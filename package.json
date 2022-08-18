@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "vite": "^3.0.8",
+    "vite-plugin-top-level-await": "^1.1.1",
+    "vite-plugin-wasm": "^2.1.0"
+  },
+  "scripts": {
+    "dev": "vite"
+  }
+}
