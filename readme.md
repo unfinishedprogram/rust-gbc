@@ -1,4 +1,4 @@
-# A Game Boy Emulator running in wasm programmed in rust
+# wasm compatible game boy emulator written in rust
 
 ## Opcodes
 
