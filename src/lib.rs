@@ -1,6 +1,9 @@
+#![feature(generic_associated_types)]
+
+
 use wasm_bindgen::prelude::*;
 
-mod emulator;
+mod cpu;
 
 #[wasm_bindgen]
 extern {
