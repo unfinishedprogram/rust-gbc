@@ -8,3 +8,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wasm-bindgen = "0.2.82"
+js-sys = "0.3.59"
+
+[build]
+target = "wasm32-unknown-unknown"
+rustflags = '-Ctarget-feature=+atomics,+bulk-memory,+mutable-globals'

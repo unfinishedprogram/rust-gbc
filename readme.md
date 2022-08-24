@@ -41,3 +41,23 @@
 | FF00  | FF7F | I/O Registers                   |                                                             |
 | FF80  | FFFE | High RAM (HRAM)                 |                                                             |
 | FFFF  | FFFF | Interrupts Enable Register (IE) |                                                             |
+
+## Rom Map
+0100-014F Cartage Header
+
+## Cartage Header
+0100-0103 - Entry Point
+0104-0133 - Nintendo Logo
+0134-0143 - Title
+013F-0142 - Manufacturer Code
+0143 - CGB Flag
+0144-0145 - New License Code
+0146 - SGB Flag
+0147 - Cartridge Type
+0148 - ROM Size
+0149 - RAM Size
+014A - Destination Code
+014B - Old Licensee Code
+014C - Mask ROM Version number
+014D - Header Checksum
+014E-014F - Global Checksum
