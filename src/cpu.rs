@@ -6,7 +6,7 @@ mod values;
 
 use registers::Registers;
 
-use self::instruction::Opcode;
+use self::{instruction::Opcode, registers::CompositeU16};
 
 pub struct CPU<'a> {
 	pc:u16,
@@ -15,16 +15,20 @@ pub struct CPU<'a> {
 	memory: [u8; 0xFFFF],
 }
 
-impl <'a>CPU {
-	fn fetch_next_byte_from_memory(&mut self) -> u8 {
-		let value = self.memory[self.pc];
+impl <'a>CPU<'_> {
+	pub fn read_mem(&mut self) -> &mut u8 {
+		let value:&mut u8 = &self.memory[self.pc];
 		self.pc += 1;
 		return value;
 	}
 
+	pub fn read_nn(&mut self) -> &mut CompositeU16 {
+		return &mut CompositeU16(self.read_mem(), self.read_mem());
+	}
+
 	// fn parse_next_instruction(&mut self) -> (Opcode, Vec<u8>) {
 	// 	let mut bytes = Vec::new();
-	// 	bytes.push(self.fetch_next_byte_from_memory());
+	// 	bytes.push(self.read_mem());
 
 	// 	let has_prefix = match bytes[0] {
 	// 		0xCB | 0xDD | 0xED | 0xFD => true,
@@ -32,27 +36,24 @@ impl <'a>CPU {
 	// 	};
 
 	// 	if(has_prefix){
-	// 		let prefix_byte = self.fetch_next_byte_from_memory();
+	// 		let prefix_byte = self.read_mem();
 	// 		bytes.push(prefix_byte);
 	// 		let has_second_prefix = match prefix_byte {
 	// 			0xDD | 0xFD => bytes[0] == 0xCB,
 	// 			_ => false
 	// 		};
 	// 		if(has_second_prefix) {
-	// 			bytes.push(self.fetch_next_byte_from_memory());
-	// 			bytes.push(self.fetch_next_byte_from_memory());
+	// 			bytes.push(self.read_mem());
+	// 			bytes.push(self.read_mem());
 	// 		}
 	// 	}
 
 	// 	let raw_opcode = match prefix {
-	// 		true => self.fetch_next_byte_from_memory(),
+	// 		true => self.read_mem(),
 	// 		false => prefix_byte
 	// 	};
 
 	// 	let opcode = Opcode::new(raw_opcode);
 	// 	return (opcode, bytes)
 	// }
-
-	pub fn get_register_value(&self, register:Register) {
-	}
 }

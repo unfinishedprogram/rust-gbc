@@ -71,7 +71,7 @@ pub enum Register16 {
 
 impl<'a> Registers<'a> {
 	pub fn new() -> Registers<'a> {
-		//								  [A  B  C  D  E  F  H  L  S  P  P  C]
+		//					 [A  B  C  D  E  F  H  L  S  P  P  C]
 		let bytes:[u8; 12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 		Registers {

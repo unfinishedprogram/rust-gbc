@@ -1,6 +1,6 @@
 // https://gb-archive.github.io/salvage/decoding_gbz80_opcodes/Decoding%20Gamboy%20Z80%20Opcodes.html#cb
 
-use super::{registers::{Register8, Register16, CompositeU16}, CPU, values::U16Value};
+use super::{registers::{Register8, Register16, CompositeU16}, CPU, values::U16Value, decode_tables::DECODE_TABLES};
 
 
 pub struct Opcode {
@@ -28,11 +28,12 @@ pub enum Instruction<'a> {
 	NOP, 
 	STOP, 
 	LD(&'a mut dyn U16Value<'a>, Register16),
-	JR,
+	JR(Condition, u8),
+	ADD(Register16, Register16)
 }
 
 pub enum Condition {
-	NZ, Z, NC, C
+	NZ, Z, NC, C, ALWAYS
 }
 pub enum ALUOperation {
 	ADD, ADC, SUB, SBC, AND, XOR, OR, CP
@@ -53,11 +54,25 @@ pub enum InstructionParameter {
 pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 	match opcode.x {
 		0 => match opcode.z {
-			0 => match opcode.y {
+			0 => match opcode.y { 
 				0 => Instruction::NOP,
-				1 => Instruction::LD(&mut CompositeU16(cpu.fetch_next_byte_from_memory(), cpu.fetch_next_byte_from_memory()), Register16::SP),
+				1 => Instruction::LD(cpu.read_nn, Register16::SP),
 				2 => Instruction::STOP,
+				3 => Instruction::JR(Condition::ALWAYS, *cpu.read_mem()),
+				_ => Instruction::JR(DECODE_TABLES.cc[opcode.y], *cpu.read_mem())
 			},
+			1 => match opcode.q {
+				0 => Instruction::LD(DECODE_TABLES.rp[opcode.p], cpu.read_nn()),
+				1 => Instruction::ADD(Register16::HL, DECODE_TABLES.rp[opcode.p])
+			},
+			2 => match opcode.q {
+				0 => match opcode.p {
+					0 => Instruction::LD(Register16::BC, Register8::A)
+				}
+				1 => match opcode.p {
+					
+				}
+			}
 		},
 	}
 }
