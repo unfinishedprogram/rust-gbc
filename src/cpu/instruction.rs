@@ -132,7 +132,7 @@ pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 						ValueRefU8::Reg(Register8::A), 
 						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::HL))),
 					),
-					_ => Instruction::ERRO
+					_ => Instruction::ERROR
 				},
 				_ => Instruction::ERROR
 			},
@@ -153,7 +153,9 @@ pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 				5 => Instruction::CPL,
 				6 => Instruction::SCF,
 				7 => Instruction::CCF,
+				_ => Instruction::ERROR
 			}
+			_ => Instruction::ERROR
 		},
 		1 => {
 			if opcode.z == 6 && opcode.y == 6 {
@@ -167,7 +169,8 @@ pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 		},
 		2 => Instruction::ALU_OP_8(DT.alu[opcode.y as usize],ValueRefU8::Reg(Register8::A), ValueRefU8::Reg(DT.r[opcode.z as usize])),
 		3 => match opcode.z {
-			// 0 => 
+			_ => Instruction::ERROR
 		}
+		_ => Instruction::ERROR
 	}
 }
