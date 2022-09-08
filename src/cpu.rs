@@ -2,11 +2,9 @@ mod registers;
 mod values;
 mod instruction;
 
-use registers::Registers;
-
-use self::{
-	values::{ValueRefU8, ValueRefU16, get_as_u16}, 
-};
+use registers::{Registers};
+use values::{ValueRefU8, ValueRefU16, get_as_u16};
+use instruction::{get_instruction, opcode::Opcode, Instruction};
 
 pub struct CPU {
 	pc:u16,
@@ -72,6 +70,11 @@ impl <'a>CPU {
 			ValueRefU16::Reg(reg) => self.registers.set_u16(reg, value),
 			ValueRefU16::Raw(x) => unreachable!(),
 		}
+	}
+
+	pub fn get_next_instruction(&mut self) -> Instruction {
+		let opcode:Opcode = Opcode::from(self.next_byte());
+		get_instruction(self, opcode)
 	}
 
 	// pub fn get_register_8(&mut self, register: Register8) {
