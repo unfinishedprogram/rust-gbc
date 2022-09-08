@@ -1,24 +1,28 @@
 use super::registers::Register8;
 use super::registers::Register16;
 
+#[derive(Copy, Clone)]
 pub enum ValueRefU8 {
 	Reg(Register8),
 	Mem(u16),
 	Raw(u8)
 }
 
+#[derive(Copy, Clone)]
 pub enum ValueRefU16 {
 	Reg(Register16),
 	Mem(u16),
 	Raw(u16)
 }
 
+#[derive(Copy, Clone)]
 pub enum ValueRefI8 {
 	Reg(Register8),
 	Mem(u8),
 	Raw(i8)
 }
 
+#[derive(Copy, Clone)]
 pub enum ValueRefI16 {
 	Reg(Register16),
 	Mem(u16),
