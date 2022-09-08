@@ -17,8 +17,8 @@ pub enum Register16 {
 
 pub struct Registers {
 	bytes:[u8;8],
-	sp:u16,
-	pc:u16,
+	pub sp:u16,
+	pub pc:u16,
 }
 
 impl Index<Register8> for Registers {

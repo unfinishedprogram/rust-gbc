@@ -3,6 +3,7 @@
 
 mod decode_tables;
 pub mod opcode;
+pub mod execute;
 
 use opcode::Opcode;
 
@@ -10,7 +11,7 @@ use self::decode_tables::DT;
 
 use super::{
 	registers::{Register8, Register8::*, Register16, Register16::*}, 
-	CPU, 
+	Cpu, 
 	values::{ValueRefU16, ValueRefI8, ValueRefU8}, 
 };
 
@@ -87,7 +88,7 @@ pub enum RotShiftOperation {
 	RLC, RRC, RL, RR, SLA, SRA, SWAP, SRL
 }
 
-pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
+pub fn get_instruction(cpu: &mut Cpu, opcode:Opcode) -> Instruction {
 	match opcode.x { 
 		0 => match opcode.z {
 			0 => match opcode.y {
