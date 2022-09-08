@@ -67,7 +67,14 @@ pub enum Instruction {
 	CPL,
 	SCF,
 	CCF,
+
+	//  CB Instructions
+	BIT(u8, Register8), 
+	RES(u8, Register8), 
+	SET(u8, Register8), 
+	ROT(RotShiftOperation, Register8)
 }
+
 #[derive(Copy, Clone)]
 pub enum Condition {
 	NZ, Z, NC, C, ALWAYS
@@ -221,7 +228,16 @@ pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 			}
 			3 => match opcode.y {
 				0 => Instruction::JP(Condition::ALWAYS, ValueRefU16::Raw(cpu.next_chomp())),
-				1 => Instruction::CBPref,
+				1 =>  {
+					let cb_opcode = Opcode::from(cpu.next_byte());
+					match cb_opcode.x {
+						0 => Instruction::ROT(DT.rot[cb_opcode.y as usize], DT.r[cb_opcode.z as usize]),
+						1 => Instruction::BIT(cb_opcode.y, DT.r[cb_opcode.z as usize]),
+						2 => Instruction::RES(cb_opcode.y, DT.r[cb_opcode.z as usize]),
+						3 => Instruction::SET(cb_opcode.y, DT.r[cb_opcode.z as usize]),
+						_ => Instruction::ERROR,
+					}
+				},
 				6 => Instruction::DI,
 				7 => Instruction::EI,
 				_ => Instruction::ERROR,
