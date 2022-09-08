@@ -31,12 +31,19 @@ pub enum Instruction {
 
 	ADD_16(ValueRefU16, ValueRefU16),
 	ADD_8(ValueRefU8, ValueRefU8),
+
+	ADD_SIGNED(ValueRefU16, ValueRefI8),
 	
 	ALU_OP_8(ALUOperation, ValueRefU8, ValueRefU8),
 	ALU_OP_16(ALUOperation, ValueRefU16, ValueRefU16),
 
 	HALT,
 
+
+	// Return
+
+	RET(Condition),
+	RETI,
 
 	// Accumulator flag ops
 
@@ -167,6 +174,20 @@ pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 		},
 		2 => Instruction::ALU_OP_8(DT.alu[opcode.y as usize],ValueRefU8::Reg(Register8::A), ValueRefU8::Reg(DT.r[opcode.z as usize])),
 		3 => match opcode.z {
+			0 => match opcode.y { // Done
+				0..=3 => Instruction::RET(DT.cc[opcode.y as usize]),
+				4 => Instruction::LD_8(ValueRefU8::Mem(0xFF00 + cpu.next_byte() as u16), ValueRefU8::Reg(Register8::A)),
+				5 => Instruction::ADD_SIGNED(ValueRefU16::Reg(Register16::SP), ValueRefI8::Raw(cpu.next_displacement())),
+				6 => Instruction::LD_8(ValueRefU8::Reg(Register8::A), ValueRefU8::Mem(0xFF00 + cpu.next_byte() as u16)),
+				7 => Instruction::LD_16(
+					ValueRefU16::Reg(Register16::HL), 
+					ValueRefU16::Raw(
+						cpu.read_16(
+							ValueRefU16::Reg(Register16::SP))
+							.wrapping_add_signed(cpu.next_displacement() as i16)
+					)),
+				_ => Instruction::ERROR,
+			}
 			_ => Instruction::ERROR
 		}
 		_ => Instruction::ERROR

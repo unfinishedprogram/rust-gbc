@@ -13,5 +13,3 @@ js-sys = "0.3.59"
 [build]
 target = "wasm32-unknown-unknown"
 rustflags = '-Ctarget-feature=+atomics,+bulk-memory,+mutable-globals'
-
-#![feature(generic_associated_types)]

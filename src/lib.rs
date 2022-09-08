@@ -1,4 +1,5 @@
 #![feature(generic_associated_types)]
+#![feature(mixed_integer_ops)]
 
 use wasm_bindgen::prelude::*;
 

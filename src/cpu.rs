@@ -33,6 +33,10 @@ impl <'a>CPU {
 		self.memory[(self.pc-1) as usize]
 	}
 
+	pub fn next_displacement(&mut self) -> i8 {
+		self.next_byte() as i8
+	}
+
 	pub fn next_chomp(&mut self) -> u16 {
 		get_as_u16(&self.next_byte(), &self.next_byte())
 	}
