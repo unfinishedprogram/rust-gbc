@@ -1,30 +1,86 @@
-
-mod instruction;
 mod registers;
-mod decode_tables;
 mod values;
+mod instruction;
 
 use registers::Registers;
 
-use self::{instruction::Opcode, registers::CompositeU16};
+use self::{
+	values::{ValueRefU8, ValueRefU16, get_as_u16}, 
+};
 
-pub struct CPU<'a> {
+pub struct CPU {
 	pc:u16,
 	sp:u16,
-	registers:Registers<'a>,
+	registers:Registers,
 	memory: [u8; 0xFFFF],
 }
 
-impl <'a>CPU<'_> {
+impl <'a>CPU {
+	pub fn new() -> CPU {
+		CPU {
+			pc:0, sp:0, 
+			registers:Registers::new(),
+			memory: [0;0xFFFF],
+		}
+	}
+
 	pub fn read_mem(&mut self) -> &mut u8 {
-		let value:&mut u8 = &self.memory[self.pc];
+		let value:&mut u8 = &mut self.memory[self.pc as usize];
 		self.pc += 1;
 		return value;
 	}
 
-	pub fn read_nn(&mut self) -> &mut CompositeU16 {
-		return &mut CompositeU16(self.read_mem(), self.read_mem());
+	pub fn next_byte(&mut self) -> u8 {
+		self.pc += 1;
+		self.memory[(self.pc-1) as usize]
 	}
+
+	pub fn next_chomp(&mut self) -> u16 {
+		get_as_u16(&self.next_byte(), &self.next_byte())
+	}
+
+	pub fn read_8(&self, value_ref:ValueRefU8) -> u8 {
+		match value_ref {
+			ValueRefU8::Mem(i) => self.memory[i as usize],
+			ValueRefU8::Reg(reg) => self.registers.get_u8(reg),
+			ValueRefU8::Raw(x) => x,
+		}
+	}
+	
+	pub fn write_8(&mut self, value_ref:ValueRefU8, value:u8) {
+		match value_ref {
+			ValueRefU8::Mem(i) => self.memory[i as usize] = value,
+			ValueRefU8::Reg(reg) => self.registers.set_u8(reg, value),
+			ValueRefU8::Raw(_) => unreachable!(),
+		}
+	}
+
+	pub fn read_16(&self, value_ref:ValueRefU16) -> u16 {
+		match value_ref {
+			ValueRefU16::Mem(i) => (self.memory[i as usize] as u16) << 8 | self.memory[(i as usize) + 1] as u16,
+			ValueRefU16::Reg(reg) => self.registers.get_u16(reg),
+			ValueRefU16::Raw(x) => x,
+		}
+	}
+
+	pub fn write_16(&mut self, value_ref:ValueRefU16, value:u16) {
+		match value_ref {
+			ValueRefU16::Mem(i) => {
+				self.memory[i as usize] = (value >> 8) as u8;
+				self.memory[(i as usize) + 1] = (value & 0x00FF) as u8;
+			},
+			ValueRefU16::Reg(reg) => self.registers.set_u16(reg, value),
+			ValueRefU16::Raw(x) => unreachable!(),
+		}
+	}
+
+	// pub fn get_register_8(&mut self, register: Register8) {
+
+	// }
+
+	// pub fn get_register_16(&mut self, register:Register16) {
+	// 	return 
+	// }
 
 	// fn parse_next_instruction(&mut self) -> (Opcode, Vec<u8>) {
 	// 	let mut bytes = Vec::new();

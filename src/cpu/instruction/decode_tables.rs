@@ -1,19 +1,16 @@
-use super::registers::Register8;
-use super::registers::Register16;
-use super::instruction::ALUOperation;
-use super::instruction::Condition;
-use super::instruction::RotShiftOperation;
+use crate::cpu::registers::*;
+use crate::cpu::instruction::*;
 
 struct DecodeTables {
-	r:[Register8; 8],
-	rp:[Register16; 4],
-	rp2:[Register16; 4],
-	cc:[Condition; 4],
-	alu:[ALUOperation; 8],
-	rot:[RotShiftOperation; 8],
+	pub r:[Register8; 8],
+	pub rp:[Register16; 4],
+	pub rp2:[Register16; 4],
+	pub cc:[Condition; 4],
+	pub alu:[ALUOperation; 8],
+	pub rot:[RotShiftOperation; 8],
 }
 
-pub const DECODE_TABLES:DecodeTables = DecodeTables {
+pub const DT:DecodeTables = DecodeTables {
 	r : [
 		Register8::B,
 		Register8::C,

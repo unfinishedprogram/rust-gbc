@@ -1,93 +1,173 @@
 // https://gb-archive.github.io/salvage/decoding_gbz80_opcodes/Decoding%20Gamboy%20Z80%20Opcodes.html#cb
+mod decode_tables;
+mod opcode;
 
-use super::{registers::{Register8, Register16, CompositeU16}, CPU, values::U16Value, decode_tables::DECODE_TABLES};
+use opcode::Opcode;
 
+use self::decode_tables::DT;
 
-pub struct Opcode {
-	raw:u8,
-	x:u8, 
-	y:u8, 
-	z:u8,
-	p:u8, 
-	q:u8,
-}
+use super::{
+	registers::{Register8, Register16}, 
+	CPU, 
+	values::{ValueRefU16, ValueRefI8, ValueRefU8}, 
+};
 
-impl Opcode {
-	pub fn new(raw:u8) -> Opcode {
-		let x = (raw & 0b11000000) >> 6; // 
-		let y = (raw & 0b00111000) >> 3; //
-		let z = (raw & 0b00000111) >> 0; // 
-		let p = (raw & 0b00110000) >> 4; //
-		let q = (raw & 0b00001000) >> 3; //
-
-		Opcode { raw, x, y, z, p, q, }
-	}
-}
-
-pub enum Instruction<'a> {
+pub enum Instruction {
 	NOP, 
 	STOP, 
-	LD(&'a mut dyn U16Value<'a>, Register16),
-	JR(Condition, u8),
-	ADD(Register16, Register16)
-}
 
+	ERROR,
+
+	// Load
+
+	LD_8(ValueRefU8, ValueRefU8),
+	LD_16(ValueRefU16, ValueRefU16),
+
+	INC_8(ValueRefU8),
+	INC_16(ValueRefU16),
+
+	DEC_8(ValueRefU8),
+	DEC_16(ValueRefU16),
+
+	JR(Condition, ValueRefI8),
+
+	ADD_16(ValueRefU16, ValueRefU16),
+	ADD_8(ValueRefU8, ValueRefU8),
+	
+	ALU_OP_8(ALUOperation, ValueRefU8, ValueRefU8),
+	ALU_OP_16(ALUOperation, ValueRefU16, ValueRefU16),
+
+	HALT,
+
+
+	// Accumulator flag ops
+
+	RLCA,
+	RRCA,
+	RLA,
+	RRA,
+	DAA,
+	CPL,
+	SCF,
+	CCF,
+}
+#[derive(Copy, Clone)]
 pub enum Condition {
 	NZ, Z, NC, C, ALWAYS
 }
+
+#[derive(Copy, Clone)]
 pub enum ALUOperation {
 	ADD, ADC, SUB, SBC, AND, XOR, OR, CP
 }
+#[derive(Copy, Clone)]
 pub enum RotShiftOperation {
 	RLC, RRC, RL, RR, SLA, SRA, SWAP, SRL
 }
 
-pub enum InstructionParameter {
-	ValueU16(u8, u8),
-	ValueI16(u8, u8),
-	ValueU8(u8),
-	ValueI8(u8),
-	Register8(Register8),
-	Register16(Register16),
-}
-
 pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
-	match opcode.x {
-		0 => match opcode.z {
-			0 => match opcode.y { 
-				0 => Instruction::NOP,
-				1 => Instruction::LD(cpu.read_nn, Register16::SP),
-				2 => Instruction::STOP,
-				3 => Instruction::JR(Condition::ALWAYS, *cpu.read_mem()),
-				_ => Instruction::JR(DECODE_TABLES.cc[opcode.y], *cpu.read_mem())
+	match opcode.x { 
+		0 => match opcode.z { // DONE!
+			0 => match opcode.y { // Done
+				0 => Instruction::NOP, 
+				1 => Instruction::LD_16(
+					ValueRefU16::Raw(cpu.next_chomp()), 
+					ValueRefU16::Reg(Register16::SP)
+				), 
+				2 => Instruction::STOP, 
+				3 => Instruction::JR(
+					Condition::ALWAYS, 
+					ValueRefI8::Raw(cpu.next_byte() as i8)
+				),
+				_ => Instruction::JR(
+					DT.cc[opcode.y as usize],
+					ValueRefI8::Raw(cpu.next_byte() as i8)
+				)
 			},
-			1 => match opcode.q {
-				0 => Instruction::LD(DECODE_TABLES.rp[opcode.p], cpu.read_nn()),
-				1 => Instruction::ADD(Register16::HL, DECODE_TABLES.rp[opcode.p])
+			1 => match opcode.q { // Done
+				0 => Instruction::LD_16(
+					ValueRefU16::Reg(DT.rp[opcode.p as usize]),
+					ValueRefU16::Raw(cpu.next_chomp()),
+				),
+				1 => Instruction::ADD_16(
+					ValueRefU16::Reg(Register16::HL),
+					ValueRefU16::Reg(DT.rp[opcode.p as usize]),
+				),
+				_ => Instruction::ERROR
 			},
-			2 => match opcode.q {
+			2 => match opcode.q { // Indirect Loading from memory // TODO ADD DECREMENT
 				0 => match opcode.p {
-					0 => Instruction::LD(Register16::BC, Register8::A)
+					0 => Instruction::LD_8(
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::BC))),
+						ValueRefU8::Reg(Register8::A)
+					),
+					1 => Instruction::LD_8(
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::DE))),
+						ValueRefU8::Reg(Register8::A)
+					),
+					2 => Instruction::LD_8( // Increment
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::HL))),
+						ValueRefU8::Reg(Register8::A)
+					),
+					3 => Instruction::LD_8( // Decrement 
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::HL))),
+						ValueRefU8::Reg(Register8::A)
+					),
+					_ => Instruction::ERROR
 				}
 				1 => match opcode.p {
-					
-				}
+					0 => Instruction::LD_8(
+						ValueRefU8::Reg(Register8::A), 
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::BC))),
+					),
+					1 => Instruction::LD_8(
+						ValueRefU8::Reg(Register8::A), 
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::DE))),
+					),
+					2 => Instruction::LD_8(
+						ValueRefU8::Reg(Register8::A), 
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::HL))),
+					),
+					3 => Instruction::LD_8(
+						ValueRefU8::Reg(Register8::A), 
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::HL))),
+					),
+					_ => Instruction::ERRO
+				},
+				_ => Instruction::ERROR
+			},
+			3 => match opcode.q {
+					0 => Instruction::INC_16(ValueRefU16::Reg(DT.rp[opcode.p as usize])), // Increment 16 bit
+					1 => Instruction::DEC_16(ValueRefU16::Reg(DT.rp[opcode.p as usize])), // Decrement 16 bit //  TODO DOuble check this
+					_ => Instruction::ERROR
+			},
+			4 => Instruction::INC_8(ValueRefU8::Reg(DT.r[opcode.y as usize])), // Increment 8 bit
+			5 => Instruction::DEC_8(ValueRefU8::Reg(DT.r[opcode.y as usize])), // Decrement 8 bit
+			6 => Instruction::LD_8(ValueRefU8::Reg(DT.r[opcode.y as usize]), ValueRefU8::Raw(cpu.next_byte())),
+			7 => match opcode.y {
+				0 => Instruction::RLCA,
+				1 => Instruction::RRCA,
+				2 => Instruction::RLA,
+				3 => Instruction::RRA,
+				4 => Instruction::DAA,
+				5 => Instruction::CPL,
+				6 => Instruction::SCF,
+				7 => Instruction::CCF,
 			}
 		},
-	}
-}
-
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-	#[test]
-	fn opcode_deconstruction() {
-		let opcode = Opcode::new(255);
-		assert_eq!(opcode.x, 0b11); 
-		assert_eq!(opcode.y, 0b111);
-		assert_eq!(opcode.z, 0b111);
-		assert_eq!(opcode.p, 0b11);
-		assert_eq!(opcode.q, 0b1);
+		1 => {
+			if opcode.z == 6 && opcode.y == 6 {
+				return Instruction::HALT
+			} else {
+				return Instruction::LD_8 (
+					ValueRefU8::Reg(DT.r[opcode.y as usize]),
+					ValueRefU8::Reg(DT.r[opcode.z as usize])
+				)
+			}
+		},
+		2 => Instruction::ALU_OP_8(DT.alu[opcode.y as usize],ValueRefU8::Reg(Register8::A), ValueRefU8::Reg(DT.r[opcode.z as usize])),
+		3 => match opcode.z {
+			// 0 => 
+		}
 	}
 }
