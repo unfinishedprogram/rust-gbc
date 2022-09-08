@@ -12,13 +12,11 @@ use super::{
 	values::{ValueRefU16, ValueRefI8, ValueRefU8}, 
 };
 
+#[allow(non_camel_case_types)]
 pub enum Instruction {
 	NOP, 
 	STOP, 
-
 	ERROR,
-
-	// Load
 
 	LD_8(ValueRefU8, ValueRefU8),
 	LD_16(ValueRefU16, ValueRefU16),
