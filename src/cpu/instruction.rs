@@ -1,4 +1,6 @@
-// https://gb-archive.github.io/salvage/decoding_gbz80_opcodes/Decoding%20Gamboy%20Z80%20Opcodes.html#cb
+// Resource
+// https://gb-archive.github.io/salvage/decoding_gbz80_opcodes/Decoding%20Gamboy%20Z80%20Opcodes.html
+
 mod decode_tables;
 pub mod opcode;
 
@@ -30,12 +32,10 @@ pub enum Instruction {
 	JR(Condition, ValueRefI8),
 
 	ADD_16(ValueRefU16, ValueRefU16),
-	ADD_8(ValueRefU8, ValueRefU8),
 
 	ADD_SIGNED(ValueRefU16, ValueRefI8),
 	
 	ALU_OP_8(ALUOperation, ValueRefU8, ValueRefU8),
-	ALU_OP_16(ALUOperation, ValueRefU16, ValueRefU16),
 
 	HALT,
 
@@ -52,10 +52,8 @@ pub enum Instruction {
 
 	RST(ValueRefU16),
 
-	CBPref, // Prefix for chomp opcodes
-
-	DI, 
-	EI, 
+	DI,
+	EI,
 
 	// Accumulator flag ops
 
@@ -91,8 +89,8 @@ pub enum RotShiftOperation {
 
 pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 	match opcode.x { 
-		0 => match opcode.z { // DONE!
-			0 => match opcode.y { // Done
+		0 => match opcode.z {
+			0 => match opcode.y {
 				0 => Instruction::NOP, 
 				1 => Instruction::LD_16(
 					ValueRefU16::Raw(cpu.next_chomp()), 
@@ -108,7 +106,7 @@ pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 					ValueRefI8::Raw(cpu.next_byte() as i8)
 				)
 			},
-			1 => match opcode.q { // Done
+			1 => match opcode.q {
 				0 => Instruction::LD_16(
 					ValueRefU16::Reg(DT.rp[opcode.p as usize]),
 					ValueRefU16::Raw(cpu.next_chomp()),
@@ -193,7 +191,7 @@ pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 		},
 		2 => Instruction::ALU_OP_8(DT.alu[opcode.y as usize],ValueRefU8::Reg(Register8::A), ValueRefU8::Reg(DT.r[opcode.z as usize])),
 		3 => match opcode.z {
-			0 => match opcode.y { // Done
+			0 => match opcode.y {
 				0..=3 => Instruction::RET(DT.cc[opcode.y as usize]),
 				4 => Instruction::LD_8(ValueRefU8::Mem(0xFF00 + cpu.next_byte() as u16), ValueRefU8::Reg(A)),
 				5 => Instruction::ADD_SIGNED(ValueRefU16::Reg(SP), ValueRefI8::Raw(cpu.next_displacement())),
