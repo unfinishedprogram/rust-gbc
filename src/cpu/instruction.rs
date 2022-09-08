@@ -1,6 +1,6 @@
 // https://gb-archive.github.io/salvage/decoding_gbz80_opcodes/Decoding%20Gamboy%20Z80%20Opcodes.html#cb
 mod decode_tables;
-mod opcode;
+pub mod opcode;
 
 use opcode::Opcode;
 

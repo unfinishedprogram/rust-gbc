@@ -18,8 +18,8 @@ pub fn load_rom_and_run(rom:js_sys::Uint8Array) {
         // Load raw rom into memory
         // rom.raw_copy_to_ptr(state.memory.as_mut_ptr());
     // }
-    let processor = cpu::CPU::new();
-    let inst = 
+    let mut processor = cpu::CPU::new();
+    _ = processor.get_next_instruction();
 
     // let opcode = cpu::Opcode::from(*processor.read_mem());
 
