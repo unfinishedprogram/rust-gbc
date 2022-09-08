@@ -7,7 +7,7 @@ use opcode::Opcode;
 use self::decode_tables::DT;
 
 use super::{
-	registers::{Register8, Register16}, 
+	registers::{Register8, Register8::*, Register16, Register16::*}, 
 	CPU, 
 	values::{ValueRefU16, ValueRefI8, ValueRefU8}, 
 };
@@ -39,11 +39,23 @@ pub enum Instruction {
 
 	HALT,
 
+	CALL(Condition, ValueRefU16),
+
+	POP(Register16),
+	PUSH(Register16),
+
+	JP(Condition, ValueRefU16),
 
 	// Return
-
 	RET(Condition),
 	RETI,
+
+	RST(ValueRefU16),
+
+	CBPref, // Prefix for chomp opcodes
+
+	DI, 
+	EI, 
 
 	// Accumulator flag ops
 
@@ -103,39 +115,39 @@ pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 			2 => match opcode.q { // Indirect Loading from memory // TODO ADD DECREMENT
 				0 => match opcode.p {
 					0 => Instruction::LD_8(
-						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::BC))),
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(BC))),
 						ValueRefU8::Reg(Register8::A)
 					),
 					1 => Instruction::LD_8(
-						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::DE))),
-						ValueRefU8::Reg(Register8::A)
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(DE))),
+						ValueRefU8::Reg(A)
 					),
 					2 => Instruction::LD_8( // Increment
-						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::HL))),
-						ValueRefU8::Reg(Register8::A)
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(HL))),
+						ValueRefU8::Reg(A)
 					),
 					3 => Instruction::LD_8( // Decrement 
-						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::HL))),
-						ValueRefU8::Reg(Register8::A)
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(HL))),
+						ValueRefU8::Reg(A)
 					),
 					_ => Instruction::ERROR
 				}
 				1 => match opcode.p {
 					0 => Instruction::LD_8(
-						ValueRefU8::Reg(Register8::A), 
-						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::BC))),
+						ValueRefU8::Reg(A), 
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(BC))),
 					),
 					1 => Instruction::LD_8(
-						ValueRefU8::Reg(Register8::A), 
-						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::DE))),
+						ValueRefU8::Reg(A), 
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(DE))),
 					),
 					2 => Instruction::LD_8(
-						ValueRefU8::Reg(Register8::A), 
-						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::HL))),
+						ValueRefU8::Reg(A), 
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(HL))),
 					),
 					3 => Instruction::LD_8(
-						ValueRefU8::Reg(Register8::A), 
-						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(Register16::HL))),
+						ValueRefU8::Reg(A), 
+						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(HL))),
 					),
 					_ => Instruction::ERROR
 				},
@@ -176,20 +188,60 @@ pub fn get_instruction(cpu: &mut CPU, opcode:Opcode) -> Instruction {
 		3 => match opcode.z {
 			0 => match opcode.y { // Done
 				0..=3 => Instruction::RET(DT.cc[opcode.y as usize]),
-				4 => Instruction::LD_8(ValueRefU8::Mem(0xFF00 + cpu.next_byte() as u16), ValueRefU8::Reg(Register8::A)),
-				5 => Instruction::ADD_SIGNED(ValueRefU16::Reg(Register16::SP), ValueRefI8::Raw(cpu.next_displacement())),
-				6 => Instruction::LD_8(ValueRefU8::Reg(Register8::A), ValueRefU8::Mem(0xFF00 + cpu.next_byte() as u16)),
+				4 => Instruction::LD_8(ValueRefU8::Mem(0xFF00 + cpu.next_byte() as u16), ValueRefU8::Reg(A)),
+				5 => Instruction::ADD_SIGNED(ValueRefU16::Reg(SP), ValueRefI8::Raw(cpu.next_displacement())),
+				6 => Instruction::LD_8(ValueRefU8::Reg(A), ValueRefU8::Mem(0xFF00 + cpu.next_byte() as u16)),
 				7 => Instruction::LD_16(
-					ValueRefU16::Reg(Register16::HL), 
+					ValueRefU16::Reg(HL), 
 					ValueRefU16::Raw(
 						cpu.read_16(
-							ValueRefU16::Reg(Register16::SP))
+							ValueRefU16::Reg(SP))
 							.wrapping_add_signed(cpu.next_displacement() as i16)
 					)),
 				_ => Instruction::ERROR,
 			}
-			_ => Instruction::ERROR
-		}
+			1 => match opcode.q {
+				0 => Instruction::POP(DT.rp2[opcode.p as usize]),
+				1 => match opcode.p {
+					0 => Instruction::RET(Condition::ALWAYS),
+					1 => Instruction::RETI,
+					2 => Instruction::JP(Condition::ALWAYS, ValueRefU16::Reg(HL)),
+					3 => Instruction::LD_16(ValueRefU16::Reg(SP),ValueRefU16::Reg(HL)),
+					_ => Instruction::ERROR,
+				}
+				_ => Instruction::ERROR,
+			},
+			2 => match opcode.y {
+				0..=3 => Instruction::JP(DT.cc[opcode.y as usize], ValueRefU16::Raw(cpu.next_chomp())),
+				4 => Instruction::LD_8(ValueRefU8::Mem(0xFF00 + cpu.read_8(ValueRefU8::Reg(C)) as u16), ValueRefU8::Reg(A)),
+				5 => Instruction::LD_8(ValueRefU8::Mem(cpu.next_chomp()), ValueRefU8::Reg(A)),
+				6 => Instruction::LD_8(ValueRefU8::Reg(A), ValueRefU8::Mem(0xFF00 + cpu.read_8(ValueRefU8::Reg(C)) as u16)),
+				7 => Instruction::LD_8(ValueRefU8::Reg(A), ValueRefU8::Mem(cpu.next_chomp())),
+				_ => Instruction::ERROR,
+			}
+			3 => match opcode.y {
+				0 => Instruction::JP(Condition::ALWAYS, ValueRefU16::Raw(cpu.next_chomp())),
+				1 => Instruction::CBPref,
+				6 => Instruction::DI,
+				7 => Instruction::EI,
+				_ => Instruction::ERROR,
+			},
+			4 => match opcode.y {
+				0..=3 => Instruction::CALL(DT.cc[opcode.y as usize], ValueRefU16::Raw(cpu.next_chomp())),
+				_ => Instruction::ERROR,
+			}
+			5 => match opcode.q {
+				0 => Instruction::PUSH(DT.rp2[opcode.p as usize]),
+				1 => match opcode.p {
+					0 => Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(cpu.next_chomp())),
+					_ => Instruction::ERROR,
+				}
+				_ => Instruction::ERROR,
+			}
+			6 => Instruction::ALU_OP_8(DT.alu[opcode.y as usize], ValueRefU8::Reg(A), ValueRefU8::Raw(cpu.next_byte())),
+			7 => Instruction::RST(ValueRefU16::Raw((opcode.y as u16) * 8)),
+			_ => Instruction::ERROR,
+ 		}
 		_ => Instruction::ERROR
 	}
 }
