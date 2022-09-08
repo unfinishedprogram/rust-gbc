@@ -1,7 +1,7 @@
 use crate::cpu::registers::*;
 use crate::cpu::instruction::*;
 
-struct DecodeTables {
+pub struct DecodeTables {
 	pub r:[Register8; 8],
 	pub rp:[Register16; 4],
 	pub rp2:[Register16; 4],
