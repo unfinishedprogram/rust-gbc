@@ -1,27 +1,38 @@
-pub struct Flags {
-	raw:[bool;4],
-}
+use super::{Cpu, registers::Register8, values::ValueRefU8};
 
 pub enum Flag {
 	Z = 0, N, H, C
 }
 
-impl Flags {
-	pub fn new() -> Flags {
-		Flags {
-			raw:[false;4],
-		}
+pub trait Flags {
+	fn get_flag_byte(&self) -> u8;
+	fn set_flag_byte(&mut self, byte:u8);
+
+	fn set_flag(&mut self, flag:Flag) {
+		let mask = 1 << 4 + flag as usize;
+		let byte = self.get_flag_byte();
+		self.set_flag_byte(byte & !mask);
 	}
 
-	pub fn set(&mut self, flag:Flag) {
-		self.raw[flag as usize] = true;
+	fn clear_flag(&mut self, flag:Flag) {
+		let mask = 1 << 4 + flag as usize;
+		let byte = self.get_flag_byte();
+		self.set_flag_byte(byte | mask);
 	}
 
-	pub fn clear(&mut self, flag:Flag) {
-		self.raw[flag as usize] = false;
+	fn get_flag(&self, flag:Flag) -> bool {
+		let mask = 1 << 4 + flag as usize;
+		let byte = self.get_flag_byte();
+		return (byte << 4 + flag as usize) & 1 != 0;
+	}
+}
+
+impl Flags for Cpu {
+	fn get_flag_byte(&self) -> u8 {
+		self.read_8(ValueRefU8::Reg(Register8::F))
 	}
 
-	pub fn get(&self, flag:Flag) -> bool{
-		self.raw[flag as usize]
+	fn set_flag_byte(&mut self, byte:u8) {
+		self.write_8(ValueRefU8::Reg(Register8::F), byte);
 	}
 }

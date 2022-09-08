@@ -5,10 +5,8 @@ mod flags;
 use registers::{Registers};
 use values::{ValueRefU8, ValueRefU16, get_as_u16};
 use instruction::{get_instruction, opcode::Opcode, Instruction};
-use flags::{Flags};
 
 pub struct Cpu {
-	pub flags:Flags,
 	registers:Registers,
 	memory: [u8; 0xFFFF],
 }
@@ -16,7 +14,6 @@ pub struct Cpu {
 impl <'a>Cpu {
 	pub fn new() -> Cpu {
 		Cpu {
-			flags:Flags::new(),
 			registers:Registers::new(),
 			memory: [0;0xFFFF],
 		}
