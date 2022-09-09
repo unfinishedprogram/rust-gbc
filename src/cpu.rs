@@ -7,6 +7,8 @@ use registers::{Registers};
 use values::{ValueRefU8, ValueRefU16, get_as_u16};
 use instruction::{get_instruction, opcode::Opcode, Instruction};
 
+use self::instruction::Condition;
+
 pub struct Cpu {
 	registers:Registers,
 	memory: [u8; 0xFFFF],
@@ -77,5 +79,14 @@ impl <'a>Cpu {
 	pub fn get_next_instruction(&mut self) -> Instruction {
 		let opcode:Opcode = Opcode::from(self.next_byte());
 		get_instruction(self, opcode)
+	}
+
+	pub fn check_condition(condition: Condition) -> bool {
+		use Condition::*;
+
+		match condition {
+			ALWAYS => true,
+			_ => false
+		}
 	}
 }
