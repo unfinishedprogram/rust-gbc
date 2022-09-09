@@ -1,6 +1,18 @@
 use super::registers::Register8;
 use super::registers::Register16;
 
+impl Into<ValueRefU16> for Register16 {
+	fn into(self: Register16) -> ValueRefU16 {
+		ValueRefU16::Reg(self)
+	}
+}
+
+impl Into<ValueRefU8> for Register8 {
+	fn into(self: Register8) -> ValueRefU8 {
+		ValueRefU8::Reg(self)
+	}
+}
+
 #[derive(Copy, Clone)]
 pub enum ValueRefU8 {
 	Reg(Register8),

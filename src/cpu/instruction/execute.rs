@@ -70,16 +70,27 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     HALT => todo!(),
     CALL(condition, location) => {
       if(cpu.check_condition(condition)) {
-        cpu.push(cpu.read_16(ValueRefU16::Reg(Register16::PC))+1);
+        cpu.push(
+          cpu.read_16(Register16::PC.into())+1
+        );
+
         cpu.write_16(
-          ValueRefU16::Reg(Register16::PC), 
+          Register16::PC.into(), 
           cpu.read_16(location)
-        )
+        );
       }
     },
     POP(_) => todo!(),
     PUSH(_) => todo!(),
-    RET(_) => todo!(),
+    RET(condition) => {
+      if(cpu.check_condition(condition)) {
+        let ptr = cpu.pop();
+        cpu.write_16(
+          ValueRefU16::Reg(Register16::PC),
+          ptr
+        );
+      }
+    },
     RETI => todo!(),
     RST(_) => todo!(),
     DI => todo!(),
