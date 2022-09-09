@@ -1,4 +1,4 @@
-use super::{Cpu, registers::Register8, values::ValueRefU8};
+use super::{registers::Register8, values::ValueRefU8, Cpu};
 
 pub enum Flag {
 	Z = 0, N, H, C
@@ -11,19 +11,18 @@ pub trait Flags {
 	fn set_flag(&mut self, flag:Flag) {
 		let mask = 1 << 4 + flag as usize;
 		let byte = self.get_flag_byte();
-		self.set_flag_byte(byte & !mask);
+		self.set_flag_byte(byte | mask);
 	}
 
 	fn clear_flag(&mut self, flag:Flag) {
 		let mask = 1 << 4 + flag as usize;
 		let byte = self.get_flag_byte();
-		self.set_flag_byte(byte | mask);
+		self.set_flag_byte(byte & !mask);
 	}
 
 	fn get_flag(&self, flag:Flag) -> bool {
-		let mask = 1 << 4 + flag as usize;
 		let byte = self.get_flag_byte();
-		return (byte << 4 + flag as usize) & 1 != 0;
+		return (byte >> 4 + flag as usize) & 1 != 0;
 	}
 }
 
@@ -34,5 +33,41 @@ impl Flags for Cpu {
 
 	fn set_flag_byte(&mut self, byte:u8) {
 		self.write_8(ValueRefU8::Reg(Register8::F), byte);
+	}
+}
+
+#[cfg(test)]
+mod tests {
+  use crate::cpu::{Cpu, flags::Flag};
+	use super::Flags;
+	
+	#[test]
+	fn flag_tests() {
+		let mut cpu = Cpu::new();
+
+		assert_eq!(cpu.get_flag(Flag::C), false);
+		assert_eq!(cpu.get_flag(Flag::H), false);
+		assert_eq!(cpu.get_flag(Flag::N), false);
+		assert_eq!(cpu.get_flag(Flag::Z), false);
+
+		cpu.set_flag(Flag::C);
+		assert_eq!(cpu.get_flag(Flag::C), true);
+		cpu.clear_flag(Flag::C);
+		assert_eq!(cpu.get_flag(Flag::C), false);
+
+		cpu.set_flag(Flag::H);
+		assert_eq!(cpu.get_flag(Flag::H), true);
+		cpu.clear_flag(Flag::H);
+		assert_eq!(cpu.get_flag(Flag::H), false);
+
+		cpu.set_flag(Flag::N);
+		assert_eq!(cpu.get_flag(Flag::N), true);
+		cpu.clear_flag(Flag::N);
+		assert_eq!(cpu.get_flag(Flag::N), false);
+
+		cpu.set_flag(Flag::Z);
+		assert_eq!(cpu.get_flag(Flag::Z), true);
+		cpu.clear_flag(Flag::Z);
+		assert_eq!(cpu.get_flag(Flag::Z), false);
 	}
 }
