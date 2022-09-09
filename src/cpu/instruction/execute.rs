@@ -5,6 +5,7 @@ use super::Instruction::*;
 pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
 	match instruction {
 		NOP => {},
+
     LD_8(to, from) => {
 			cpu.write_8(to, cpu.read_8(from));
 		},
@@ -16,19 +17,27 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
 			cpu.write_8(to, cpu.read_8(from));
 			cpu.write_8(from, cpu.read_8(from) + 1);
     },
+
     LD_16(to, from) => {
 			cpu.write_16(to, cpu.read_16(from));
 		},
+
     INC_8(ptr) => {
 			cpu.write_8(ptr, cpu.read_8(ptr) + 1);
 		},
     INC_16(ptr) => {
 			cpu.write_16(ptr, cpu.read_16(ptr) + 1);
 		},
+
+    DEC_8(ptr) => {
+			cpu.write_8(ptr, cpu.read_8(ptr) - 1);
+		},
+    DEC_16(ptr) => {
+			cpu.write_16(ptr, cpu.read_16(ptr) - 1);
+		},
+
     STOP => todo!(),
     ERROR => todo!(),
-    DEC_8(_) => todo!(),
-    DEC_16(_) => todo!(),
     JR(_, _) => todo!(),
     ADD_16(_, _) => todo!(),
     ADD_SIGNED(_, _) => todo!(),
