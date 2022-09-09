@@ -1,3 +1,4 @@
+use crate::cpu::gbStack::GBStack;
 use crate::cpu::registers::Register16;
 use crate::cpu::values::ValueRefI8;
 use crate::cpu::values::ValueRefU16;
@@ -67,7 +68,15 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     ADD_SIGNED(_, _) => todo!(),
     ALU_OP_8(_, _, _) => todo!(),
     HALT => todo!(),
-    CALL(_, _) => todo!(),
+    CALL(condition, location) => {
+      if(cpu.check_condition(condition)) {
+        cpu.push(cpu.read_16(ValueRefU16::Reg(Register16::PC))+1);
+        cpu.write_16(
+          ValueRefU16::Reg(Register16::PC), 
+          cpu.read_16(location)
+        )
+      }
+    },
     POP(_) => todo!(),
     PUSH(_) => todo!(),
     RET(_) => todo!(),
