@@ -7,7 +7,7 @@ use registers::{Registers};
 use values::{ValueRefU8, ValueRefU16, get_as_u16};
 use instruction::{get_instruction, opcode::Opcode, Instruction};
 
-use self::instruction::Condition;
+use self::{instruction::Condition, values::ValueRefI8};
 
 pub struct Cpu {
 	registers:Registers,
@@ -48,6 +48,14 @@ impl <'a>Cpu {
 			ValueRefU8::Raw(x) => x,
 		}
 	}
+
+	pub fn read_i8(&self, value_ref:ValueRefI8) -> i8 {
+		match value_ref {
+			ValueRefI8::Mem(i) => self.memory[i as usize] as i8,
+			ValueRefI8::Reg(reg) => self.registers.get_u8(reg) as i8,
+			ValueRefI8::Raw(x) => x,
+		}
+	}
 	
 	pub fn write_8(&mut self, value_ref:ValueRefU8, value:u8) {
 		match value_ref {
@@ -81,12 +89,12 @@ impl <'a>Cpu {
 		get_instruction(self, opcode)
 	}
 
-	pub fn check_condition(condition: Condition) -> bool {
+	pub fn check_condition(&self, condition: Condition) -> bool {
 		use Condition::*;
 
 		match condition {
 			ALWAYS => true,
-			_ => false
+			_ => todo!(),
 		}
 	}
 }

@@ -18,7 +18,7 @@ pub enum ValueRefU16 {
 #[derive(Copy, Clone)]
 pub enum ValueRefI8 {
 	Reg(Register8),
-	Mem(u8),
+	Mem(u16),
 	Raw(i8)
 }
 
