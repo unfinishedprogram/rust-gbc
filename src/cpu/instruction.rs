@@ -22,6 +22,8 @@ pub enum Instruction {
 	ERROR,
 
 	LD_8(ValueRefU8, ValueRefU8),
+	LDD_8(ValueRefU8, ValueRefU8),
+	LDI_8(ValueRefU8, ValueRefU8),
 	LD_16(ValueRefU16, ValueRefU16),
 
 	INC_8(ValueRefU8),
@@ -128,11 +130,11 @@ pub fn get_instruction(cpu: &mut Cpu, opcode:Opcode) -> Instruction {
 						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(DE))),
 						ValueRefU8::Reg(A)
 					),
-					2 => Instruction::LD_8( // Increment
+					2 => Instruction::LDI_8( // Increment
 						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(HL))),
 						ValueRefU8::Reg(A)
 					),
-					3 => Instruction::LD_8( // Decrement 
+					3 => Instruction::LDD_8( // Decrement 
 						ValueRefU8::Mem(cpu.read_16(ValueRefU16::Reg(HL))),
 						ValueRefU8::Reg(A)
 					),

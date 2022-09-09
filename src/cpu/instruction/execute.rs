@@ -5,10 +5,18 @@ use super::Instruction::*;
 pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
 	match instruction {
 		NOP => {},
-    LD_8(from, to) => {
+    LD_8(to, from) => {
 			cpu.write_8(to, cpu.read_8(from));
 		},
-    LD_16(from, to) => {
+    LDD_8(to, from) => {
+			cpu.write_8(to, cpu.read_8(from));
+			cpu.write_8(from, cpu.read_8(from) - 1);
+    },
+    LDI_8(to, from) => {
+			cpu.write_8(to, cpu.read_8(from));
+			cpu.write_8(from, cpu.read_8(from) + 1);
+    },
+    LD_16(to, from) => {
 			cpu.write_16(to, cpu.read_16(from));
 		},
     INC_8(ptr) => {
