@@ -20,7 +20,7 @@ pub fn load_rom_and_run(rom:js_sys::Uint8Array) {
         // rom.raw_copy_to_ptr(state.memory.as_mut_ptr());
     // }
     let mut processor = cpu::Cpu::new();
-    _ = processor.get_next_instruction();
+    processor.execute_next_instruction();
 
     // let opcode = cpu::Opcode::from(*processor.read_mem());
 

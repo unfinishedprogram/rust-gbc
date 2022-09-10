@@ -3,9 +3,10 @@ mod values;
 mod instruction;
 mod flags;
 mod gbStack;
+
 use registers::{Registers};
 use values::{ValueRefU8, ValueRefU16, get_as_u16};
-use instruction::{get_instruction, opcode::Opcode, Instruction};
+use instruction::{get_instruction, opcode::Opcode, Instruction, execute::execute_instruction};
 
 use self::{instruction::Condition, values::ValueRefI8};
 
@@ -96,5 +97,10 @@ impl <'a>Cpu {
 			ALWAYS => true,
 			_ => todo!(),
 		}
+	}
+
+	pub fn execute_next_instruction(&mut self) {
+		let instruction = self.get_next_instruction();
+		execute_instruction(instruction, self);
 	}
 }

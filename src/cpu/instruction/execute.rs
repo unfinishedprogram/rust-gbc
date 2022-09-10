@@ -1,8 +1,5 @@
 use crate::cpu::gbStack::GBStack;
 use crate::cpu::registers::Register16;
-use crate::cpu::values::ValueRefI8;
-use crate::cpu::values::ValueRefU16;
-use crate::cpu::values::ValueRefU8;
 
 use super::Cpu;
 use super::Instruction;
@@ -47,19 +44,19 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     JP(condition, location) => {
       if(cpu.check_condition(condition)) {
         cpu.write_16(
-          ValueRefU16::Reg(Register16::PC), 
+          Register16::PC.into(), 
           cpu.read_16(location)
         );
       }
     },
     JR(condition, offset) => {
       if(cpu.check_condition(condition)) {
-        let current_pc = cpu.read_16(ValueRefU16::Reg(Register16::PC));
+        let current_pc = cpu.read_16(Register16::PC.into());
         
         let offset = cpu.read_i8(offset);
             
         cpu.write_16(
-          ValueRefU16::Reg(Register16::PC),
+          Register16::PC.into(),
           (current_pc as i32 + offset as i32) as u16
         )
       }
@@ -85,10 +82,7 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     RET(condition) => {
       if(cpu.check_condition(condition)) {
         let ptr = cpu.pop();
-        cpu.write_16(
-          ValueRefU16::Reg(Register16::PC),
-          ptr
-        );
+        cpu.write_16(Register16::PC.into(), ptr);
       }
     },
     RETI => todo!(),
