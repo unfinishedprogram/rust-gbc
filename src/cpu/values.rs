@@ -1,14 +1,14 @@
-use super::registers::Register8;
-use super::registers::Register16;
+use super::registers::CPURegister8;
+use super::registers::CPURegister16;
 
-impl Into<ValueRefU16> for Register16 {
-	fn into(self: Register16) -> ValueRefU16 {
+impl Into<ValueRefU16> for CPURegister16 {
+	fn into(self: CPURegister16) -> ValueRefU16 {
 		ValueRefU16::Reg(self)
 	}
 }
 
-impl Into<ValueRefU8> for Register8 {
-	fn into(self: Register8) -> ValueRefU8 {
+impl Into<ValueRefU8> for CPURegister8 {
+	fn into(self: CPURegister8) -> ValueRefU8 {
 		ValueRefU8::Reg(self)
 	}
 }
@@ -27,28 +27,28 @@ impl Into<ValueRefU16> for u16 {
 
 #[derive(Copy, Clone)]
 pub enum ValueRefU8 {
-	Reg(Register8),
+	Reg(CPURegister8),
 	Mem(u16),
 	Raw(u8)
 }
 
 #[derive(Copy, Clone)]
 pub enum ValueRefU16 {
-	Reg(Register16),
+	Reg(CPURegister16),
 	Mem(u16),
 	Raw(u16)
 }
 
 #[derive(Copy, Clone)]
 pub enum ValueRefI8 {
-	Reg(Register8),
+	Reg(CPURegister8),
 	Mem(u16),
 	Raw(i8)
 }
 
 #[derive(Copy, Clone)]
 pub enum ValueRefI16 {
-	Reg(Register16),
+	Reg(CPURegister16),
 	Mem(u16),
 	Raw(i16)
 }

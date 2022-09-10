@@ -1,5 +1,5 @@
 use crate::cpu::gbStack::GBStack;
-use crate::cpu::registers::Register16;
+use crate::cpu::registers::CPURegister16;
 
 use super::Cpu;
 use super::Instruction;
@@ -44,19 +44,19 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     JP(condition, location) => {
       if(cpu.check_condition(condition)) {
         cpu.write_16(
-          Register16::PC.into(), 
+          CPURegister16::PC.into(), 
           cpu.read_16(location)
         );
       }
     },
     JR(condition, offset) => {
       if(cpu.check_condition(condition)) {
-        let current_pc = cpu.read_16(Register16::PC.into());
+        let current_pc = cpu.read_16(CPURegister16::PC.into());
         
         let offset = cpu.read_i8(offset);
             
         cpu.write_16(
-          Register16::PC.into(),
+          CPURegister16::PC.into(),
           (current_pc as i32 + offset as i32) as u16
         )
       }
@@ -68,11 +68,11 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     CALL(condition, location) => {
       if(cpu.check_condition(condition)) {
         cpu.push(
-          cpu.read_16(Register16::PC.into())+1
+          cpu.read_16(CPURegister16::PC.into())+1
         );
 
         cpu.write_16(
-          Register16::PC.into(), 
+          CPURegister16::PC.into(), 
           cpu.read_16(location)
         );
       }
@@ -82,7 +82,7 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     RET(condition) => {
       if(cpu.check_condition(condition)) {
         let ptr = cpu.pop();
-        cpu.write_16(Register16::PC.into(), ptr);
+        cpu.write_16(CPURegister16::PC.into(), ptr);
       }
     },
     RETI => todo!(),

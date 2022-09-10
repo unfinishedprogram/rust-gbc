@@ -1,4 +1,4 @@
-use super::{registers::Register8, values::ValueRefU8, Cpu};
+use super::{registers::CPURegister8, values::ValueRefU8, Cpu};
 
 pub enum Flag {
 	Z = 0, N, H, C
@@ -28,11 +28,11 @@ pub trait Flags {
 
 impl Flags for Cpu {
 	fn get_flag_byte(&self) -> u8 {
-		self.read_8(ValueRefU8::Reg(Register8::F))
+		self.read_8(ValueRefU8::Reg(CPURegister8::F))
 	}
 
 	fn set_flag_byte(&mut self, byte:u8) {
-		self.write_8(ValueRefU8::Reg(Register8::F), byte);
+		self.write_8(ValueRefU8::Reg(CPURegister8::F), byte);
 	}
 }
 

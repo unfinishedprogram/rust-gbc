@@ -10,7 +10,7 @@ use opcode::Opcode;
 use self::decode_tables::DT;
 
 use super::{
-	registers::{Register8, Register8::*, Register16, Register16::*}, 
+	registers::{CPURegister8, CPURegister8::*, CPURegister16, CPURegister16::*}, 
 	Cpu, 
 	values::{ValueRefU16, ValueRefI8, ValueRefU8}, 
 };
@@ -44,8 +44,8 @@ pub enum Instruction {
 
 	CALL(Condition, ValueRefU16),
 
-	POP(Register16),
-	PUSH(Register16),
+	POP(CPURegister16),
+	PUSH(CPURegister16),
 
 	JP(Condition, ValueRefU16),
 
@@ -70,10 +70,10 @@ pub enum Instruction {
 	CCF,
 
 	//  CB Instructions
-	BIT(u8, Register8), 
-	RES(u8, Register8), 
-	SET(u8, Register8), 
-	ROT(RotShiftOperation, Register8)
+	BIT(u8, CPURegister8), 
+	RES(u8, CPURegister8), 
+	SET(u8, CPURegister8), 
+	ROT(RotShiftOperation, CPURegister8)
 }
 
 #[derive(Copy, Clone)]

@@ -2,9 +2,9 @@ use crate::cpu::registers::*;
 use crate::cpu::instruction::*;
 
 pub struct DecodeTables {
-	pub r:[Register8; 8],
-	pub rp:[Register16; 4],
-	pub rp2:[Register16; 4],
+	pub r:[CPURegister8; 8],
+	pub rp:[CPURegister16; 4],
+	pub rp2:[CPURegister16; 4],
 	pub cc:[Condition; 4],
 	pub alu:[ALUOperation; 8],
 	pub rot:[RotShiftOperation; 8],
@@ -12,28 +12,28 @@ pub struct DecodeTables {
 
 pub const DT:DecodeTables = DecodeTables {
 	r : [
-		Register8::B,
-		Register8::C,
-		Register8::D,
-		Register8::E,
-		Register8::H,
-		Register8::L,
-		Register8::H, // TODO Figure this out
-		Register8::A,
+		CPURegister8::B,
+		CPURegister8::C,
+		CPURegister8::D,
+		CPURegister8::E,
+		CPURegister8::H,
+		CPURegister8::L,
+		CPURegister8::H, // TODO Figure this out
+		CPURegister8::A,
 	],
 
 	rp : [
-		Register16::BC,
-		Register16::DE,
-		Register16::HL,
-		Register16::SP,
+		CPURegister16::BC,
+		CPURegister16::DE,
+		CPURegister16::HL,
+		CPURegister16::SP,
 	],
 
 	rp2 : [
-		Register16::BC,
-		Register16::DE,
-		Register16::HL,
-		Register16::AF,
+		CPURegister16::BC,
+		CPURegister16::DE,
+		CPURegister16::HL,
+		CPURegister16::AF,
 	],
 
 	cc : [

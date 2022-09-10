@@ -1,4 +1,4 @@
-use super::{Cpu, values::ValueRefU16, registers::Register16};
+use super::{Cpu, values::ValueRefU16, registers::CPURegister16};
 
 pub trait GBStack {
 	fn push(&mut self, value: u16);
@@ -9,25 +9,25 @@ impl GBStack for Cpu {
 	fn push(&mut self, value: u16) {
 		self.write_16(
 			ValueRefU16::Mem(
-				self.read_16(ValueRefU16::Reg(Register16::SP))
+				self.read_16(ValueRefU16::Reg(CPURegister16::SP))
 			),
 			value,
 		);
 
 		self.write_16(
-			ValueRefU16::Reg(Register16::SP), 
-			self.read_16(ValueRefU16::Reg(Register16::SP))-2
+			ValueRefU16::Reg(CPURegister16::SP), 
+			self.read_16(ValueRefU16::Reg(CPURegister16::SP))-2
 		);
 	}
 
 	fn pop(&mut self) -> u16 {
 		self.write_16(
-			ValueRefU16::Reg(Register16::SP), 
-			self.read_16(ValueRefU16::Reg(Register16::SP))+2
+			ValueRefU16::Reg(CPURegister16::SP), 
+			self.read_16(ValueRefU16::Reg(CPURegister16::SP))+2
 		);
 		self.read_16(
 			ValueRefU16::Mem(
-				self.read_16(ValueRefU16::Reg(Register16::SP))
+				self.read_16(ValueRefU16::Reg(CPURegister16::SP))
 			)
 		)
 	}
@@ -35,13 +35,13 @@ impl GBStack for Cpu {
 
 #[cfg(test)]
 mod tests {
-  use crate::cpu::{Cpu, values::ValueRefU16, registers::Register16};
+  use crate::cpu::{Cpu, values::ValueRefU16, registers::CPURegister16};
 	use super::GBStack;
 
 	#[test]
 	fn stack_tests() {
 		let mut cpu = Cpu::new();
-		cpu.write_16(ValueRefU16::Reg(Register16::SP), 0xE000);
+		cpu.write_16(ValueRefU16::Reg(CPURegister16::SP), 0xE000);
 		cpu.push(255);
 		assert_eq!(255, cpu.pop());
 		cpu.push(0);

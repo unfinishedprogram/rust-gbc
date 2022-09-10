@@ -4,21 +4,21 @@ mod instruction;
 mod flags;
 mod gbStack;
 
-use registers::{Registers};
+use registers::{CPURegisters};
 use values::{ValueRefU8, ValueRefU16, get_as_u16};
 use instruction::{get_instruction, opcode::Opcode, Instruction, execute::execute_instruction};
 
 use self::{instruction::Condition, values::ValueRefI8};
 
 pub struct Cpu {
-	registers:Registers,
+	registers:CPURegisters,
 	memory: [u8; 0xFFFF],
 }
 
 impl <'a>Cpu {
 	pub fn new() -> Cpu {
 		Cpu {
-			registers:Registers::new(),
+			registers:CPURegisters::new(),
 			memory: [0;0xFFFF],
 		}
 	}
