@@ -13,6 +13,18 @@ impl Into<ValueRefU8> for Register8 {
 	}
 }
 
+impl Into<ValueRefU8> for u8 {
+	fn into(self: u8) -> ValueRefU8 {
+		ValueRefU8::Raw(self)
+	}
+}
+
+impl Into<ValueRefU16> for u16 {
+	fn into(self: u16) -> ValueRefU16 {
+		ValueRefU16::Raw(self)
+	}
+}
+
 #[derive(Copy, Clone)]
 pub enum ValueRefU8 {
 	Reg(Register8),
