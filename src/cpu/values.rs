@@ -19,6 +19,12 @@ impl Into<ValueRefU8> for u8 {
 	}
 }
 
+impl Into<ValueRefI8> for i8 {
+	fn into(self: i8) -> ValueRefI8 {
+		ValueRefI8::Raw(self)
+	}
+}
+
 impl Into<ValueRefU16> for u16 {
 	fn into(self: u16) -> ValueRefU16 {
 		ValueRefU16::Raw(self)
