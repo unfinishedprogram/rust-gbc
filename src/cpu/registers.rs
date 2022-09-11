@@ -37,11 +37,7 @@ impl IndexMut<CPURegister8> for CPURegisters {
 	}
 }
 
-
-
 impl CPURegisters {
-
-
 	pub fn new() -> CPURegisters {
 		CPURegisters {
 			bytes:[0; 8],

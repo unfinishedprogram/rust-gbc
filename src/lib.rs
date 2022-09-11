@@ -4,6 +4,7 @@
 use wasm_bindgen::prelude::*;
 
 mod cpu;
+mod cartridge;
 
 #[wasm_bindgen]
 extern {

@@ -1,3 +1,5 @@
+pub mod header;
+
 // https://gbdev.io/pandocs/The_Cartridge_Header.html#0147---cartridge-type
 enum CartridgeType {
 	ROM = 0x00,
