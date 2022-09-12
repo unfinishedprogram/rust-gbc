@@ -1,7 +1,8 @@
 // https://gbdev.io/pandocs/The_Cartridge_Header.html
+use wasm_bindgen::{prelude::wasm_bindgen};
 
-// 0x0100
-// 0x014F
+#[wasm_bindgen]
+#[derive(Debug)]
 pub struct Header {
 	entry_point: [u8;4], // 0100-0103
 	nintendo_logo:[u8;48], // 0104-0133
@@ -38,9 +39,9 @@ impl Header {
 			global_checksum: ((rom[0x014E] as u16) << 8) | rom[0x014F] as u16, // 014E-014F
 		};
 		
-		header.entry_point.copy_from_slice(&rom[0x0100..0x0103]);
-		header.nintendo_logo.copy_from_slice(&rom[0x0104..0x0133]);
-		header.title.copy_from_slice(&rom[0x0134..0x0143]);
+		header.entry_point.copy_from_slice(&rom[0x0100..0x0104]);
+		header.nintendo_logo.copy_from_slice(&rom[0x0104..0x0134]);
+		header.title.copy_from_slice(&rom[0x0134..0x0144]);
 
 		return header;
 	}

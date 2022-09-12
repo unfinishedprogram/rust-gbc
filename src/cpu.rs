@@ -23,12 +23,6 @@ impl <'a>Cpu {
 		}
 	}
 
-	pub fn read_mem(&mut self) -> &mut u8 {
-		let value:&mut u8 = &mut self.memory[self.registers.pc as usize];
-		self.registers.pc += 1;
-		return value;
-	}
-
 	pub fn next_byte(&mut self) -> u8 {
 		self.registers.pc += 1;
 		self.memory[(self.registers.pc-1) as usize]

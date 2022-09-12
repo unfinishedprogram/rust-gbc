@@ -8,23 +8,20 @@ mod cartridge;
 
 #[wasm_bindgen]
 extern {
-    fn alert(s: &str);
+    #[wasm_bindgen(js_namespace = window, js_name = log)]
     fn log(s: &str);
 }
 
+macro_rules! console_log {
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
+
 #[wasm_bindgen]
-pub fn load_rom_and_run(rom:js_sys::Uint8Array) {
-    let _ = rom;
-    // let mut state = emulator::EmulatorState::new();
-    // unsafe {
-        // Load raw rom into memory
-        // rom.raw_copy_to_ptr(state.memory.as_mut_ptr());
-    // }
-    let mut processor = cpu::Cpu::new();
-    processor.execute_next_instruction();
+pub fn load_rom_and_run(rom:&[u8]) -> cartridge::header::Header {
+    let cart = cartridge::header::Header::from(rom.clone());
+    console_log!("cart{:#?}", cart);
+    return cart;
 
-    // let opcode = cpu::Opcode::from(*processor.read_mem());
-
-    // let instruction = instruction::get_instruction(cpu);
-    alert("Done");
+    // let mut processor = cpu::Cpu::new();
+    // processor.execute_next_instruction();
 }
