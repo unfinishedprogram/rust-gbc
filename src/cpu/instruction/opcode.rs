@@ -1,9 +1,11 @@
+#[derive(Debug)]
 pub struct Opcode {
 	pub x:u8, 
 	pub y:u8, 
 	pub z:u8,
 	pub p:u8, 
 	pub q:u8,
+	pub raw:u8,
 }
 
 impl Opcode {
@@ -14,6 +16,6 @@ impl Opcode {
 		let p = (raw & 0b00110000) >> 4;
 		let q = (raw & 0b00001000) >> 3;
 
-		Opcode { x, y, z, p, q, }
+		Opcode { x, y, z, p, q, raw}
 	}
 }

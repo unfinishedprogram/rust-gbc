@@ -1,5 +1,5 @@
-export async function readRomData(rom:string) {
+export async function readRomData(rom:string, print=false) {
   let res = await fetch(rom);
-  let arr = await res.arrayBuffer();
-  return new Uint8Array(arr);
+  let arr = new Uint8Array(await res.arrayBuffer());
+  return arr;
 }

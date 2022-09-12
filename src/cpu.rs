@@ -1,12 +1,14 @@
-mod registers;
+pub mod registers;
 mod values;
 mod instruction;
 mod flags;
-mod gbStack;
+mod gb_stack;
 
 use registers::{CPURegisters};
 use values::{ValueRefU8, ValueRefU16, get_as_u16};
 use instruction::{get_instruction, opcode::Opcode, Instruction, execute::execute_instruction};
+
+use crate::cpu::flags::{Flag, Flags};
 
 use self::{instruction::Condition, values::ValueRefI8};
 
@@ -89,12 +91,27 @@ impl <'a>Cpu {
 
 		match condition {
 			ALWAYS => true,
-			_ => todo!(),
+			Condition::NZ => !self.get_flag(Flag::Z),
+			Condition::Z => self.get_flag(Flag::Z),
+			Condition::NC => !self.get_flag(Flag::C),
+			Condition::C => self.get_flag(Flag::C),
 		}
 	}
 
 	pub fn execute_next_instruction(&mut self) {
 		let instruction = self.get_next_instruction();
 		execute_instruction(instruction, self);
+	}
+
+	pub fn load_cartridge(&mut self, rom:&[u8]) {
+		for i in 0..rom.len() {
+			self.memory[i] = rom[i];
+		}
+	}
+
+	pub fn load_boot_rom(&mut self, rom:&[u8]) {
+		for i in 0..rom.len() {
+			self.memory[i] = rom[i];
+		}
 	}
 }

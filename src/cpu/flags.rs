@@ -14,6 +14,13 @@ pub trait Flags {
 		self.set_flag_byte(byte | mask);
 	}
 
+	fn set_flag_to(&mut self, flag:Flag, value:bool) {
+		match value {
+			true => self.set_flag(flag),
+			false => self.clear_flag(flag),
+		}
+	}
+
 	fn clear_flag(&mut self, flag:Flag) {
 		let mask = 1 << 4 + flag as usize;
 		let byte = self.get_flag_byte();

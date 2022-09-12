@@ -8,10 +8,10 @@ use super::values::set_as_u16_small;
 use CPURegister16::*;
 use CPURegister8::*;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum CPURegister8 { A=0, B, C, D, E, F, H, L }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum CPURegister16 {
 	AF, BC,
 	DE, HL, 
