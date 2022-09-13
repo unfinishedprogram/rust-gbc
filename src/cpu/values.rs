@@ -58,7 +58,7 @@ pub enum ValueRefI16 {
 	Raw(i16)
 }
 
-pub fn get_as_u16(big:&u8, small:&u8) -> u16 {
+pub fn get_as_u16(small:&u8, big:&u8) -> u16 {
 	(*big as u16) << 8 | *small as u16
 }
 

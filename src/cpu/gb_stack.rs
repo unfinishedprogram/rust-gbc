@@ -7,29 +7,15 @@ pub trait GBStack {
 
 impl GBStack for Cpu {
 	fn push(&mut self, value: u16) {
-		self.write_16(
-			ValueRefU16::Mem(
-				self.read_16(ValueRefU16::Reg(CPURegister16::SP))
-			),
-			value,
-		);
-
-		self.write_16(
-			ValueRefU16::Reg(CPURegister16::SP), 
-			self.read_16(ValueRefU16::Reg(CPURegister16::SP))-2
-		);
+		let sp = self.read_16(CPURegister16::SP.into());
+		self.write_16(ValueRefU16::Mem(sp), value);
+		self.write_16(CPURegister16::SP.into(), sp - 2);
 	}
 
 	fn pop(&mut self) -> u16 {
-		self.write_16(
-			ValueRefU16::Reg(CPURegister16::SP), 
-			self.read_16(ValueRefU16::Reg(CPURegister16::SP))+2
-		);
-		self.read_16(
-			ValueRefU16::Mem(
-				self.read_16(ValueRefU16::Reg(CPURegister16::SP))
-			)
-		)
+		let sp = self.read_16(CPURegister16::SP.into());
+		self.write_16(CPURegister16::SP.into(), sp + 2);
+		self.read_16(ValueRefU16::Mem(sp))
 	}
 }
 

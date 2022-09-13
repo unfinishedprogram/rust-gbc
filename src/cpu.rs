@@ -7,17 +7,19 @@ mod gb_stack;
 use registers::{CPURegisters};
 use values::{ValueRefU8, ValueRefU16, get_as_u16};
 use instruction::{get_instruction, opcode::Opcode, Instruction, execute::execute_instruction};
+use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::cpu::flags::{Flag, Flags};
+use crate::{cpu::flags::{Flag, Flags}, console_log};
 
 use self::{instruction::Condition, values::ValueRefI8};
 
+#[wasm_bindgen]
 pub struct Cpu {
 	registers:CPURegisters,
 	memory: [u8; 0xFFFF],
 }
 
-impl <'a>Cpu {
+impl Cpu {
 	pub fn new() -> Cpu {
 		Cpu {
 			registers:CPURegisters::new(),
@@ -64,7 +66,7 @@ impl <'a>Cpu {
 
 	pub fn read_16(&self, value_ref:ValueRefU16) -> u16 {
 		match value_ref {
-			ValueRefU16::Mem(i) => (self.memory[i as usize] as u16) << 8 | self.memory[(i as usize) + 1] as u16,
+			ValueRefU16::Mem(i) => (self.memory[i as usize] as u16) | ((self.memory[(i as usize) + 1] as u16) << 8) ,
 			ValueRefU16::Reg(reg) => self.registers.get_u16(reg),
 			ValueRefU16::Raw(x) => x,
 		}
@@ -74,7 +76,7 @@ impl <'a>Cpu {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				self.memory[i as usize] = (value >> 8) as u8;
-				self.memory[(i as usize) + 1] = (value & 0x00FF) as u8;
+				self.memory[i as usize + 1] = (value & 0xFF) as u8;
 			},
 			ValueRefU16::Reg(reg) => self.registers.set_u16(reg, value),
 			ValueRefU16::Raw(_) => unreachable!(),
