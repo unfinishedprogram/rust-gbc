@@ -7,6 +7,7 @@ use super::values::set_as_u16_small;
 
 use CPURegister16::*;
 use CPURegister8::*;
+use serde::Serialize;
 
 #[derive(Copy, Clone, Debug)]
 pub enum CPURegister8 { A=0, B, C, D, E, F, H, L }
@@ -17,7 +18,7 @@ pub enum CPURegister16 {
 	DE, HL, 
 	SP, PC, 
 }
-
+#[derive(Debug, Serialize)]
 pub struct CPURegisters {
 	bytes:[u8;8],
 	pub sp:u16,

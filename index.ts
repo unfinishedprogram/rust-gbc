@@ -1,7 +1,8 @@
-import { create_cpu, get_current_cpu_state, load_rom_and_run, step_cpu } from "./pkg/gbc_emu";
+import { create_cpu, load_rom_and_run, step_cpu, cpu_info } from "./pkg/gbc_emu";
 import { readRomData } from "./util";
+import { ICpuData, Display }  from "./display";
 
-// var log = console.log;
+const display = new Display();
 
 (window as any).log = (str:string) => {
 	try {
@@ -13,16 +14,19 @@ import { readRomData } from "./util";
 	} catch {
 		console.log(str);
 	}
-
-}
-async function play() {
-	let cpu = create_cpu();
-	let rom = await readRomData("tetris.gb");
-	let boot = await readRomData("dmg_boot.bin", true);
-	load_rom_and_run(cpu, rom, boot);
-	for(let i = 0; i < 256; i++) {
-		step_cpu(cpu);
-	}
 }
 
-play();
+
+let cpu = create_cpu();
+let rom = await readRomData("tetris.gb");
+let boot = await readRomData("dmg_boot.bin", true);
+
+load_rom_and_run(cpu, rom, boot);
+
+document.addEventListener("click", () => {
+	step_cpu(cpu);
+	let data:ICpuData = JSON.parse(cpu_info(cpu));
+	display.update(data);
+})
+
+document.body.appendChild(display.elm);

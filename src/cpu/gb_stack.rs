@@ -8,8 +8,8 @@ pub trait GBStack {
 impl GBStack for Cpu {
 	fn push(&mut self, value: u16) {
 		let sp = self.read_16(CPURegister16::SP.into());
-		self.write_16(ValueRefU16::Mem(sp), value);
 		self.write_16(CPURegister16::SP.into(), sp - 2);
+		self.write_16(ValueRefU16::Mem(sp-2), value);
 	}
 
 	fn pop(&mut self) -> u16 {

@@ -57,10 +57,10 @@ pub enum Instruction {
 	DAA, CPL, SCF, CCF,
 
 	//  CB Instructions
-	BIT(u8, CPURegister8), 
-	RES(u8, CPURegister8), 
-	SET(u8, CPURegister8), 
-	ROT(RotShiftOperation, CPURegister8)
+	BIT(u8, ValueRefU8), 
+	RES(u8, ValueRefU8), 
+	SET(u8, ValueRefU8), 
+	ROT(RotShiftOperation, ValueRefU8)
 }
 
 use Instruction::*;
@@ -178,11 +178,17 @@ pub fn get_instruction(cpu: &mut Cpu, opcode:Opcode) -> Instruction {
 
 		(3, 3, 1, _, _) => {
 			let cb_opcode = Opcode::from(cpu.next_byte());
+
+			let val_ref = match cb_opcode.z {
+				6 => ValueRefU8::Mem(cpu.read_16(HL.into())),
+				_ => DT.r[cb_opcode.z as usize].into(),
+			};
+
 			match cb_opcode.x {
-				0 => inst!(cpu, ROT, (DT.rot[cb_opcode.y as usize]), (DT.r[cb_opcode.z as usize])),
-				1 => inst!(cpu, BIT, (cb_opcode.y), (DT.r[cb_opcode.z as usize])),
-				2 => inst!(cpu, RES, (cb_opcode.y), (DT.r[cb_opcode.z as usize])),
-				3 => inst!(cpu, SET, (cb_opcode.y), (DT.r[cb_opcode.z as usize])),
+				0 => inst!(cpu, ROT, (DT.rot[cb_opcode.y as usize]), val_ref),
+				1 => inst!(cpu, BIT, (cb_opcode.y), val_ref),
+				2 => inst!(cpu, RES, (cb_opcode.y), val_ref),
+				3 => inst!(cpu, SET, (cb_opcode.y), val_ref),
 				_ => inst!(cpu, ERROR, (cb_opcode.raw)),
 			}
 		},

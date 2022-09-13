@@ -87,7 +87,7 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     CALL(condition, location) => {
       if cpu.check_condition(condition) {
         cpu.push(
-          cpu.read_16(CPURegister16::PC.into())+1
+          cpu.read_16(CPURegister16::PC.into())
         );
 
         cpu.write_16(
@@ -96,8 +96,10 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
         );
       }
     },
+
+
     POP(_) => todo!(),
-    PUSH(_) => todo!(),
+    PUSH(value_ref) => cpu.push(cpu.read_16(value_ref.into())),
     RET(condition) => {
       if cpu.check_condition(condition) {
         let ptr = cpu.pop();
@@ -123,6 +125,50 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     },
     RES(_, _) => todo!(),
     SET(_, _) => todo!(),
-    ROT(_, _) => todo!(),
+    ROT(operator, val_ref) => {
+      use super::RotShiftOperation::*;
+      let value = cpu.read_8(val_ref);
+
+      let carry_bit = match cpu.get_flag(Flag::C) {
+        true => 1, 
+        false => 0
+      };
+
+      match operator {
+        RLC => {
+          if value & 1 != 0 {
+            cpu.set_flag(Flag::C)
+          }
+          cpu.write_8(val_ref, value.rotate_left(1));
+        },
+        RRC => {
+          if value.rotate_right(1) & 1 != 0 {
+            cpu.set_flag(Flag::C)
+          }
+          cpu.write_8(val_ref, value.rotate_right(1));
+        },
+        RL => cpu.write_8(val_ref, value.rotate_left(1) & (!255 ^ carry_bit)),
+        RR => cpu.write_8(val_ref, value.rotate_right(1) & (!255 ^ (carry_bit << 7))),
+        SLA => {
+          if (value >> 7) & 1 != 0 {
+            cpu.set_flag(Flag::C)
+          }
+          cpu.write_8(val_ref, value << 1);
+        },
+        SRA => {
+          if value & 1 != 0 {
+            cpu.set_flag(Flag::C)
+          }
+          cpu.write_8(val_ref, (value >> 1) | value & (1 << 7));
+        },
+        SWAP => cpu.write_8(val_ref, value.rotate_right(4)),
+        SRL => {
+          if value & 1 != 0 {
+            cpu.set_flag(Flag::C)
+          }
+          cpu.write_8(val_ref, value >> 1);
+        },
+      }
+    },
 	}
 }
