@@ -1,4 +1,5 @@
 use std::ops::BitAnd;
+use std::ops::BitOr;
 use std::ops::BitXor;
 
 use crate::cpu::flags::Flag;
@@ -6,6 +7,7 @@ use crate::cpu::flags::Flags;
 use crate::cpu::gb_stack::GBStack;
 use crate::cpu::registers::CPURegister16;
 use crate::console_log;
+use crate::cpu::registers::CPURegister8;
 use crate::log;
 
 use super::Cpu;
@@ -21,6 +23,7 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     LD_8(to, from) => {
 			cpu.write_8(to, cpu.read_8(from));
 		},
+
     LDD_8(to, from) => {
 			cpu.write_8(to, cpu.read_8(from));
 			cpu.write_8(from, cpu.read_8(from) - 1);
@@ -36,15 +39,25 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
 		},
 
     INC_8(ptr) => {
-			cpu.write_8(ptr, cpu.read_8(ptr) + 1);
+      let val = cpu.read_8(ptr);
+      cpu.set_flag_to(Flag::Z, val.wrapping_add(1) == 0);
+      cpu.clear_flag(Flag::N);
+      cpu.set_flag_to(Flag::H, ((val & 0xf).wrapping_add(1) & 0x10) == 0x10);
+			cpu.write_8(ptr, val.wrapping_add(1));
 		},
+
     INC_16(ptr) => {
 			cpu.write_16(ptr, cpu.read_16(ptr) + 1);
 		},
 
     DEC_8(ptr) => {
-			cpu.write_8(ptr, cpu.read_8(ptr) - 1);
+      let val = cpu.read_8(ptr);
+      cpu.set_flag_to(Flag::Z, val.wrapping_sub(1) == 0);
+      cpu.set_flag(Flag::N);
+      cpu.set_flag_to(Flag::H, ((val & 0xf).wrapping_sub(1 & 0xf) & 0x10) == 0x10);
+			cpu.write_8(ptr, val.wrapping_sub(1));
 		},
+
     DEC_16(ptr) => {
 			cpu.write_16(ptr, cpu.read_16(ptr) - 1);
 		},
@@ -71,17 +84,69 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
         )
       }
     },
-    ADD_16(_, _) => todo!(),
+    ADD_16(a_ref, b_ref) => {
+      let a_val = cpu.read_16(a_ref);
+      let b_val = cpu.read_16(b_ref);
+      cpu.clear_flag(Flag::N);
+      cpu.set_flag(Flag::C);
+
+      cpu.write_16(a_ref, a_val.wrapping_add(b_val));
+    },
+
     ADD_SIGNED(_, _) => todo!(),
-    ALU_OP_8(op, to, from) => match op {
-        ALUOperation::ADD => todo!(),
-        ALUOperation::ADC => todo!(),
-        ALUOperation::SUB => todo!(),
-        ALUOperation::SBC => todo!(),
-        ALUOperation::AND => todo!(),
-        ALUOperation::XOR => cpu.write_8(to, cpu.read_8(from).bitxor(cpu.read_8(to))),
-        ALUOperation::OR => todo!(),
-        ALUOperation::CP => todo!(),
+    ALU_OP_8(op, to, from) => { 
+      let a_val = cpu.read_8(to);
+      let b_val = cpu.read_8(from);
+
+      let carry:u8 = match cpu.get_flag(Flag::C) {
+        false => 0,
+        true => 1,
+      };
+      
+      let result = match op {
+        ALUOperation::ADD => {
+          cpu.clear_flag(Flag::N);
+          cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_add(b_val) & 0x10) == 0x10);
+          cpu.set_flag_to(Flag::C, a_val.wrapping_add(b_val) < a_val);
+          cpu.set_flag_to(Flag::Z, a_val.wrapping_add(b_val) == 0);
+          a_val.wrapping_add(b_val)
+        },
+        ALUOperation::ADC => {
+          cpu.clear_flag(Flag::N);
+          cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_add(b_val).wrapping_add(carry) & 0x10) == 0x10);
+          cpu.set_flag_to(Flag::C, a_val.wrapping_add(b_val).wrapping_add(carry) < a_val);
+          cpu.set_flag_to(Flag::Z, a_val.wrapping_add(b_val).wrapping_add(carry) == 0);
+          a_val.wrapping_add(b_val).wrapping_add(carry)
+        },
+        ALUOperation::SUB => {
+          cpu.set_flag(Flag::N);
+          cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_sub(b_val) & 0x10) == 0x10);
+          cpu.set_flag_to(Flag::C, a_val.wrapping_sub(b_val) > a_val);
+          cpu.set_flag_to(Flag::Z, a_val.wrapping_sub(b_val) == 0);
+          a_val.wrapping_sub(b_val)
+        },
+        ALUOperation::SBC => {
+          cpu.set_flag(Flag::N);
+          cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_sub(b_val).wrapping_sub(carry) & 0x10) == 0x10);
+          cpu.set_flag_to(Flag::C, a_val.wrapping_sub(b_val).wrapping_sub(carry) > a_val);
+          cpu.set_flag_to(Flag::Z, a_val.wrapping_sub(b_val).wrapping_sub(carry) == 0);
+          a_val.wrapping_sub(b_val).wrapping_sub(carry)
+        },
+        ALUOperation::AND => a_val.bitand(b_val),
+        ALUOperation::XOR => a_val.bitxor(b_val),
+        ALUOperation::OR => a_val.bitor(b_val),
+        ALUOperation::CP => {
+          cpu.set_flag(Flag::N);
+          cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_sub(b_val) & 0x10) == 0x10);
+          cpu.set_flag_to(Flag::C, a_val.wrapping_sub(b_val) > a_val);
+          cpu.set_flag_to(Flag::Z, a_val.wrapping_sub(b_val) == 0);
+          a_val
+        },
+      };
+
+      if result == 0 { cpu.set_flag(Flag::Z) };
+
+      cpu.write_8(to, result);
     },
     HALT => todo!(),
     CALL(condition, location) => {
@@ -96,9 +161,10 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
         );
       }
     },
-
-
-    POP(_) => todo!(),
+    POP(value_ref) => {
+      let val = cpu.pop();
+      cpu.write_16(value_ref.into(), val);
+    },
     PUSH(value_ref) => cpu.push(cpu.read_16(value_ref.into())),
     RET(condition) => {
       if cpu.check_condition(condition) {
@@ -110,10 +176,38 @@ pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
     RST(_) => todo!(),
     DI => todo!(),
     EI => todo!(),
-    RLCA => todo!(),
-    RRCA => todo!(),
-    RLA => todo!(),
-    RRA => todo!(),
+    RLCA => {
+      let value = cpu.read_8(CPURegister8::A.into());
+      if value & 1 != 0 {
+        cpu.set_flag(Flag::C)
+      }
+      cpu.write_8(CPURegister8::A.into(), value.rotate_left(1));
+    },
+    RRCA => {
+      let value = cpu.read_8(CPURegister8::A.into());
+      if value.rotate_right(1) & 1 != 0 {
+        cpu.set_flag(Flag::C)
+      }
+      cpu.write_8(CPURegister8::A.into(), value.rotate_right(1));
+    },
+    RLA => {
+      let carry_bit = match cpu.get_flag(Flag::C) {
+        true => 1, 
+        false => 0
+      };
+      let value = cpu.read_8(CPURegister8::A.into());
+      cpu.write_8(CPURegister8::A.into(), value.rotate_left(1) & (!255 ^ carry_bit))
+    },
+
+    RRA => {
+      let carry_bit = match cpu.get_flag(Flag::C) {
+        true => 1, 
+        false => 0
+      };
+      let value = cpu.read_8(CPURegister8::A.into());
+      cpu.write_8(CPURegister8::A.into(), value.rotate_right(1) & (!255 ^ (carry_bit << 7)))
+    },
+
     DAA => todo!(),
     CPL => todo!(),
     SCF => todo!(),

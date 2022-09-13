@@ -12,7 +12,7 @@ macro_rules! mem {
 	($cpu:tt, [$p1:tt]u8) => {{
 		let v1 = arg!($cpu, $p1);
 		let v2 = $cpu.read_16(v1);
-		ValueRefU8::Mem(v2)
+		ValueRefU8::Mem(ValueRefU16::Raw(v2))
 	}};
 
 	($cpu:tt, [$p1:tt]u16) => {{

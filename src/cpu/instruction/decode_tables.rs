@@ -2,7 +2,7 @@ use crate::cpu::registers::*;
 use crate::cpu::instruction::*;
 
 pub struct DecodeTables {
-	pub r:[CPURegister8; 8],
+	pub r:[ValueRefU8; 8],
 	pub rp:[CPURegister16; 4],
 	pub rp2:[CPURegister16; 4],
 	pub cc:[Condition; 4],
@@ -12,14 +12,14 @@ pub struct DecodeTables {
 
 pub const DT:DecodeTables = DecodeTables {
 	r : [
-		CPURegister8::B,
-		CPURegister8::C,
-		CPURegister8::D,
-		CPURegister8::E,
-		CPURegister8::H,
-		CPURegister8::L,
-		CPURegister8::H, // TODO Figure this out
-		CPURegister8::A,
+		ValueRefU8::Reg(B),
+		ValueRefU8::Reg(C),
+		ValueRefU8::Reg(D),
+		ValueRefU8::Reg(E),
+		ValueRefU8::Mem(ValueRefU16::Reg(HL)),
+		ValueRefU8::Reg(L),
+		ValueRefU8::Reg(H), // TODO Figure this out
+		ValueRefU8::Reg(A),
 	],
 
 	rp : [

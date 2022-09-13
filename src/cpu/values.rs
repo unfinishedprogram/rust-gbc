@@ -7,6 +7,12 @@ impl Into<ValueRefU16> for CPURegister16 {
 	}
 }
 
+impl Into<ValueRefU8> for CPURegister16 {
+	fn into(self: CPURegister16) -> ValueRefU8 {
+		ValueRefU8::Mem(self.into())
+	}
+}
+
 impl Into<ValueRefU8> for CPURegister8 {
 	fn into(self: CPURegister8) -> ValueRefU8 {
 		ValueRefU8::Reg(self)
@@ -33,7 +39,7 @@ impl Into<ValueRefU16> for u16 {
 #[derive(Copy, Clone, Debug)]
 pub enum ValueRefU8 {
 	Reg(CPURegister8),
-	Mem(u16),
+	Mem(ValueRefU16),
 	Raw(u8)
 }
 

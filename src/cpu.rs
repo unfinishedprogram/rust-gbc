@@ -44,7 +44,7 @@ impl Cpu {
 
 	pub fn read_8(&self, value_ref:ValueRefU8) -> u8 {
 		match value_ref {
-			ValueRefU8::Mem(i) => self.memory[i as usize],
+			ValueRefU8::Mem(addr) => self.memory[self.read_16(addr) as usize],
 			ValueRefU8::Reg(reg) => self.registers.get_u8(reg),
 			ValueRefU8::Raw(x) => x,
 		}
@@ -60,7 +60,7 @@ impl Cpu {
 	
 	pub fn write_8(&mut self, value_ref:ValueRefU8, value:u8) {
 		match value_ref {
-			ValueRefU8::Mem(i) => self.memory[i as usize] = value,
+			ValueRefU8::Mem(addr) => self.memory[self.read_16(addr) as usize] = value,
 			ValueRefU8::Reg(reg) => self.registers.set_u8(reg, value),
 			ValueRefU8::Raw(_) => unreachable!(),
 		}

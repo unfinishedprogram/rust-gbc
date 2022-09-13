@@ -16,17 +16,33 @@ const display = new Display();
 	}
 }
 
-
 let cpu = create_cpu();
 let rom = await readRomData("tetris.gb");
 let boot = await readRomData("dmg_boot.bin", true);
 
-load_rom_and_run(cpu, rom, boot);
+let i = 0;
 
-document.addEventListener("click", () => {
-	step_cpu(cpu);
+load_rom_and_run(cpu, rom, boot);
+let run;
+run = () => {
+	try {
+		step_cpu(cpu);
+		poll();
+	} catch (e) {
+		clearInterval(i);
+		throw e;
+	}
+}
+
+const poll = () => {
 	let data:ICpuData = JSON.parse(cpu_info(cpu));
 	display.update(data);
-})
+}
+
+// document.addEventListener("click", run);
+
+i = setInterval(run, 25);
+
+
 
 document.body.appendChild(display.elm);
