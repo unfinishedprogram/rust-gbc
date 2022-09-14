@@ -8,11 +8,9 @@ pub mod mac_instruction;
 
 use opcode::Opcode;
 
-use crate::console_log;
 use crate::inst;
 use crate::arg;
 use crate::mem;
-use crate::log;
 
 use self::decode_tables::DT;
 
@@ -86,8 +84,6 @@ pub fn get_instruction(cpu: &mut Cpu, opcode:Opcode) -> Instruction {
 	let y:usize = opcode.y as usize;
 	let p:usize = opcode.p as usize;
 	let q:usize = opcode.q as usize;
-
-	console_log!("{:#?}", opcode);
 
 	match (x, z, y, p, q) {
 	//(x, z, y, p, q)

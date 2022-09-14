@@ -6,9 +6,7 @@ use crate::cpu::flags::Flag;
 use crate::cpu::flags::Flags;
 use crate::cpu::gb_stack::GBStack;
 use crate::cpu::registers::CPURegister16;
-use crate::console_log;
 use crate::cpu::registers::CPURegister8;
-use crate::log;
 
 use super::Cpu;
 use super::Instruction;
@@ -16,7 +14,6 @@ use super::Instruction::*;
 use super::ALUOperation;
 
 pub fn execute_instruction(instruction:Instruction, cpu:&mut Cpu) {
-  console_log!("{:?}", instruction);
 	match instruction {
 		NOP => {},
 

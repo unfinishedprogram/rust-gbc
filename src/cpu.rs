@@ -7,18 +7,16 @@ mod gb_stack;
 use registers::{CPURegisters};
 use values::{ValueRefU8, ValueRefU16, get_as_u16};
 use instruction::{get_instruction, opcode::Opcode, Instruction, execute::execute_instruction};
-use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{cpu::flags::{Flag, Flags}};
 
 use self::{instruction::Condition, values::ValueRefI8};
 
-#[wasm_bindgen]
 #[derive(Debug, serde::Serialize)]
 pub struct Cpu {
-	registers: CPURegisters,
+	pub registers: CPURegisters,
 	#[serde(serialize_with = "<[_]>::serialize")]
-	memory: [u8; 0xFFFF],
+	pub memory: [u8; 0xFFFF],
 }
 
 impl Cpu {

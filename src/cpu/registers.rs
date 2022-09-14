@@ -20,7 +20,7 @@ pub enum CPURegister16 {
 }
 #[derive(Debug, Serialize)]
 pub struct CPURegisters {
-	bytes:[u8;8],
+	pub bytes:[u8;8],
 	pub sp:u16,
 	pub pc:u16,
 }

@@ -1,7 +1,5 @@
 // https://gbdev.io/pandocs/The_Cartridge_Header.html
-use wasm_bindgen::{prelude::wasm_bindgen};
 
-#[wasm_bindgen]
 #[derive(Debug)]
 pub struct Header {
 	entry_point: [u8;4], // 0100-0103
