@@ -1,5 +1,5 @@
 use crate::{
-	components::{memory_view::memory_view, state_view::state_view},
+	components::{log_view::log_view, memory_view::memory_view, state_view::state_view},
 	cpu::Cpu,
 };
 use poll_promise::Promise;
@@ -13,6 +13,7 @@ pub struct EmulatorManager {
 	cpu: Cpu,
 	loaded_file_data: Option<RomLoadType>,
 	play: bool,
+	logs: Vec<String>,
 }
 
 impl Default for EmulatorManager {
@@ -21,6 +22,7 @@ impl Default for EmulatorManager {
 			play: false,
 			cpu: Cpu::new(),
 			loaded_file_data: None::<RomLoadType>,
+			logs: vec![],
 		}
 	}
 }
@@ -28,6 +30,11 @@ impl Default for EmulatorManager {
 impl EmulatorManager {
 	pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
 		Default::default()
+	}
+
+	pub fn step_cpu(&mut self) {
+		let inst = self.cpu.execute_next_instruction();
+		self.logs.push(format!("{:?}", inst));
 	}
 }
 
@@ -37,6 +44,7 @@ impl eframe::App for EmulatorManager {
 			play,
 			cpu,
 			loaded_file_data,
+			logs,
 		} = self;
 
 		match &self.loaded_file_data {
@@ -61,10 +69,11 @@ impl eframe::App for EmulatorManager {
 
 		state_view(ctx, &self.cpu);
 		memory_view(ctx, &self.cpu);
+		log_view(ctx, &self.logs);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {
 			if ui.button("step").clicked() {
-				self.cpu.execute_next_instruction();
+				self.step_cpu();
 			}
 
 			if ui.button("Load Bios").clicked() {
@@ -111,7 +120,7 @@ impl eframe::App for EmulatorManager {
 			}
 
 			if self.play {
-				self.cpu.execute_next_instruction();
+				self.step_cpu();
 				ctx.request_repaint(); // wake up UI thread
 			}
 		});

@@ -20,9 +20,10 @@ use super::{
 	Cpu,
 };
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 #[allow(non_camel_case_types)]
 pub enum Instruction {
+	COMPOSE(Box<Instruction>, Box<Instruction>),
 	NOP,
 	STOP,
 	ERROR(u8),
@@ -125,17 +126,15 @@ pub fn get_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 		(0, 2, _, 0, 0) => inst!(cpu, LD_8, [BC]u8, A),
 		(0, 2, _, 1, 0) => inst!(cpu, LD_8, [DE]u8, A),
 
-		(0, 2, _, 2, 0) => {
-			let inst = inst!(cpu, LD_8, [HL]u8, A);
-			cpu.write_16(HL.into(), cpu.read_16(HL.into()) + 1);
-			return inst;
-		}
+		(0, 2, _, 2, 0) => Instruction::COMPOSE(
+			inst!(cpu, LD_8, [HL]u8, A).into(),
+			inst!(cpu, INC_16, HL).into(),
+		),
 
-		(0, 2, _, 3, 0) => {
-			let inst = inst!(cpu, LD_8, [HL]u8, A);
-			cpu.write_16(HL.into(), cpu.read_16(HL.into()) - 1);
-			return inst;
-		}
+		(0, 2, _, 3, 0) => Instruction::COMPOSE(
+			inst!(cpu, LD_8, [HL]u8, A).into(),
+			inst!(cpu, DEC_16, HL).into(),
+		),
 
 		(0, 2, _, 0, 1) => inst!(cpu, LD_8, A, [BC]u8),
 		(0, 2, _, 1, 1) => inst!(cpu, LD_8, A, [DE]u8),

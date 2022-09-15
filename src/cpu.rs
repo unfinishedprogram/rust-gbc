@@ -102,9 +102,10 @@ impl Cpu {
 		}
 	}
 
-	pub fn execute_next_instruction(&mut self) {
-		let instruction = self.get_next_instruction();
-		execute_instruction(instruction, self);
+	pub fn execute_next_instruction(&mut self) -> Instruction {
+		let instruction = self.get_next_instruction().clone();
+		execute_instruction(instruction.clone(), self);
+		return instruction;
 	}
 
 	pub fn load_cartridge(&mut self, rom: &[u8]) {
