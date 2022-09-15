@@ -2,29 +2,29 @@
 // https://gb-archive.github.io/salvage/decoding_gbz80_opcodes/Decoding%20Gamboy%20Z80%20Opcodes.html
 
 mod decode_tables;
-pub mod opcode;
 pub mod execute;
 pub mod mac_instruction;
+pub mod opcode;
 
 use opcode::Opcode;
 
-use crate::inst;
 use crate::arg;
+use crate::inst;
 use crate::mem;
 
 use self::decode_tables::DT;
 
 use super::{
-	registers::{CPURegister8, CPURegister8::*, CPURegister16, CPURegister16::*}, 
-	Cpu, 
-	values::{ValueRefU16, ValueRefI8, ValueRefU8}, 
+	registers::{CPURegister16, CPURegister16::*, CPURegister8::*},
+	values::{ValueRefI8, ValueRefU16, ValueRefU8},
+	Cpu,
 };
 
 #[derive(Debug, Copy, Clone)]
 #[allow(non_camel_case_types)]
 pub enum Instruction {
-	NOP, 
-	STOP, 
+	NOP,
+	STOP,
 	ERROR(u8),
 	LD_8(ValueRefU8, ValueRefU8),
 	LDD_8(ValueRefU8, ValueRefU8),
@@ -51,49 +51,73 @@ pub enum Instruction {
 	EI,
 
 	// Accumulator flag ops
-	RLCA, RRCA, RLA, RRA,
-	DAA, CPL, SCF, CCF,
+	RLCA,
+	RRCA,
+	RLA,
+	RRA,
+	DAA,
+	CPL,
+	SCF,
+	CCF,
 
 	//  CB Instructions
-	BIT(u8, ValueRefU8), 
-	RES(u8, ValueRefU8), 
-	SET(u8, ValueRefU8), 
-	ROT(RotShiftOperation, ValueRefU8)
+	BIT(u8, ValueRefU8),
+	RES(u8, ValueRefU8),
+	SET(u8, ValueRefU8),
+	ROT(RotShiftOperation, ValueRefU8),
 }
 
 use Instruction::*;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Condition {
-	NZ, Z, NC, C, ALWAYS
+	NZ,
+	Z,
+	NC,
+	C,
+	ALWAYS,
 }
 
 #[derive(Copy, Clone, Debug)]
 pub enum ALUOperation {
-	ADD, ADC, SUB, SBC, AND, XOR, OR, CP
+	ADD,
+	ADC,
+	SUB,
+	SBC,
+	AND,
+	XOR,
+	OR,
+	CP,
 }
 
 #[derive(Copy, Clone, Debug)]
 pub enum RotShiftOperation {
-	RLC, RRC, RL, RR, SLA, SRA, SWAP, SRL
+	RLC,
+	RRC,
+	RL,
+	RR,
+	SLA,
+	SRA,
+	SWAP,
+	SRL,
 }
 
-pub fn get_instruction(cpu: &mut Cpu, opcode:Opcode) -> Instruction {
-	let x:usize = opcode.x as usize;
-	let z:usize = opcode.z as usize;
-	let y:usize = opcode.y as usize;
-	let p:usize = opcode.p as usize;
-	let q:usize = opcode.q as usize;
+pub fn get_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
+	let x: usize = opcode.x as usize;
+	let z: usize = opcode.z as usize;
+	let y: usize = opcode.y as usize;
+	let p: usize = opcode.p as usize;
+	let q: usize = opcode.q as usize;
 
 	match (x, z, y, p, q) {
-	//(x, z, y, p, q)
+		//(x, z, y, p, q)
 		(0, 0, 0, _, _) => inst!(cpu, NOP),
 		(0, 0, 1, _, _) => inst!(cpu, LD_16, SP, nn),
 
 		(0, 0, 2, _, _) => inst!(cpu, STOP),
 		(0, 0, 3, _, _) => inst!(cpu, JR, (Condition::ALWAYS), d),
 
-		(0, 0, _, _, _) => inst!(cpu, JR, (DT.cc[(y-4)]), d),
+		(0, 0, _, _, _) => inst!(cpu, JR, (DT.cc[(y - 4)]), d),
 		(0, 1, _, _, 0) => inst!(cpu, LD_16, (DT.rp[p]), nn),
 
 		(0, 1, _, _, 1) => inst!(cpu, ADD_16, HL, (DT.rp[p])),
@@ -103,15 +127,15 @@ pub fn get_instruction(cpu: &mut Cpu, opcode:Opcode) -> Instruction {
 
 		(0, 2, _, 2, 0) => {
 			let inst = inst!(cpu, LD_8, [HL]u8, A);
-			cpu.write_16(HL.into(), cpu.read_16(HL.into())+1);
+			cpu.write_16(HL.into(), cpu.read_16(HL.into()) + 1);
 			return inst;
-		},
-		
+		}
+
 		(0, 2, _, 3, 0) => {
 			let inst = inst!(cpu, LD_8, [HL]u8, A);
-			cpu.write_16(HL.into(), cpu.read_16(HL.into())-1);
+			cpu.write_16(HL.into(), cpu.read_16(HL.into()) - 1);
 			return inst;
-		},
+		}
 
 		(0, 2, _, 0, 1) => inst!(cpu, LD_8, A, [BC]u8),
 		(0, 2, _, 1, 1) => inst!(cpu, LD_8, A, [DE]u8),
@@ -137,7 +161,7 @@ pub fn get_instruction(cpu: &mut Cpu, opcode:Opcode) -> Instruction {
 		(1, _, _, _, _) => inst!(cpu, LD_8, (DT.r[y]), (DT.r[z])),
 
 		(2, _, _, _, _) => inst!(cpu, ALU_OP_8, (DT.alu[y]), A, (DT.r[z])),
-		
+
 		(3, 0, 0, _, _) => inst!(cpu, RET, (DT.cc[0])),
 		(3, 0, 1, _, _) => inst!(cpu, RET, (DT.cc[1])),
 		(3, 0, 2, _, _) => inst!(cpu, RET, (DT.cc[2])),
@@ -149,8 +173,14 @@ pub fn get_instruction(cpu: &mut Cpu, opcode:Opcode) -> Instruction {
 
 		(3, 0, 6, _, _) => inst!(cpu, LD_8, A, [(0xFF00 + cpu.next_byte() as u16)]u8),
 
-		(3, 0, 7, _, _) => Instruction::LD_16(HL.into(), ValueRefU16::Raw(cpu.read_16(SP.into()).wrapping_add_signed(cpu.next_displacement() as i16))),
-		
+		(3, 0, 7, _, _) => Instruction::LD_16(
+			HL.into(),
+			ValueRefU16::Raw(
+				cpu.read_16(SP.into())
+					.wrapping_add_signed(cpu.next_displacement() as i16),
+			),
+		),
+
 		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p])),
 
 		(3, 1, _, 0, 1) => inst!(cpu, RET, (Condition::ALWAYS)),
@@ -169,20 +199,24 @@ pub fn get_instruction(cpu: &mut Cpu, opcode:Opcode) -> Instruction {
 		(3, 2, 6, _, _) => inst!(cpu, LD_8, A, [(0xFF00 + cpu.read_8(C.into()) as u16)]u8),
 		(3, 2, 7, _, _) => inst!(cpu, LD_8, A, [nn]u8),
 
-
 		(3, 3, 0, _, _) => inst!(cpu, JP, (Condition::ALWAYS), nn),
 
 		(3, 3, 1, _, _) => {
 			let cb_opcode = Opcode::from(cpu.next_byte());
 			match cb_opcode.x {
-				0 => inst!(cpu, ROT, (DT.rot[cb_opcode.y as usize]), (DT.r[cb_opcode.z as usize])),
+				0 => inst!(
+					cpu,
+					ROT,
+					(DT.rot[cb_opcode.y as usize]),
+					(DT.r[cb_opcode.z as usize])
+				),
 				1 => inst!(cpu, BIT, (cb_opcode.y), (DT.r[cb_opcode.z as usize])),
 				2 => inst!(cpu, RES, (cb_opcode.y), (DT.r[cb_opcode.z as usize])),
 				3 => inst!(cpu, SET, (cb_opcode.y), (DT.r[cb_opcode.z as usize])),
 				_ => inst!(cpu, ERROR, (cb_opcode.raw)),
 			}
-		},
-		
+		}
+
 		(3, 3, 6, _, _) => inst!(cpu, DI),
 		(3, 3, 7, _, _) => inst!(cpu, EI),
 
