@@ -1,5 +1,9 @@
 use crate::{
-	components::{log_view::log_view, memory_view::memory_view, state_view::state_view},
+	components::{
+		log_view::log_view,
+		memory_view::{memory_view, MemoryViewState},
+		state_view::state_view,
+	},
 	cpu::Cpu,
 };
 use poll_promise::Promise;
@@ -13,7 +17,8 @@ pub struct EmulatorManager {
 	cpu: Cpu,
 	loaded_file_data: Option<RomLoadType>,
 	play: bool,
-	logs: Vec<String>,
+	logs: Vec<(u16, String)>,
+	memory_view_state: MemoryViewState,
 }
 
 impl Default for EmulatorManager {
@@ -23,6 +28,7 @@ impl Default for EmulatorManager {
 			cpu: Cpu::new(),
 			loaded_file_data: None::<RomLoadType>,
 			logs: vec![],
+			memory_view_state: MemoryViewState::default(),
 		}
 	}
 }
@@ -33,25 +39,28 @@ impl EmulatorManager {
 	}
 
 	pub fn step_cpu(&mut self) {
+		let pc = self.cpu.registers.pc;
 		let inst = self.cpu.execute_next_instruction();
-		self.logs.push(format!("{:?}", inst));
+		self.logs.push((pc, format!("{:?}", inst)));
 	}
 }
 
 impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		let Self {
-			play,
-			cpu,
-			loaded_file_data,
-			logs,
-		} = self;
+		// let Self {
+		// 	play,
+		// 	cpu,
+		// 	loaded_file_data,
+		// 	logs,
+		// 	memory_view_state,
+		// } = self;
 
 		match &self.loaded_file_data {
 			Some(RomLoadType::Bios(rom)) => match rom.ready() {
 				Some(rom) => {
 					self.cpu
 						.load_boot_rom(rom.as_ref().unwrap().into_iter().as_slice());
+					self.logs.push((0, "Loaded BIOS".to_string()));
 					self.loaded_file_data = None;
 				}
 				None => {}
@@ -60,6 +69,7 @@ impl eframe::App for EmulatorManager {
 				Some(rom) => {
 					self.cpu
 						.load_cartridge(rom.as_ref().unwrap().into_iter().as_slice());
+					self.logs.push((0, "Loaded ROM".to_string()));
 					self.loaded_file_data = None;
 				}
 				None => {}
@@ -68,7 +78,7 @@ impl eframe::App for EmulatorManager {
 		}
 
 		state_view(ctx, &self.cpu);
-		memory_view(ctx, &self.cpu);
+		memory_view(ctx, &self.cpu, &mut self.memory_view_state);
 		log_view(ctx, &self.logs);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {

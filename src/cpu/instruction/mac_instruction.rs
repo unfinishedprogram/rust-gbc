@@ -1,24 +1,28 @@
 #[macro_export]
 macro_rules! arg {
-	($cpu:tt, d) => {$cpu.next_displacement().into()};
-	($cpu:tt, n) => {$cpu.next_byte().into()};
-	($cpu:tt, nn) => {$cpu.next_chomp().into()};
-	
-	($cpu:tt, $p:tt) => {$p.into()};
+	($cpu:tt, d) => {
+		$cpu.next_displacement().into()
+	};
+	($cpu:tt, n) => {
+		$cpu.next_byte().into()
+	};
+	($cpu:tt, nn) => {
+		$cpu.next_chomp().into()
+	};
+
+	($cpu:tt, $p:tt) => {
+		$p.into()
+	};
 }
 
 #[macro_export]
 macro_rules! mem {
 	($cpu:tt, [$p1:tt]u8) => {{
-		let v1 = arg!($cpu, $p1);
-		let v2 = $cpu.read_16(v1);
-		ValueRefU8::Mem(ValueRefU16::Raw(v2))
+		ValueRefU8::Mem(arg!($cpu, $p1))
 	}};
 
 	($cpu:tt, [$p1:tt]u16) => {{
-		let v1 = arg!($cpu, $p1);
-		let v2 = $cpu.read_16(v1);
-		ValueRefU16::Mem(v2)
+		ValueRefU16::Mem(arg!($cpu, $p1);)
 	}};
 }
 

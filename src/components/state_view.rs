@@ -24,19 +24,19 @@ pub fn state_view(ctx: &Context, cpu: &Cpu) {
 			ui.monospace(format!("SP:{:x}", cpu.registers.sp));
 			ui.monospace(format!(
 				"AF:{:x}",
-				get_as_u16(&cpu.registers.bytes[0], &cpu.registers.bytes[5])
+				get_as_u16(cpu.registers.bytes[5], cpu.registers.bytes[0])
 			));
 			ui.monospace(format!(
 				"BC:{:x}",
-				get_as_u16(&cpu.registers.bytes[1], &cpu.registers.bytes[2])
+				get_as_u16(cpu.registers.bytes[2], cpu.registers.bytes[1])
 			));
 			ui.monospace(format!(
 				"DE:{:x}",
-				get_as_u16(&cpu.registers.bytes[3], &cpu.registers.bytes[4])
+				get_as_u16(cpu.registers.bytes[4], cpu.registers.bytes[3])
 			));
 			ui.monospace(format!(
 				"HL:{:x}",
-				get_as_u16(&cpu.registers.bytes[6], &cpu.registers.bytes[7])
+				get_as_u16(cpu.registers.bytes[7], cpu.registers.bytes[6])
 			));
 
 			ui.separator();

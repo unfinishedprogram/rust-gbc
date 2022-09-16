@@ -230,7 +230,9 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 		SCF => todo!(),
 		CCF => todo!(),
 		BIT(bit, value) => {
-			cpu.set_flag_to(Flag::Z, (cpu.read_8(value.into()) >> (7 - bit)) & 1 != 1)
+			cpu.set_flag_to(Flag::Z, (cpu.read_8(value.into()) >> bit) & 1 == 0);
+			cpu.set_flag(Flag::H);
+			cpu.clear_flag(Flag::N);
 		}
 		RES(_, _) => todo!(),
 		SET(_, _) => todo!(),

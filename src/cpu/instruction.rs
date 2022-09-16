@@ -172,12 +172,9 @@ pub fn get_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 
 		(3, 0, 6, _, _) => inst!(cpu, LD_8, A, [(0xFF00 + cpu.next_byte() as u16)]u8),
 
-		(3, 0, 7, _, _) => Instruction::LD_16(
-			HL.into(),
-			ValueRefU16::Raw(
-				cpu.read_16(SP.into())
-					.wrapping_add_signed(cpu.next_displacement() as i16),
-			),
+		(3, 0, 7, _, _) => Instruction::COMPOSE(
+			inst!(cpu, LD_16, HL, SP).into(),
+			inst!(cpu, ADD_SIGNED, HL, (cpu.next_displacement())).into(),
 		),
 
 		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p])),

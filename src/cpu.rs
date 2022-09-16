@@ -37,7 +37,8 @@ impl Cpu {
 	}
 
 	pub fn next_chomp(&mut self) -> u16 {
-		get_as_u16(&self.next_byte(), &self.next_byte())
+		self.registers.pc += 2;
+		self.read_16(ValueRefU16::Mem(self.registers.pc - 2))
 	}
 
 	pub fn read_8(&self, value_ref: ValueRefU8) -> u8 {
