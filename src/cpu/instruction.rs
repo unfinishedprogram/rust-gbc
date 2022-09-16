@@ -28,8 +28,6 @@ pub enum Instruction {
 	STOP,
 	ERROR(u8),
 	LD_8(ValueRefU8, ValueRefU8),
-	LDD_8(ValueRefU8, ValueRefU8),
-	LDI_8(ValueRefU8, ValueRefU8),
 	LD_16(ValueRefU16, ValueRefU16),
 	INC_8(ValueRefU8),
 	INC_16(ValueRefU16),

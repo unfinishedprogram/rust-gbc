@@ -26,16 +26,6 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			cpu.write_8(to, cpu.read_8(from));
 		}
 
-		LDD_8(to, from) => {
-			cpu.write_8(to, cpu.read_8(from));
-			cpu.write_8(from, cpu.read_8(from) - 1);
-		}
-
-		LDI_8(to, from) => {
-			cpu.write_8(to, cpu.read_8(from));
-			cpu.write_8(from, cpu.read_8(from) + 1);
-		}
-
 		LD_16(to, from) => {
 			cpu.write_16(to, cpu.read_16(from));
 		}
