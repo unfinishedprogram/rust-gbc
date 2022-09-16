@@ -39,42 +39,39 @@ impl EmulatorManager {
 	}
 
 	pub fn step_cpu(&mut self) {
-		let pc = self.cpu.registers.pc;
 		let inst = self.cpu.execute_next_instruction();
-		self.logs.push((pc, format!("{:?}", inst)));
+		self.log(format!("{:?}", inst));
+	}
+
+	pub fn log(&mut self, text: String) {
+		let pc = self.cpu.registers.pc;
+		if (self.logs.len() >= 100) {
+			self.logs.remove(0);
+		}
+		self.logs.push((pc, text));
 	}
 }
 
 impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		// let Self {
-		// 	play,
-		// 	cpu,
-		// 	loaded_file_data,
-		// 	logs,
-		// 	memory_view_state,
-		// } = self;
-
 		match &self.loaded_file_data {
 			Some(RomLoadType::Bios(rom)) => match rom.ready() {
-				Some(rom) => {
-					self.cpu
-						.load_boot_rom(rom.as_ref().unwrap().into_iter().as_slice());
-					self.logs.push((0, "Loaded BIOS".to_string()));
+				Some(Ok(rom)) => {
+					self.cpu.load_boot_rom(rom.into_iter().as_slice());
+					self.log("Loaded BIOS".to_string());
 					self.loaded_file_data = None;
 				}
-				None => {}
+				_ => {}
 			},
 			Some(RomLoadType::Rom(rom)) => match rom.ready() {
-				Some(rom) => {
-					self.cpu
-						.load_cartridge(rom.as_ref().unwrap().into_iter().as_slice());
-					self.logs.push((0, "Loaded ROM".to_string()));
+				Some(Ok(rom)) => {
+					self.cpu.load_cartridge(rom.into_iter().as_slice());
+					self.log("Loaded ROM".to_string());
 					self.loaded_file_data = None;
 				}
-				None => {}
+				_ => {}
 			},
-			None => {}
+			_ => {}
 		}
 
 		state_view(ctx, &self.cpu);
@@ -116,21 +113,20 @@ impl eframe::App for EmulatorManager {
 				});
 			}
 
-			match self.play {
-				false => {
-					if ui.button("start").clicked() {
-						self.play = true;
-					}
-				}
-				true => {
-					if ui.button("stop").clicked() {
-						self.play = false
-					}
-				}
+			if ui
+				.button(match self.play {
+					true => "stop",
+					false => "start",
+				})
+				.clicked()
+			{
+				self.play = !self.play
 			}
 
 			if self.play {
-				self.step_cpu();
+				for i in 0..4 {
+					self.step_cpu();
+				}
 				ctx.request_repaint(); // wake up UI thread
 			}
 		});
