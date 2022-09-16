@@ -6,32 +6,32 @@ pub use gbc_emu::app::EmulatorManager;
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    // Log to stdout (if you run with `RUST_LOG=debug`).
+	// Log to stdout (if you run with `RUST_LOG=debug`).
 
-    tracing_subscriber::fmt::init();
+	tracing_subscriber::fmt::init();
 
-    let native_options = eframe::NativeOptions::default();
-    eframe::run_native(
-        "eframe template",
-        native_options,
-        Box::new(|cc| Box::new(EmulatorManager::new(cc))),
-    );
+	let native_options = eframe::NativeOptions::default();
+	eframe::run_native(
+		"eframe template",
+		native_options,
+		Box::new(|cc| Box::new(EmulatorManager::new(cc))),
+	);
 }
 
 // when compiling to web using trunk.
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    // Make sure panics are logged using `console.error`.
-    console_error_panic_hook::set_once();
+	// Make sure panics are logged using `console.error`.
+	console_error_panic_hook::set_once();
 
-    // Redirect tracing to console.log and friends:
-    tracing_wasm::set_as_global_default();
+	// Redirect tracing to console.log and friends:
+	tracing_wasm::set_as_global_default();
 
-    let web_options = eframe::WebOptions::default();
-    eframe::start_web(
-        "the_canvas_id", // hardcode it
-        web_options,
-        Box::new(|cc| Box::new(EmulatorManager::new(cc))),
-    )
-    .expect("failed to start eframe");
+	let web_options = eframe::WebOptions::default();
+	eframe::start_web(
+		"the_canvas_id", // hardcode it
+		web_options,
+		Box::new(|cc| Box::new(EmulatorManager::new(cc))),
+	)
+	.expect("failed to start eframe");
 }
