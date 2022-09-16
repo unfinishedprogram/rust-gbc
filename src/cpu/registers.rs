@@ -1,9 +1,7 @@
 use std::ops::Index;
 use std::ops::IndexMut;
 
-use super::values::get_as_u16;
-use super::values::set_as_u16_big;
-use super::values::set_as_u16_small;
+use super::values::{as_u16, lsb, msb};
 
 use serde::Serialize;
 use CPURegister16::*;
@@ -69,35 +67,36 @@ impl CPURegisters {
 
 	pub fn get_u16(&self, reg: CPURegister16) -> u16 {
 		match reg {
-			AF => get_as_u16(self[A], self[F]),
-			BC => get_as_u16(self[B], self[C]),
-			DE => get_as_u16(self[D], self[E]),
-			HL => get_as_u16(self[H], self[L]),
+			AF => as_u16([self[F], self[A]]),
+			BC => as_u16([self[C], self[B]]),
+			DE => as_u16([self[E], self[D]]),
+			HL => as_u16([self[L], self[H]]),
 			SP => self.sp,
 			PC => self.pc,
 		}
 	}
 
 	pub fn set_u16(&mut self, reg: CPURegister16, value: u16) {
+		let bytes = u16::to_le_bytes(value);
 		match reg {
 			AF => {
-				set_as_u16_big(&mut self[A], value);
-				set_as_u16_small(&mut self[F], value);
+				self[A] = bytes[1];
+				self[F] = bytes[0];
 			}
 
 			BC => {
-				set_as_u16_big(&mut self[B], value);
-				set_as_u16_small(&mut self[C], value);
+				self[B] = bytes[1];
+				self[C] = bytes[0];
 			}
 
 			DE => {
-				set_as_u16_big(&mut self[D], value);
-				set_as_u16_small(&mut self[E], value);
+				self[D] = bytes[1];
+				self[E] = bytes[0];
 			}
 
 			HL => {
-				set_as_u16_big(&mut self[H], value);
-				set_as_u16_small(&mut self[L], value);
+				self[H] = bytes[1];
+				self[L] = bytes[0];
 			}
 
 			SP => self.sp = value,

@@ -6,7 +6,7 @@ pub mod values;
 
 use instruction::{execute::execute_instruction, get_instruction, opcode::Opcode, Instruction};
 use registers::CPURegisters;
-use values::{get_as_u16, ValueRefU16, ValueRefU8};
+use values::{as_u16, ValueRefU16, ValueRefU8};
 
 use crate::cpu::flags::{Flag, Flags};
 
@@ -67,9 +67,7 @@ impl Cpu {
 
 	pub fn read_16(&self, value_ref: ValueRefU16) -> u16 {
 		match value_ref {
-			ValueRefU16::Mem(i) => {
-				(self.memory[i as usize] as u16) | ((self.memory[(i as usize) + 1] as u16) << 8)
-			}
+			ValueRefU16::Mem(i) => as_u16([self.memory[i as usize], self.memory[i as usize + 1]]),
 			ValueRefU16::Reg(reg) => self.registers.get_u16(reg),
 			ValueRefU16::Raw(x) => x,
 		}

@@ -57,19 +57,16 @@ pub enum ValueRefI8 {
 	Raw(i8),
 }
 
-pub fn get_as_u16(small: u8, big: u8) -> u16 {
-	(big as u16) << 8 | small as u16
+pub fn as_u16(bytes: [u8; 2]) -> u16 {
+	u16::from_le_bytes(bytes)
 }
 
-// pub fn set_as_u16(big: &mut u8, small: &mut u8, value: u16) {
-// 	*big = ((value & 0xFF00) >> 8) as u8;
-// 	*small = (value & 0xFF) as u8;
-// }
-
-pub fn set_as_u16_big(byte: &mut u8, value: u16) {
-	*byte = ((value & 0xFF00) >> 8) as u8;
+// Most Significant Byte
+pub fn msb(value: u16) -> u8 {
+	(value & 0x00FF) as u8
 }
 
-pub fn set_as_u16_small(byte: &mut u8, value: u16) {
-	*byte = (value & 0xFF) as u8;
+// Least Significant Byte
+pub fn lsb(value: u16) -> u8 {
+	((value & 0xFF00) >> 8) as u8
 }
