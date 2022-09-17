@@ -60,13 +60,3 @@ pub enum ValueRefI8 {
 pub fn as_u16(bytes: [u8; 2]) -> u16 {
 	u16::from_le_bytes(bytes)
 }
-
-// Most Significant Byte
-pub fn msb(value: u16) -> u8 {
-	(value & 0x00FF) as u8
-}
-
-// Least Significant Byte
-pub fn lsb(value: u16) -> u8 {
-	((value & 0xFF00) >> 8) as u8
-}

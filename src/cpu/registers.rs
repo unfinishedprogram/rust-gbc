@@ -1,7 +1,7 @@
 use std::ops::Index;
 use std::ops::IndexMut;
 
-use super::values::{as_u16, lsb, msb};
+use super::values::as_u16;
 
 use serde::Serialize;
 use CPURegister16::*;

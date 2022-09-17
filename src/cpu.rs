@@ -76,8 +76,8 @@ impl Cpu {
 	pub fn write_16(&mut self, value_ref: ValueRefU16, value: u16) {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
-				self.memory[i as usize] = (value >> 8) as u8;
-				self.memory[i as usize + 1] = (value & 0xFF) as u8;
+				self.memory[i as usize + 1] = (value >> 8) as u8;
+				self.memory[i as usize] = (value & 0xFF) as u8;
 			}
 			ValueRefU16::Reg(reg) => self.registers.set_u16(reg, value),
 			ValueRefU16::Raw(_) => unreachable!(),

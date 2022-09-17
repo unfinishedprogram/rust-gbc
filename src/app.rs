@@ -2,9 +2,10 @@ use crate::{
 	components::{
 		log_view::log_view,
 		memory_view::{memory_view, MemoryViewState},
+		screen_view::{screen_view, ScreenViewState},
 		state_view::state_view,
 	},
-	cpu::Cpu,
+	cpu::{registers::CPURegister16, Cpu},
 };
 use poll_promise::Promise;
 
@@ -18,7 +19,9 @@ pub struct EmulatorManager {
 	loaded_file_data: Option<RomLoadType>,
 	play: bool,
 	logs: Vec<(u16, String)>,
+
 	memory_view_state: MemoryViewState,
+	screen_view_state: ScreenViewState,
 }
 
 impl Default for EmulatorManager {
@@ -29,6 +32,7 @@ impl Default for EmulatorManager {
 			loaded_file_data: None::<RomLoadType>,
 			logs: vec![],
 			memory_view_state: MemoryViewState::default(),
+			screen_view_state: ScreenViewState::default(),
 		}
 	}
 }
@@ -39,12 +43,12 @@ impl EmulatorManager {
 	}
 
 	pub fn step_cpu(&mut self) {
+		let pc = self.cpu.registers.pc;
 		let inst = self.cpu.execute_next_instruction();
-		self.log(format!("{:?}", inst));
+		self.log(pc, format!("{:?}", inst));
 	}
 
-	pub fn log(&mut self, text: String) {
-		let pc = self.cpu.registers.pc;
+	pub fn log(&mut self, pc: u16, text: String) {
 		if (self.logs.len() >= 100) {
 			self.logs.remove(0);
 		}
@@ -58,7 +62,7 @@ impl eframe::App for EmulatorManager {
 			Some(RomLoadType::Bios(rom)) => match rom.ready() {
 				Some(Ok(rom)) => {
 					self.cpu.load_boot_rom(rom.into_iter().as_slice());
-					self.log("Loaded BIOS".to_string());
+					self.log(0, "Loaded BIOS".to_string());
 					self.loaded_file_data = None;
 				}
 				_ => {}
@@ -66,7 +70,7 @@ impl eframe::App for EmulatorManager {
 			Some(RomLoadType::Rom(rom)) => match rom.ready() {
 				Some(Ok(rom)) => {
 					self.cpu.load_cartridge(rom.into_iter().as_slice());
-					self.log("Loaded ROM".to_string());
+					self.log(0, "Loaded ROM".to_string());
 					self.loaded_file_data = None;
 				}
 				_ => {}
@@ -77,6 +81,7 @@ impl eframe::App for EmulatorManager {
 		state_view(ctx, &self.cpu);
 		memory_view(ctx, &self.cpu, &mut self.memory_view_state);
 		log_view(ctx, &self.logs);
+		screen_view(ctx, &mut self.screen_view_state);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {
 			if ui.button("step").clicked() {
@@ -102,7 +107,8 @@ impl eframe::App for EmulatorManager {
 				self.loaded_file_data.get_or_insert_with(|| {
 					let ctx = ctx.clone();
 					let (sender, promise) = Promise::new();
-					let request = ehttp::Request::get("tetris.gb");
+					let request = ehttp::Request::get("06-ld r,r.gb");
+
 					ehttp::fetch(request, move |response| {
 						let data = response.and_then(parse_response);
 						sender.send(data); // send the results back to the UI thread.
@@ -124,8 +130,19 @@ impl eframe::App for EmulatorManager {
 			}
 
 			if self.play {
-				for i in 0..4 {
+				for i in 0..32 {
 					self.step_cpu();
+
+					if self.cpu.registers.get_u16(CPURegister16::HL) == 0x8000 {
+						self.play = false;
+						break;
+					}
+
+					if (self.cpu.registers.pc == 0x00E0) {
+						self.log(0, "LOGO CHECK ROUTINE".to_string());
+						self.play = false;
+						break;
+					}
 				}
 				ctx.request_repaint(); // wake up UI thread
 			}

@@ -191,29 +191,15 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			}
 			cpu.write_8(CPURegister8::A.into(), value.rotate_right(1));
 		}
-		RLA => {
-			let carry_bit = match cpu.get_flag(Flag::C) {
-				true => 1,
-				false => 0,
-			};
-			let value = cpu.read_8(CPURegister8::A.into());
-			cpu.write_8(
-				CPURegister8::A.into(),
-				value.rotate_left(1) & (!255 ^ carry_bit),
-			)
-		}
 
-		RRA => {
-			let carry_bit = match cpu.get_flag(Flag::C) {
-				true => 1,
-				false => 0,
-			};
-			let value = cpu.read_8(CPURegister8::A.into());
-			cpu.write_8(
-				CPURegister8::A.into(),
-				value.rotate_right(1) & (!255 ^ (carry_bit << 7)),
-			)
-		}
+		RLA => execute_instruction(
+			Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
+			cpu,
+		),
+		RRA => execute_instruction(
+			Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
+			cpu,
+		),
 
 		DAA => todo!(),
 		CPL => todo!(),
@@ -248,8 +234,8 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 					}
 					cpu.write_8(val_ref, value.rotate_right(1));
 				}
-				RL => cpu.write_8(val_ref, value.rotate_left(1) & (!255 ^ carry_bit)),
-				RR => cpu.write_8(val_ref, value.rotate_right(1) & (!255 ^ (carry_bit << 7))),
+				RL => cpu.write_8(val_ref, ((value << 1) & 0b11111110) | carry_bit),
+				RR => cpu.write_8(val_ref, ((value >> 1) & 0b01111111) | (carry_bit << 7)),
 				SLA => {
 					if (value >> 7) & 1 != 0 {
 						cpu.set_flag(Flag::C)
