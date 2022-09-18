@@ -21,7 +21,7 @@ impl Cpu {
 	pub fn new() -> Cpu {
 		Cpu {
 			registers: CPURegisters::new(),
-			memory: [0xFF; 0xFFFF],
+			memory: [0; 0xFFFF],
 		}
 	}
 

@@ -174,7 +174,10 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			}
 		}
 		RETI => todo!(),
-		RST(_) => todo!(),
+		RST(addr) => {
+			cpu.push(cpu.read_16(CPURegister16::PC.into()));
+			cpu.write_16(CPURegister16::PC.into(), cpu.read_16(addr));
+		}
 		DI => todo!(),
 		EI => todo!(),
 		RLCA => {

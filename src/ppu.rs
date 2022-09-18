@@ -2,6 +2,13 @@ pub mod registers;
 use crate::cpu::Cpu;
 use crate::util::bitmap::bit_set;
 
+enum PPUMode {
+	OamSearch,
+	ActivePicture,
+	HorizontalBlanking,
+	VerticalBlanking,
+}
+
 pub trait PPU {
 	fn is_active(&self) -> bool;
 }

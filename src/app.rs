@@ -124,7 +124,7 @@ impl eframe::App for EmulatorManager {
 				self.loaded_file_data.get_or_insert_with(|| {
 					let ctx = ctx.clone();
 					let (sender, promise) = Promise::new();
-					let request = ehttp::Request::get("tetris.gb");
+					let request = ehttp::Request::get("06-ld r,r.gb");
 
 					ehttp::fetch(request, move |response| {
 						let data = response.and_then(parse_response);

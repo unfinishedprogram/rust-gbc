@@ -53,7 +53,7 @@ impl CPURegisters {
 		CPURegisters {
 			bytes: [0; 8],
 			sp: 0,
-			pc: 0,
+			pc: 0x0200,
 		}
 	}
 

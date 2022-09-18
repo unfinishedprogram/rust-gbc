@@ -3,8 +3,6 @@ use crate::ppu;
 
 use super::bitmap::bit_set;
 
-pub enum GBColors {}
-
 pub fn put_tile(
 	buffer: &mut [u8; 160 * 144 * 4],
 	tile_data: [u8; 8 * 8 * 4],
@@ -44,7 +42,7 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> [u8; 64 * 4] {
 				(false, false) => (15, 56, 15),
 			};
 
-			buffer[(y * 8 + x) * 4] = color.0;
+			buffer[(y * 8 + x) * 4 + 0] = color.0;
 			buffer[(y * 8 + x) * 4 + 1] = color.1;
 			buffer[(y * 8 + x) * 4 + 2] = color.2;
 		}
@@ -54,7 +52,7 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> [u8; 64 * 4] {
 
 pub fn debug_draw_tile_data(cpu: &cpu::Cpu, screen_buffer: &mut [u8; 160 * 144 * 4], page: usize) {
 	let start = ppu::registers::PPURegister::VramStart as usize;
-	let start = 18 * 20 * 8 * 2 * page;
+	let start = 18 * 20 * 8 * 2 * page + 1;
 
 	for y in 0..18 {
 		for x in 0..20 {
