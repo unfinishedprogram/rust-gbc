@@ -27,7 +27,7 @@ pub fn log_view(ctx: &Context, logs: &Vec<(u16, String)>) {
 							ui.monospace(format!("{:X}", &logs[row_index].0));
 						});
 						row.col(|ui| {
-							ui.monospace(&logs[row_index].1);
+							ui.monospace(&logs[row_index].1.to_string());
 						});
 					});
 				});

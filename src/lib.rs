@@ -6,6 +6,8 @@ pub mod app;
 mod cartridge;
 pub mod components;
 mod cpu;
+mod ppu;
+mod util;
 pub use app::EmulatorManager;
 
 pub fn load_rom_and_run(processor: &mut Cpu, rom: &[u8], boot_rom: &[u8]) {

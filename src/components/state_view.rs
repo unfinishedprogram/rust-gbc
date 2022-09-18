@@ -1,7 +1,6 @@
 use crate::cpu::flags::{Flag, Flags};
 use crate::cpu::registers::CPURegister16::*;
 use crate::cpu::registers::CPURegister8::*;
-use crate::cpu::values::as_u16;
 use crate::cpu::Cpu;
 use egui::Context;
 

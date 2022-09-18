@@ -81,7 +81,7 @@ pub fn memory_view(ctx: &Context, cpu: &Cpu, state: &mut MemoryViewState) {
 
 							for i in 0..width {
 								let index = row_index * width + i;
-								let mut col = row.col(|ui| {
+								row.col(|ui| {
 									let text = RichText::new(format!("{:02X}", cpu.memory[index]))
 										.monospace()
 										.color(match index {
@@ -102,11 +102,11 @@ pub fn memory_view(ctx: &Context, cpu: &Cpu, state: &mut MemoryViewState) {
 									let instance = ui.add(label);
 
 									if instance.hovered() {
-										state.hovering.insert(index);
+										_ = state.hovering.insert(index);
 									}
 
 									if instance.clicked() {
-										state.selected.insert(index);
+										_ = state.selected.insert(index);
 									}
 								});
 							}

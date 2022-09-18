@@ -6,6 +6,7 @@ use crate::{
 		state_view::state_view,
 	},
 	cpu::{registers::CPURegister16, Cpu},
+	util::debug_draw::debug_draw_tile_data,
 };
 use poll_promise::Promise;
 
@@ -22,6 +23,8 @@ pub struct EmulatorManager {
 
 	memory_view_state: MemoryViewState,
 	screen_view_state: ScreenViewState,
+	vram_view_state: ScreenViewState,
+	page: usize,
 }
 
 impl Default for EmulatorManager {
@@ -33,6 +36,8 @@ impl Default for EmulatorManager {
 			logs: vec![],
 			memory_view_state: MemoryViewState::default(),
 			screen_view_state: ScreenViewState::default(),
+			vram_view_state: ScreenViewState::new("VRAM"),
+			page: 0,
 		}
 	}
 }
@@ -49,7 +54,7 @@ impl EmulatorManager {
 	}
 
 	pub fn log(&mut self, pc: u16, text: String) {
-		if (self.logs.len() >= 100) {
+		if self.logs.len() >= 100 {
 			self.logs.remove(0);
 		}
 		self.logs.push((pc, text));
@@ -82,8 +87,19 @@ impl eframe::App for EmulatorManager {
 		memory_view(ctx, &self.cpu, &mut self.memory_view_state);
 		log_view(ctx, &self.logs);
 		screen_view(ctx, &mut self.screen_view_state);
+		screen_view(ctx, &mut self.vram_view_state);
+
+		debug_draw_tile_data(&self.cpu, &mut self.vram_view_state.pixel_buffer, self.page);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {
+			if ui.button("Page Up").clicked() {
+				self.page += 1;
+			}
+			if ui.button("Page Down").clicked() {
+				self.page -= 1;
+			}
+			ui.monospace(format!("{}", self.page));
+
 			if ui.button("step").clicked() {
 				self.step_cpu();
 			}
@@ -92,6 +108,7 @@ impl eframe::App for EmulatorManager {
 				self.loaded_file_data.get_or_insert_with(|| {
 					let ctx = ctx.clone();
 					let (sender, promise) = Promise::new();
+					// let request = ehttp::Request::get("dmg_boot.bin");
 					let request = ehttp::Request::get("dmg_boot.bin");
 					ehttp::fetch(request, move |response| {
 						let data = response.and_then(parse_response);
@@ -107,7 +124,7 @@ impl eframe::App for EmulatorManager {
 				self.loaded_file_data.get_or_insert_with(|| {
 					let ctx = ctx.clone();
 					let (sender, promise) = Promise::new();
-					let request = ehttp::Request::get("06-ld r,r.gb");
+					let request = ehttp::Request::get("tetris.gb");
 
 					ehttp::fetch(request, move |response| {
 						let data = response.and_then(parse_response);
@@ -130,7 +147,7 @@ impl eframe::App for EmulatorManager {
 			}
 
 			if self.play {
-				for i in 0..32 {
+				for _ in 0..32 {
 					self.step_cpu();
 
 					if self.cpu.registers.get_u16(CPURegister16::HL) == 0x8000 {
@@ -138,7 +155,7 @@ impl eframe::App for EmulatorManager {
 						break;
 					}
 
-					if (self.cpu.registers.pc == 0x00E0) {
+					if self.cpu.registers.pc == 0x00E0 {
 						self.log(0, "LOGO CHECK ROUTINE".to_string());
 						self.play = false;
 						break;

@@ -12,10 +12,8 @@ use crate::cpu::flags::{Flag, Flags};
 
 use self::{instruction::Condition, values::ValueRefI8};
 
-#[derive(Debug, serde::Serialize)]
 pub struct Cpu {
 	pub registers: CPURegisters,
-	#[serde(serialize_with = "<[_]>::serialize")]
 	pub memory: [u8; 0xFFFF],
 }
 
