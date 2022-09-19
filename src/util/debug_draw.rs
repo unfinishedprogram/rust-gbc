@@ -1,4 +1,7 @@
-use crate::cpu;
+use std::cell::RefCell;
+
+use crate::cpu::Cpu;
+use crate::memory::Memory;
 use crate::ppu;
 
 use super::bitmap::bit_set;
@@ -9,8 +12,6 @@ pub fn put_tile(
 	x_pos: usize,
 	y_pos: usize,
 ) {
-	// let base_index = (y_pos * 160 + x_pos) * 8 * 4;
-
 	let real_x = x_pos * 8;
 	let real_y = y_pos * 8;
 
@@ -50,18 +51,24 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> [u8; 64 * 4] {
 	return buffer;
 }
 
-pub fn debug_draw_tile_data(cpu: &cpu::Cpu, screen_buffer: &mut [u8; 160 * 144 * 4], page: usize) {
+pub fn debug_draw_tile_data(
+	memory: &RefCell<Memory>,
+	screen_buffer: &mut [u8; 160 * 144 * 4],
+	page: usize,
+) {
 	let start = ppu::registers::PPURegister::VramStart as usize;
 	let start = 18 * 20 * 8 * 2 * page + 1;
 
+	let memory = memory.borrow();
+
 	for y in 0..18 {
 		for x in 0..20 {
-			let index = start + ((y * 20) + x) * 16;
+			let index: u16 = (start + ((y * 20) + x) * 16) as u16;
 
 			let mut values = [0; 16];
 
-			for i in 0..16 {
-				values[i] = cpu.memory[index + i];
+			for i in 0..16u16 {
+				values[i as usize] = memory[index + i];
 			}
 
 			let tile_data = to_pixel_tile(values);

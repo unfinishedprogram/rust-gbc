@@ -1,20 +1,23 @@
 pub mod registers;
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::cpu::Cpu;
-use crate::util::bitmap::bit_set;
+use crate::memory::Memory;
 
 enum PPUMode {
-	OamSearch,
-	ActivePicture,
-	HorizontalBlanking,
-	VerticalBlanking,
+	OamScan,
+	Draw,
+	HBlank,
+	VBlank,
 }
 
-pub trait PPU {
-	fn is_active(&self) -> bool;
+pub struct Ppu {
+	memory: Rc<RefCell<Memory>>,
 }
 
-impl PPU for Cpu {
-	fn is_active(&self) -> bool {
-		bit_set(self.memory[registers::PPURegister::LCDC as usize], 7)
+impl Ppu {
+	pub fn new(memory: Rc<RefCell<Memory>>) -> Ppu {
+		Ppu { memory }
 	}
 }

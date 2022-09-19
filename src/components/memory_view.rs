@@ -2,21 +2,14 @@ use crate::cpu::Cpu;
 use egui::{Color32, Context, Label, Rgba, RichText, Sense};
 use egui_extras::{Size, TableBuilder};
 
-pub struct RangeHighlight {
-	color: Color32,
-	start: usize,
-	end: usize,
-}
 pub struct MemoryViewState {
-	highlights: Vec<RangeHighlight>,
-	selected: Option<usize>,
-	hovering: Option<usize>,
+	selected: Option<u16>,
+	hovering: Option<u16>,
 }
 
 impl Default for MemoryViewState {
 	fn default() -> Self {
 		Self {
-			highlights: vec![],
 			selected: None,
 			hovering: None,
 		}
@@ -35,7 +28,7 @@ pub fn memory_view(ctx: &Context, cpu: &Cpu, state: &mut MemoryViewState) {
 					ui.set_min_width(140.0);
 					match state.selected {
 						Some(index) => {
-							let value = cpu.memory[index];
+							let value = cpu.memory.borrow()[index];
 							ui.monospace(format!("INT : {:}", value));
 							ui.monospace(format!("BIN : {:08b}", value));
 							ui.monospace(format!("HEX : {:02X}", value));
@@ -77,26 +70,29 @@ pub fn memory_view(ctx: &Context, cpu: &Cpu, state: &mut MemoryViewState) {
 								ui.monospace(format!("{:04X}", row_index * width));
 							});
 
-							let pc = cpu.registers.pc as usize;
+							let pc = cpu.registers.pc;
 
 							for i in 0..width {
-								let index = row_index * width + i;
+								let index: u16 = (row_index * width + i).try_into().unwrap_or(0);
 								row.col(|ui| {
-									let text = RichText::new(format!("{:02X}", cpu.memory[index]))
-										.monospace()
-										.color(match index {
-											p if p == pc => Rgba::RED,
-											_ => Rgba::WHITE,
-										})
-										.background_color(match (state.selected, state.hovering) {
-											(Some(i), _) if i == index => {
-												Rgba::from(Color32::from_rgb(80, 80, 80))
-											}
-											(_, Some(i)) if i == index => {
-												Rgba::from(Color32::from_rgb(60, 60, 60))
-											}
-											(_, _) => Rgba::TRANSPARENT,
-										});
+									let text = RichText::new(format!(
+										"{:02X}",
+										cpu.memory.borrow()[index]
+									))
+									.monospace()
+									.color(match index {
+										p if p == pc => Rgba::RED,
+										_ => Rgba::WHITE,
+									})
+									.background_color(match (state.selected, state.hovering) {
+										(Some(i), _) if i == index => {
+											Rgba::from(Color32::from_rgb(80, 80, 80))
+										}
+										(_, Some(i)) if i == index => {
+											Rgba::from(Color32::from_rgb(60, 60, 60))
+										}
+										(_, _) => Rgba::TRANSPARENT,
+									});
 									let label = Label::new(text).sense(Sense::click());
 
 									let instance = ui.add(label);

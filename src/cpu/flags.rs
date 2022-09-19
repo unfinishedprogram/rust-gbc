@@ -45,39 +45,3 @@ impl Flags for Cpu {
 		self.write_8(CPURegister8::F.into(), byte);
 	}
 }
-
-#[cfg(test)]
-mod tests {
-	use super::Flags;
-	use crate::cpu::{flags::Flag, Cpu};
-
-	#[test]
-	fn flag_tests() {
-		let mut cpu = Cpu::new();
-
-		assert_eq!(cpu.get_flag(Flag::C), false);
-		assert_eq!(cpu.get_flag(Flag::H), false);
-		assert_eq!(cpu.get_flag(Flag::N), false);
-		assert_eq!(cpu.get_flag(Flag::Z), false);
-
-		cpu.set_flag(Flag::C);
-		assert_eq!(cpu.get_flag(Flag::C), true);
-		cpu.clear_flag(Flag::C);
-		assert_eq!(cpu.get_flag(Flag::C), false);
-
-		cpu.set_flag(Flag::H);
-		assert_eq!(cpu.get_flag(Flag::H), true);
-		cpu.clear_flag(Flag::H);
-		assert_eq!(cpu.get_flag(Flag::H), false);
-
-		cpu.set_flag(Flag::N);
-		assert_eq!(cpu.get_flag(Flag::N), true);
-		cpu.clear_flag(Flag::N);
-		assert_eq!(cpu.get_flag(Flag::N), false);
-
-		cpu.set_flag(Flag::Z);
-		assert_eq!(cpu.get_flag(Flag::Z), true);
-		cpu.clear_flag(Flag::Z);
-		assert_eq!(cpu.get_flag(Flag::Z), false);
-	}
-}

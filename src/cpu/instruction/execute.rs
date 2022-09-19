@@ -1,12 +1,8 @@
-use std::ops::BitAnd;
-use std::ops::BitOr;
-use std::ops::BitXor;
+use std::ops::{BitAnd, BitOr, BitXor};
 
-use crate::cpu::flags::Flag;
-use crate::cpu::flags::Flags;
+use crate::cpu::flags::{Flag, Flags};
 use crate::cpu::gb_stack::GBStack;
-use crate::cpu::registers::CPURegister16;
-use crate::cpu::registers::CPURegister8;
+use crate::cpu::registers::{CPURegister16, CPURegister8};
 
 use super::ALUOperation;
 use super::Cpu;

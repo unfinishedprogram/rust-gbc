@@ -6,6 +6,7 @@ use crate::{
 		state_view::state_view,
 	},
 	cpu::{registers::CPURegister16, Cpu},
+	emulator::Emulator,
 	util::debug_draw::debug_draw_tile_data,
 };
 use poll_promise::Promise;
@@ -16,11 +17,11 @@ enum RomLoadType {
 }
 
 pub struct EmulatorManager {
-	cpu: Cpu,
+	emulator: Emulator,
+
 	loaded_file_data: Option<RomLoadType>,
 	play: bool,
 	logs: Vec<(u16, String)>,
-
 	memory_view_state: MemoryViewState,
 	screen_view_state: ScreenViewState,
 	vram_view_state: ScreenViewState,
@@ -31,7 +32,7 @@ impl Default for EmulatorManager {
 	fn default() -> Self {
 		Self {
 			play: false,
-			cpu: Cpu::new(),
+			emulator: Emulator::new(),
 			loaded_file_data: None::<RomLoadType>,
 			logs: vec![],
 			memory_view_state: MemoryViewState::default(),
@@ -48,8 +49,8 @@ impl EmulatorManager {
 	}
 
 	pub fn step_cpu(&mut self) {
-		let pc = self.cpu.registers.pc;
-		let inst = self.cpu.execute_next_instruction();
+		let pc = self.emulator.cpu.registers.pc;
+		let inst = self.emulator.cpu.execute_next_instruction();
 		self.log(pc, format!("{:?}", inst));
 	}
 
@@ -66,7 +67,7 @@ impl eframe::App for EmulatorManager {
 		match &self.loaded_file_data {
 			Some(RomLoadType::Bios(rom)) => match rom.ready() {
 				Some(Ok(rom)) => {
-					self.cpu.load_boot_rom(rom.into_iter().as_slice());
+					self.emulator.cpu.load_boot_rom(rom.into_iter().as_slice());
 					self.log(0, "Loaded BIOS".to_string());
 					self.loaded_file_data = None;
 				}
@@ -74,7 +75,7 @@ impl eframe::App for EmulatorManager {
 			},
 			Some(RomLoadType::Rom(rom)) => match rom.ready() {
 				Some(Ok(rom)) => {
-					self.cpu.load_cartridge(rom.into_iter().as_slice());
+					self.emulator.cpu.load_cartridge(rom.into_iter().as_slice());
 					self.log(0, "Loaded ROM".to_string());
 					self.loaded_file_data = None;
 				}
@@ -83,13 +84,17 @@ impl eframe::App for EmulatorManager {
 			_ => {}
 		}
 
-		state_view(ctx, &self.cpu);
-		memory_view(ctx, &self.cpu, &mut self.memory_view_state);
+		state_view(ctx, &self.emulator.cpu);
+		memory_view(ctx, &self.emulator.cpu, &mut self.memory_view_state);
 		log_view(ctx, &self.logs);
 		screen_view(ctx, &mut self.screen_view_state);
 		screen_view(ctx, &mut self.vram_view_state);
 
-		debug_draw_tile_data(&self.cpu, &mut self.vram_view_state.pixel_buffer, self.page);
+		debug_draw_tile_data(
+			&self.emulator.memory,
+			&mut self.vram_view_state.pixel_buffer,
+			self.page,
+		);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {
 			if ui.button("Page Up").clicked() {
@@ -150,12 +155,12 @@ impl eframe::App for EmulatorManager {
 				for _ in 0..32 {
 					self.step_cpu();
 
-					if self.cpu.registers.get_u16(CPURegister16::HL) == 0x8000 {
+					if self.emulator.cpu.registers.get_u16(CPURegister16::HL) == 0x8000 {
 						self.play = false;
 						break;
 					}
 
-					if self.cpu.registers.pc == 0x00E0 {
+					if self.emulator.cpu.registers.pc == 0x00E0 {
 						self.log(0, "LOGO CHECK ROUTINE".to_string());
 						self.play = false;
 						break;

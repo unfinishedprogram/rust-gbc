@@ -36,6 +36,7 @@ impl Into<ValueRefU16> for u16 {
 		ValueRefU16::Raw(self)
 	}
 }
+
 #[derive(Copy, Clone, Debug)]
 pub enum ValueRefU8 {
 	Reg(CPURegister8),

@@ -18,23 +18,3 @@ impl GBStack for Cpu {
 		self.read_16(ValueRefU16::Mem(sp))
 	}
 }
-
-#[cfg(test)]
-mod tests {
-	use super::GBStack;
-	use crate::cpu::{registers::CPURegister16, values::ValueRefU16, Cpu};
-
-	#[test]
-	fn stack_tests() {
-		let mut cpu = Cpu::new();
-		cpu.write_16(ValueRefU16::Reg(CPURegister16::SP), 0xE000);
-		cpu.push(255);
-		assert_eq!(255, cpu.pop());
-		cpu.push(0);
-		cpu.push(1);
-		cpu.push(4);
-		assert_eq!(4, cpu.pop());
-		assert_eq!(1, cpu.pop());
-		assert_eq!(0, cpu.pop());
-	}
-}
