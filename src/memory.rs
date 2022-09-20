@@ -1,12 +1,29 @@
-use std::ops::{Index, IndexMut};
+use std::{
+	cell::RefCell,
+	ops::{Add, Index, IndexMut},
+};
 
 pub struct Memory {
 	bytes: [u8; 0xFFFF],
+	pub t_state: RefCell<u32>,
 }
 
 impl Memory {
 	pub fn new() -> Self {
-		Self { bytes: [0; 0xFFFF] }
+		Self {
+			bytes: [0; 0xFFFF],
+			t_state: RefCell::new(0),
+		}
+	}
+
+	pub fn read(&self, addr: u16) -> u8 {
+		*self.t_state.borrow_mut() += 1;
+		return self.bytes[addr as usize];
+	}
+
+	pub fn write(&mut self, addr: u16, value: u8) {
+		*self.t_state.borrow_mut() += 1;
+		self.bytes[addr as usize] = value;
 	}
 }
 

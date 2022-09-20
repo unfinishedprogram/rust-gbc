@@ -19,4 +19,7 @@ impl Emulator {
 			cpu: Cpu::new(rc.clone()),
 		};
 	}
+	pub fn current_t(&self) -> u32 {
+		self.memory.borrow().t_state.borrow().to_owned()
+	}
 }

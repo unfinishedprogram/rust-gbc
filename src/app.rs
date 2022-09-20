@@ -7,6 +7,7 @@ use crate::{
 	},
 	cpu::{registers::CPURegister16, Cpu},
 	emulator::Emulator,
+	memory::Memory,
 	util::debug_draw::debug_draw_tile_data,
 };
 use poll_promise::Promise;
@@ -97,6 +98,11 @@ impl eframe::App for EmulatorManager {
 		);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {
+			ui.monospace(format!(
+				"{}",
+				self.emulator.memory.borrow().t_state.borrow()
+			));
+
 			if ui.button("Page Up").clicked() {
 				self.page += 1;
 			}
@@ -152,7 +158,8 @@ impl eframe::App for EmulatorManager {
 			}
 
 			if self.play {
-				for _ in 0..32 {
+				// 70224 // t-cycles per frame
+				while (true) {
 					self.step_cpu();
 
 					if self.emulator.cpu.registers.get_u16(CPURegister16::HL) == 0x8000 {
@@ -163,6 +170,14 @@ impl eframe::App for EmulatorManager {
 					if self.emulator.cpu.registers.pc == 0x00E0 {
 						self.log(0, "LOGO CHECK ROUTINE".to_string());
 						self.play = false;
+						break;
+					}
+
+					let mut mem_ref = self.emulator.memory.borrow();
+					let mut t_state_ref = mem_ref.t_state.borrow_mut();
+
+					if t_state_ref.to_owned() >= 702 {
+						*t_state_ref = 0;
 						break;
 					}
 				}

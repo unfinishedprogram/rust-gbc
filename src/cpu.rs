@@ -32,8 +32,8 @@ impl Cpu {
 	}
 
 	pub fn next_byte(&mut self) -> u8 {
-		self.registers.pc += 1;
-		self.memory.borrow()[self.registers.pc - 1]
+		self.registers.pc = self.registers.pc.wrapping_add(1);
+		self.memory.borrow().read(self.registers.pc - 1)
 	}
 
 	pub fn next_displacement(&mut self) -> i8 {
@@ -47,7 +47,7 @@ impl Cpu {
 
 	pub fn read_8(&self, value_ref: ValueRefU8) -> u8 {
 		match value_ref {
-			ValueRefU8::Mem(addr) => self.memory.borrow()[self.read_16(addr)],
+			ValueRefU8::Mem(addr) => self.memory.borrow().read(self.read_16(addr)).to_owned(),
 			ValueRefU8::Reg(reg) => self.registers.get_u8(reg),
 			ValueRefU8::Raw(x) => x,
 		}
@@ -55,7 +55,7 @@ impl Cpu {
 
 	pub fn read_i8(&self, value_ref: ValueRefI8) -> i8 {
 		match value_ref {
-			ValueRefI8::Mem(i) => self.memory.borrow()[i] as i8,
+			ValueRefI8::Mem(i) => self.memory.borrow().read(i) as i8,
 			ValueRefI8::Reg(reg) => self.registers.get_u8(reg) as i8,
 			ValueRefI8::Raw(x) => x,
 		}
