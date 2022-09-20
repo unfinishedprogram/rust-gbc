@@ -159,7 +159,7 @@ impl eframe::App for EmulatorManager {
 
 			if self.play {
 				// 70224 // t-cycles per frame
-				while (true) {
+				while true {
 					self.step_cpu();
 
 					if self.emulator.cpu.registers.get_u16(CPURegister16::HL) == 0x8000 {

@@ -6,46 +6,35 @@ use crate::ppu;
 
 use super::bitmap::bit_set;
 
-pub fn put_tile(
-	buffer: &mut [u8; 160 * 144 * 4],
-	tile_data: [u8; 8 * 8 * 4],
-	x_pos: usize,
-	y_pos: usize,
-) {
-	let real_x = x_pos * 8;
-	let real_y = y_pos * 8;
+type ScreenBuffer = [[[u8; 4]; 160]; 144];
+type TileBuffer = [[[u8; 4]; 8]; 8];
+
+pub fn put_tile(buffer: &mut ScreenBuffer, tile_data: TileBuffer, tile_x: usize, tile_y: usize) {
+	let real_x = tile_x * 8;
+	let real_y = tile_y * 8;
 
 	for y in 0..8 {
 		for x in 0..8 {
-			let real_index = ((real_x + x) + (real_y + y) * 160) * 4;
-
-			let local_index = (y * 8 + x) * 4;
-
-			buffer[real_index + 0] = tile_data[local_index + 0];
-			buffer[real_index + 1] = tile_data[local_index + 1];
-			buffer[real_index + 2] = tile_data[local_index + 2];
-			buffer[real_index + 3] = tile_data[local_index + 3];
+			buffer[real_y + y][real_x + x] = tile_data[y][x];
 		}
 	}
 }
 
-pub fn to_pixel_tile(gb_tile: [u8; 16]) -> [u8; 64 * 4] {
-	let mut buffer = [255; 64 * 4];
+pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
+	let mut buffer: TileBuffer = [[[255; 4]; 8]; 8];
 	for y in 0..8 {
 		for x in 0..8 {
 			let color = match (
 				bit_set(gb_tile[y * 2], x as u8),
 				bit_set(gb_tile[y * 2 + 1], x as u8),
 			) {
-				(true, true) => (155, 188, 15),
-				(true, false) => (139, 172, 15),
-				(false, true) => (48, 98, 48),
-				(false, false) => (15, 56, 15),
+				(true, true) => [155, 188, 15, 255],
+				(true, false) => [139, 172, 15, 255],
+				(false, true) => [48, 98, 48, 255],
+				(false, false) => [15, 56, 15, 255],
 			};
 
-			buffer[(y * 8 + x) * 4 + 0] = color.0;
-			buffer[(y * 8 + x) * 4 + 1] = color.1;
-			buffer[(y * 8 + x) * 4 + 2] = color.2;
+			buffer[y][x] = color;
 		}
 	}
 	return buffer;
@@ -53,7 +42,7 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> [u8; 64 * 4] {
 
 pub fn debug_draw_tile_data(
 	memory: &RefCell<Memory>,
-	screen_buffer: &mut [u8; 160 * 144 * 4],
+	screen_buffer: &mut [[[u8; 4]; 160]; 144],
 	page: usize,
 ) {
 	let start = ppu::registers::PPURegister::VramStart as usize;

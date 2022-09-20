@@ -1,7 +1,7 @@
 use egui::{ColorImage, Context, Image, TextureHandle, Vec2};
 
 pub struct ScreenViewState {
-	pub pixel_buffer: [u8; 160 * 144 * 4],
+	pub pixel_buffer: [[[u8; 4]; 160]; 144],
 	size: (usize, usize),
 	texture: Option<TextureHandle>,
 	name: &'static str,
@@ -13,7 +13,7 @@ impl Default for ScreenViewState {
 			name: "Screen",
 			texture: None,
 			size: (160, 144),
-			pixel_buffer: [255; 160 * 144 * 4],
+			pixel_buffer: [[[255; 4]; 160]; 144],
 		}
 	}
 }
@@ -24,11 +24,11 @@ impl ScreenViewState {
 			name,
 			texture: None,
 			size: (160, 144),
-			pixel_buffer: [255; 160 * 144 * 4],
+			pixel_buffer: [[[255; 4]; 160]; 144],
 		}
 	}
 
-	pub fn set_buffer(&mut self, buffer: &[u8]) {
+	pub fn set_buffer(&mut self, buffer: &[[[u8; 4]; 160]; 144]) {
 		if buffer.len() > self.pixel_buffer.len() {
 			panic!("Size mismatch between buffers");
 		}
@@ -38,9 +38,16 @@ impl ScreenViewState {
 	}
 }
 
+fn to_flat(buffer: &[[[u8; 4]; 160]; 144]) -> &[u8] {
+	let flat = buffer.flatten();
+	return flat.flatten();
+}
+
 pub fn screen_view(ctx: &Context, state: &mut ScreenViewState) {
-	let image =
-		ColorImage::from_rgba_unmultiplied([state.size.0, state.size.1], &state.pixel_buffer);
+	let image = ColorImage::from_rgba_unmultiplied(
+		[state.size.0, state.size.1],
+		to_flat(&state.pixel_buffer),
+	);
 
 	match &mut state.texture {
 		None => {

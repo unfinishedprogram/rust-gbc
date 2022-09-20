@@ -1,3 +1,5 @@
+#![feature(slice_flatten)]
+
 pub mod app;
 pub mod components;
 pub mod memory;
