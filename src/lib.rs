@@ -2,6 +2,7 @@
 
 pub mod app;
 pub mod components;
+pub mod lcd;
 pub mod memory;
 
 mod cartridge;
