@@ -12,6 +12,7 @@ use registers::CPURegisters;
 use values::{as_u16, ValueRefU16, ValueRefU8};
 
 use crate::{
+	cartridge::CartridgeData,
 	cpu::flags::{Flag, Flags},
 	memory::Memory,
 };
@@ -115,19 +116,12 @@ impl Cpu {
 		return instruction;
 	}
 
-	pub fn load_cartridge(&mut self, rom: &[u8]) {
+	pub fn load_cartridge(&mut self, rom: &CartridgeData) {
 		let mut mem = self.memory.borrow_mut();
+		let (_, data) = rom;
 
-		for i in 0..rom.len() {
-			mem[i as u16] = rom[i];
-		}
-	}
-
-	pub fn load_boot_rom(&mut self, rom: &[u8]) {
-		let mut mem = self.memory.borrow_mut();
-
-		for i in 0..rom.len() {
-			mem[i as u16] = rom[i];
+		for i in 0..data.len() {
+			mem[i as u16] = data[i];
 		}
 	}
 }

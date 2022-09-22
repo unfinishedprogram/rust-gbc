@@ -1,8 +1,6 @@
 use std::cell::RefCell;
 
-use crate::cpu::Cpu;
 use crate::memory::Memory;
-use crate::ppu;
 
 use super::bitmap::bit_set;
 
@@ -45,7 +43,7 @@ pub fn debug_draw_tile_data(
 	screen_buffer: &mut [[[u8; 4]; 160]; 144],
 	page: usize,
 ) {
-	let start = ppu::registers::PPURegister::VramStart as usize;
+	// let start = ppu::registers::PPURegister::VramStart as usize;
 	let start = 18 * 20 * 8 * 2 * page + 1;
 
 	let memory = memory.borrow();

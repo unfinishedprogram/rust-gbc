@@ -2,7 +2,6 @@ pub mod registers;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::cpu::Cpu;
 use crate::lcd::Lcd;
 use crate::memory::Memory;
 use registers::PPURegister::*;

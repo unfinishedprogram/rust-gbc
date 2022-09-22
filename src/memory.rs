@@ -1,6 +1,6 @@
 use std::{
 	cell::RefCell,
-	ops::{Add, Index, IndexMut},
+	ops::{Index, IndexMut},
 };
 
 pub struct Memory {

@@ -1,26 +1,21 @@
 use crate::{
+	cartridge::{CartridgeData, CartridgeType},
 	components::{
 		log_view::log_view,
 		memory_view::{memory_view, MemoryViewState},
 		screen_view::{screen_view, ScreenViewState},
 		state_view::state_view,
 	},
-	cpu::{registers::CPURegister16, Cpu},
+	cpu::registers::CPURegister16,
 	emulator::Emulator,
-	memory::Memory,
 	util::debug_draw::debug_draw_tile_data,
 };
-use poll_promise::Promise;
 
-enum RomLoadType {
-	Bios(Promise<ehttp::Result<Vec<u8>>>),
-	Rom(Promise<ehttp::Result<Vec<u8>>>),
-}
+use poll_promise::Promise;
 
 pub struct EmulatorManager {
 	emulator: Emulator,
-
-	loaded_file_data: Option<RomLoadType>,
+	loaded_file_data: Option<Promise<CartridgeData>>,
 	play: bool,
 	logs: Vec<(u16, String)>,
 	memory_view_state: MemoryViewState,
@@ -34,7 +29,7 @@ impl Default for EmulatorManager {
 		Self {
 			play: false,
 			emulator: Emulator::new(),
-			loaded_file_data: None::<RomLoadType>,
+			loaded_file_data: None::<Promise<CartridgeData>>,
 			logs: vec![],
 			memory_view_state: MemoryViewState::default(),
 			screen_view_state: ScreenViewState::default(),
@@ -61,28 +56,34 @@ impl EmulatorManager {
 		}
 		self.logs.push((pc, text));
 	}
+
+	pub fn load_cartridge_by_url(&mut self, url: &str, cartridge_type: CartridgeType) {
+		self.loaded_file_data.get_or_insert_with(|| {
+			let (sender, promise) = Promise::new();
+
+			let request = ehttp::Request::get(url);
+
+			ehttp::fetch(request, move |response| {
+				let result = response.and_then(parse_response);
+				match result {
+					Ok(data) => sender.send((cartridge_type, data)),
+					_ => {}
+				}
+			});
+
+			promise
+		});
+	}
 }
 
 impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		match &self.loaded_file_data {
-			Some(RomLoadType::Bios(rom)) => match rom.ready() {
-				Some(Ok(rom)) => {
-					self.emulator.cpu.load_boot_rom(rom.into_iter().as_slice());
-					self.log(0, "Loaded BIOS".to_string());
-					self.loaded_file_data = None;
-				}
-				_ => {}
-			},
-			Some(RomLoadType::Rom(rom)) => match rom.ready() {
-				Some(Ok(rom)) => {
-					self.emulator.cpu.load_cartridge(rom.into_iter().as_slice());
-					self.log(0, "Loaded ROM".to_string());
-					self.loaded_file_data = None;
-				}
-				_ => {}
-			},
-			_ => {}
+		if let Some(data) = &self.loaded_file_data {
+			if let Some(result) = data.ready() {
+				self.emulator.cpu.load_cartridge(result);
+				self.log(0, "Loaded ROM".to_string());
+				self.loaded_file_data = None;
+			}
 		}
 
 		state_view(ctx, &self.emulator.cpu);
@@ -116,35 +117,11 @@ impl eframe::App for EmulatorManager {
 			}
 
 			if ui.button("Load Bios").clicked() {
-				self.loaded_file_data.get_or_insert_with(|| {
-					let ctx = ctx.clone();
-					let (sender, promise) = Promise::new();
-					// let request = ehttp::Request::get("dmg_boot.bin");
-					let request = ehttp::Request::get("dmg_boot.bin");
-					ehttp::fetch(request, move |response| {
-						let data = response.and_then(parse_response);
-						sender.send(data); // send the results back to the UI thread.
-						ctx.request_repaint(); // wake up UI thread
-					});
-
-					RomLoadType::Bios(promise)
-				});
+				self.load_cartridge_by_url("dmg_boot.bin", CartridgeType::BIOS);
 			}
 
 			if ui.button("Load Rom").clicked() {
-				self.loaded_file_data.get_or_insert_with(|| {
-					let ctx = ctx.clone();
-					let (sender, promise) = Promise::new();
-					let request = ehttp::Request::get("06-ld r,r.gb");
-
-					ehttp::fetch(request, move |response| {
-						let data = response.and_then(parse_response);
-						sender.send(data); // send the results back to the UI thread.
-						ctx.request_repaint(); // wake up UI thread
-					});
-
-					RomLoadType::Rom(promise)
-				});
+				self.load_cartridge_by_url("06-ld r,r.gb", CartridgeType::ROM);
 			}
 
 			if ui
@@ -173,7 +150,7 @@ impl eframe::App for EmulatorManager {
 						break;
 					}
 
-					let mut mem_ref = self.emulator.memory.borrow();
+					let mem_ref = self.emulator.memory.borrow();
 					let mut t_state_ref = mem_ref.t_state.borrow_mut();
 
 					if t_state_ref.to_owned() >= 702 {

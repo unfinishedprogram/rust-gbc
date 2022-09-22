@@ -1,4 +1,9 @@
-// pub mod header;
+pub enum CartridgeType {
+	ROM,
+	BIOS,
+}
+
+pub type CartridgeData = (CartridgeType, Vec<u8>);
 
 // // https://gbdev.io/pandocs/The_Cartridge_Header.html#0147---cartridge-type
 // enum CartridgeType {
