@@ -102,11 +102,11 @@ pub enum RotShiftOperation {
 }
 
 pub fn get_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
-	let x: usize = opcode.x as usize;
-	let z: usize = opcode.z as usize;
-	let y: usize = opcode.y as usize;
-	let p: usize = opcode.p as usize;
-	let q: usize = opcode.q as usize;
+	let x = opcode.x as usize;
+	let z = opcode.z as usize;
+	let y = opcode.y as usize;
+	let p = opcode.p as usize;
+	let q = opcode.q as usize;
 
 	match (x, z, y, p, q) {
 		//(x, z, y, p, q)
