@@ -1,10 +1,12 @@
-pub mod registers;
+pub mod flags;
+pub mod interrupts;
+
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::lcd::Lcd;
 use crate::memory::Memory;
-use registers::PPURegister::*;
+// use registers::PPURegister::*;
 
 enum PPUMode {
 	HBlank = 0,
@@ -24,9 +26,9 @@ impl Ppu {
 
 	pub fn step(&mut self, lcd: &mut Lcd) {}
 
-	fn set_mode(&mut self, mode: PPUMode) {
-		let mut mem = self.memory.borrow_mut();
-		let new_val = (mem[STAT as u16] & 0b11111100) & (mode as u8);
-		mem[STAT as u16] = new_val;
-	}
+	// fn set_mode(&mut self, mode: PPUMode) {
+	// 	let mut mem = self.memory.borrow_mut();
+	// 	let new_val = (mem[STAT as u16] & 0b11111100) & (mode as u8);
+	// 	mem[STAT as u16] = new_val;
+	// }
 }

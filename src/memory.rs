@@ -4,14 +4,14 @@ use std::{
 };
 
 pub struct Memory {
-	bytes: [u8; 0xFFFF],
+	bytes: [u8; 0x10000],
 	pub t_state: RefCell<u32>,
 }
 
 impl Memory {
 	pub fn new() -> Self {
 		Self {
-			bytes: [0; 0xFFFF],
+			bytes: [0; 0x10000],
 			t_state: RefCell::new(0),
 		}
 	}

@@ -8,7 +8,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use instruction::{execute::execute_instruction, get_instruction, opcode::Opcode, Instruction};
-use registers::CPURegisters;
+use registers::{CPURegister16, CPURegisters};
 use values::{as_u16, ValueRefU16, ValueRefU8};
 
 use crate::{
@@ -32,6 +32,36 @@ impl Cpu {
 		}
 	}
 
+	pub fn init(&mut self) {
+		self.registers.pc = 0x100;
+		self.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
+		self.write_16(ValueRefU16::Reg(CPURegister16::BC), 0x0013);
+		self.write_16(ValueRefU16::Reg(CPURegister16::DE), 0x00D8);
+		self.write_16(ValueRefU16::Reg(CPURegister16::HL), 0x014D);
+
+		self.registers.sp = 0xFFFE;
+		let mut mem = self.memory.borrow_mut();
+		mem[0xFF10] = 0x80;
+		mem[0xFF11] = 0xBF;
+		mem[0xFF12] = 0xF3;
+		mem[0xFF14] = 0xBF;
+		mem[0xFF16] = 0x3F;
+		mem[0xFF19] = 0xBF;
+		mem[0xFF1A] = 0x7F;
+		mem[0xFF1B] = 0xFF;
+		mem[0xFF1C] = 0x9F;
+		mem[0xFF1E] = 0xBF;
+		mem[0xFF20] = 0xFF;
+		mem[0xFF23] = 0xBF;
+		mem[0xFF24] = 0x77;
+		mem[0xFF25] = 0xF3;
+		mem[0xFF26] = 0xF1;
+		mem[0xFF40] = 0x91;
+		mem[0xFF47] = 0xFC;
+		mem[0xFF48] = 0xFF;
+		mem[0xFF49] = 0xFF;
+	}
+
 	pub fn next_byte(&mut self) -> u8 {
 		self.registers.pc = self.registers.pc.wrapping_add(1);
 		self.memory.borrow().read(self.registers.pc - 1)
@@ -42,7 +72,7 @@ impl Cpu {
 	}
 
 	pub fn next_chomp(&mut self) -> u16 {
-		self.registers.pc += 2;
+		self.registers.pc = self.registers.pc.wrapping_add(2);
 		self.read_16(ValueRefU16::Mem(self.registers.pc - 2))
 	}
 
@@ -74,7 +104,7 @@ impl Cpu {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				let mem = self.memory.borrow();
-				as_u16([mem[i], mem[i + 1]])
+				as_u16([mem[i], mem[i.wrapping_add(1)]])
 			}
 			ValueRefU16::Reg(reg) => self.registers.get_u16(reg),
 			ValueRefU16::Raw(x) => x,

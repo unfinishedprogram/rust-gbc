@@ -5,10 +5,11 @@ use crate::{
 		memory_view::{memory_view, MemoryViewState},
 		screen_view::{screen_view, ScreenViewState},
 		state_view::state_view,
+		tile_view::{tile_view, TileViewState},
 	},
 	cpu::registers::CPURegister16,
 	emulator::Emulator,
-	util::debug_draw::debug_draw_tile_data,
+	util::debug_draw::{debug_draw_tile_data, debug_draw_window_data},
 };
 
 use poll_promise::Promise;
@@ -20,6 +21,7 @@ pub struct EmulatorManager {
 	logs: Vec<(u16, String)>,
 	memory_view_state: MemoryViewState,
 	screen_view_state: ScreenViewState,
+	tile_view_state: TileViewState,
 	vram_view_state: ScreenViewState,
 	page: usize,
 }
@@ -34,6 +36,7 @@ impl Default for EmulatorManager {
 			memory_view_state: MemoryViewState::default(),
 			screen_view_state: ScreenViewState::default(),
 			vram_view_state: ScreenViewState::new("VRAM"),
+			tile_view_state: TileViewState::default(),
 			page: 0,
 		}
 	}
@@ -89,13 +92,19 @@ impl eframe::App for EmulatorManager {
 		state_view(ctx, &self.emulator.cpu);
 		memory_view(ctx, &self.emulator.cpu, &mut self.memory_view_state);
 		log_view(ctx, &self.logs);
-		screen_view(ctx, &mut self.screen_view_state);
+		// screen_view(ctx, &mut self.screen_view_state);
 		screen_view(ctx, &mut self.vram_view_state);
+		tile_view(ctx, &mut self.tile_view_state);
 
 		debug_draw_tile_data(
 			&self.emulator.memory,
 			&mut self.vram_view_state.pixel_buffer,
 			self.page,
+		);
+
+		debug_draw_window_data(
+			&self.emulator.memory,
+			&mut self.tile_view_state.pixel_buffer,
 		);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {
@@ -121,7 +130,8 @@ impl eframe::App for EmulatorManager {
 			}
 
 			if ui.button("Load Rom").clicked() {
-				self.load_cartridge_by_url("06-ld r,r.gb", CartridgeType::ROM);
+				// self.load_cartridge_by_url("06-ld r,r.gb", CartridgeType::ROM);
+				self.load_cartridge_by_url("tetris2.gb", CartridgeType::ROM);
 			}
 
 			if ui
@@ -153,7 +163,7 @@ impl eframe::App for EmulatorManager {
 					let mem_ref = self.emulator.memory.borrow();
 					let mut t_state_ref = mem_ref.t_state.borrow_mut();
 
-					if t_state_ref.to_owned() >= 702 {
+					if t_state_ref.to_owned() >= 7022 {
 						*t_state_ref = 0;
 						break;
 					}

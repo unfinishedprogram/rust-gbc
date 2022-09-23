@@ -174,8 +174,12 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			cpu.push(cpu.read_16(CPURegister16::PC.into()));
 			cpu.write_16(CPURegister16::PC.into(), cpu.read_16(addr));
 		}
-		DI => todo!(),
-		EI => todo!(),
+		DI => {
+			// Disable Interrupts after next instruction
+		}
+		EI => {
+			// Enable Interrupts after next instruction
+		}
 		RLCA => {
 			let value = cpu.read_8(CPURegister8::A.into());
 			if value & 1 != 0 {
@@ -203,7 +207,12 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 		DAA => todo!(),
 		CPL => todo!(),
 		SCF => todo!(),
-		CCF => todo!(),
+		CCF => {
+			cpu.set_flag(Flag::H);
+			cpu.set_flag(Flag::N);
+			let value = cpu.read_8(A);
+			cpu.write_8(A, !value);
+		}
 		BIT(bit, value) => {
 			cpu.set_flag_to(Flag::Z, (cpu.read_8(value.into()) >> bit) & 1 == 0);
 			cpu.set_flag(Flag::H);

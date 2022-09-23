@@ -5,9 +5,26 @@ use crate::memory::Memory;
 use super::bitmap::bit_set;
 
 type ScreenBuffer = [[[u8; 4]; 160]; 144];
+type WindowBuffer = [[[u8; 4]; 256]; 256];
 type TileBuffer = [[[u8; 4]; 8]; 8];
 
 pub fn put_tile(buffer: &mut ScreenBuffer, tile_data: TileBuffer, tile_x: usize, tile_y: usize) {
+	let real_x = tile_x * 8;
+	let real_y = tile_y * 8;
+
+	for y in 0..8 {
+		for x in 0..8 {
+			buffer[real_y + y][real_x + x] = tile_data[y][x];
+		}
+	}
+}
+
+pub fn put_window_tile(
+	buffer: &mut WindowBuffer,
+	tile_data: TileBuffer,
+	tile_x: usize,
+	tile_y: usize,
+) {
 	let real_x = tile_x * 8;
 	let real_y = tile_y * 8;
 
@@ -36,6 +53,28 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 		}
 	}
 	return buffer;
+}
+
+pub fn debug_draw_window_data(memory: &RefCell<Memory>, window_buffer: &mut [[[u8; 4]; 256]; 256]) {
+	let background_map_start = 0x9800;
+	let background_map_start = 0x9C00;
+
+	let memory = memory.borrow();
+	for y in 0..32 {
+		for x in 0..32 {
+			let index = (memory.read(background_map_start + x * y) as u16) * 16 + 0x8000;
+
+			let mut values = [0; 16];
+
+			for i in 0..16 {
+				values[i as usize] = memory[(index + i).into()];
+			}
+
+			let tile_data = to_pixel_tile(values);
+
+			put_window_tile(window_buffer, tile_data, x as usize, y as usize);
+		}
+	}
 }
 
 pub fn debug_draw_tile_data(

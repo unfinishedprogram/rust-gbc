@@ -13,10 +13,12 @@ pub struct Emulator {
 impl Emulator {
 	pub fn new() -> Self {
 		let rc: Rc<RefCell<Memory>> = Rc::new(RefCell::new(Memory::new()));
+		let mut cpu = Cpu::new(rc.clone());
+		cpu.init();
 		return Self {
 			memory: rc.clone(),
 			ppu: Ppu::new(rc.clone()),
-			cpu: Cpu::new(rc.clone()),
+			cpu,
 		};
 	}
 	pub fn current_t(&self) -> u32 {

@@ -1,10 +1,22 @@
-pub trait PpuFlags {
-	fn get_mem() -> Ref<Memory>;
+type BitFlagRef = (u16, u8);
+
+pub enum PpuFlag {
+	// VBlankInterruptEnable = (0xFFFF,),
 }
 
-// Bit 6 - LYC=LY Coincidence Interrupt (1=Enable)
-// Bit 5 - Mode 2 OAM Interrupt         (1=Enable)
-// Bit 4 - Mode 1 V-Blank Interrupt     (1=Enable)
-// Bit 3 - Mode 0 H-Blank Interrupt     (1=Enable)
-// Bit 2 - Coincidence Flag  (0:LYC<>LY, 1:LYC=LY)
-// Bit 1-0 - Mode Flag       (Mode 0-3, see below)
+pub trait PpuFlags {
+	// fn get_mem(&self) -> Ref<Memory>;
+
+	fn test_flag(&self, flag: PpuFlag) -> bool {
+		// let mem = self.get_mem();
+		true
+	}
+	fn set_flag(&mut self, flag: PpuFlag) {}
+	fn reset_flag(&mut self, flag: PpuFlag) {}
+}
+
+// impl PpuFlags for Ppu {
+// 	fn get_mem(&self) {
+// 		return self.memory;
+// 	}
+// }

@@ -3,12 +3,12 @@
 pub mod app;
 pub mod cartridge;
 pub mod components;
+pub mod cpu;
+pub mod emulator;
+// pub mod flags;
 pub mod lcd;
 pub mod memory;
-
-mod cpu;
-mod emulator;
-mod ppu;
-mod util;
-
+pub mod memory_registers;
+pub mod ppu;
+pub mod util;
 pub use app::EmulatorManager;
