@@ -205,17 +205,23 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 		),
 
 		DAA => todo!(),
-		CPL => todo!(),
+		CPL => {
+			// Complement A register
+			cpu.set_flag(Flag::H);
+			cpu.set_flag(Flag::N);
+			cpu.write_8(A, !cpu.read_8(A));
+		}
 		SCF => {
+			// Set Carry Flag
 			cpu.clear_flag(Flag::H);
 			cpu.clear_flag(Flag::N);
 			cpu.set_flag(Flag::C);
 		}
 		CCF => {
-			cpu.set_flag(Flag::H);
-			cpu.set_flag(Flag::N);
-			let value = cpu.read_8(A);
-			cpu.write_8(A, !value);
+			// Complement Carry FLag
+			cpu.clear_flag(Flag::H);
+			cpu.clear_flag(Flag::N);
+			cpu.set_flag_to(Flag::C, !cpu.get_flag(Flag::C));
 		}
 		BIT(bit, value) => {
 			cpu.set_flag_to(Flag::Z, (cpu.read_8(value.into()) >> bit) & 1 == 0);
