@@ -204,12 +204,36 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			cpu,
 		),
 
-		DAA => todo!(),
+		DAA => {
+			// Decimal Adjust A Register
+			cpu.clear_flag(Flag::H);
+			let a_ref = CPURegister8::A.into();
+			let a_val = cpu.read_8(a_ref);
+
+			if !cpu.get_flag(Flag::N) {
+				if cpu.get_flag(Flag::C) || a_val > 0x99 {
+					cpu.write_8(a_ref, cpu.read_8(a_ref).wrapping_add(0x60));
+					cpu.set_flag(Flag::C);
+				}
+				if cpu.get_flag(Flag::H) || (cpu.read_8(a_ref) & 0x0f) > 0x09 {
+					cpu.write_8(a_ref, cpu.read_8(a_ref).wrapping_add(0x6));
+				}
+			} else {
+				if cpu.get_flag(Flag::C) {
+					cpu.write_8(a_ref, cpu.read_8(a_ref).wrapping_sub(0x60));
+				}
+				if cpu.get_flag(Flag::H) {
+					cpu.write_8(a_ref, cpu.read_8(a_ref).wrapping_sub(0x6));
+				}
+			}
+			cpu.set_flag_to(Flag::Z, cpu.read_8(a_ref) == 0);
+			cpu.clear_flag(Flag::H);
+		}
 		CPL => {
-			// Complement A register
+			// Complement A Register
 			cpu.set_flag(Flag::H);
 			cpu.set_flag(Flag::N);
-			cpu.write_8(A, !cpu.read_8(A));
+			cpu.write_8(CPURegister8::A.into(), !cpu.read_8(CPURegister8::A.into()));
 		}
 		SCF => {
 			// Set Carry Flag
