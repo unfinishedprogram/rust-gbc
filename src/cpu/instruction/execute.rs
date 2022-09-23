@@ -252,8 +252,14 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			cpu.set_flag(Flag::H);
 			cpu.clear_flag(Flag::N);
 		}
-		RES(_, _) => todo!(),
-		SET(_, _) => todo!(),
+		RES(bit, value) => {
+			// Reset Bit
+			cpu.write_8(value, cpu.read_8(value) & (!(1 >> bit)));
+		}
+		SET(bit, value) => {
+			// Set Bit
+			cpu.write_8(value, cpu.read_8(value) | (1 >> bit));
+		}
 		ROT(operator, val_ref) => {
 			use super::RotShiftOperation::*;
 			let value = cpu.read_8(val_ref);
