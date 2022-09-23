@@ -206,7 +206,11 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 
 		DAA => todo!(),
 		CPL => todo!(),
-		SCF => todo!(),
+		SCF => {
+			cpu.clear_flag(Flag::H);
+			cpu.clear_flag(Flag::N);
+			cpu.set_flag(Flag::C);
+		}
 		CCF => {
 			cpu.set_flag(Flag::H);
 			cpu.set_flag(Flag::N);
