@@ -22,6 +22,7 @@ impl Emulator {
 		};
 	}
 	pub fn current_t(&self) -> u32 {
-		self.memory.borrow().t_state.borrow().to_owned()
+		0
+		// self.memory.borrow().t_state.borrow().to_owned()
 	}
 }

@@ -1,4 +1,4 @@
-type BitFlagRef = (u16, u8);
+// type BitFlagRef = (u16, u8);
 
 pub enum PpuFlag {
 	// VBlankInterruptEnable = (0xFFFF,),

@@ -1,43 +1,49 @@
 use egui::{ColorImage, Context, Image, TextureHandle, Vec2};
 
-pub struct TileViewState {
-	pub pixel_buffer: [[[u8; 4]; 256]; 256],
+type PixelBuffer = Vec<Vec<[u8; 4]>>;
+
+pub struct BufferViewState {
+	pub pixel_buffer: PixelBuffer,
 	size: (usize, usize),
 	texture: Option<TextureHandle>,
 	name: &'static str,
 }
 
-impl Default for TileViewState {
+impl Default for BufferViewState {
 	fn default() -> Self {
+		BufferViewState::new("Screen", (160, 144))
+	}
+}
+
+impl BufferViewState {
+	pub fn new(name: &'static str, size: (usize, usize)) -> Self {
 		Self {
-			name: "Tile View",
+			name,
+			size,
 			texture: None,
-			size: (256, 256),
-			pixel_buffer: [[[255; 4]; 256]; 256],
+			pixel_buffer: vec![vec![[255; 4]; size.0]; size.1],
 		}
 	}
 }
 
-impl TileViewState {
-	pub fn set_buffer(&mut self, buffer: &[[[u8; 4]; 256]; 256]) {
-		if buffer.len() > self.pixel_buffer.len() {
-			panic!("Size mismatch between buffers");
-		}
-		for i in 0..buffer.len() {
-			self.pixel_buffer[i] = buffer[i];
+fn to_flat(buffer: &PixelBuffer) -> Vec<u8> {
+	let mut collector: Vec<u8> = Vec::new();
+
+	for row in buffer {
+		for col in row {
+			for pixel in col {
+				collector.push(pixel.to_owned());
+			}
 		}
 	}
+
+	return collector;
 }
 
-fn to_flat(buffer: &[[[u8; 4]; 256]; 256]) -> &[u8] {
-	let flat = buffer.flatten();
-	return flat.flatten();
-}
-
-pub fn tile_view(ctx: &Context, state: &mut TileViewState) {
+pub fn render_image(ctx: &Context, state: &mut BufferViewState) {
 	let image = ColorImage::from_rgba_unmultiplied(
 		[state.size.0, state.size.1],
-		to_flat(&state.pixel_buffer),
+		to_flat(&state.pixel_buffer).as_slice(),
 	);
 
 	match &mut state.texture {

@@ -33,7 +33,8 @@ impl Cpu {
 	}
 
 	pub fn init(&mut self) {
-		self.registers.pc = 0x100;
+		// self.registers.pc = 0x100;
+		self.registers.pc = 0;
 		self.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
 		self.write_16(ValueRefU16::Reg(CPURegister16::BC), 0x0013);
 		self.write_16(ValueRefU16::Reg(CPURegister16::DE), 0x00D8);

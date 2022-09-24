@@ -1,11 +1,10 @@
 use crate::{
 	cartridge::{CartridgeData, CartridgeType},
 	components::{
+		buffer_view::{render_image, BufferViewState},
 		log_view::log_view,
 		memory_view::{memory_view, MemoryViewState},
-		screen_view::{screen_view, ScreenViewState},
 		state_view::state_view,
-		tile_view::{tile_view, TileViewState},
 	},
 	cpu::registers::CPURegister16,
 	emulator::Emulator,
@@ -20,9 +19,9 @@ pub struct EmulatorManager {
 	play: bool,
 	logs: Vec<(u16, String)>,
 	memory_view_state: MemoryViewState,
-	screen_view_state: ScreenViewState,
-	tile_view_state: TileViewState,
-	vram_view_state: ScreenViewState,
+	screen_view_state: BufferViewState,
+	tile_view_state: BufferViewState,
+	vram_view_state: BufferViewState,
 	page: usize,
 }
 
@@ -34,9 +33,9 @@ impl Default for EmulatorManager {
 			loaded_file_data: None::<Promise<CartridgeData>>,
 			logs: vec![],
 			memory_view_state: MemoryViewState::default(),
-			screen_view_state: ScreenViewState::default(),
-			vram_view_state: ScreenViewState::new("VRAM"),
-			tile_view_state: TileViewState::default(),
+			screen_view_state: BufferViewState::new("Screen View", (160, 144)),
+			tile_view_state: BufferViewState::new("Window View", (256, 256)),
+			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
 			page: 0,
 		}
 	}
@@ -90,11 +89,11 @@ impl eframe::App for EmulatorManager {
 		}
 
 		state_view(ctx, &self.emulator.cpu);
-		memory_view(ctx, &self.emulator.cpu, &mut self.memory_view_state);
+		// memory_view(ctx, &self.emulator.cpu, &mut self.memory_view_state);
 		log_view(ctx, &self.logs);
-		// screen_view(ctx, &mut self.screen_view_state);
-		screen_view(ctx, &mut self.vram_view_state);
-		tile_view(ctx, &mut self.tile_view_state);
+		render_image(ctx, &mut self.screen_view_state);
+		render_image(ctx, &mut self.vram_view_state);
+		render_image(ctx, &mut self.tile_view_state);
 
 		debug_draw_tile_data(
 			&self.emulator.memory,
@@ -108,10 +107,10 @@ impl eframe::App for EmulatorManager {
 		);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {
-			ui.monospace(format!(
-				"{}",
-				self.emulator.memory.borrow().t_state.borrow()
-			));
+			// ui.monospace(format!(
+			// 	"{}",
+			// 	self.emulator.memory.borrow().t_state.borrow()
+			// ));
 
 			if ui.button("Page Up").clicked() {
 				self.page += 1;
@@ -131,7 +130,7 @@ impl eframe::App for EmulatorManager {
 
 			if ui.button("Load Rom").clicked() {
 				// self.load_cartridge_by_url("06-ld r,r.gb", CartridgeType::ROM);
-				self.load_cartridge_by_url("tetris2.gb", CartridgeType::ROM);
+				self.load_cartridge_by_url("tetris.gb", CartridgeType::ROM);
 			}
 
 			if ui
@@ -146,27 +145,35 @@ impl eframe::App for EmulatorManager {
 
 			if self.play {
 				// 70224 // t-cycles per frame
+				let mut count = 0;
 				loop {
 					self.step_cpu();
-
+					count += 1;
 					if self.emulator.cpu.registers.get_u16(CPURegister16::HL) == 0x8000 {
 						self.play = false;
 						break;
 					}
 
-					if self.emulator.cpu.registers.pc == 0x00E0 {
-						self.log(0, "LOGO CHECK ROUTINE".to_string());
-						self.play = false;
+					// let mut c = '_';
+					// {
+					// 	let mut mem_ref = self.emulator.memory.borrow_mut();
+					// 	if mem_ref[0xff02] == 0x81 {
+					// 		c = mem_ref[0xff01].to_owned().into();
+					// 	}
+					// }
+					// if c != '_' {
+					// 	self.log(1, format!("{}", c));
+					// }
+
+					if count > 235 {
+						count = 0;
 						break;
 					}
 
-					let mem_ref = self.emulator.memory.borrow();
-					let mut t_state_ref = mem_ref.t_state.borrow_mut();
-
-					if t_state_ref.to_owned() >= 7022 {
-						*t_state_ref = 0;
-						break;
-					}
+					// if mem_ref.t_state.as_ptr() >= 7022 {
+					// 	*mem_ref.t_state = 0;
+					// 	break;
+					// }
 				}
 				ctx.request_repaint(); // wake up UI thread
 			}

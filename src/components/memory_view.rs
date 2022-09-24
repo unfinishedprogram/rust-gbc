@@ -65,7 +65,7 @@ pub fn memory_view(ctx: &Context, cpu: &Cpu, state: &mut MemoryViewState) {
 							}
 						});
 
-						body.rows(16.0, 65535 / width, |row_index, mut row| {
+						body.rows(16.0, 0x10000 / width, |row_index, mut row| {
 							row.col(|ui| {
 								ui.monospace(format!("{:04X}", row_index * width));
 							});

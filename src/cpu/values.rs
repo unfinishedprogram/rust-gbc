@@ -1,5 +1,6 @@
 use super::registers::CPURegister16;
 use super::registers::CPURegister8;
+use std::fmt;
 
 impl Into<ValueRefU16> for CPURegister16 {
 	fn into(self: CPURegister16) -> ValueRefU16 {
@@ -44,7 +45,7 @@ pub enum ValueRefU8 {
 	Raw(u8),
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub enum ValueRefU16 {
 	Reg(CPURegister16),
 	Mem(u16),
@@ -56,6 +57,16 @@ pub enum ValueRefI8 {
 	Reg(CPURegister8),
 	Mem(u16),
 	Raw(i8),
+}
+
+impl fmt::Debug for ValueRefU16 {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			ValueRefU16::Raw(x) => write!(f, "Raw({:X})", x),
+			ValueRefU16::Mem(x) => write!(f, "Mem({:X})", x),
+			ValueRefU16::Reg(x) => write!(f, "Raw({:?})", x),
+		}
+	}
 }
 
 pub fn as_u16(bytes: [u8; 2]) -> u16 {

@@ -11,4 +11,3 @@ pub mod memory;
 pub mod memory_registers;
 pub mod ppu;
 pub mod util;
-pub use app::EmulatorManager;
