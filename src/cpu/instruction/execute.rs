@@ -115,7 +115,7 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 				ALUOperation::SUB => {
 					cpu.set_flag(Flag::N);
 					cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_sub(b_val) & 0x10) == 0x10);
-					cpu.set_flag_to(Flag::C, a_val.wrapping_sub(b_val) > a_val);
+					cpu.set_flag_to(Flag::C, b_val > a_val);
 					cpu.set_flag_to(Flag::Z, a_val.wrapping_sub(b_val) == 0);
 					a_val.wrapping_sub(b_val)
 				}
@@ -125,21 +125,37 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 						Flag::H,
 						((a_val & 0xf).wrapping_sub(b_val).wrapping_sub(carry) & 0x10) == 0x10,
 					);
-					cpu.set_flag_to(
-						Flag::C,
-						a_val.wrapping_sub(b_val).wrapping_sub(carry) > a_val,
-					);
+					cpu.set_flag_to(Flag::C, b_val.wrapping_add(carry) > a_val);
 					cpu.set_flag_to(Flag::Z, a_val.wrapping_sub(b_val).wrapping_sub(carry) == 0);
 					a_val.wrapping_sub(b_val).wrapping_sub(carry)
 				}
-				ALUOperation::AND => a_val.bitand(b_val),
-				ALUOperation::XOR => a_val.bitxor(b_val),
-				ALUOperation::OR => a_val.bitor(b_val),
+				ALUOperation::AND => {
+					cpu.clear_flag(Flag::C);
+					cpu.set_flag(Flag::H);
+					cpu.clear_flag(Flag::N);
+
+					cpu.set_flag_to(Flag::Z, a_val.bitand(b_val) == 0);
+					a_val.bitand(b_val)
+				}
+				ALUOperation::XOR => {
+					cpu.clear_flag(Flag::C);
+					cpu.clear_flag(Flag::H);
+					cpu.clear_flag(Flag::N);
+					cpu.set_flag_to(Flag::Z, a_val.bitxor(b_val) == 0);
+					a_val.bitxor(b_val)
+				}
+				ALUOperation::OR => {
+					cpu.clear_flag(Flag::C);
+					cpu.clear_flag(Flag::H);
+					cpu.clear_flag(Flag::N);
+					cpu.set_flag_to(Flag::Z, a_val.bitor(b_val) == 0);
+					a_val.bitor(b_val)
+				}
 				ALUOperation::CP => {
 					cpu.set_flag(Flag::N);
 					cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_sub(b_val) & 0x10) == 0x10);
-					cpu.set_flag_to(Flag::C, a_val.wrapping_sub(b_val) > a_val);
-					cpu.set_flag_to(Flag::Z, a_val.wrapping_sub(b_val) == 0);
+					cpu.set_flag_to(Flag::C, b_val > a_val);
+					cpu.set_flag_to(Flag::Z, a_val == b_val);
 					a_val
 				}
 			};

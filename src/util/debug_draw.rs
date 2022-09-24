@@ -39,8 +39,8 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 }
 
 pub fn debug_draw_window_data(memory: &RefCell<Memory>, window_buffer: &mut PixelBuffer) {
-	let background_map_start = 0x9800;
-	let background_map_start = 0x9C00;
+	// let background_map_start = 0x9800;
+	// let background_map_start = 0x9C00;
 	let background_map_start = 0;
 
 	let memory = memory.borrow();
@@ -67,12 +67,13 @@ pub fn debug_draw_tile_data(
 	page: usize,
 ) {
 	// let start = ppu::registers::PPURegister::VramStart as usize;
-	let start = 18 * 20 * 8 * 2 * page + 1;
+	// let start = 18 * 20 * 8 * 2 * page + 1;
+	let start = 0x8000;
 
 	let memory = memory.borrow();
 
-	for y in 0..18 {
-		for x in 0..20 {
+	for y in 0..32 {
+		for x in 0..32 {
 			let index: u16 = (start + ((y * 20) + x) * 16) as u16;
 
 			let mut values = [0; 16];

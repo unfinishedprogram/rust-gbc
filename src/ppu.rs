@@ -24,7 +24,9 @@ impl Ppu {
 		Ppu { memory }
 	}
 
-	pub fn step(&mut self, lcd: &mut Lcd) {}
+	pub fn step(&mut self, lcd: &mut Lcd) {
+		let mem = self.memory.borrow_mut();
+	}
 
 	// fn set_mode(&mut self, mode: PPUMode) {
 	// 	let mut mem = self.memory.borrow_mut();

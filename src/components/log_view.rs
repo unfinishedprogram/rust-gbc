@@ -11,7 +11,7 @@ pub fn log_view(ctx: &Context, logs: &Vec<(u16, String)>) {
 					.striped(true)
 					.cell_layout(egui::Layout::left_to_right(egui::Align::Center))
 					.column(Size::Absolute {
-						initial: (20.0),
+						initial: (40.0),
 						range: (10.0, 20.0),
 					})
 					.column(Size::Absolute {

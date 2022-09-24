@@ -61,6 +61,8 @@ impl Cpu {
 		mem[0xFF47] = 0xFC;
 		mem[0xFF48] = 0xFF;
 		mem[0xFF49] = 0xFF;
+
+		mem[0xFF44] = 0x90;
 	}
 
 	pub fn next_byte(&mut self) -> u8 {

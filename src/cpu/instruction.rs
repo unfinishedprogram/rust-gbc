@@ -136,8 +136,16 @@ pub fn get_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 
 		(0, 2, _, 0, 1) => inst!(cpu, LD_8, A, [BC]u8),
 		(0, 2, _, 1, 1) => inst!(cpu, LD_8, A, [DE]u8),
-		(0, 2, _, 2, 1) => inst!(cpu, LD_8, A, [HL]u8),
-		(0, 2, _, 3, 1) => inst!(cpu, LD_8, A, [HL]u8),
+
+		(0, 2, _, 2, 1) => Instruction::COMPOSE(
+			inst!(cpu, LD_8, A, [HL]u8).into(),
+			inst!(cpu, INC_16, HL).into(),
+		),
+
+		(0, 2, _, 3, 1) => Instruction::COMPOSE(
+			inst!(cpu, LD_8, A, [HL]u8).into(),
+			inst!(cpu, DEC_16, HL).into(),
+		),
 
 		(0, 3, _, _, 0) => inst!(cpu, INC_16, (DT.rp[p])),
 		(0, 3, _, _, 1) => inst!(cpu, DEC_16, (DT.rp[p])),

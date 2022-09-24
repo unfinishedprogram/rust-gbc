@@ -89,7 +89,7 @@ impl eframe::App for EmulatorManager {
 		}
 
 		state_view(ctx, &self.emulator.cpu);
-		// memory_view(ctx, &self.emulator.cpu, &mut self.memory_view_state);
+		memory_view(ctx, &self.emulator.cpu, &mut self.memory_view_state);
 		log_view(ctx, &self.logs);
 		render_image(ctx, &mut self.screen_view_state);
 		render_image(ctx, &mut self.vram_view_state);
@@ -125,12 +125,12 @@ impl eframe::App for EmulatorManager {
 			}
 
 			if ui.button("Load Bios").clicked() {
-				self.load_cartridge_by_url("dmg_boot.bin", CartridgeType::BIOS);
+				self.load_cartridge_by_url("roms/dmg_boot.bin", CartridgeType::BIOS);
 			}
 
 			if ui.button("Load Rom").clicked() {
-				// self.load_cartridge_by_url("06-ld r,r.gb", CartridgeType::ROM);
-				self.load_cartridge_by_url("tetris.gb", CartridgeType::ROM);
+				self.load_cartridge_by_url("roms/06-ld r,r.gb", CartridgeType::ROM);
+				// self.load_cartridge_by_url("roms/dr-mario.gb", CartridgeType::ROM);
 			}
 
 			if ui
@@ -149,11 +149,14 @@ impl eframe::App for EmulatorManager {
 				loop {
 					self.step_cpu();
 					count += 1;
-					if self.emulator.cpu.registers.get_u16(CPURegister16::HL) == 0x8000 {
+					// if self.emulator.cpu.registers.get_u16(CPURegister16::HL) == 0x5000 {
+					// 	self.play = false;
+					// 	break;
+					// }
+					if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0xe9 {
 						self.play = false;
 						break;
 					}
-
 					// let mut c = '_';
 					// {
 					// 	let mut mem_ref = self.emulator.memory.borrow_mut();
@@ -165,7 +168,7 @@ impl eframe::App for EmulatorManager {
 					// 	self.log(1, format!("{}", c));
 					// }
 
-					if count > 235 {
+					if count > 23500 {
 						count = 0;
 						break;
 					}

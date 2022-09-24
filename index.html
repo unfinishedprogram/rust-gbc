@@ -10,15 +10,11 @@
     <title>GAME BOY</title>
 
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
-    <link data-trunk rel="rust" data-wasm-opt="2" />
+    <link data-trunk rel="rust" data-wasm-opt="0" />
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
     <base data-trunk-public-url />
-    <link data-trunk rel="copy-file" href="public/dmg_boot.bin">
-    <link data-trunk rel="copy-file" href="public/tetris.gb">
-    <link data-trunk rel="copy-file" href="public/tetris2.gb">
-    <link data-trunk rel="copy-file" href="public/06-ld r,r.gb">
+    <link data-trunk rel="copy-dir" href="roms">
 
-    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon_ios_touch_192.png">
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="white">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#404040">
