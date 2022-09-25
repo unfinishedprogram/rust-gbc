@@ -67,13 +67,8 @@ pub fn debug_draw_window_data(memory: &RefCell<Memory>, window_buffer: &mut Pixe
 	}
 }
 
-pub fn debug_draw_tile_data(
-	memory: &RefCell<Memory>,
-	screen_buffer: &mut PixelBuffer,
-	page: usize,
-) {
+pub fn debug_draw_tile_data(memory: &RefCell<Memory>, screen_buffer: &mut PixelBuffer) {
 	// let start = ppu::registers::PPURegister::VramStart as usize;
-	// let start = 18 * 20 * 8 * 2 * page + 1;
 	let start = 0x8000;
 
 	let memory = memory.borrow();

@@ -11,6 +11,7 @@ use crate::{
 	util::debug_draw::{debug_draw_tile_data, debug_draw_window_data},
 };
 
+use egui::ComboBox;
 use poll_promise::Promise;
 
 pub struct EmulatorManager {
@@ -22,7 +23,8 @@ pub struct EmulatorManager {
 	screen_view_state: BufferViewState,
 	tile_view_state: BufferViewState,
 	vram_view_state: BufferViewState,
-	page: usize,
+	selected_rom: &'static str,
+	roms: Vec<&'static str>,
 }
 
 impl Default for EmulatorManager {
@@ -36,7 +38,8 @@ impl Default for EmulatorManager {
 			screen_view_state: BufferViewState::new("Screen View", (160, 144)),
 			tile_view_state: BufferViewState::new("Window View", (256, 256)),
 			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
-			page: 0,
+			selected_rom: "",
+			roms: vec!["roms/dr-mario.gb", "roms/06-ld r,r.gb", "roms/tetris.gb"],
 		}
 	}
 }
@@ -100,7 +103,6 @@ impl eframe::App for EmulatorManager {
 		debug_draw_tile_data(
 			&self.emulator.memory,
 			&mut self.vram_view_state.pixel_buffer,
-			self.page,
 		);
 
 		debug_draw_window_data(
@@ -109,19 +111,6 @@ impl eframe::App for EmulatorManager {
 		);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {
-			// ui.monospace(format!(
-			// 	"{}",
-			// 	self.emulator.memory.borrow().t_state.borrow()
-			// ));
-
-			if ui.button("Page Up").clicked() {
-				self.page += 1;
-			}
-			if ui.button("Page Down").clicked() {
-				self.page -= 1;
-			}
-			ui.monospace(format!("{}", self.page));
-
 			if ui.button("step").clicked() {
 				self.step_emulation();
 			}
@@ -130,11 +119,19 @@ impl eframe::App for EmulatorManager {
 				self.load_cartridge_by_url("roms/dmg_boot.bin", CartridgeType::BIOS);
 			}
 
-			if ui.button("Load Rom").clicked() {
-				// self.load_cartridge_by_url("roms/06-ld r,r.gb", CartridgeType::ROM);
-				// self.load_cartridge_by_url("roms/tetris.gb", CartridgeType::ROM);
-				self.load_cartridge_by_url("roms/dr-mario.gb", CartridgeType::ROM);
-			}
+			ui.horizontal(|ui| {
+				ComboBox::from_label("")
+					.selected_text(format!("{:?}", self.selected_rom))
+					.show_ui(ui, |ui| {
+						for rom in self.roms.iter() {
+							ui.selectable_value(&mut self.selected_rom, rom, *rom);
+						}
+					});
+
+				if ui.button("Load Rom").clicked() {
+					self.load_cartridge_by_url(self.selected_rom, CartridgeType::ROM);
+				}
+			});
 
 			if ui
 				.button(match self.play {
@@ -152,34 +149,15 @@ impl eframe::App for EmulatorManager {
 				loop {
 					self.step_emulation();
 					count += 1;
-					// if self.emulator.cpu.registers.get_u16(CPURegister16::HL) == 0x5000 {
-					// 	self.play = false;
-					// 	break;
-					// }
 					if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0xe9 {
 						self.play = false;
 						break;
 					}
-					// let mut c = '_';
-					// {
-					// 	let mut mem_ref = self.emulator.memory.borrow_mut();
-					// 	if mem_ref[0xff02] == 0x81 {
-					// 		c = mem_ref[0xff01].to_owned().into();
-					// 	}
-					// }
-					// if c != '_' {
-					// 	self.log(1, format!("{}", c));
-					// }
 
-					if count > 23500 {
+					if count > 7022 {
 						count = 0;
 						break;
 					}
-
-					// if mem_ref.t_state.as_ptr() >= 7022 {
-					// 	*mem_ref.t_state = 0;
-					// 	break;
-					// }
 				}
 				ctx.request_repaint(); // wake up UI thread
 			}
