@@ -1,4 +1,6 @@
+use crate::cpu::instruction::Instruction;
 use crate::cpu::Cpu;
+use crate::lcd;
 use crate::memory::Memory;
 use crate::ppu::Ppu;
 use std::cell::RefCell;
@@ -21,8 +23,9 @@ impl Emulator {
 			cpu,
 		};
 	}
-	pub fn current_t(&self) -> u32 {
-		0
-		// self.memory.borrow().t_state.borrow().to_owned()
+
+	pub fn step(&mut self) -> Option<Instruction> {
+		self.ppu.step();
+		return self.cpu.step();
 	}
 }

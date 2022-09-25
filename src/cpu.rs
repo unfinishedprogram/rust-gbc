@@ -1,6 +1,6 @@
 pub mod flags;
 mod gb_stack;
-mod instruction;
+pub mod instruction;
 pub mod registers;
 pub mod values;
 
@@ -22,6 +22,7 @@ use self::{instruction::Condition, values::ValueRefI8};
 pub struct Cpu {
 	pub registers: CPURegisters,
 	pub memory: Rc<RefCell<Memory>>,
+	pub t_buffer: u32,
 }
 
 impl Cpu {
@@ -29,6 +30,7 @@ impl Cpu {
 		Cpu {
 			memory,
 			registers: CPURegisters::new(),
+			t_buffer: 0,
 		}
 	}
 
@@ -61,8 +63,10 @@ impl Cpu {
 		mem[0xFF47] = 0xFC;
 		mem[0xFF48] = 0xFF;
 		mem[0xFF49] = 0xFF;
+	}
 
-		mem[0xFF44] = 0x90;
+	pub fn add_t(&mut self, t: u32) {
+		self.t_buffer += t;
 	}
 
 	pub fn next_byte(&mut self) -> u8 {
@@ -143,11 +147,22 @@ impl Cpu {
 		}
 	}
 
-	pub fn execute_next_instruction(&mut self) -> Instruction {
-		let instruction = self.get_next_instruction().clone();
-		execute_instruction(instruction.clone(), self);
-		return instruction;
+	pub fn step(&mut self) -> Option<Instruction> {
+		if self.t_buffer == 0 {
+			let instruction = self.get_next_instruction();
+			execute_instruction(instruction.clone(), self);
+			self.add_t(1);
+			self.t_buffer -= 1;
+			return Some(instruction);
+		}
+		return None;
 	}
+
+	// pub fn execute_next_instruction(&mut self) -> Instruction {
+	// 	let instruction = self.get_next_instruction().clone();
+	// 	execute_instruction(instruction.clone(), self);
+	// 	return instruction;
+	// }
 
 	pub fn load_cartridge(&mut self, rom: &CartridgeData) {
 		let mut mem = self.memory.borrow_mut();

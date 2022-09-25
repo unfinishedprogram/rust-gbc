@@ -46,10 +46,12 @@ impl EmulatorManager {
 		Default::default()
 	}
 
-	pub fn step_cpu(&mut self) {
+	pub fn step_emulation(&mut self) {
 		let pc = self.emulator.cpu.registers.pc;
-		let inst = self.emulator.cpu.execute_next_instruction();
-		self.log(pc, format!("{:?}", inst));
+
+		if let Some(inst) = self.emulator.step() {
+			self.log(pc, format!("{:?}", inst));
+		};
 	}
 
 	pub fn log(&mut self, pc: u16, text: String) {
@@ -121,7 +123,7 @@ impl eframe::App for EmulatorManager {
 			ui.monospace(format!("{}", self.page));
 
 			if ui.button("step").clicked() {
-				self.step_cpu();
+				self.step_emulation();
 			}
 
 			if ui.button("Load Bios").clicked() {
@@ -129,8 +131,9 @@ impl eframe::App for EmulatorManager {
 			}
 
 			if ui.button("Load Rom").clicked() {
-				self.load_cartridge_by_url("roms/06-ld r,r.gb", CartridgeType::ROM);
-				// self.load_cartridge_by_url("roms/dr-mario.gb", CartridgeType::ROM);
+				// self.load_cartridge_by_url("roms/06-ld r,r.gb", CartridgeType::ROM);
+				// self.load_cartridge_by_url("roms/tetris.gb", CartridgeType::ROM);
+				self.load_cartridge_by_url("roms/dr-mario.gb", CartridgeType::ROM);
 			}
 
 			if ui
@@ -147,7 +150,7 @@ impl eframe::App for EmulatorManager {
 				// 70224 // t-cycles per frame
 				let mut count = 0;
 				loop {
-					self.step_cpu();
+					self.step_emulation();
 					count += 1;
 					// if self.emulator.cpu.registers.get_u16(CPURegister16::HL) == 0x5000 {
 					// 	self.play = false;

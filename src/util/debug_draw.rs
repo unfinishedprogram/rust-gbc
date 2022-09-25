@@ -26,10 +26,10 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 				bit_set(gb_tile[y * 2], x as u8),
 				bit_set(gb_tile[y * 2 + 1], x as u8),
 			) {
-				(true, true) => [155, 188, 15, 255],
-				(true, false) => [139, 172, 15, 255],
-				(false, true) => [48, 98, 48, 255],
-				(false, false) => [15, 56, 15, 255],
+				(true, true) => [8, 24, 32, 255],
+				(true, false) => [224, 248, 208, 255],
+				(false, true) => [52, 104, 86, 255],
+				(false, false) => [136, 192, 112, 255],
 			};
 
 			buffer[y][x] = color;
@@ -39,14 +39,20 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 }
 
 pub fn debug_draw_window_data(memory: &RefCell<Memory>, window_buffer: &mut PixelBuffer) {
-	// let background_map_start = 0x9800;
+	let background_map_start = 0x9800;
+	// let background_map_start = 0x9000;
+
 	// let background_map_start = 0x9C00;
-	let background_map_start = 0;
+	// let background_map_start = 0;
 
 	let memory = memory.borrow();
+
 	for y in 0..32 {
 		for x in 0..32 {
-			let index = (memory.read(background_map_start + x + y * 32) as u16) * 16 + 0x8000;
+			let offset = memory.read(background_map_start + x + y * 32) as i8;
+			let real_offset: i32 = 16 * (offset as i32);
+
+			let index = (0x9000 + real_offset) as u16;
 
 			let mut values = [0; 16];
 

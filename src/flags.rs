@@ -1,23 +1,46 @@
 pub type BitFlagRef = (u16, u8);
+use std::borrow::BorrowMut;
 
+use crate::memory::Memory;
+pub enum InterruptFlag {
+	VBlank = 0,
+	LcdStat = 1,
+	Timer = 2,
+	Serial = 3,
+	JoyPad = 4,
+}
+
+pub enum LCDFlag {
+	BGDisplay = 0,
+	OBJDisplayEnable = 1,
+	OBJSize = 2,
+	BGAndWindowTileDataSelect = 4,
+	BGTileMapDisplaySelect = 3,
+	WindowDisplayEnable = 5,
+	WindowTileMapDisplaySelect = 6,
+	LcdDisplayEnable = 7,
+}
+
+pub enum TimerFlag {
+	Stop = 2,
+}
+
+#[repr(u16)]
 pub enum BitFlag {
-	// Interrupt flags
-	InterruptVBlank = (0xFF0F, 0),
-	InterruptLcdStat = (0xFF0F, 1),
-	InterruptTimer = (0xFF0F, 2),
-	InterruptSerial = (0xFF0F, 3),
-	InterruptJoyPad = (0xFF0F, 4),
+	Interrupt(InterruptFlag) = 0xFF0F,
+	LCD(LCDFlag) = 0xFF40,
+	Timer(TimerFlag) = 0xFF07,
+}
 
-	// LCD Control 0xFF40
-	BGDisplay = (0xFF40, 0),
-	OBJDisplayEnable = (0xFF40, 1),
-	OBJSize = (0xFF40, 2),
-	BGAndWindowTileDataSelect = (0xFF40, 4),
-	BGTileMapDisplaySelect = (0xFF40, 3),
-	WindowDisplayEnable = (0xFF40, 5),
-	WindowTileMapDisplaySelect = (0xFF40, 6),
-	LcdDisplayEnable = (0xFF40, 7),
+pub fn set_bit_flag(memory: &mut Memory, flag: BitFlag) {
+	let mem = memory.borrow_mut();
 
-	// Timer control
-	TimerStop = (0xFF07, 2),
+	let flag = match flag {
+		BitFlag::Interrupt(bit) => (0xFF0F, bit as u16),
+		BitFlag::LCD(bit) => (0xFF40, bit as u16),
+		BitFlag::Timer(bit) => (0xFF07, bit as u16),
+	};
+
+	let mask = 1 << flag.1;
+	mem[flag.0] |= mask;
 }

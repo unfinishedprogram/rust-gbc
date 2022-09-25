@@ -15,7 +15,7 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 
 		COMPOSE(a, b) => {
 			execute_instruction(*a, cpu);
-			execute_instruction(*b, cpu);
+			execute_instruction(*b, cpu)
 		}
 
 		LD_8(to, from) => {
@@ -166,7 +166,7 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 
 			cpu.write_8(to, result);
 		}
-		HALT => todo!(),
+		HALT => {}
 		CALL(condition, location) => {
 			if cpu.check_condition(condition) {
 				cpu.push(cpu.read_16(CPURegister16::PC.into()));
