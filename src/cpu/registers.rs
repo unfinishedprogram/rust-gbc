@@ -1,8 +1,6 @@
 use std::ops::Index;
 use std::ops::IndexMut;
 
-use super::values::as_u16;
-
 use serde::Serialize;
 use CPURegister16::*;
 use CPURegister8::*;
@@ -67,10 +65,10 @@ impl CPURegisters {
 
 	pub fn get_u16(&self, reg: CPURegister16) -> u16 {
 		match reg {
-			AF => as_u16([self[F], self[A]]),
-			BC => as_u16([self[C], self[B]]),
-			DE => as_u16([self[E], self[D]]),
-			HL => as_u16([self[L], self[H]]),
+			AF => u16::from_le_bytes([self[F], self[A]]),
+			BC => u16::from_le_bytes([self[C], self[B]]),
+			DE => u16::from_le_bytes([self[E], self[D]]),
+			HL => u16::from_le_bytes([self[L], self[H]]),
 			SP => self.sp,
 			PC => self.pc,
 		}

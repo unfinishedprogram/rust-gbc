@@ -9,7 +9,7 @@ use std::rc::Rc;
 
 use instruction::{execute::execute_instruction, get_instruction, opcode::Opcode, Instruction};
 use registers::{CPURegister16, CPURegisters};
-use values::{as_u16, ValueRefU16, ValueRefU8};
+use values::{ValueRefU16, ValueRefU8};
 
 use crate::{
 	cartridge::CartridgeData,
@@ -111,7 +111,7 @@ impl Cpu {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				let mem = self.memory.borrow();
-				as_u16([mem[i], mem[i.wrapping_add(1)]])
+				u16::from_le_bytes([mem[i], mem[i.wrapping_add(1)]])
 			}
 			ValueRefU16::Reg(reg) => self.registers.get_u16(reg),
 			ValueRefU16::Raw(x) => x,

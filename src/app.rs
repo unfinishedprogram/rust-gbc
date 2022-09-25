@@ -45,7 +45,7 @@ impl Default for EmulatorManager {
 }
 
 impl EmulatorManager {
-	pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+	pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
 		Default::default()
 	}
 
@@ -155,7 +155,6 @@ impl eframe::App for EmulatorManager {
 					}
 
 					if count > 7022 {
-						count = 0;
 						break;
 					}
 				}

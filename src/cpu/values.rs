@@ -68,7 +68,3 @@ impl fmt::Debug for ValueRefU16 {
 		}
 	}
 }
-
-pub fn as_u16(bytes: [u8; 2]) -> u16 {
-	u16::from_le_bytes(bytes)
-}

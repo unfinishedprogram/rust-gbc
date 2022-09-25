@@ -1,6 +1,5 @@
 use crate::cpu::instruction::Instruction;
 use crate::cpu::Cpu;
-use crate::lcd;
 use crate::memory::Memory;
 use crate::ppu::Ppu;
 use std::cell::RefCell;

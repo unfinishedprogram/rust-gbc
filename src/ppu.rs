@@ -4,7 +4,6 @@ pub mod interrupts;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::lcd::Lcd;
 use crate::memory::Memory;
 
 use crate::memory_registers::MemoryRegister::*;
@@ -31,8 +30,8 @@ impl Ppu {
 		mem[LCDC as u16] = (mem[LCDC as u16] & 0b11111100) | mode as u8;
 	}
 
-	pub fn get_mode(&mut self) -> PPUMode {
-		let mut mem = self.memory.borrow_mut();
+	pub fn get_mode(&self) -> PPUMode {
+		let mem = self.memory.borrow();
 		let num = mem[LCDC as u16] & 0b11111100;
 		return match num {
 			0 => PPUMode::HBlank,
