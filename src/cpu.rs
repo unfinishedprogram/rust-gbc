@@ -158,12 +158,6 @@ impl Cpu {
 		return None;
 	}
 
-	// pub fn execute_next_instruction(&mut self) -> Instruction {
-	// 	let instruction = self.get_next_instruction().clone();
-	// 	execute_instruction(instruction.clone(), self);
-	// 	return instruction;
-	// }
-
 	pub fn load_cartridge(&mut self, rom: &CartridgeData) {
 		let mut mem = self.memory.borrow_mut();
 		let (_, data) = rom;
