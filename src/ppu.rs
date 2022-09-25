@@ -8,6 +8,7 @@ use crate::memory::Memory;
 
 use crate::memory_registers::MemoryRegister::*;
 
+#[derive(Debug)]
 pub enum PPUMode {
 	HBlank = 0,
 	VBlank = 1,
@@ -32,7 +33,7 @@ impl Ppu {
 
 	pub fn get_mode(&self) -> PPUMode {
 		let mem = self.memory.borrow();
-		let num = mem[LCDC as u16] & 0b11111100;
+		let num = mem[LCDC as u16] & 0b00000011;
 		return match num {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
@@ -54,6 +55,10 @@ impl Ppu {
 			match self.get_mode() {
 				PPUMode::HBlank => {
 					self.set_mode(PPUMode::OamScan);
+					self.set_ly(self.get_ly() + 1);
+					if self.get_ly() == 144 {
+						self.set_mode(PPUMode::VBlank);
+					}
 					self.t_state += 80;
 				}
 				PPUMode::VBlank => {
@@ -63,6 +68,7 @@ impl Ppu {
 						self.t_state += 80;
 					} else {
 						self.set_ly(self.get_ly() + 1);
+
 						self.t_state += 456;
 					}
 				}
@@ -78,10 +84,4 @@ impl Ppu {
 		}
 		self.t_state -= 1;
 	}
-
-	// fn set_mode(&mut self, mode: PPUMode) {
-	// 	let mut mem = self.memory.borrow_mut();
-	// 	let new_val = (mem[STAT as u16] & 0b11111100) & (mode as u8);
-	// 	mem[STAT as u16] = new_val;
-	// }
 }
