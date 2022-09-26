@@ -218,15 +218,14 @@ impl Cpu {
 
 	pub fn step(&mut self) -> Option<Instruction> {
 		if self.t_buffer == 0 {
-			let instruction = self.get_next_instruction_or_interrupt();
-			execute_instruction(instruction.clone(), self);
-			self.add_t(1);
-			self.t_buffer -= 1;
-
 			if let Some(interrupt_enable) = self.interrupt_next_state {
 				self.interrupt_next_state = None;
 				self.interrupt_enable = interrupt_enable;
 			}
+			let instruction = self.get_next_instruction_or_interrupt();
+			execute_instruction(instruction.clone(), self);
+			self.add_t(1);
+			self.t_buffer -= 1;
 
 			return Some(instruction);
 		}

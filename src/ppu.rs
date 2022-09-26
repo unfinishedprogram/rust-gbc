@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::flags;
 use crate::flags::set_bit_flag;
 use crate::memory::Memory;
 
@@ -26,6 +25,18 @@ impl Ppu {
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode) {
+		match mode {
+			PPUMode::HBlank => self.t_state += 204,
+			PPUMode::VBlank => {
+				self.t_state += 456;
+				self.set_ly(self.get_ly() + 1)
+			}
+			PPUMode::OamScan => {
+				self.t_state += 80;
+				self.set_ly((self.get_ly() + 1) % 153)
+			}
+			PPUMode::Draw => self.t_state += 172,
+		}
 		let mut mem = self.memory.borrow_mut();
 		mem[LCDC as u16] = (mem[LCDC as u16] & 0b11111100) | mode as u8;
 	}
@@ -51,37 +62,15 @@ impl Ppu {
 
 	pub fn step(&mut self) {
 		if self.t_state == 0 {
-			match self.get_mode() {
-				PPUMode::HBlank => {
-					self.set_mode(PPUMode::OamScan);
-					self.set_ly(self.get_ly() + 1);
-					if self.get_ly() == 144 {
-						self.set_mode(PPUMode::VBlank);
-						set_bit_flag(
-							&mut self.memory.borrow_mut(),
-							flags::BitFlag::InterruptRequest(flags::InterruptFlag::VBlank),
-						);
-					}
-					self.t_state += 80;
-				}
-				PPUMode::VBlank => {
-					if self.get_ly() == 153 {
-						self.set_mode(PPUMode::OamScan);
-						self.set_ly(0);
-						self.t_state += 80;
-					} else {
-						self.set_ly(self.get_ly() + 1);
-						self.t_state += 456;
-					}
-				}
-				PPUMode::OamScan => {
-					self.set_mode(PPUMode::Draw);
-					self.t_state += 172;
-				}
-				PPUMode::Draw => {
-					self.set_mode(PPUMode::HBlank);
-					self.t_state += 204;
-				}
+			use PPUMode::*;
+			match (self.get_mode(), self.get_ly()) {
+				(OamScan, _) => self.set_mode(Draw),
+				(Draw, _) => self.set_mode(HBlank),
+				(HBlank, 0..=143) => self.set_mode(OamScan),
+				(HBlank, 144..=u8::MAX) => self.set_mode(VBlank),
+				(VBlank, 144..=152) => self.set_mode(VBlank),
+				(VBlank, 153) => self.set_mode(OamScan),
+				_ => self.set_mode(VBlank),
 			}
 		}
 		self.t_state -= 1;

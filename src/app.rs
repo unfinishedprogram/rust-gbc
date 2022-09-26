@@ -2,6 +2,7 @@ use crate::{
 	cartridge::{CartridgeData, CartridgeType},
 	components::{
 		buffer_view::{render_image, BufferViewState},
+		joypad_view::joypad_view,
 		log_view::log_view,
 		memory_view::{memory_view, MemoryViewState},
 		ppu_view::ppu_view,
@@ -52,7 +53,6 @@ impl EmulatorManager {
 
 	pub fn step_emulation(&mut self) {
 		let pc = self.emulator.cpu.registers.pc;
-
 		if let Some(inst) = self.emulator.step() {
 			self.log(pc, format!("{:?}", inst));
 		};
@@ -98,6 +98,7 @@ impl eframe::App for EmulatorManager {
 		memory_view(ctx, &self.emulator.cpu, &mut self.memory_view_state);
 		log_view(ctx, &self.logs);
 		ppu_view(ctx, &self.emulator.ppu);
+		joypad_view(ctx, &mut self.emulator.cpu);
 		render_image(ctx, &mut self.screen_view_state);
 		render_image(ctx, &mut self.vram_view_state);
 		render_image(ctx, &mut self.tile_view_state);

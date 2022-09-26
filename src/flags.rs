@@ -11,6 +11,15 @@ pub enum InterruptFlag {
 	JoyPad = 4,
 }
 
+pub enum JoyPadFlag {
+	RightOrA = 0,
+	LeftOrB = 1,
+	UpOrSelect = 2,
+	DownOrStart = 3,
+	SelectDirectionButtons = 4,
+	SelectActionButtons = 5,
+}
+
 pub enum LCDFlag {
 	BGDisplay = 0,
 	OBJDisplayEnable = 1,
@@ -29,6 +38,7 @@ pub enum TimerFlag {
 pub enum BitFlag {
 	InterruptEnable(InterruptFlag) = 0xFFFF,
 	InterruptRequest(InterruptFlag) = 0xFF0F,
+	JoyPad(JoyPadFlag) = 0xFF00,
 	LCD(LCDFlag) = 0xFF40,
 	Timer(TimerFlag) = 0xFF07,
 }
@@ -39,6 +49,7 @@ fn flag_to_tuple(flag: BitFlag) -> (u16, u16) {
 		BitFlag::InterruptRequest(bit) => (0xFF0F, bit as u16),
 		BitFlag::LCD(bit) => (0xFF40, bit as u16),
 		BitFlag::Timer(bit) => (0xFF07, bit as u16),
+		BitFlag::JoyPad(bit) => (0xFF00, bit as u16),
 	}
 }
 
