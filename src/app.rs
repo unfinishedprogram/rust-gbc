@@ -13,7 +13,12 @@ use crate::{
 	util::debug_draw::{debug_draw_tile_data, debug_draw_window_data},
 };
 
-use egui::ComboBox;
+use eframe::epaint::Shadow;
+use egui::{
+	style::{Selection, Widgets},
+	ComboBox, Rounding, Stroke,
+};
+use egui::{Color32, Visuals};
 use poll_promise::Promise;
 
 pub struct EmulatorManager {
@@ -84,8 +89,29 @@ impl EmulatorManager {
 	}
 }
 
+fn color(val: u32) -> Color32 {
+	let [_, r, g, b] = val.to_be_bytes();
+	Color32::from_rgb(r as u8, g as u8, b as u8)
+}
+
 impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+		let mut style = Visuals::default();
+		let mut widgets = Widgets::default();
+
+		widgets.noninteractive.bg_fill = color(0x1c212b);
+		widgets.noninteractive.bg_stroke = Stroke::new(1.0, color(0xBBBBBB));
+
+		widgets.inactive.rounding = Rounding::default().at_least(2.0);
+
+		style.widgets = widgets;
+		style.window_rounding = Rounding::default().at_least(2.0);
+		style.window_shadow = Shadow::small_dark();
+		style.override_text_color = Some(color(0xc5c5c5));
+		style.hyperlink_color = color(0x0096cf);
+
+		ctx.set_visuals(style);
+
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(result) = data.ready() {
 				self.emulator.cpu.load_cartridge(result);
