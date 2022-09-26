@@ -26,6 +26,10 @@ pub fn memory_view(ctx: &Context, cpu: &Cpu, state: &mut MemoryViewState) {
 			ui.horizontal_top(|ui| {
 				ui.vertical(|ui| {
 					ui.set_min_width(140.0);
+					let mem = cpu.memory.borrow();
+					ui.monospace(format!("IR:{:08b}", mem[0xFF0F]));
+					ui.monospace(format!("IE:{:08b}", mem[0xFFFF]));
+
 					match state.selected {
 						Some(index) => {
 							let value = cpu.memory.borrow()[index];

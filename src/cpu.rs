@@ -14,6 +14,8 @@ use values::{ValueRefU16, ValueRefU8};
 use crate::{
 	cartridge::CartridgeData,
 	cpu::flags::{Flag, Flags},
+	flags::{clear_bit_flag, get_bit_flag},
+	flags::{BitFlag, InterruptFlag},
 	memory::Memory,
 };
 
@@ -23,6 +25,8 @@ pub struct Cpu {
 	pub registers: CPURegisters,
 	pub memory: Rc<RefCell<Memory>>,
 	pub t_buffer: u32,
+	pub interrupt_enable: bool,
+	interrupt_next_state: Option<bool>,
 }
 
 impl Cpu {
@@ -31,7 +35,17 @@ impl Cpu {
 			memory,
 			registers: CPURegisters::new(),
 			t_buffer: 0,
+			interrupt_next_state: None,
+			interrupt_enable: false,
 		}
+	}
+
+	pub fn disable_interrupts(&mut self) {
+		_ = self.interrupt_next_state.insert(false);
+	}
+
+	pub fn enable_interrupts(&mut self) {
+		_ = self.interrupt_next_state.insert(true);
 	}
 
 	pub fn init(&mut self) {
@@ -147,12 +161,73 @@ impl Cpu {
 		}
 	}
 
+	fn check_interrupt(&self, interrupt: InterruptFlag) -> bool {
+		let mem = self.memory.borrow();
+
+		get_bit_flag(&mem, BitFlag::InterruptEnable(interrupt))
+			&& get_bit_flag(&mem, BitFlag::InterruptRequest(interrupt))
+	}
+
+	fn clear_request(&mut self, interrupt: InterruptFlag) {
+		clear_bit_flag(
+			&mut self.memory.borrow_mut(),
+			BitFlag::InterruptRequest(interrupt),
+		);
+	}
+
+	fn get_interrupt(&mut self) -> Option<Instruction> {
+		use InterruptFlag::*;
+
+		if self.interrupt_enable {
+			if self.check_interrupt(VBlank) {
+				self.clear_request(VBlank);
+				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x40)));
+			}
+
+			if self.check_interrupt(LcdStat) {
+				self.clear_request(LcdStat);
+				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x48)));
+			}
+
+			if self.check_interrupt(Timer) {
+				self.clear_request(Timer);
+				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x50)));
+			}
+
+			if self.check_interrupt(Serial) {
+				self.clear_request(Serial);
+				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x58)));
+			}
+			if self.check_interrupt(JoyPad) {
+				self.clear_request(JoyPad);
+				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x60)));
+			}
+		}
+		return None;
+	}
+
+	pub fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
+		return match self.get_interrupt() {
+			Some(inst) => {
+				self.disable_interrupts();
+				inst
+			}
+			None => self.get_next_instruction(),
+		};
+	}
+
 	pub fn step(&mut self) -> Option<Instruction> {
 		if self.t_buffer == 0 {
-			let instruction = self.get_next_instruction();
+			let instruction = self.get_next_instruction_or_interrupt();
 			execute_instruction(instruction.clone(), self);
 			self.add_t(1);
 			self.t_buffer -= 1;
+
+			if let Some(interrupt_enable) = self.interrupt_next_state {
+				self.interrupt_next_state = None;
+				self.interrupt_enable = interrupt_enable;
+			}
+
 			return Some(instruction);
 		}
 		return None;

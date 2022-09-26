@@ -185,16 +185,15 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 				cpu.write_16(CPURegister16::PC.into(), ptr);
 			}
 		}
-		RETI => todo!(),
 		RST(addr) => {
 			cpu.push(cpu.read_16(CPURegister16::PC.into()));
 			cpu.write_16(CPURegister16::PC.into(), cpu.read_16(addr));
 		}
 		DI => {
-			// Disable Interrupts after next instruction
+			cpu.enable_interrupts();
 		}
 		EI => {
-			// Enable Interrupts after next instruction
+			cpu.disable_interrupts();
 		}
 		RLCA => {
 			let value = cpu.read_8(CPURegister8::A.into());

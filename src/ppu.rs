@@ -1,9 +1,8 @@
-pub mod flags;
-pub mod interrupts;
-
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::flags;
+use crate::flags::set_bit_flag;
 use crate::memory::Memory;
 
 use crate::memory_registers::MemoryRegister::*;
@@ -58,6 +57,10 @@ impl Ppu {
 					self.set_ly(self.get_ly() + 1);
 					if self.get_ly() == 144 {
 						self.set_mode(PPUMode::VBlank);
+						set_bit_flag(
+							&mut self.memory.borrow_mut(),
+							flags::BitFlag::InterruptRequest(flags::InterruptFlag::VBlank),
+						);
 					}
 					self.t_state += 80;
 				}
@@ -68,7 +71,6 @@ impl Ppu {
 						self.t_state += 80;
 					} else {
 						self.set_ly(self.get_ly() + 1);
-
 						self.t_state += 456;
 					}
 				}

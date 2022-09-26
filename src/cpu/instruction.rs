@@ -6,13 +6,10 @@ pub mod execute;
 pub mod mac_instruction;
 pub mod opcode;
 
+use crate::{arg, inst, mem};
+
+use decode_tables::DT;
 use opcode::Opcode;
-
-use crate::arg;
-use crate::inst;
-use crate::mem;
-
-use self::decode_tables::DT;
 
 use super::{
 	registers::{CPURegister16, CPURegister16::*, CPURegister8::*},
@@ -44,7 +41,6 @@ pub enum Instruction {
 	JP(Condition, ValueRefU16),
 	// Return
 	RET(Condition),
-	RETI,
 	RST(ValueRefU16),
 	DI,
 	EI,
@@ -186,7 +182,10 @@ pub fn get_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p])),
 
 		(3, 1, _, 0, 1) => inst!(cpu, RET, (Condition::ALWAYS)),
-		(3, 1, _, 1, 1) => inst!(cpu, RETI),
+		(3, 1, _, 1, 1) => Instruction::COMPOSE(
+			inst!(cpu, RET, (Condition::ALWAYS)).into(),
+			inst!(cpu, EI).into(),
+		),
 		(3, 1, _, 2, 1) => inst!(cpu, JP, (Condition::ALWAYS), HL),
 		(3, 1, _, 3, 1) => inst!(cpu, LD_16, SP, HL),
 
