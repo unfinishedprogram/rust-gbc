@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use crate::memory::Memory;
 
-use super::{bit_ops::get_bit, bitmap::bit_set};
+use super::bit_ops::get_bit;
 
 type TileBuffer = [[[u8; 4]; 8]; 8];
 type PixelBuffer = Vec<Vec<[u8; 4]>>;

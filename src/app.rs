@@ -47,8 +47,8 @@ impl Default for EmulatorManager {
 				"roms/dr-mario.gb",
 				"roms/06-ld r,r.gb",
 				"roms/tetris.gb",
-				"02-interrupts.gb",
-				"07-jr,jp,call,ret,rst.gb",
+				"roms/02-interrupts.gb",
+				"roms/07-jr,jp,call,ret,rst.gb",
 			],
 		}
 	}
@@ -143,7 +143,7 @@ impl eframe::App for EmulatorManager {
 		);
 
 		egui::SidePanel::left("side_panel").show(ctx, |ui| {
-			if ui.button("step").clicked() {
+			if ui.button("step").clicked() || ctx.input().key_pressed(egui::Key::ArrowRight) {
 				self.step_emulation();
 			}
 
@@ -181,12 +181,12 @@ impl eframe::App for EmulatorManager {
 				loop {
 					self.step_emulation();
 					count += 1;
-					if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0x38 {
+					if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0xc7f5 {
 						self.play = false;
 						break;
 					}
 
-					if count > 70 {
+					if count > 702 {
 						break;
 					}
 				}

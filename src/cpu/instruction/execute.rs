@@ -15,15 +15,17 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 
 		COMPOSE(a, b) => {
 			execute_instruction(*a, cpu);
-			execute_instruction(*b, cpu)
+			execute_instruction(*b, cpu);
 		}
 
 		LD_8(to, from) => {
-			cpu.write_8(to, cpu.read_8(from));
+			let val = cpu.read_8(from);
+			cpu.write_8(to, val);
 		}
 
 		LD_16(to, from) => {
-			cpu.write_16(to, cpu.read_16(from));
+			let val = cpu.read_16(from);
+			cpu.write_16(to, val);
 		}
 
 		INC_8(ptr) => {
@@ -35,7 +37,8 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 		}
 
 		INC_16(ptr) => {
-			cpu.write_16(ptr, cpu.read_16(ptr) + 1);
+			let ptr_val = cpu.read_16(ptr);
+			cpu.write_16(ptr, ptr_val + 1);
 		}
 
 		DEC_8(ptr) => {
@@ -47,7 +50,8 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 		}
 
 		DEC_16(ptr) => {
-			cpu.write_16(ptr, cpu.read_16(ptr) - 1);
+			let ptr_val = cpu.read_16(ptr);
+			cpu.write_16(ptr, ptr_val - 1);
 		}
 
 		STOP => todo!(),
@@ -55,7 +59,8 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 
 		JP(condition, location) => {
 			if cpu.check_condition(condition) {
-				cpu.write_16(CPURegister16::PC.into(), cpu.read_16(location));
+				let loc_val = cpu.read_16(location);
+				cpu.write_16(CPURegister16::PC.into(), loc_val);
 			}
 		}
 
@@ -169,16 +174,20 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 		HALT => {}
 		CALL(condition, location) => {
 			if cpu.check_condition(condition) {
-				cpu.push(cpu.read_16(CPURegister16::PC.into()));
-
-				cpu.write_16(CPURegister16::PC.into(), cpu.read_16(location));
+				let current_pc = cpu.read_16(CPURegister16::PC.into());
+				cpu.push(current_pc);
+				let loc_value = cpu.read_16(location);
+				cpu.write_16(CPURegister16::PC.into(), loc_value);
 			}
 		}
 		POP(value_ref) => {
 			let val = cpu.pop();
 			cpu.write_16(value_ref.into(), val);
 		}
-		PUSH(value_ref) => cpu.push(cpu.read_16(value_ref.into())),
+		PUSH(value_ref) => {
+			let value = cpu.read_16(value_ref.into());
+			cpu.push(value)
+		}
 		RET(condition) => {
 			if cpu.check_condition(condition) {
 				let ptr = cpu.pop();
@@ -186,8 +195,10 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			}
 		}
 		RST(addr) => {
-			cpu.push(cpu.read_16(CPURegister16::PC.into()));
-			cpu.write_16(CPURegister16::PC.into(), cpu.read_16(addr));
+			let current_pc = cpu.read_16(CPURegister16::PC.into());
+			cpu.push(current_pc);
+			let new_pc = cpu.read_16(addr);
+			cpu.write_16(CPURegister16::PC.into(), new_pc);
 		}
 		DI => {
 			cpu.enable_interrupts();
@@ -227,28 +238,30 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 
 			if !cpu.get_flag(Flag::N) {
 				if cpu.get_flag(Flag::C) || a_val > 0x99 {
-					cpu.write_8(a_ref, cpu.read_8(a_ref).wrapping_add(0x60));
+					cpu.write_8(a_ref, a_val.wrapping_add(0x60));
 					cpu.set_flag(Flag::C);
 				}
 				if cpu.get_flag(Flag::H) || (cpu.read_8(a_ref) & 0x0f) > 0x09 {
-					cpu.write_8(a_ref, cpu.read_8(a_ref).wrapping_add(0x6));
+					cpu.write_8(a_ref, a_val.wrapping_add(0x6));
 				}
 			} else {
 				if cpu.get_flag(Flag::C) {
-					cpu.write_8(a_ref, cpu.read_8(a_ref).wrapping_sub(0x60));
+					cpu.write_8(a_ref, a_val.wrapping_sub(0x60));
 				}
 				if cpu.get_flag(Flag::H) {
-					cpu.write_8(a_ref, cpu.read_8(a_ref).wrapping_sub(0x6));
+					cpu.write_8(a_ref, a_val.wrapping_sub(0x6));
 				}
 			}
-			cpu.set_flag_to(Flag::Z, cpu.read_8(a_ref) == 0);
+			let new_val = cpu.read_8(a_ref);
+			cpu.set_flag_to(Flag::Z, new_val == 0);
 			cpu.clear_flag(Flag::H);
 		}
 		CPL => {
 			// Complement A Register
+			let current = cpu.read_8(CPURegister8::A.into());
 			cpu.set_flag(Flag::H);
 			cpu.set_flag(Flag::N);
-			cpu.write_8(CPURegister8::A.into(), !cpu.read_8(CPURegister8::A.into()));
+			cpu.write_8(CPURegister8::A.into(), !current);
 		}
 		SCF => {
 			// Set Carry Flag
@@ -263,17 +276,21 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			cpu.set_flag_to(Flag::C, !cpu.get_flag(Flag::C));
 		}
 		BIT(bit, value) => {
-			cpu.set_flag_to(Flag::Z, (cpu.read_8(value.into()) >> bit) & 1 == 0);
+			let value = cpu.read_8(value.into());
+			cpu.set_flag_to(Flag::Z, (value >> bit) & 1 == 0);
 			cpu.set_flag(Flag::H);
 			cpu.clear_flag(Flag::N);
 		}
 		RES(bit, value) => {
 			// Reset Bit
-			cpu.write_8(value, cpu.read_8(value) & (!(1 >> bit)));
+			let current = cpu.read_8(value);
+
+			cpu.write_8(value, current & (!(1 >> bit)));
 		}
 		SET(bit, value) => {
 			// Set Bit
-			cpu.write_8(value, cpu.read_8(value) | (1 >> bit));
+			let current = cpu.read_8(value);
+			cpu.write_8(value, current | (1 >> bit));
 		}
 		ROT(operator, val_ref) => {
 			use super::RotShiftOperation::*;

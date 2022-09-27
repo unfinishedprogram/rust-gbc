@@ -49,8 +49,8 @@ impl Cpu {
 	}
 
 	pub fn init(&mut self) {
-		self.registers.pc = 0x100;
-		// self.registers.pc = 0;
+		// self.registers.pc = 0x100;
+		self.registers.pc = 0;
 		self.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
 		self.write_16(ValueRefU16::Reg(CPURegister16::BC), 0x0013);
 		self.write_16(ValueRefU16::Reg(CPURegister16::DE), 0x00D8);
@@ -97,17 +97,24 @@ impl Cpu {
 		self.read_16(ValueRefU16::Mem(self.registers.pc - 2))
 	}
 
-	pub fn read_8(&self, value_ref: ValueRefU8) -> u8 {
+	pub fn read_8(&mut self, value_ref: ValueRefU8) -> u8 {
 		match value_ref {
-			ValueRefU8::Mem(addr) => self.memory.borrow().read(self.read_16(addr)).to_owned(),
+			ValueRefU8::Mem(addr) => {
+				self.add_t(2);
+				let index = self.read_16(addr);
+				self.memory.borrow().read(index)
+			}
 			ValueRefU8::Reg(reg) => self.registers[reg],
 			ValueRefU8::Raw(x) => x,
 		}
 	}
 
-	pub fn read_i8(&self, value_ref: ValueRefI8) -> i8 {
+	pub fn read_i8(&mut self, value_ref: ValueRefI8) -> i8 {
 		match value_ref {
-			ValueRefI8::Mem(i) => self.memory.borrow().read(i) as i8,
+			ValueRefI8::Mem(addr) => {
+				self.add_t(2);
+				self.memory.borrow().read(addr) as i8
+			}
 			ValueRefI8::Reg(reg) => self.registers[reg] as i8,
 			ValueRefI8::Raw(x) => x,
 		}
@@ -115,17 +122,22 @@ impl Cpu {
 
 	pub fn write_8(&mut self, value_ref: ValueRefU8, value: u8) {
 		match value_ref {
-			ValueRefU8::Mem(addr) => self.memory.borrow_mut()[self.read_16(addr)] = value,
+			ValueRefU8::Mem(addr) => {
+				self.add_t(2);
+				let index = self.read_16(addr);
+				self.memory.borrow_mut().write(index, value);
+			}
 			ValueRefU8::Reg(reg) => self.registers[reg] = value,
 			ValueRefU8::Raw(_) => unreachable!(),
 		}
 	}
 
-	pub fn read_16(&self, value_ref: ValueRefU16) -> u16 {
+	pub fn read_16(&mut self, value_ref: ValueRefU16) -> u16 {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
+				self.add_t(2);
 				let mem = self.memory.borrow();
-				u16::from_le_bytes([mem[i], mem[i.wrapping_add(1)]])
+				u16::from_le_bytes([mem.read(i), mem.read(i.wrapping_add(1))])
 			}
 			ValueRefU16::Reg(reg) => self.registers.get_u16(reg),
 			ValueRefU16::Raw(x) => x,
@@ -226,10 +238,10 @@ impl Cpu {
 			let instruction = self.get_next_instruction_or_interrupt();
 			execute_instruction(instruction.clone(), self);
 			self.add_t(1);
-			self.t_buffer -= 1;
 
 			return Some(instruction);
 		}
+		self.t_buffer -= 1;
 		return None;
 	}
 

@@ -88,7 +88,7 @@ pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 
 		(3, 0, 7, _, _) => Instruction::COMPOSE(
 			inst!(cpu, LD_16, HL, SP).into(),
-			inst!(cpu, ADD_SIGNED, HL, (cpu.next_displacement())).into(),
+			inst!(cpu, ADD_SIGNED, HL, d).into(),
 		),
 
 		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p])),
@@ -101,16 +101,13 @@ pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 		(3, 1, _, 2, 1) => inst!(cpu, JP, (Condition::ALWAYS), HL),
 		(3, 1, _, 3, 1) => inst!(cpu, LD_16, SP, HL),
 
-		(3, 2, 0, _, _) => inst!(cpu, JP, (DT.cc[0]), nn),
-		(3, 2, 1, _, _) => inst!(cpu, JP, (DT.cc[1]), nn),
-		(3, 2, 2, _, _) => inst!(cpu, JP, (DT.cc[2]), nn),
-		(3, 2, 3, _, _) => inst!(cpu, JP, (DT.cc[3]), nn),
-
 		(3, 2, 4, _, _) => inst!(cpu, LD_8, [(0xFF00 + cpu.read_8(C.into()) as u16)]u8, A),
 		(3, 2, 5, _, _) => inst!(cpu, LD_8, [nn]u8, A),
 
 		(3, 2, 6, _, _) => inst!(cpu, LD_8, A, [(0xFF00 + cpu.read_8(C.into()) as u16)]u8),
 		(3, 2, 7, _, _) => inst!(cpu, LD_8, A, [nn]u8),
+
+		(3, 2, c, _, _) => inst!(cpu, JP, (DT.cc[c]), nn),
 
 		(3, 3, 0, _, _) => inst!(cpu, JP, (Condition::ALWAYS), nn),
 
@@ -133,10 +130,7 @@ pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 		(3, 3, 6, _, _) => inst!(cpu, DI),
 		(3, 3, 7, _, _) => inst!(cpu, EI),
 
-		(3, 4, 0, _, _) => inst!(cpu, CALL, (DT.cc[0]), nn),
-		(3, 4, 1, _, _) => inst!(cpu, CALL, (DT.cc[1]), nn),
-		(3, 4, 2, _, _) => inst!(cpu, CALL, (DT.cc[2]), nn),
-		(3, 4, 3, _, _) => inst!(cpu, CALL, (DT.cc[3]), nn),
+		(3, 4, c, _, _) => inst!(cpu, CALL, (DT.cc[c]), nn),
 
 		(3, 5, _, _, 0) => inst!(cpu, PUSH, (DT.rp2[p])),
 		(3, 5, _, 0, 1) => inst!(cpu, CALL, (Condition::ALWAYS), nn),
