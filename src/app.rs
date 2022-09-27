@@ -181,12 +181,12 @@ impl eframe::App for EmulatorManager {
 				loop {
 					self.step_emulation();
 					count += 1;
-					if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0xCc5f {
+					if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0x38 {
 						self.play = false;
 						break;
 					}
 
-					if count > 7022 {
+					if count > 70 {
 						break;
 					}
 				}

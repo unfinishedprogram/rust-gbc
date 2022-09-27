@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use crate::memory::Memory;
 
-use super::bitmap::bit_set;
+use super::{bit_ops::get_bit, bitmap::bit_set};
 
 type TileBuffer = [[[u8; 4]; 8]; 8];
 type PixelBuffer = Vec<Vec<[u8; 4]>>;
@@ -23,8 +23,8 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 	for y in 0..8 {
 		for x in 0..8 {
 			let color = match (
-				bit_set(gb_tile[y * 2], x as u8),
-				bit_set(gb_tile[y * 2 + 1], x as u8),
+				get_bit(&gb_tile[y * 2], x as u8),
+				get_bit(&gb_tile[y * 2 + 1], x as u8),
 			) {
 				(true, true) => [8, 24, 32, 255],
 				(true, false) => [224, 248, 208, 255],
