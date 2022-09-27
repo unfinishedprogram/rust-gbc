@@ -12,7 +12,7 @@ pub enum InterruptFlag {
 }
 
 pub enum STATFlag {
-	LYCeqLU = 2,
+	LYCeqLY = 2,
 	HBlankStatInterruptEnable = 3,
 	VBlankStatInterruptEnable = 4,
 	OAMStatInterruptEnable = 5,
