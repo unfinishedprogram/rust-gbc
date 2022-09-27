@@ -4,22 +4,22 @@ pub mod instruction;
 pub mod registers;
 pub mod values;
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
-use instruction::{execute::execute_instruction, get_instruction, opcode::Opcode, Instruction};
+use instruction::{
+	execute::execute_instruction, fetch::fetch_instruction, opcode::Opcode, Instruction,
+};
 use registers::{CPURegister16, CPURegisters};
 use values::{ValueRefU16, ValueRefU8};
 
 use crate::{
 	cartridge::CartridgeData,
 	cpu::flags::{Flag, Flags},
-	flags::{clear_bit_flag, get_bit_flag},
-	flags::{BitFlag, InterruptFlag},
+	flags::{clear_bit_flag, get_bit_flag, BitFlag, InterruptFlag},
 	memory::Memory,
 };
 
-use self::{instruction::Condition, values::ValueRefI8};
+use self::{instruction::condition::Condition, values::ValueRefI8};
 
 pub struct Cpu {
 	pub registers: CPURegisters,
@@ -146,7 +146,7 @@ impl Cpu {
 
 	pub fn get_next_instruction(&mut self) -> Instruction {
 		let opcode: Opcode = Opcode::from(self.next_byte());
-		get_instruction(self, opcode)
+		fetch_instruction(self, opcode)
 	}
 
 	pub fn check_condition(&self, condition: Condition) -> bool {
