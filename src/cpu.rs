@@ -100,7 +100,7 @@ impl Cpu {
 	pub fn read_8(&self, value_ref: ValueRefU8) -> u8 {
 		match value_ref {
 			ValueRefU8::Mem(addr) => self.memory.borrow().read(self.read_16(addr)).to_owned(),
-			ValueRefU8::Reg(reg) => self.registers.get_u8(reg),
+			ValueRefU8::Reg(reg) => self.registers[reg],
 			ValueRefU8::Raw(x) => x,
 		}
 	}
@@ -108,7 +108,7 @@ impl Cpu {
 	pub fn read_i8(&self, value_ref: ValueRefI8) -> i8 {
 		match value_ref {
 			ValueRefI8::Mem(i) => self.memory.borrow().read(i) as i8,
-			ValueRefI8::Reg(reg) => self.registers.get_u8(reg) as i8,
+			ValueRefI8::Reg(reg) => self.registers[reg] as i8,
 			ValueRefI8::Raw(x) => x,
 		}
 	}
@@ -116,7 +116,7 @@ impl Cpu {
 	pub fn write_8(&mut self, value_ref: ValueRefU8, value: u8) {
 		match value_ref {
 			ValueRefU8::Mem(addr) => self.memory.borrow_mut()[self.read_16(addr)] = value,
-			ValueRefU8::Reg(reg) => self.registers.set_u8(reg, value),
+			ValueRefU8::Reg(reg) => self.registers[reg] = value,
 			ValueRefU8::Raw(_) => unreachable!(),
 		}
 	}

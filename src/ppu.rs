@@ -56,7 +56,6 @@ impl Ppu {
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode) {
-		use BitFlag::Stat;
 		use STATFlag::*;
 		match mode {
 			PPUMode::HBlank => {
@@ -79,7 +78,6 @@ impl Ppu {
 						);
 					}
 				}
-
 				self.t_state += 456;
 				self.set_ly(self.get_ly() + 1)
 			}

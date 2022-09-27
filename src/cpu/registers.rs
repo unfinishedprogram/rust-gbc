@@ -55,14 +55,6 @@ impl CPURegisters {
 		}
 	}
 
-	pub fn get_u8(&self, reg: CPURegister8) -> u8 {
-		self.bytes[reg as usize]
-	}
-
-	pub fn set_u8(&mut self, reg: CPURegister8, value: u8) {
-		self.bytes[reg as usize] = value;
-	}
-
 	pub fn get_u16(&self, reg: CPURegister16) -> u16 {
 		match reg {
 			AF => u16::from_le_bytes([self[F], self[A]]),
@@ -76,26 +68,12 @@ impl CPURegisters {
 
 	pub fn set_u16(&mut self, reg: CPURegister16, value: u16) {
 		let bytes = u16::to_le_bytes(value);
+
 		match reg {
-			AF => {
-				self[A] = bytes[1];
-				self[F] = bytes[0];
-			}
-
-			BC => {
-				self[B] = bytes[1];
-				self[C] = bytes[0];
-			}
-
-			DE => {
-				self[D] = bytes[1];
-				self[E] = bytes[0];
-			}
-
-			HL => {
-				self[H] = bytes[1];
-				self[L] = bytes[0];
-			}
+			AF => [self[F], self[A]] = bytes,
+			BC => [self[C], self[B]] = bytes,
+			DE => [self[E], self[D]] = bytes,
+			HL => [self[L], self[H]] = bytes,
 
 			SP => self.sp = value,
 			PC => self.pc = value,
