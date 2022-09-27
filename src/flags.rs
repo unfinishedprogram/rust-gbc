@@ -68,17 +68,17 @@ fn flag_to_tuple(flag: BitFlag) -> (u16, u8) {
 
 pub fn get_bit_flag(mem: &Memory, flag: BitFlag) -> bool {
 	let flag = flag_to_tuple(flag);
-	return (mem[flag.0] >> flag.1) & 1 == 1;
+	return (mem.read(flag.0) >> flag.1) & 1 == 1;
 }
 
 pub fn clear_bit_flag(mem: &mut Memory, flag: BitFlag) {
 	let flag = flag_to_tuple(flag);
-	clear_bit(&mut mem[flag.0], flag.1);
+	clear_bit(mem.get_ref(flag.0), flag.1);
 }
 
 pub fn set_bit_flag(mem: &mut Memory, flag: BitFlag) {
 	let flag = flag_to_tuple(flag);
-	set_bit(&mut mem[flag.0], flag.1);
+	set_bit(mem.get_ref(flag.0), flag.1);
 }
 
 pub fn set_bit_flag_to(mem: &mut Memory, flag: BitFlag, status: bool) {

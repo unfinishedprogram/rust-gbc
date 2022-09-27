@@ -23,12 +23,12 @@ pub fn memory_view(ui: &mut Ui, cpu: &Cpu, state: &mut MemoryViewState) {
 		ui.vertical(|ui| {
 			ui.set_min_width(140.0);
 			let mem = cpu.memory.borrow();
-			ui.monospace(format!("IR:{:08b}", mem[0xFF0F]));
-			ui.monospace(format!("IE:{:08b}", mem[0xFFFF]));
+			ui.monospace(format!("IR:{:08b}", mem.read(0xFF0F)));
+			ui.monospace(format!("IE:{:08b}", mem.read(0xFFFF)));
 
 			match state.selected {
 				Some(index) => {
-					let value = cpu.memory.borrow()[index];
+					let value = cpu.memory.borrow().read(index);
 					ui.monospace(format!("INT : {:}", value));
 					ui.monospace(format!("BIN : {:08b}", value));
 					ui.monospace(format!("HEX : {:02X}", value));
@@ -74,21 +74,22 @@ pub fn memory_view(ui: &mut Ui, cpu: &Cpu, state: &mut MemoryViewState) {
 					for i in 0..width {
 						let index: u16 = (row_index * width + i).try_into().unwrap_or(0);
 						row.col(|ui| {
-							let text = RichText::new(format!("{:02X}", cpu.memory.borrow()[index]))
-								.monospace()
-								.color(match index {
-									p if p == pc => Rgba::RED,
-									_ => Rgba::WHITE,
-								})
-								.background_color(match (state.selected, state.hovering) {
-									(Some(i), _) if i == index => {
-										Rgba::from(Color32::from_rgb(80, 80, 80))
-									}
-									(_, Some(i)) if i == index => {
-										Rgba::from(Color32::from_rgb(60, 60, 60))
-									}
-									(_, _) => Rgba::TRANSPARENT,
-								});
+							let text =
+								RichText::new(format!("{:02X}", cpu.memory.borrow().read(index)))
+									.monospace()
+									.color(match index {
+										p if p == pc => Rgba::RED,
+										_ => Rgba::WHITE,
+									})
+									.background_color(match (state.selected, state.hovering) {
+										(Some(i), _) if i == index => {
+											Rgba::from(Color32::from_rgb(80, 80, 80))
+										}
+										(_, Some(i)) if i == index => {
+											Rgba::from(Color32::from_rgb(60, 60, 60))
+										}
+										(_, _) => Rgba::TRANSPARENT,
+									});
 							let label = Label::new(text).sense(Sense::click());
 
 							let instance = ui.add(label);

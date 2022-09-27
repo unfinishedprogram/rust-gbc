@@ -1,5 +1,3 @@
-use std::ops::{Index, IndexMut};
-
 pub struct Memory {
 	bytes: [u8; 0x10000],
 }
@@ -18,6 +16,10 @@ impl Memory {
 		};
 	}
 
+	pub fn get_ref(&mut self, addr: u16) -> &mut u8 {
+		return &mut self.bytes[addr as usize];
+	}
+
 	pub fn write(&mut self, addr: u16, value: u8) {
 		match addr {
 			0xFEA0..=0xFEFF => {}
@@ -27,18 +29,5 @@ impl Memory {
 			}
 			_ => self.bytes[addr as usize] = value,
 		}
-	}
-}
-
-impl Index<u16> for Memory {
-	type Output = u8;
-	fn index(&self, addr: u16) -> &Self::Output {
-		&self.bytes[addr as usize]
-	}
-}
-
-impl IndexMut<u16> for Memory {
-	fn index_mut(&mut self, addr: u16) -> &mut Self::Output {
-		&mut self.bytes[addr as usize]
 	}
 }

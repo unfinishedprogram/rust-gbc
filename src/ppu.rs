@@ -27,7 +27,7 @@ impl Ppu {
 
 	pub fn get_mode(&self) -> PPUMode {
 		let mem = self.memory.borrow();
-		let num = mem[STAT as u16] & 0b00000011;
+		let num = mem.read(STAT as u16) & 0b00000011;
 		return match num {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
@@ -38,13 +38,13 @@ impl Ppu {
 	}
 
 	pub fn get_ly(&self) -> u8 {
-		return self.memory.borrow()[LY as u16];
+		return self.memory.borrow().read(LY as u16);
 	}
 
 	pub fn set_ly(&mut self, value: u8) {
 		let mut mem = self.memory.borrow_mut();
-		mem[LY as u16] = value;
-		let lyc_status = mem[LYC as u16] == value;
+		let lyc_status = mem.read(LY as u16) == value;
+		mem.write(LY as u16, value);
 		set_bit_flag_to(&mut mem, BitFlag::Stat(STATFlag::LYCeqLY), lyc_status);
 
 		if lyc_status && get_bit_flag(&mem, BitFlag::Stat(STATFlag::LYCeqLUInterruptEnable)) {
@@ -103,8 +103,8 @@ impl Ppu {
 			PPUMode::Draw => self.t_state += 172,
 		}
 		let mut mem = self.memory.borrow_mut();
-
-		mem[STAT as u16] = (mem[STAT as u16] & 0b11111100) | mode as u8;
+		let current_stat = mem.read(STAT as u16);
+		mem.write(STAT as u16, (current_stat & 0b11111100) | mode as u8);
 	}
 
 	pub fn step(&mut self) {

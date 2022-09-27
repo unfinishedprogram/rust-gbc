@@ -58,25 +58,26 @@ impl Cpu {
 
 		self.registers.sp = 0xFFFE;
 		let mut mem = self.memory.borrow_mut();
-		mem[0xFF10] = 0x80;
-		mem[0xFF11] = 0xBF;
-		mem[0xFF12] = 0xF3;
-		mem[0xFF14] = 0xBF;
-		mem[0xFF16] = 0x3F;
-		mem[0xFF19] = 0xBF;
-		mem[0xFF1A] = 0x7F;
-		mem[0xFF1B] = 0xFF;
-		mem[0xFF1C] = 0x9F;
-		mem[0xFF1E] = 0xBF;
-		mem[0xFF20] = 0xFF;
-		mem[0xFF23] = 0xBF;
-		mem[0xFF24] = 0x77;
-		mem[0xFF25] = 0xF3;
-		mem[0xFF26] = 0xF1;
-		mem[0xFF40] = 0x91;
-		mem[0xFF47] = 0xFC;
-		mem[0xFF48] = 0xFF;
-		mem[0xFF49] = 0xFF;
+
+		mem.write(0xFF10, 0x80);
+		mem.write(0xFF11, 0xBF);
+		mem.write(0xFF12, 0xF3);
+		mem.write(0xFF14, 0xBF);
+		mem.write(0xFF16, 0x3F);
+		mem.write(0xFF19, 0xBF);
+		mem.write(0xFF1A, 0x7F);
+		mem.write(0xFF1B, 0xFF);
+		mem.write(0xFF1C, 0x9F);
+		mem.write(0xFF1E, 0xBF);
+		mem.write(0xFF20, 0xFF);
+		mem.write(0xFF23, 0xBF);
+		mem.write(0xFF24, 0x77);
+		mem.write(0xFF25, 0xF3);
+		mem.write(0xFF26, 0xF1);
+		mem.write(0xFF40, 0x91);
+		mem.write(0xFF47, 0xFC);
+		mem.write(0xFF48, 0xFF);
+		mem.write(0xFF49, 0xFF);
 	}
 
 	pub fn add_t(&mut self, t: u32) {
@@ -148,8 +149,8 @@ impl Cpu {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				let mut mem = self.memory.borrow_mut();
-				mem[i + 1] = (value >> 8) as u8;
-				mem[i] = (value & 0xFF) as u8;
+				mem.write(i + 1, (value >> 8) as u8);
+				mem.write(i, (value & 0xFF) as u8);
 			}
 			ValueRefU16::Reg(reg) => self.registers.set_u16(reg, value),
 			ValueRefU16::Raw(_) => unreachable!(),
@@ -250,7 +251,7 @@ impl Cpu {
 		let (_, data) = rom;
 
 		for i in 0..data.len() {
-			mem[i as u16] = data[i];
+			mem.write(i as u16, data[i]);
 		}
 	}
 }
