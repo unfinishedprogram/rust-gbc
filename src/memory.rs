@@ -1,7 +1,4 @@
-use std::{
-	cell::RefCell,
-	ops::{Index, IndexMut},
-};
+use std::ops::{Index, IndexMut};
 
 pub struct Memory {
 	bytes: [u8; 0x10000],

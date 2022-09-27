@@ -5,8 +5,7 @@ use crate::{
 		joypad_view::joypad_view,
 		log_view::log_view,
 		memory_view::{memory_view, MemoryViewState},
-		ppu_view::ppu_view,
-		state_view::state_view,
+		status_view::status_view,
 	},
 	cpu::registers::CPURegister16,
 	emulator::Emulator,
@@ -14,7 +13,7 @@ use crate::{
 };
 
 use eframe::epaint::Shadow;
-use egui::{style::Widgets, ComboBox, Rounding, Stroke};
+use egui::{style::Widgets, Rounding, Stroke, Style};
 use egui::{Color32, Visuals};
 use poll_promise::Promise;
 
@@ -24,10 +23,8 @@ pub struct EmulatorManager {
 	play: bool,
 	logs: Vec<(u16, String)>,
 	memory_view_state: MemoryViewState,
-	screen_view_state: BufferViewState,
 	tile_view_state: BufferViewState,
 	vram_view_state: BufferViewState,
-	selected_rom: &'static str,
 	roms: Vec<&'static str>,
 }
 
@@ -39,15 +36,13 @@ impl Default for EmulatorManager {
 			loaded_file_data: None::<Promise<CartridgeData>>,
 			logs: vec![],
 			memory_view_state: MemoryViewState::default(),
-			screen_view_state: BufferViewState::new("Screen View", (160, 144)),
 			tile_view_state: BufferViewState::new("Window View", (256, 256)),
 			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
-			selected_rom: "",
 			roms: vec![
-				"roms/dr-mario.gb",
-				"roms/06-ld r,r.gb",
 				"roms/tetris.gb",
+				"roms/dr-mario.gb",
 				"roms/02-interrupts.gb",
+				"roms/06-ld r,r.gb",
 				"roms/07-jr,jp,call,ret,rst.gb",
 			],
 		}
@@ -67,7 +62,7 @@ impl EmulatorManager {
 	}
 
 	pub fn log(&mut self, pc: u16, text: String) {
-		if self.logs.len() >= 100 {
+		if self.logs.len() >= 1000 {
 			self.logs.remove(0);
 		}
 		self.logs.push((pc, text));
@@ -99,21 +94,26 @@ fn color(val: u32) -> Color32 {
 
 impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		let mut style = Visuals::default();
+		let mut visuals = Visuals::default();
 		let mut widgets = Widgets::default();
+		let mut style = Style::default();
+
+		style.spacing.item_spacing = (5.0, 5.0).into();
+		style.spacing.button_padding = (10.0, 5.0).into();
 
 		widgets.noninteractive.bg_fill = color(0x1c212b);
 		widgets.noninteractive.bg_stroke = Stroke::new(1.0, color(0xBBBBBB));
 
 		widgets.inactive.rounding = Rounding::default().at_least(2.0);
 
-		style.widgets = widgets;
-		style.window_rounding = Rounding::default().at_least(2.0);
-		style.window_shadow = Shadow::small_dark();
-		style.override_text_color = Some(color(0xc5c5c5));
-		style.hyperlink_color = color(0x0096cf);
+		visuals.widgets = widgets;
+		visuals.window_rounding = Rounding::default().at_least(2.0);
+		visuals.window_shadow = Shadow::small_dark();
+		visuals.override_text_color = Some(color(0xc5c5c5));
+		visuals.hyperlink_color = color(0x0096cf);
 
-		ctx.set_visuals(style);
+		ctx.set_style(style);
+		ctx.set_visuals(visuals);
 
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(result) = data.ready() {
@@ -123,12 +123,7 @@ impl eframe::App for EmulatorManager {
 			}
 		}
 
-		state_view(ctx, &self.emulator.cpu);
-		memory_view(ctx, &self.emulator.cpu, &mut self.memory_view_state);
-		log_view(ctx, &self.logs);
-		ppu_view(ctx, &self.emulator.ppu);
 		joypad_view(ctx, &mut self.emulator.cpu);
-		render_image(ctx, &mut self.screen_view_state);
 		render_image(ctx, &mut self.vram_view_state);
 		render_image(ctx, &mut self.tile_view_state);
 
@@ -142,57 +137,70 @@ impl eframe::App for EmulatorManager {
 			&mut self.tile_view_state.pixel_buffer,
 		);
 
-		egui::SidePanel::left("side_panel").show(ctx, |ui| {
-			if ui.button("step").clicked() || ctx.input().key_pressed(egui::Key::ArrowRight) {
-				self.step_emulation();
-			}
-
-			if ui.button("Load Bios").clicked() {
-				self.load_cartridge_by_url("roms/dmg_boot.bin", CartridgeType::BIOS);
-			}
-
+		egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
-				ComboBox::from_label("")
-					.selected_text(format!("{:?}", self.selected_rom))
-					.show_ui(ui, |ui| {
-						for rom in self.roms.iter() {
-							ui.selectable_value(&mut self.selected_rom, rom, *rom);
+				ui.menu_button("file", |ui| {
+					ui.menu_button("Load Rom", |ui| {
+						for rom in self.roms.clone().iter() {
+							if ui.button(format!("{:?}", rom)).clicked() {
+								ui.add_space(5.0);
+								self.load_cartridge_by_url(rom, CartridgeType::ROM);
+								ui.close_menu();
+							}
 						}
 					});
+				});
 
-				if ui.button("Load Rom").clicked() {
-					self.load_cartridge_by_url(self.selected_rom, CartridgeType::ROM);
-				}
-			});
-
-			if ui
-				.button(match self.play {
-					true => "stop",
-					false => "start",
-				})
-				.clicked()
-			{
-				self.play = !self.play
-			}
-
-			if self.play {
-				// 70224 // t-cycles per frame
-				let mut count = 0;
-				loop {
+				if ui.button("step").clicked() || ctx.input().key_pressed(egui::Key::ArrowRight) {
 					self.step_emulation();
-					count += 1;
-					if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0xc7f5 {
-						self.play = false;
-						break;
-					}
-
-					if count > 702 {
-						break;
-					}
 				}
-				ctx.request_repaint(); // wake up UI thread
-			}
+
+				if ui.button("Load Bios").clicked() {
+					self.load_cartridge_by_url("roms/dmg_boot.bin", CartridgeType::BIOS);
+				}
+
+				if ui
+					.button(match self.play {
+						true => "stop",
+						false => "start",
+					})
+					.clicked()
+				{
+					self.play = !self.play
+				}
+			})
 		});
+
+		egui::SidePanel::left("left_panel").show(ctx, |ui| {
+			log_view(ui, &self.logs);
+		});
+
+		egui::SidePanel::right("right_panel").show(ctx, |ui| {
+			ui.horizontal(|ui| {
+				status_view(ui, &self.emulator);
+				memory_view(ui, &self.emulator.cpu, &mut self.memory_view_state);
+			})
+		});
+
+		egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
+
+		if self.play {
+			// 70224 // t-cycles per frame
+			let mut count = 0;
+			loop {
+				self.step_emulation();
+				count += 1;
+				if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0xc7f5 {
+					self.play = false;
+					break;
+				}
+
+				if count > 702 {
+					break;
+				}
+			}
+			ctx.request_repaint(); // wake up UI thread
+		}
 	}
 }
 
