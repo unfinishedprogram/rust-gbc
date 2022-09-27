@@ -1,7 +1,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::flags::set_bit_flag;
+use crate::flags::{set_bit_flag_to, BitFlag, STATFlag};
+
 use crate::memory::Memory;
 
 use crate::memory_registers::MemoryRegister::*;
@@ -24,26 +25,9 @@ impl Ppu {
 		Ppu { memory, t_state: 0 }
 	}
 
-	pub fn set_mode(&mut self, mode: PPUMode) {
-		match mode {
-			PPUMode::HBlank => self.t_state += 204,
-			PPUMode::VBlank => {
-				self.t_state += 456;
-				self.set_ly(self.get_ly() + 1)
-			}
-			PPUMode::OamScan => {
-				self.t_state += 80;
-				self.set_ly((self.get_ly() + 1) % 153)
-			}
-			PPUMode::Draw => self.t_state += 172,
-		}
-		let mut mem = self.memory.borrow_mut();
-		mem[LCDC as u16] = (mem[LCDC as u16] & 0b11111100) | mode as u8;
-	}
-
 	pub fn get_mode(&self) -> PPUMode {
 		let mem = self.memory.borrow();
-		let num = mem[LCDC as u16] & 0b00000011;
+		let num = mem[STAT as u16] & 0b00000011;
 		return match num {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
@@ -56,8 +40,33 @@ impl Ppu {
 	pub fn get_ly(&self) -> u8 {
 		return self.memory.borrow()[LY as u16];
 	}
+
 	pub fn set_ly(&mut self, value: u8) {
-		self.memory.borrow_mut()[LY as u16] = value;
+		let mut mem = self.memory.borrow_mut();
+		mem[LY as u16] = value;
+		let lyc_status = mem[LYC as u16] == value;
+		set_bit_flag_to(&mut mem, BitFlag::Stat(STATFlag::LYCeqLU), lyc_status);
+	}
+
+	pub fn set_mode(&mut self, mode: PPUMode) {
+		match mode {
+			PPUMode::HBlank => self.t_state += 204,
+			PPUMode::VBlank => {
+				self.t_state += 456;
+				self.set_ly(self.get_ly() + 1)
+			}
+			PPUMode::OamScan => {
+				self.t_state += 80;
+				if self.get_ly() > 153 {
+					self.set_ly(0);
+				} else {
+					self.set_ly(self.get_ly() + 1);
+				}
+			}
+			PPUMode::Draw => self.t_state += 172,
+		}
+		let mut mem = self.memory.borrow_mut();
+		mem[STAT as u16] = (mem[STAT as u16] & 0b11111100) | mode as u8;
 	}
 
 	pub fn step(&mut self) {
@@ -67,10 +76,9 @@ impl Ppu {
 				(OamScan, _) => self.set_mode(Draw),
 				(Draw, _) => self.set_mode(HBlank),
 				(HBlank, 0..=143) => self.set_mode(OamScan),
-				(HBlank, 144..=u8::MAX) => self.set_mode(VBlank),
-				(VBlank, 144..=152) => self.set_mode(VBlank),
-				(VBlank, 153) => self.set_mode(OamScan),
-				_ => self.set_mode(VBlank),
+				(HBlank, _) => self.set_mode(VBlank),
+				(VBlank, 144..=153) => self.set_mode(VBlank),
+				(VBlank, _) => self.set_mode(OamScan),
 			}
 		}
 		self.t_state -= 1;

@@ -14,10 +14,7 @@ use crate::{
 };
 
 use eframe::epaint::Shadow;
-use egui::{
-	style::{Selection, Widgets},
-	ComboBox, Rounding, Stroke,
-};
+use egui::{style::Widgets, ComboBox, Rounding, Stroke};
 use egui::{Color32, Visuals};
 use poll_promise::Promise;
 
@@ -46,7 +43,13 @@ impl Default for EmulatorManager {
 			tile_view_state: BufferViewState::new("Window View", (256, 256)),
 			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
 			selected_rom: "",
-			roms: vec!["roms/dr-mario.gb", "roms/06-ld r,r.gb", "roms/tetris.gb"],
+			roms: vec![
+				"roms/dr-mario.gb",
+				"roms/06-ld r,r.gb",
+				"roms/tetris.gb",
+				"02-interrupts.gb",
+				"07-jr,jp,call,ret,rst.gb",
+			],
 		}
 	}
 }
@@ -178,12 +181,12 @@ impl eframe::App for EmulatorManager {
 				loop {
 					self.step_emulation();
 					count += 1;
-					if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0xCC5F {
+					if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0xCc5f {
 						self.play = false;
 						break;
 					}
 
-					if count > 702 {
+					if count > 7022 {
 						break;
 					}
 				}

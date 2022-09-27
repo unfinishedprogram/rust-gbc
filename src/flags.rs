@@ -11,6 +11,14 @@ pub enum InterruptFlag {
 	JoyPad = 4,
 }
 
+pub enum STATFlag {
+	LYCeqLU = 2,
+	HBlankStatInterruptEnable = 3,
+	VBlankStatInterruptEnable = 4,
+	OAMStatInterruptEnable = 5,
+	LYCeqLUInterruptEnable = 6,
+}
+
 pub enum JoyPadFlag {
 	RightOrA = 0,
 	LeftOrB = 1,
@@ -40,6 +48,7 @@ pub enum BitFlag {
 	InterruptRequest(InterruptFlag) = 0xFF0F,
 	JoyPad(JoyPadFlag) = 0xFF00,
 	LCD(LCDFlag) = 0xFF40,
+	Stat(STATFlag) = 0xFF41,
 	Timer(TimerFlag) = 0xFF07,
 }
 
@@ -48,6 +57,7 @@ fn flag_to_tuple(flag: BitFlag) -> (u16, u16) {
 		BitFlag::InterruptEnable(bit) => (0xFFFF, bit as u16),
 		BitFlag::InterruptRequest(bit) => (0xFF0F, bit as u16),
 		BitFlag::LCD(bit) => (0xFF40, bit as u16),
+		BitFlag::Stat(bit) => (0xFF41, bit as u16),
 		BitFlag::Timer(bit) => (0xFF07, bit as u16),
 		BitFlag::JoyPad(bit) => (0xFF00, bit as u16),
 	}
@@ -68,4 +78,12 @@ pub fn set_bit_flag(mem: &mut Memory, flag: BitFlag) {
 	let flag = flag_to_tuple(flag);
 	let mask = 1 << flag.1;
 	mem[flag.0] |= mask;
+}
+
+pub fn set_bit_flag_to(mem: &mut Memory, flag: BitFlag, status: bool) {
+	if status {
+		set_bit_flag(mem, flag)
+	} else {
+		clear_bit_flag(mem, flag)
+	}
 }

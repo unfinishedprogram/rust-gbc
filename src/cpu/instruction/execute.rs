@@ -51,7 +51,7 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 		}
 
 		STOP => todo!(),
-		ERROR(_) => todo!(),
+		ERROR(_) => {}
 
 		JP(condition, location) => {
 			if cpu.check_condition(condition) {
