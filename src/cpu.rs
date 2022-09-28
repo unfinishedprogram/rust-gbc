@@ -191,30 +191,13 @@ impl Cpu {
 	fn get_interrupt(&mut self) -> Option<Instruction> {
 		use InterruptFlag::*;
 
+		let to_check = [VBlank, LcdStat, Timer, Serial, JoyPad];
 		if self.interrupt_enable {
-			if self.check_interrupt(VBlank) {
-				self.clear_request(VBlank);
-				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x40)));
-			}
-
-			if self.check_interrupt(LcdStat) {
-				self.clear_request(LcdStat);
-				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x48)));
-			}
-
-			if self.check_interrupt(Timer) {
-				self.clear_request(Timer);
-				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x50)));
-			}
-
-			if self.check_interrupt(Serial) {
-				self.clear_request(Serial);
-				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x58)));
-			}
-
-			if self.check_interrupt(JoyPad) {
-				self.clear_request(JoyPad);
-				return Some(Instruction::CALL(Condition::ALWAYS, ValueRefU16::Raw(0x60)));
+			for interrupt in to_check {
+				if self.check_interrupt(interrupt) {
+					self.clear_request(interrupt);
+					return Some(Instruction::INT(interrupt));
+				}
 			}
 		}
 		return None;
