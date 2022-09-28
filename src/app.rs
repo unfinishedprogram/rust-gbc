@@ -2,12 +2,12 @@ use crate::{
 	cartridge::{CartridgeData, CartridgeType},
 	components::{
 		buffer_view::{render_image, BufferViewState},
+		drawable::Drawable,
 		joypad_view::joypad_view,
-		log_view::log_view,
+		log_view::Logger,
 		memory_view::{memory_view, MemoryViewState},
 		status_view::status_view,
 	},
-	cpu::{instruction::Instruction, registers::CPURegister16},
 	emulator::Emulator,
 	util::debug_draw::{debug_draw_tile_data, debug_draw_window_data},
 };
@@ -19,9 +19,9 @@ use poll_promise::Promise;
 
 pub struct EmulatorManager {
 	emulator: Emulator,
+	logger: Logger,
 	loaded_file_data: Option<Promise<CartridgeData>>,
 	play: bool,
-	logs: Vec<(u16, String)>,
 	memory_view_state: MemoryViewState,
 	tile_view_state: BufferViewState,
 	vram_view_state: BufferViewState,
@@ -34,7 +34,7 @@ impl Default for EmulatorManager {
 			play: false,
 			emulator: Emulator::new(),
 			loaded_file_data: None::<Promise<CartridgeData>>,
-			logs: vec![],
+			logger: Logger::default(),
 			memory_view_state: MemoryViewState::default(),
 			tile_view_state: BufferViewState::new("Window View", (256, 256)),
 			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
@@ -57,15 +57,8 @@ impl EmulatorManager {
 	pub fn step_emulation(&mut self) {
 		let pc = self.emulator.cpu.registers.pc;
 		if let Some(inst) = self.emulator.step() {
-			self.log(pc, format!("{:?}", inst));
+			self.logger.info(format!("{} : {:?}", pc, inst));
 		};
-	}
-
-	pub fn log(&mut self, pc: u16, text: String) {
-		if self.logs.len() >= 1000 {
-			self.logs.remove(0);
-		}
-		self.logs.push((pc, text));
 	}
 
 	pub fn load_cartridge_by_url(&mut self, url: &str, cartridge_type: CartridgeType) {
@@ -118,7 +111,7 @@ impl eframe::App for EmulatorManager {
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(result) = data.ready() {
 				self.emulator.cpu.load_cartridge(result);
-				self.log(0, "Loaded ROM".to_string());
+				self.logger.info("Loaded ROM");
 				self.loaded_file_data = None;
 			}
 		}
@@ -140,8 +133,8 @@ impl eframe::App for EmulatorManager {
 		egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
 				ui.menu_button("file", |ui| {
-					ui.menu_button("Load Rom", |ui| {
-						for rom in self.roms.clone().iter() {
+					ui.menu_button("load rom", |ui| {
+						for rom in &self.roms.clone() {
 							if ui.button(rom.to_string()).clicked() {
 								ui.add_space(5.0);
 								self.load_cartridge_by_url(rom, CartridgeType::ROM);
@@ -171,9 +164,7 @@ impl eframe::App for EmulatorManager {
 			})
 		});
 
-		egui::SidePanel::left("left_panel").show(ctx, |ui| {
-			log_view(ui, &self.logs);
-		});
+		egui::SidePanel::left("left_panel").show(ctx, |ui| self.logger.draw(ui));
 
 		egui::SidePanel::right("right_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
