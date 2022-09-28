@@ -4,7 +4,7 @@ use crate::{
 		buffer_view::{render_image, BufferViewState},
 		drawable::Drawable,
 		joypad_view::joypad_view,
-		log_view::Logger,
+		logger::Logger,
 		memory_view::{memory_view, MemoryViewState},
 		status_view::status_view,
 	},
