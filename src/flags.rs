@@ -55,7 +55,7 @@ pub enum BitFlag {
 	Timer(TimerFlag) = 0xFF07,
 }
 
-fn flag_to_tuple(flag: BitFlag) -> (u16, u8) {
+fn flag_to_tuple(flag: BitFlag) -> BitFlagRef {
 	match flag {
 		BitFlag::InterruptEnable(bit) => (0xFFFF, bit as u8),
 		BitFlag::InterruptRequest(bit) => (0xFF0F, bit as u8),
@@ -67,18 +67,18 @@ fn flag_to_tuple(flag: BitFlag) -> (u16, u8) {
 }
 
 pub fn get_bit_flag(mem: &Memory, flag: BitFlag) -> bool {
-	let flag = flag_to_tuple(flag);
-	return (mem.read(flag.0) >> flag.1) & 1 == 1;
+	let (addr, bit) = flag_to_tuple(flag);
+	return (mem.read(addr) >> bit) & 1 == 1;
 }
 
 pub fn clear_bit_flag(mem: &mut Memory, flag: BitFlag) {
-	let flag = flag_to_tuple(flag);
-	clear_bit(mem.get_ref(flag.0), flag.1);
+	let (addr, bit) = flag_to_tuple(flag);
+	clear_bit(mem.get_ref(addr), bit);
 }
 
 pub fn set_bit_flag(mem: &mut Memory, flag: BitFlag) {
-	let flag = flag_to_tuple(flag);
-	set_bit(mem.get_ref(flag.0), flag.1);
+	let (addr, bit) = flag_to_tuple(flag);
+	set_bit(mem.get_ref(addr), bit);
 }
 
 pub fn set_bit_flag_to(mem: &mut Memory, flag: BitFlag, status: bool) {
