@@ -12,6 +12,20 @@ use super::Instruction::*;
 pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 	match instruction {
 		NOP => {}
+		INT(interrupt) => {
+			use crate::flags::InterruptFlag::*;
+			let addr = match interrupt {
+				VBlank => 0x40,
+				LcdStat => 0x48,
+				Timer => 0x50,
+				Serial => 0x58,
+				JoyPad => 0x60,
+			};
+			let current_pc = cpu.read_16(CPURegister16::PC.into());
+			cpu.push(current_pc);
+			cpu.write_16(CPURegister16::PC.into(), addr);
+			cpu.disable_interrupts();
+		}
 
 		COMPOSE(a, b) => {
 			execute_instruction(*a, cpu);
@@ -201,10 +215,10 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			cpu.write_16(CPURegister16::PC.into(), new_pc);
 		}
 		DI => {
-			cpu.enable_interrupts();
+			cpu.disable_interrupts();
 		}
 		EI => {
-			cpu.disable_interrupts();
+			cpu.enable_interrupts();
 		}
 		RLCA => {
 			let value = cpu.read_8(CPURegister8::A.into());

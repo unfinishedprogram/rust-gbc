@@ -16,6 +16,7 @@ use super::{
 	values::{ValueRefI8, ValueRefU16, ValueRefU8},
 	Cpu,
 };
+use crate::flags::InterruptFlag;
 
 #[derive(Debug, Clone)]
 #[allow(non_camel_case_types)]
@@ -60,6 +61,8 @@ pub enum Instruction {
 	RES(u8, ValueRefU8),
 	SET(u8, ValueRefU8),
 	ROT(RotShiftOperation, ValueRefU8),
+
+	INT(InterruptFlag),
 }
 
 #[derive(Copy, Clone, Debug)]

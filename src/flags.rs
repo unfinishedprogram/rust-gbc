@@ -5,7 +5,7 @@ use crate::{
 	util::bit_ops::{clear_bit, set_bit},
 };
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum InterruptFlag {
 	VBlank = 0,
 	LcdStat = 1,

@@ -57,7 +57,7 @@ pub fn debug_draw_window_data(memory: &RefCell<Memory>, window_buffer: &mut Pixe
 			let mut values = [0; 16];
 
 			for i in 0..16 {
-				values[i as usize] = memory.read(index + 1).into();
+				values[i as usize] = memory.read(index + i).into();
 			}
 
 			let tile_data = to_pixel_tile(values);

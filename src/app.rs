@@ -7,7 +7,7 @@ use crate::{
 		memory_view::{memory_view, MemoryViewState},
 		status_view::status_view,
 	},
-	cpu::registers::CPURegister16,
+	cpu::{instruction::Instruction, registers::CPURegister16},
 	emulator::Emulator,
 	util::debug_draw::{debug_draw_tile_data, debug_draw_window_data},
 };
@@ -142,7 +142,7 @@ impl eframe::App for EmulatorManager {
 				ui.menu_button("file", |ui| {
 					ui.menu_button("Load Rom", |ui| {
 						for rom in self.roms.clone().iter() {
-							if ui.button(format!("{:?}", rom)).clicked() {
+							if ui.button(rom.to_string()).clicked() {
 								ui.add_space(5.0);
 								self.load_cartridge_by_url(rom, CartridgeType::ROM);
 								ui.close_menu();
@@ -190,12 +190,12 @@ impl eframe::App for EmulatorManager {
 			loop {
 				self.step_emulation();
 				count += 1;
-				if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0xc7f5 {
-					self.play = false;
-					break;
-				}
+				// if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0x37 {
+				// self.play = false;
+				// break;
+				// }
 
-				if count > 702 {
+				if count > 7022 {
 					break;
 				}
 			}

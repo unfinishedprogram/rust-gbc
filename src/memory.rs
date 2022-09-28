@@ -11,7 +11,7 @@ impl Memory {
 
 	pub fn read(&self, addr: u16) -> u8 {
 		return match addr {
-			0xFEA0..=0xFEFF => 0xFF,
+			0xFEA0..=0xFEFF => 0,
 			_ => self.bytes[addr as usize],
 		};
 	}
