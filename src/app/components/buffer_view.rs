@@ -41,29 +41,22 @@ fn to_flat(buffer: &PixelBuffer) -> Vec<u8> {
 }
 
 pub fn render_image(ctx: &Context, state: &mut BufferViewState) {
-	let image = ColorImage::from_rgba_unmultiplied(
-		[state.size.0, state.size.1],
-		to_flat(&state.pixel_buffer).as_slice(),
-	);
+	let size = [state.size.0, state.size.1];
 
-	match &mut state.texture {
-		None => {
-			_ = state.texture.insert(ctx.load_texture(
-				"screen-texture",
-				image,
-				egui::TextureFilter::Nearest,
-			));
-		}
-		Some(texture) => {
-			texture.set(image, egui::TextureFilter::Nearest);
-			egui::Window::new(state.name)
-				.resizable(false)
-				.show(ctx, |ui| {
-					ui.add(Image::new(
-						texture.id(),
-						Vec2::new((state.size.0 as f32) * 2.0, (state.size.1 as f32) * 2.0),
-					))
-				});
-		}
-	}
+	let image = ColorImage::from_rgba_unmultiplied(size, to_flat(&state.pixel_buffer).as_slice());
+
+	let texture = state.texture.get_or_insert_with(|| {
+		ctx.load_texture(state.name, image.clone(), egui::TextureFilter::Nearest)
+	});
+
+	texture.set(image, egui::TextureFilter::Nearest);
+
+	egui::Window::new(state.name)
+		.resizable(false)
+		.show(ctx, |ui| {
+			ui.add(Image::new(
+				texture.id(),
+				Vec2::new((state.size.0 as f32) * 2.0, (state.size.1 as f32) * 2.0),
+			))
+		});
 }
