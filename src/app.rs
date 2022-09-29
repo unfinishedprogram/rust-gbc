@@ -2,7 +2,7 @@ use crate::{
 	cartridge::{CartridgeData, CartridgeType},
 	components::{
 		buffer_view::{render_image, BufferViewState},
-		drawable::{Drawable, DrawableMut},
+		drawable::DrawableMut,
 		joypad_view::joypad_view,
 		logger::Logger,
 		memory_view::{memory_view, MemoryViewState},

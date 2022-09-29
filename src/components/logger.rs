@@ -1,5 +1,7 @@
+use std::fmt::Display;
+
 use super::drawable::{Drawable, DrawableMut};
-use egui::{Color32, Ui};
+use egui::{Color32, RichText, Ui};
 use egui_extras::{Size, TableBuilder};
 
 pub struct Logger {
@@ -10,6 +12,7 @@ pub struct Logger {
 	debug_enabled: bool,
 }
 
+#[derive(Debug)]
 pub enum LogMessageType {
 	Error,
 	Warn,
@@ -17,22 +20,40 @@ pub enum LogMessageType {
 	Debug,
 }
 
+impl Display for LogMessageType {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{} {:?}", self.icon(), self)
+	}
+}
+
+impl LogMessageType {
+	pub fn icon(&self) -> &str {
+		match self {
+			LogMessageType::Error => "⛔",
+			LogMessageType::Warn => "⚠",
+			LogMessageType::Info => "ℹ",
+			LogMessageType::Debug => "💡",
+		}
+	}
+	pub fn color(&self) -> Color32 {
+		match self {
+			LogMessageType::Error => Color32::from_rgb(255, 102, 102),
+			LogMessageType::Warn => Color32::from_rgb(255, 179, 102),
+			LogMessageType::Info => Color32::from_rgb(110, 156, 247),
+			LogMessageType::Debug => Color32::from_rgb(255, 102, 255),
+		}
+	}
+}
+
 pub type LogMessage = (LogMessageType, String);
 
 impl Drawable for LogMessage {
 	fn draw(&self, ui: &mut Ui) {
-		use LogMessageType::*;
-		let (msg, color, icon) = match self {
-			(Error, msg) => (msg, Color32::from_rgb(255, 102, 102), "⛔"),
-			(Info, msg) => (msg, Color32::from_rgb(110, 156, 247), "ℹ"),
-			(Warn, msg) => (msg, Color32::from_rgb(255, 179, 102), "⚠"),
-			(Debug, msg) => (msg, Color32::from_rgb(255, 102, 255), "💡"),
-		};
-
+		let (log_type, msg) = self;
 		ui.label(
-			egui::RichText::new(format!("{} {}", icon, msg))
+			egui::RichText::new(format!("{} {}", log_type.icon(), msg))
 				.strong()
-				.color(color)
+				.color(log_type.color())
 				.monospace()
 				.size(16.0),
 		);
@@ -42,12 +63,24 @@ impl Drawable for LogMessage {
 impl DrawableMut for Logger {
 	fn draw(&mut self, ui: &mut Ui) {
 		ui.heading("Logs");
-
+		use LogMessageType::*;
 		ui.collapsing("Levels", |ui| {
-			ui.checkbox(&mut self.error_enabled, "⛔ Error");
-			ui.checkbox(&mut self.warn_enabled, "⚠ Warn");
-			ui.checkbox(&mut self.info_enabled, "ℹ Info");
-			ui.checkbox(&mut self.debug_enabled, "💡 Debug");
+			ui.checkbox(
+				&mut self.error_enabled,
+				RichText::new(format!("{}", Error)).color(Error.color()),
+			);
+			ui.checkbox(
+				&mut self.warn_enabled,
+				RichText::new(format!("{}", Warn)).color(Warn.color()),
+			);
+			ui.checkbox(
+				&mut self.info_enabled,
+				RichText::new(format!("{}", Info)).color(Info.color()),
+			);
+			ui.checkbox(
+				&mut self.debug_enabled,
+				RichText::new(format!("{}", Debug)).color(Debug.color()),
+			);
 		});
 
 		ui.separator();
