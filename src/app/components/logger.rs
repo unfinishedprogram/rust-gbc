@@ -84,29 +84,30 @@ impl DrawableMut for Logger {
 		});
 
 		ui.separator();
-
 		TableBuilder::new(ui)
-			.cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-			.striped(true)
 			.scroll(true)
+			.striped(true)
+			.cell_layout(egui::Layout::left_to_right(egui::Align::Center))
 			.stick_to_bottom(true)
 			.column(Size::Remainder {
 				range: (0.0, 500.0),
 			})
 			.body(|body| {
-				let mut iter = self.logs.iter().filter(|item| match item {
-					(LogMessageType::Error, _) => self.error_enabled,
-					(LogMessageType::Warn, _) => self.warn_enabled,
-					(LogMessageType::Info, _) => self.info_enabled,
-					(LogMessageType::Debug, _) => self.debug_enabled,
-				});
+				let filtered: Vec<&LogMessage> = self
+					.logs
+					.iter()
+					.filter(|item| match item {
+						(LogMessageType::Error, _) => self.error_enabled,
+						(LogMessageType::Warn, _) => self.warn_enabled,
+						(LogMessageType::Info, _) => self.info_enabled,
+						(LogMessageType::Debug, _) => self.debug_enabled,
+					})
+					.collect();
 
-				let count = iter.clone().count();
+				let count = filtered.len();
 
-				body.rows(18.0, count, |_, mut row| {
-					if let Some(item) = iter.next() {
-						row.col(|ui| item.draw(ui));
-					}
+				body.rows(18.0, count, |index, mut row| {
+					row.col(|ui| filtered[index].draw(ui));
 				});
 			});
 	}
