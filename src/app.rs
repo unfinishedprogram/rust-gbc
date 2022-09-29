@@ -2,7 +2,7 @@ use crate::{
 	cartridge::{CartridgeData, CartridgeType},
 	components::{
 		buffer_view::{render_image, BufferViewState},
-		drawable::Drawable,
+		drawable::{Drawable, DrawableMut},
 		joypad_view::joypad_view,
 		logger::Logger,
 		memory_view::{memory_view, MemoryViewState},
@@ -56,9 +56,15 @@ impl EmulatorManager {
 
 	pub fn step_emulation(&mut self) {
 		let pc = self.emulator.cpu.registers.pc;
+
 		if let Some(inst) = self.emulator.step() {
-			self.logger.info(format!("{} : {:?}", pc, inst));
+			self.logger.info(format!("{} : {:?}", pc, inst))
 		};
+
+		match self.emulator.step() {
+			Some(inst) => self.logger.info(format!("{} : {:?}", pc, inst)),
+			None => {}
+		}
 	}
 
 	pub fn load_cartridge_by_url(&mut self, url: &str, cartridge_type: CartridgeType) {
