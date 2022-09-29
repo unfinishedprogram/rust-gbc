@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use super::drawable::{Drawable, DrawableMut};
+use crate::app::drawable::{Drawable, DrawableMut};
 use egui::{Color32, RichText, Ui};
 use egui_extras::{Size, TableBuilder};
 

@@ -1,13 +1,17 @@
+pub mod components;
+pub mod drawable;
+
+use components::{
+	buffer_view::{render_image, BufferViewState},
+	joypad_view::joypad_view,
+	logger::Logger,
+	memory_view::{memory_view, MemoryViewState},
+	status_view::status_view,
+};
+use drawable::DrawableMut;
+
 use crate::{
 	cartridge::{CartridgeData, CartridgeType},
-	components::{
-		buffer_view::{render_image, BufferViewState},
-		drawable::DrawableMut,
-		joypad_view::joypad_view,
-		logger::Logger,
-		memory_view::{memory_view, MemoryViewState},
-		status_view::status_view,
-	},
 	emulator::Emulator,
 	util::{
 		color::color,
@@ -180,11 +184,6 @@ impl eframe::App for EmulatorManager {
 			loop {
 				self.step_emulation();
 				count += 1;
-				// if self.emulator.cpu.registers.get_u16(CPURegister16::PC) == 0x37 {
-				// self.play = false;
-				// break;
-				// }
-
 				if count > 7022 {
 					break;
 				}

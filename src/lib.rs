@@ -3,7 +3,6 @@
 
 pub mod app;
 pub mod cartridge;
-pub mod components;
 pub mod cpu;
 pub mod emulator;
 pub mod flags;
