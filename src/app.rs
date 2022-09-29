@@ -9,12 +9,15 @@ use crate::{
 		status_view::status_view,
 	},
 	emulator::Emulator,
-	util::debug_draw::{debug_draw_tile_data, debug_draw_window_data},
+	util::{
+		color::color,
+		debug_draw::{debug_draw_tile_data, debug_draw_window_data},
+	},
 };
 
 use eframe::epaint::Shadow;
+use egui::Visuals;
 use egui::{style::Widgets, Rounding, Stroke, Style};
-use egui::{Color32, Visuals};
 use poll_promise::Promise;
 
 pub struct EmulatorManager {
@@ -60,11 +63,6 @@ impl EmulatorManager {
 		if let Some(inst) = self.emulator.step() {
 			self.logger.info(format!("{} : {:?}", pc, inst))
 		};
-
-		match self.emulator.step() {
-			Some(inst) => self.logger.info(format!("{} : {:?}", pc, inst)),
-			None => {}
-		}
 	}
 
 	pub fn load_cartridge_by_url(&mut self, url: &str, cartridge_type: CartridgeType) {
@@ -84,11 +82,6 @@ impl EmulatorManager {
 			promise
 		});
 	}
-}
-
-fn color(val: u32) -> Color32 {
-	let [_, r, g, b] = val.to_be_bytes();
-	Color32::from_rgb(r as u8, g as u8, b as u8)
 }
 
 impl eframe::App for EmulatorManager {
