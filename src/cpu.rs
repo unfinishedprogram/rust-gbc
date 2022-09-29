@@ -48,36 +48,39 @@ impl Cpu {
 		_ = self.interrupt_next_state.insert(true);
 	}
 
-	pub fn init(&mut self) {
-		// self.registers.pc = 0x100;
-		self.registers.pc = 0;
+	pub fn init(mut self) -> Self {
+		self.registers.pc = 0x100;
+		self.registers.sp = 0xFFFE;
+
 		self.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
 		self.write_16(ValueRefU16::Reg(CPURegister16::BC), 0x0013);
 		self.write_16(ValueRefU16::Reg(CPURegister16::DE), 0x00D8);
 		self.write_16(ValueRefU16::Reg(CPURegister16::HL), 0x014D);
 
-		self.registers.sp = 0xFFFE;
-		let mut mem = self.memory.borrow_mut();
+		{
+			let mut mem = self.memory.borrow_mut();
+			mem.write(0xFF10, 0x80);
+			mem.write(0xFF11, 0xBF);
+			mem.write(0xFF12, 0xF3);
+			mem.write(0xFF14, 0xBF);
+			mem.write(0xFF16, 0x3F);
+			mem.write(0xFF19, 0xBF);
+			mem.write(0xFF1A, 0x7F);
+			mem.write(0xFF1B, 0xFF);
+			mem.write(0xFF1C, 0x9F);
+			mem.write(0xFF1E, 0xBF);
+			mem.write(0xFF20, 0xFF);
+			mem.write(0xFF23, 0xBF);
+			mem.write(0xFF24, 0x77);
+			mem.write(0xFF25, 0xF3);
+			mem.write(0xFF26, 0xF1);
+			mem.write(0xFF40, 0x91);
+			mem.write(0xFF47, 0xFC);
+			mem.write(0xFF48, 0xFF);
+			mem.write(0xFF49, 0xFF);
+		}
 
-		mem.write(0xFF10, 0x80);
-		mem.write(0xFF11, 0xBF);
-		mem.write(0xFF12, 0xF3);
-		mem.write(0xFF14, 0xBF);
-		mem.write(0xFF16, 0x3F);
-		mem.write(0xFF19, 0xBF);
-		mem.write(0xFF1A, 0x7F);
-		mem.write(0xFF1B, 0xFF);
-		mem.write(0xFF1C, 0x9F);
-		mem.write(0xFF1E, 0xBF);
-		mem.write(0xFF20, 0xFF);
-		mem.write(0xFF23, 0xBF);
-		mem.write(0xFF24, 0x77);
-		mem.write(0xFF25, 0xF3);
-		mem.write(0xFF26, 0xF1);
-		mem.write(0xFF40, 0x91);
-		mem.write(0xFF47, 0xFC);
-		mem.write(0xFF48, 0xFF);
-		mem.write(0xFF49, 0xFF);
+		self
 	}
 
 	pub fn add_t(&mut self, t: u32) {
