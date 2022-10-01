@@ -1,5 +1,6 @@
 pub mod components;
 pub mod drawable;
+pub mod managed_input;
 
 use components::{
 	buffer_view::{render_image, BufferViewState},
@@ -24,6 +25,8 @@ use egui::Visuals;
 use egui::{style::Widgets, Rounding, Stroke, Style};
 use poll_promise::Promise;
 
+use self::components::breakpoint_manager::BreakpointManager;
+
 pub struct EmulatorManager {
 	emulator: Emulator,
 	logger: Logger,
@@ -32,6 +35,7 @@ pub struct EmulatorManager {
 	memory_view_state: MemoryViewState,
 	tile_view_state: BufferViewState,
 	vram_view_state: BufferViewState,
+	breakpoint_manager: BreakpointManager,
 	roms: Vec<&'static str>,
 }
 
@@ -45,6 +49,7 @@ impl Default for EmulatorManager {
 			memory_view_state: MemoryViewState::default(),
 			tile_view_state: BufferViewState::new("Window View", (256, 256)),
 			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
+			breakpoint_manager: BreakpointManager::default(),
 			roms: vec![
 				"roms/tetris.gb",
 				"roms/dr-mario.gb",
@@ -170,9 +175,12 @@ impl eframe::App for EmulatorManager {
 		egui::SidePanel::left("left_panel").show(ctx, |ui| self.logger.draw(ui));
 
 		egui::SidePanel::right("right_panel").show(ctx, |ui| {
-			ui.horizontal(|ui| {
-				status_view(ui, &self.emulator);
-				memory_view(ui, &self.emulator.cpu, &mut self.memory_view_state);
+			ui.vertical(|ui| {
+				self.breakpoint_manager.draw(ui);
+				ui.horizontal_top(|ui| {
+					status_view(ui, &self.emulator);
+					memory_view(ui, &self.emulator.cpu, &mut self.memory_view_state);
+				})
 			})
 		});
 
@@ -183,6 +191,13 @@ impl eframe::App for EmulatorManager {
 			let mut count = 0;
 			loop {
 				self.step_emulation();
+				if self
+					.breakpoint_manager
+					.break_on(self.emulator.cpu.registers.pc)
+				{
+					self.play = false;
+					self.logger.debug("Breaking");
+				}
 				count += 1;
 				if count > 7022 {
 					break;

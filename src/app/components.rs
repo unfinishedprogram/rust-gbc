@@ -1,3 +1,4 @@
+pub mod breakpoint_manager;
 pub mod buffer_view;
 pub mod joypad_view;
 pub mod logger;
