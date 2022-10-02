@@ -1,5 +1,4 @@
-use crate::cpu::instruction::*;
-use crate::cpu::registers::*;
+use crate::cpu::{instruction::*, registers::*};
 
 pub struct DecodeTables {
 	pub r: [ValueRefU8; 8],

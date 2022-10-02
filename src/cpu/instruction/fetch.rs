@@ -130,9 +130,16 @@ pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 		(3, 3, 6, _, _) => inst!(cpu, DI),
 		(3, 3, 7, _, _) => inst!(cpu, EI),
 
-		(3, 4, c, _, _) => inst!(cpu, CALL, (DT.cc[c]), nn),
+		(3, 4, 0, _, _) => inst!(cpu, CALL, (DT.cc[0]), nn),
+		(3, 4, 1, _, _) => inst!(cpu, CALL, (DT.cc[1]), nn),
+		(3, 4, 2, _, _) => inst!(cpu, CALL, (DT.cc[2]), nn),
+		(3, 4, 3, _, _) => inst!(cpu, CALL, (DT.cc[3]), nn),
 
-		(3, 5, _, _, 0) => inst!(cpu, PUSH, (DT.rp2[p])),
+		(3, 5, _, 0, 0) => inst!(cpu, PUSH, (DT.rp2[0])),
+		(3, 5, _, 1, 0) => inst!(cpu, PUSH, (DT.rp2[1])),
+		(3, 5, _, 2, 0) => inst!(cpu, PUSH, (DT.rp2[2])),
+		(3, 5, _, 3, 0) => inst!(cpu, PUSH, (DT.rp2[3])),
+
 		(3, 5, _, 0, 1) => inst!(cpu, CALL, (Condition::ALWAYS), nn),
 
 		(3, 6, _, _, _) => inst!(cpu, ALU_OP_8, (DT.alu[y]), A, n),
