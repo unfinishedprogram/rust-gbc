@@ -1,4 +1,5 @@
 use super::breakpoint_manager;
+use crate::emulator::Emulator;
 use crate::memory::Memory;
 use crate::{app::drawable::DrawableMut, cpu::Cpu};
 use breakpoint_manager::BreakpointManager;
@@ -10,23 +11,22 @@ use std::{cell::RefCell, rc::Rc};
 pub struct MemoryView {
 	selected: Option<u16>,
 	hovering: Option<u16>,
-	scroll_offset: f32,
 	focus_cell: Option<usize>,
-	memory: Rc<RefCell<Memory>>,
-	breakpoint_manager: &mut BreakpointManager,
+	scroll_offset: f32,
 }
 
-impl MemoryView {
-	pub fn new(memory: Rc<RefCell<Memory>>, breakpoint_manager: &mut BreakpointManager) -> Self {
+impl Default for MemoryView {
+	fn default() -> Self {
 		Self {
 			selected: None,
 			hovering: None,
 			scroll_offset: 0.0,
 			focus_cell: None,
-			memory,
-			breakpoint_manager,
 		}
 	}
+}
+
+impl MemoryView {
 	pub fn focus_cell(&mut self, cell: usize) {
 		self.focus_cell.insert(cell);
 	}
@@ -35,8 +35,13 @@ impl MemoryView {
 	}
 }
 
-impl DrawableMut for MemoryView {
-	fn draw(&mut self, ui: &mut Ui) {
+impl MemoryView {
+	pub fn draw(
+		&mut self,
+		ui: &mut Ui,
+		emulator: &mut Emulator,
+		breakpoint_manager: &mut BreakpointManager,
+	) {
 		ui.vertical(|ui| {
 			ui.vertical_centered(|ui| {
 				let available_rect = ui.available_rect_before_wrap();
@@ -55,10 +60,14 @@ impl DrawableMut for MemoryView {
 				let layout_start = cell_height * min_cell as f32;
 				let layout_end = cell_height * max_cell as f32;
 
+				ui.style_mut().spacing.button_padding = (2.0, 2.0).into();
+
 				ScrollArea::vertical()
 					.vertical_scroll_offset(layout_start)
 					.show(ui, |ui| {
 						ui.add_space(layout_start);
+						ui.visuals_mut().widgets.noninteractive.bg_fill = Color32::BLACK;
+
 						for i in min_cell..max_cell {
 							let color = if let Some(selected) = self.focus_cell {
 								if selected == i {
@@ -71,11 +80,14 @@ impl DrawableMut for MemoryView {
 							};
 
 							ui.horizontal(|ui| {
-								ui.small_button(if self.breakpoint_manager.break_on(i as u16) {
-									"🌑"
-								} else {
-									"⭕"
-								});
+								let break_state = breakpoint_manager.break_on(i as u16);
+								if ui.button(if break_state { "🌑" } else { "⭕" }).clicked() {
+									if break_state {
+										breakpoint_manager.remove_breakpoint(i as u16);
+									} else {
+										breakpoint_manager.add_breakpoint(i as u16);
+									}
+								}
 								ui.colored_label(color, format!("{:04X}", i));
 							});
 						}

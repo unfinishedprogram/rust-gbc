@@ -44,8 +44,8 @@ pub fn joypad_view(ctx: &Context, cpu: &mut Cpu) {
 			let dir_enable = !get_bit_flag(&mem, BitFlag::JoyPad(JoyPadFlag::SelectActionButtons));
 			let act_enable =
 				!get_bit_flag(&mem, BitFlag::JoyPad(JoyPadFlag::SelectDirectionButtons));
-			ui.monospace(format!("Direction: {:?}", dir_enable));
-			ui.monospace(format!("Actions  : {:?}", act_enable));
+			ui.monospace(format!("Direction : {:?}", dir_enable));
+			ui.monospace(format!("Actions   : {:?}", act_enable));
 			for button in buttons {
 				if ui.button(format!("{:?}", button)).clicked() {
 					_ = pressed.insert(button);

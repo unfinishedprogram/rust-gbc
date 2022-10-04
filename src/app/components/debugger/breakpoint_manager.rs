@@ -1,6 +1,5 @@
-use super::super::managed_input::ManagedInput;
-use crate::app::drawable::DrawableMut;
-use egui_extras::{Size, TableBuilder};
+use crate::app::{drawable::DrawableMut, managed_input::ManagedInput};
+use egui::{ScrollArea, Style};
 use std::collections::HashMap;
 
 pub struct BreakpointManager {
@@ -73,7 +72,9 @@ impl DrawableMut for BreakpointManager {
 			ui.heading("Breakpoints");
 			ui.horizontal(|ui| {
 				self.address_input.draw(ui);
-
+				let mut style = Style::default();
+				style.spacing.button_padding = (2.0, 2.0).into();
+				ui.ctx().set_style(style);
 				if ui.button("add").clicked() {
 					if let Some(address) = self.address_input.get_value() {
 						self.add_breakpoint(address);
@@ -82,41 +83,32 @@ impl DrawableMut for BreakpointManager {
 				}
 			});
 
-			ui.vertical(|ui| {
-				TableBuilder::new(ui)
-					.scroll(true)
-					.striped(true)
-					.cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-					.stick_to_bottom(true)
-					.column(Size::Remainder {
-						range: (0.0, 500.0),
-					});
-			});
+			ScrollArea::vertical()
+				.always_show_scroll(true)
+				.max_height(200.0)
+				.show(ui, |ui| {
+					ui.set_min_height(200.0);
+					ui.vertical(|ui| {
+						let keys: Vec<u16> = self
+							.breakpoints
+							.keys()
+							.into_iter()
+							.map(|val| val.to_owned())
+							.collect();
 
-			ui.vertical(|ui| {
-				let keys: Vec<u16> = self
-					.breakpoints
-					.keys()
-					.into_iter()
-					.map(|val| val.to_owned())
-					.collect();
+						for addr in keys {
+							ui.horizontal_top(|ui| {
+								ui.style_mut().spacing.button_padding = (2.0, 2.0).into();
 
-				for addr in keys {
-					ui.horizontal_top(|ui| {
-						if ui
-							.checkbox(
-								self.breakpoints.get_mut(&addr).unwrap_or(&mut false),
-								format!("{:04X}", addr),
-							)
-							.clicked()
-						{}
+								if ui.button("❌").clicked() {
+									self.remove_breakpoint(addr);
+								}
 
-						if ui.button("❌").clicked() {
-							self.remove_breakpoint(addr);
+								ui.label(format!("{:04X}", addr));
+							});
 						}
 					});
-				}
-			});
+				})
 		});
 	}
 }
