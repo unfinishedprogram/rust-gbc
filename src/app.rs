@@ -6,7 +6,7 @@ use components::{
 	buffer_view::{render_image, BufferViewState},
 	joypad_view::joypad_view,
 	logger::Logger,
-	memory_view::{memory_view, MemoryViewState},
+	memory_view::MemoryView,
 	status_view::status_view,
 };
 use drawable::DrawableMut;
@@ -25,14 +25,14 @@ use egui::Visuals;
 use egui::{style::Widgets, Rounding, Stroke, Style};
 use poll_promise::Promise;
 
-use self::components::breakpoint_manager::BreakpointManager;
+use self::components::breakpoint_manager::{self, BreakpointManager};
 
 pub struct EmulatorManager {
 	emulator: Emulator,
 	logger: Logger,
 	loaded_file_data: Option<Promise<CartridgeData>>,
 	play: bool,
-	memory_view_state: MemoryViewState,
+	memory_view: MemoryView,
 	tile_view_state: BufferViewState,
 	vram_view_state: BufferViewState,
 	breakpoint_manager: BreakpointManager,
@@ -41,15 +41,18 @@ pub struct EmulatorManager {
 
 impl Default for EmulatorManager {
 	fn default() -> Self {
+		let emulator = Emulator::new();
+		let mut breakpoint_manager = BreakpointManager::default();
+
 		Self {
 			play: false,
-			emulator: Emulator::new(),
+			memory_view: MemoryView::new(emulator.memory.clone(), &mut breakpoint_manager),
+			breakpoint_manager,
 			loaded_file_data: None::<Promise<CartridgeData>>,
 			logger: Logger::default(),
-			memory_view_state: MemoryViewState::default(),
+			emulator,
 			tile_view_state: BufferViewState::new("Window View", (256, 256)),
 			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
-			breakpoint_manager: BreakpointManager::default(),
 			roms: vec![
 				"roms/tetris.gb",
 				"roms/dr-mario.gb",
@@ -70,7 +73,8 @@ impl EmulatorManager {
 		let pc = self.emulator.cpu.registers.pc;
 
 		if let Some(inst) = self.emulator.step() {
-			self.logger.info(format!("{} : {:?}", pc, inst))
+			self.logger.info(format!("{} : {:?}", pc, inst));
+			self.memory_view.focus_cell(pc as usize);
 		};
 	}
 
@@ -115,6 +119,7 @@ impl eframe::App for EmulatorManager {
 
 		ctx.set_style(style);
 		ctx.set_visuals(visuals);
+		ctx.set_debug_on_hover(true);
 
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(result) = data.ready() {
@@ -179,7 +184,7 @@ impl eframe::App for EmulatorManager {
 				self.breakpoint_manager.draw(ui);
 				ui.horizontal_top(|ui| {
 					status_view(ui, &self.emulator);
-					memory_view(ui, &self.emulator.cpu, &mut self.memory_view_state);
+					self.memory_view.draw(ui);
 				})
 			})
 		});
@@ -199,10 +204,11 @@ impl eframe::App for EmulatorManager {
 					self.logger.debug("Breaking");
 				}
 				count += 1;
-				if count > 7022 {
+				if count > 0 {
 					break;
 				}
 			}
+
 			ctx.request_repaint(); // wake up UI thread
 		}
 	}
