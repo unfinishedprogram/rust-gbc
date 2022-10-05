@@ -6,7 +6,6 @@ use components::{
 	buffer_view::{render_image, BufferViewState},
 	debugger::Debugger,
 	joypad_view::joypad_view,
-	logger::Logger,
 };
 use drawable::DrawableMut;
 
@@ -24,9 +23,10 @@ use egui::Visuals;
 use egui::{style::Widgets, Rounding, Stroke, Style};
 use poll_promise::Promise;
 
+use self::components::logger;
+
 pub struct EmulatorManager {
 	emulator: Emulator,
-	logger: Logger,
 	loaded_file_data: Option<Promise<CartridgeData>>,
 	play: bool,
 	tile_view_state: BufferViewState,
@@ -42,7 +42,6 @@ impl Default for EmulatorManager {
 		Self {
 			play: false,
 			loaded_file_data: None::<Promise<CartridgeData>>,
-			logger: Logger::default(),
 			debugger: Debugger::default(),
 			tile_view_state: BufferViewState::new("Window View", (256, 256)),
 			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
@@ -67,7 +66,7 @@ impl EmulatorManager {
 		let pc = self.emulator.cpu.registers.pc;
 
 		if let Some(inst) = self.emulator.step() {
-			self.logger.info(format!("{} : {:?}", pc, inst));
+			logger::info(format!("{} : {:?}", pc, inst));
 		};
 	}
 
@@ -117,7 +116,7 @@ impl eframe::App for EmulatorManager {
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(result) = data.ready() {
 				self.emulator.cpu.load_cartridge(result);
-				self.logger.info("Loaded ROM");
+				logger::info("Loaded ROM");
 				self.loaded_file_data = None;
 			}
 		}
@@ -170,11 +169,12 @@ impl eframe::App for EmulatorManager {
 			})
 		});
 
-		egui::SidePanel::left("left_panel").show(ctx, |ui| self.logger.draw(ui));
+		unsafe {
+			egui::SidePanel::left("left_panel").show(ctx, |ui| logger::draw(ui));
+		}
 
-		egui::SidePanel::right("right_panel").show(ctx, |ui| {
-			self.debugger.draw(&mut self.emulator, &mut self.logger, ui)
-		});
+		egui::SidePanel::right("right_panel")
+			.show(ctx, |ui| self.debugger.draw(&mut self.emulator, ui));
 
 		egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
 

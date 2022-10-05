@@ -3,34 +3,11 @@ use egui::{ScrollArea, Style};
 use std::collections::HashMap;
 
 pub struct BreakpointManager {
-	enabled: bool,
 	breakpoints: HashMap<u16, bool>,
 	address_input: ManagedInput<u16>,
 }
 
 impl BreakpointManager {
-	pub fn enable(&mut self) {
-		self.enabled = true;
-	}
-
-	pub fn disable(&mut self) {
-		self.enabled = false;
-	}
-
-	pub fn enable_breakpoint(&mut self, addr: u16) {
-		if let Some(state) = self.breakpoints.get_mut(&addr) {
-			*state = true;
-		} else {
-			self.breakpoints.insert(addr, true);
-		}
-	}
-
-	pub fn disable_breakpoint(&mut self, addr: u16) {
-		if let Some(state) = self.breakpoints.get_mut(&addr) {
-			*state = false;
-		}
-	}
-
 	pub fn add_breakpoint(&mut self, addr: u16) {
 		self.breakpoints.insert(addr, true);
 	}
@@ -58,7 +35,6 @@ impl Default for BreakpointManager {
 	fn default() -> Self {
 		Self {
 			breakpoints: HashMap::new(),
-			enabled: false,
 			address_input: ManagedInput::<u16>::new(validate_address, |string| {
 				u16::from_str_radix(string, 16).ok()
 			}),
@@ -89,6 +65,7 @@ impl DrawableMut for BreakpointManager {
 				.show(ui, |ui| {
 					ui.set_min_height(200.0);
 					ui.vertical(|ui| {
+						ui.separator();
 						let keys: Vec<u16> = self
 							.breakpoints
 							.keys()

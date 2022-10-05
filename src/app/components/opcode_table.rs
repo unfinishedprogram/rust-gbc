@@ -1,4 +1,4 @@
-use crate::cpu::{instruction::opcode::Opcode, Cpu};
+use crate::cpu::Cpu;
 use egui::Ui;
 use egui_extras::{Size, TableBuilder};
 

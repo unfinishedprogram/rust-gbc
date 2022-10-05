@@ -1,8 +1,9 @@
-use std::fmt::Display;
-
 use crate::app::drawable::{Drawable, DrawableMut};
 use egui::{Color32, RichText, Ui};
 use egui_extras::{Size, TableBuilder};
+use std::fmt::Display;
+
+pub static mut INSTANCE: Logger = Logger::new();
 
 pub struct Logger {
 	logs: Vec<LogMessage>,
@@ -60,60 +61,90 @@ impl Drawable for LogMessage {
 	}
 }
 
-impl DrawableMut for Logger {
-	fn draw(&mut self, ui: &mut Ui) {
-		ui.heading("Logs");
-		use LogMessageType::*;
-		ui.collapsing("Levels", |ui| {
-			ui.checkbox(
-				&mut self.error_enabled,
-				RichText::new(format!("{}", Error)).color(Error.color()),
-			);
-			ui.checkbox(
-				&mut self.warn_enabled,
-				RichText::new(format!("{}", Warn)).color(Warn.color()),
-			);
-			ui.checkbox(
-				&mut self.info_enabled,
-				RichText::new(format!("{}", Info)).color(Info.color()),
-			);
-			ui.checkbox(
-				&mut self.debug_enabled,
-				RichText::new(format!("{}", Debug)).color(Debug.color()),
-			);
-		});
+pub unsafe fn draw(ui: &mut Ui) {
+	ui.heading("Logs");
+	use LogMessageType::*;
+	ui.collapsing("Levels", |ui| {
+		ui.checkbox(
+			&mut INSTANCE.error_enabled,
+			RichText::new(format!("{}", Error)).color(Error.color()),
+		);
+		ui.checkbox(
+			&mut INSTANCE.warn_enabled,
+			RichText::new(format!("{}", Warn)).color(Warn.color()),
+		);
+		ui.checkbox(
+			&mut INSTANCE.info_enabled,
+			RichText::new(format!("{}", Info)).color(Info.color()),
+		);
+		ui.checkbox(
+			&mut INSTANCE.debug_enabled,
+			RichText::new(format!("{}", Debug)).color(Debug.color()),
+		);
+	});
 
-		ui.separator();
-		TableBuilder::new(ui)
-			.scroll(true)
-			.striped(true)
-			.cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-			.stick_to_bottom(true)
-			.column(Size::Remainder {
-				range: (0.0, 500.0),
-			})
-			.body(|body| {
-				let filtered: Vec<&LogMessage> = self
-					.logs
-					.iter()
-					.filter(|item| match item {
-						(LogMessageType::Error, _) => self.error_enabled,
-						(LogMessageType::Warn, _) => self.warn_enabled,
-						(LogMessageType::Info, _) => self.info_enabled,
-						(LogMessageType::Debug, _) => self.debug_enabled,
-					})
-					.collect();
+	ui.separator();
+	TableBuilder::new(ui)
+		.scroll(true)
+		.striped(true)
+		.cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+		.stick_to_bottom(true)
+		.column(Size::Remainder {
+			range: (0.0, 500.0),
+		})
+		.body(|body| {
+			let filtered: Vec<&LogMessage> = INSTANCE
+				.logs
+				.iter()
+				.filter(|item| match item {
+					(LogMessageType::Error, _) => INSTANCE.error_enabled,
+					(LogMessageType::Warn, _) => INSTANCE.warn_enabled,
+					(LogMessageType::Info, _) => INSTANCE.info_enabled,
+					(LogMessageType::Debug, _) => INSTANCE.debug_enabled,
+				})
+				.collect();
 
-				let count = filtered.len();
+			let count = filtered.len();
 
-				body.rows(18.0, count, |index, mut row| {
-					row.col(|ui| filtered[index].draw(ui));
-				});
+			body.rows(18.0, count, |index, mut row| {
+				row.col(|ui| filtered[index].draw(ui));
 			});
+		});
+}
+
+pub fn info<S: Into<String>>(msg: S) {
+	unsafe {
+		INSTANCE.info(msg);
+	}
+}
+pub fn error<S: Into<String>>(msg: S) {
+	unsafe {
+		INSTANCE.error(msg);
+	}
+}
+pub fn warn<S: Into<String>>(msg: S) {
+	unsafe {
+		INSTANCE.warn(msg);
+	}
+}
+pub fn debug<S: Into<String>>(msg: S) {
+	unsafe {
+		INSTANCE.debug(msg);
 	}
 }
 
 impl Logger {
+	pub const fn new() -> Logger {
+		let logger = Logger {
+			logs: vec![],
+			warn_enabled: true,
+			error_enabled: true,
+			info_enabled: true,
+			debug_enabled: true,
+		};
+		logger
+	}
+
 	pub fn info<S: Into<String>>(&mut self, msg: S) {
 		self.log((LogMessageType::Info, msg.into()));
 	}
@@ -132,23 +163,5 @@ impl Logger {
 		if self.logs.len() > 200 {
 			self.logs.remove(0);
 		}
-	}
-}
-
-impl Default for Logger {
-	fn default() -> Self {
-		let mut logger = Logger {
-			logs: vec![],
-			warn_enabled: true,
-			error_enabled: true,
-			info_enabled: false,
-			debug_enabled: false,
-		};
-
-		logger.error("Test Error");
-		logger.warn("Test Warn");
-		logger.info("Test Info");
-		logger.debug("Test Debug");
-		logger
 	}
 }
