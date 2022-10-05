@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::app::components::logger;
 use crate::flags;
 use crate::flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag};
 use crate::memory::Memory;
@@ -102,6 +103,8 @@ impl Ppu {
 			}
 			PPUMode::Draw => self.t_state += 172,
 		}
+		logger::debug(format!("PPU Start: {:?}", mode));
+
 		let mut mem = self.memory.borrow_mut();
 		let current_stat = mem.read(STAT as u16);
 		mem.write(STAT as u16, (current_stat & 0b11111100) | mode as u8);

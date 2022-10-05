@@ -7,7 +7,6 @@ use components::{
 	debugger::Debugger,
 	joypad_view::joypad_view,
 };
-use drawable::DrawableMut;
 
 use crate::{
 	cartridge::{CartridgeData, CartridgeType},
@@ -111,7 +110,6 @@ impl eframe::App for EmulatorManager {
 
 		ctx.set_style(style);
 		ctx.set_visuals(visuals);
-		ctx.set_debug_on_hover(true);
 
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(result) = data.ready() {
