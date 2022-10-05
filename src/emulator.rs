@@ -1,8 +1,4 @@
-use crate::{
-	cpu::{instruction::Instruction, Cpu},
-	memory::Memory,
-	ppu::Ppu,
-};
+use crate::{cpu::Cpu, memory::Memory, ppu::Ppu};
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Emulator {
@@ -22,8 +18,8 @@ impl Emulator {
 		};
 	}
 
-	pub fn step(&mut self) -> Option<Instruction> {
+	pub fn step(&mut self) {
 		self.ppu.step();
-		return self.cpu.step();
+		self.cpu.step();
 	}
 }

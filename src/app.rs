@@ -61,14 +61,6 @@ impl EmulatorManager {
 		Default::default()
 	}
 
-	pub fn step_emulation(&mut self) {
-		let pc = self.emulator.cpu.registers.pc;
-
-		if let Some(inst) = self.emulator.step() {
-			logger::info(format!("{} : {:?}", pc, inst));
-		};
-	}
-
 	pub fn load_cartridge_by_url(&mut self, url: &str, cartridge_type: CartridgeType) {
 		self.loaded_file_data.get_or_insert_with(|| {
 			let (sender, promise) = Promise::new();
@@ -147,10 +139,6 @@ impl eframe::App for EmulatorManager {
 					});
 				});
 
-				if ui.button("step").clicked() || ctx.input().key_pressed(egui::Key::ArrowRight) {
-					self.step_emulation();
-				}
-
 				if ui.button("Load Bios").clicked() {
 					self.load_cartridge_by_url("roms/dmg_boot.bin", CartridgeType::BIOS);
 				}
@@ -177,23 +165,7 @@ impl eframe::App for EmulatorManager {
 		egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
 
 		if self.play {
-			// 70224 // t-cycles per frame
-			let mut count = 0;
-			loop {
-				// self.step_emulation();
-				// if self
-				// 	.breakpoint_manager
-				// 	.break_on(self.emulator.cpu.registers.pc)
-				// {
-				// 	self.play = false;
-				// 	self.logger.debug("Breaking");
-				// }
-				count += 1;
-				if count > 0 {
-					break;
-				}
-			}
-
+			self.debugger.step(702, &mut self.emulator);
 			ctx.request_repaint(); // wake up UI thread
 		}
 	}
