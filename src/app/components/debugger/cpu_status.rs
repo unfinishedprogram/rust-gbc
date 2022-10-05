@@ -7,7 +7,7 @@ use crate::{
 };
 use egui::Ui;
 
-pub fn status_view(ui: &mut Ui, emulator: &Emulator) {
+pub fn draw_cpu_status(ui: &mut Ui, emulator: &Emulator) {
 	let cpu = &emulator.cpu;
 	let ppu = &emulator.ppu;
 	ui.vertical(|ui| {
@@ -38,9 +38,7 @@ pub fn status_view(ui: &mut Ui, emulator: &Emulator) {
 		ui.monospace(format!("N :{}", cpu.get_flag(Flag::N)));
 		ui.monospace(format!("H :{}", cpu.get_flag(Flag::H)));
 		ui.monospace(format!("C :{}", cpu.get_flag(Flag::C)));
-
 		ui.heading("PPU Info");
-
 		ui.monospace(format!("Mode: {:?}", ppu.get_mode()));
 		ui.monospace(format!("LY:   {:?}", ppu.get_ly()));
 	});

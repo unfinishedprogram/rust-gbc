@@ -4,10 +4,8 @@ pub mod managed_input;
 
 use components::{
 	buffer_view::{render_image, BufferViewState},
+	debugger::Debugger,
 	joypad_view::joypad_view,
-	logger::Logger,
-	memory_view::{memory_view, MemoryViewState},
-	status_view::status_view,
 };
 use drawable::DrawableMut;
 
@@ -25,31 +23,28 @@ use egui::Visuals;
 use egui::{style::Widgets, Rounding, Stroke, Style};
 use poll_promise::Promise;
 
-use self::components::breakpoint_manager::BreakpointManager;
+use self::components::logger;
 
 pub struct EmulatorManager {
 	emulator: Emulator,
-	logger: Logger,
 	loaded_file_data: Option<Promise<CartridgeData>>,
 	play: bool,
-	memory_view_state: MemoryViewState,
 	tile_view_state: BufferViewState,
 	vram_view_state: BufferViewState,
-	breakpoint_manager: BreakpointManager,
 	roms: Vec<&'static str>,
+	debugger: Debugger,
 }
 
 impl Default for EmulatorManager {
 	fn default() -> Self {
+		let emulator = Emulator::new();
+
 		Self {
 			play: false,
-			emulator: Emulator::new(),
 			loaded_file_data: None::<Promise<CartridgeData>>,
-			logger: Logger::default(),
-			memory_view_state: MemoryViewState::default(),
+			debugger: Debugger::default(),
 			tile_view_state: BufferViewState::new("Window View", (256, 256)),
 			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
-			breakpoint_manager: BreakpointManager::default(),
 			roms: vec![
 				"roms/tetris.gb",
 				"roms/dr-mario.gb",
@@ -57,6 +52,7 @@ impl Default for EmulatorManager {
 				"roms/06-ld r,r.gb",
 				"roms/07-jr,jp,call,ret,rst.gb",
 			],
+			emulator,
 		}
 	}
 }
@@ -70,7 +66,7 @@ impl EmulatorManager {
 		let pc = self.emulator.cpu.registers.pc;
 
 		if let Some(inst) = self.emulator.step() {
-			self.logger.info(format!("{} : {:?}", pc, inst))
+			logger::info(format!("{} : {:?}", pc, inst));
 		};
 	}
 
@@ -115,11 +111,12 @@ impl eframe::App for EmulatorManager {
 
 		ctx.set_style(style);
 		ctx.set_visuals(visuals);
+		ctx.set_debug_on_hover(true);
 
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(result) = data.ready() {
 				self.emulator.cpu.load_cartridge(result);
-				self.logger.info("Loaded ROM");
+				logger::info("Loaded ROM");
 				self.loaded_file_data = None;
 			}
 		}
@@ -172,17 +169,12 @@ impl eframe::App for EmulatorManager {
 			})
 		});
 
-		egui::SidePanel::left("left_panel").show(ctx, |ui| self.logger.draw(ui));
+		unsafe {
+			egui::SidePanel::left("left_panel").show(ctx, |ui| logger::draw(ui));
+		}
 
-		egui::SidePanel::right("right_panel").show(ctx, |ui| {
-			ui.vertical(|ui| {
-				self.breakpoint_manager.draw(ui);
-				ui.horizontal_top(|ui| {
-					status_view(ui, &self.emulator);
-					memory_view(ui, &self.emulator.cpu, &mut self.memory_view_state);
-				})
-			})
-		});
+		egui::SidePanel::right("right_panel")
+			.show(ctx, |ui| self.debugger.draw(&mut self.emulator, ui));
 
 		egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
 
@@ -190,19 +182,20 @@ impl eframe::App for EmulatorManager {
 			// 70224 // t-cycles per frame
 			let mut count = 0;
 			loop {
-				self.step_emulation();
-				if self
-					.breakpoint_manager
-					.break_on(self.emulator.cpu.registers.pc)
-				{
-					self.play = false;
-					self.logger.debug("Breaking");
-				}
+				// self.step_emulation();
+				// if self
+				// 	.breakpoint_manager
+				// 	.break_on(self.emulator.cpu.registers.pc)
+				// {
+				// 	self.play = false;
+				// 	self.logger.debug("Breaking");
+				// }
 				count += 1;
-				if count > 7022 {
+				if count > 0 {
 					break;
 				}
 			}
+
 			ctx.request_repaint(); // wake up UI thread
 		}
 	}
