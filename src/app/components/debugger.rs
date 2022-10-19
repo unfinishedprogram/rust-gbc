@@ -2,12 +2,12 @@ mod breakpoint_manager;
 mod cpu_status;
 mod memory_view;
 
-use crate::{app::drawable::DrawableMut, emulator::Emulator};
+use super::logger;
+use crate::app::drawable::DrawableMut;
+use crate::emulator::Emulator;
 use breakpoint_manager::BreakpointManager;
 use egui::Ui;
 use memory_view::MemoryView;
-
-use super::logger;
 
 pub enum DebuggerState {
 	Playing,

@@ -1,12 +1,10 @@
-use crate::emulator::{
-	Emulator,
-	cpu::{
-		flags::{Flag, Flags},
-		registers::{CPURegister16::*, CPURegister8::*},
-	},
-};
-
+use crate::emulator;
 use egui::Ui;
+use emulator::cpu::{
+	flags::{Flag, Flags},
+	registers::{CPURegister16::*, CPURegister8::*},
+};
+use emulator::Emulator;
 
 pub fn draw_cpu_status(ui: &mut Ui, emulator: &Emulator) {
 	let cpu = &emulator.cpu;

@@ -1,6 +1,5 @@
-use super::breakpoint_manager;
+use super::BreakpointManager;
 use crate::emulator::Emulator;
-use breakpoint_manager::BreakpointManager;
 use egui::{Color32, ScrollArea, Ui};
 
 pub struct MemoryView {
