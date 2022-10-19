@@ -1,5 +1,5 @@
-use crate::cpu::Cpu;
-use crate::flags::{clear_bit_flag, get_bit_flag, set_bit_flag, BitFlag, JoyPadFlag};
+use crate::emulator::cpu::Cpu;
+use crate::emulator::flags::{clear_bit_flag, get_bit_flag, set_bit_flag, BitFlag, JoyPadFlag};
 use egui::Context;
 
 #[derive(Debug, Clone, Copy)]

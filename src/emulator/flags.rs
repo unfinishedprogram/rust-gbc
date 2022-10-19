@@ -1,9 +1,7 @@
 pub type BitFlagRef = (u16, u8);
 
-use crate::{
-	memory::Memory,
-	util::bit_ops::{clear_bit, set_bit},
-};
+use crate::emulator::memory::Memory;
+use crate::util::bit_ops::{clear_bit, set_bit};
 
 #[derive(Copy, Clone, Debug)]
 pub enum InterruptFlag {

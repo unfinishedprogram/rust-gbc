@@ -1,5 +1,15 @@
-use crate::{cpu::Cpu, memory::Memory, ppu::Ppu};
 use std::{cell::RefCell, rc::Rc};
+
+pub mod cartridge;
+pub mod cpu;
+pub mod flags;
+pub mod memory;
+pub mod memory_registers;
+pub mod ppu;
+
+use cpu::Cpu;
+use memory::Memory;
+use ppu::Ppu;
 
 pub struct Emulator {
 	pub memory: Rc<RefCell<Memory>>,

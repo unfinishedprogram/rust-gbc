@@ -6,19 +6,18 @@ pub mod values;
 
 use std::{cell::RefCell, rc::Rc};
 
+use super::cartridge::CartridgeData;
+use super::flags::*;
+use super::memory::Memory;
 use instruction::{
 	execute::execute_instruction, fetch::fetch_instruction, opcode::Opcode, Instruction,
 };
+
 use registers::{CPURegister16, CPURegisters};
 use values::{ValueRefU16, ValueRefU8};
 
-use crate::{
-	cartridge::CartridgeData,
-	cpu::flags::{Flag, Flags},
-	flags::{clear_bit_flag, get_bit_flag, BitFlag, InterruptFlag},
-	memory::Memory,
-};
-
+use self::flags::Flag;
+use self::flags::Flags;
 use self::{instruction::condition::Condition, values::ValueRefI8};
 
 pub struct Cpu {
@@ -193,7 +192,6 @@ impl Cpu {
 
 	fn get_interrupt(&mut self) -> Option<Instruction> {
 		use InterruptFlag::*;
-
 		let to_check = [VBlank, LcdStat, Timer, Serial, JoyPad];
 		if self.interrupt_enable {
 			for interrupt in to_check {

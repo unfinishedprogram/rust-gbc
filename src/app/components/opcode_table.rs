@@ -1,4 +1,4 @@
-use crate::cpu::Cpu;
+use crate::emulator::cpu::Cpu;
 use egui::Ui;
 use egui_extras::{Size, TableBuilder};
 

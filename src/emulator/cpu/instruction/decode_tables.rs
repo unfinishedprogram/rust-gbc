@@ -1,4 +1,7 @@
-use crate::cpu::{instruction::*, registers::*};
+use super::{
+	ALUOperation, CPURegister16, CPURegister16::*, CPURegister8::*, Condition, RotShiftOperation,
+	ValueRefU16, ValueRefU8,
+};
 
 pub struct DecodeTables {
 	pub r: [ValueRefU8; 8],

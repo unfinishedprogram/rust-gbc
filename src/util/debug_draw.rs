@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::memory::Memory;
+use crate::emulator::memory::Memory;
 
 use super::bit_ops::get_bit;
 

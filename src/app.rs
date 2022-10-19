@@ -2,19 +2,18 @@ pub mod components;
 pub mod drawable;
 pub mod managed_input;
 
+use crate::emulator::{
+	cartridge::{CartridgeData, CartridgeType},
+	Emulator,
+};
+use crate::util::{
+	color::color,
+	debug_draw::{debug_draw_tile_data, debug_draw_window_data},
+};
 use components::{
 	buffer_view::{render_image, BufferViewState},
 	debugger::Debugger,
 	joypad_view::joypad_view,
-};
-
-use crate::{
-	cartridge::{CartridgeData, CartridgeType},
-	emulator::Emulator,
-	util::{
-		color::color,
-		debug_draw::{debug_draw_tile_data, debug_draw_window_data},
-	},
 };
 
 use eframe::epaint::Shadow;

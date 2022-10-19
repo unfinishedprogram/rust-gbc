@@ -5,6 +5,7 @@ pub mod condition;
 pub mod decode_tables;
 pub mod execute;
 pub mod fetch;
+
 #[macro_use]
 pub mod mac_instruction;
 pub mod opcode;
@@ -12,11 +13,12 @@ pub mod opcode;
 use condition::Condition;
 
 use super::{
-	registers::{CPURegister16, CPURegister16::*, CPURegister8::*},
+	registers::{CPURegister16, CPURegister8},
 	values::{ValueRefI8, ValueRefU16, ValueRefU8},
 	Cpu,
 };
-use crate::flags::InterruptFlag;
+
+use crate::emulator::flags::InterruptFlag;
 
 #[derive(Debug, Clone)]
 #[allow(non_camel_case_types)]

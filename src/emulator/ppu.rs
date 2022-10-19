@@ -2,11 +2,12 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::app::components::logger;
-use crate::flags;
-use crate::flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag};
-use crate::memory::Memory;
 
-use crate::memory_registers::MemoryRegister::*;
+use crate::emulator::flags;
+use crate::emulator::flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag};
+use crate::emulator::memory::Memory;
+
+use crate::emulator::memory_registers::MemoryRegister::*;
 
 #[derive(Debug)]
 pub enum PPUMode {

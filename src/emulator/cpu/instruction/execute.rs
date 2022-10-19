@@ -1,8 +1,8 @@
-use std::ops::{BitAnd, BitOr, BitXor};
+use super::super::flags::{Flag, Flags};
+use super::super::gb_stack::GBStack;
+use super::super::registers::{CPURegister16, CPURegister8};
 
-use crate::cpu::flags::{Flag, Flags};
-use crate::cpu::gb_stack::GBStack;
-use crate::cpu::registers::{CPURegister16, CPURegister8};
+use std::ops::{BitAnd, BitOr, BitXor};
 
 use super::ALUOperation;
 use super::Cpu;
@@ -13,7 +13,7 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 	match instruction {
 		NOP => {}
 		INT(interrupt) => {
-			use crate::flags::InterruptFlag::*;
+			use crate::emulator::flags::InterruptFlag::*;
 			let addr = match interrupt {
 				VBlank => 0x40,
 				LcdStat => 0x48,
