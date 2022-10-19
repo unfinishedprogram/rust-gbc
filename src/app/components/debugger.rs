@@ -9,7 +9,7 @@ use breakpoint_manager::BreakpointManager;
 use egui::Ui;
 use memory_view::MemoryView;
 
-pub enum DebuggerState {
+enum DebuggerState {
 	Playing,
 	Paused,
 }

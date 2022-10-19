@@ -9,7 +9,7 @@ use crate::util::{
 	color::color,
 	debug_draw::{debug_draw_tile_data, debug_draw_window_data},
 };
-use components::{buffer_view::BufferView, debugger::Debugger, joypad_view::joypad_view};
+use components::{joypad_view::joypad_view, BufferView, Debugger};
 use drawable::*;
 
 use eframe::epaint::Shadow;
