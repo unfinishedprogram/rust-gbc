@@ -14,7 +14,6 @@ use poll_promise::Promise;
 pub struct EmulatorManager {
 	emulator: Emulator,
 	loaded_file_data: Option<Promise<CartridgeData>>,
-	play: bool,
 	roms: Vec<&'static str>,
 	debugger: Debugger,
 }
@@ -24,7 +23,6 @@ impl Default for EmulatorManager {
 		let emulator = Emulator::new();
 
 		Self {
-			play: false,
 			loaded_file_data: None::<Promise<CartridgeData>>,
 			debugger: Debugger::default(),
 			roms: vec![
@@ -92,16 +90,6 @@ impl eframe::App for EmulatorManager {
 
 				if ui.button("Load Bios").clicked() {
 					self.load_cartridge_by_url("roms/dmg_boot.bin", CartridgeType::BIOS);
-				}
-
-				if ui
-					.button(match self.play {
-						true => "stop",
-						false => "start",
-					})
-					.clicked()
-				{
-					self.play = !self.play
 				}
 			})
 		});
