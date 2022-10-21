@@ -1,13 +1,18 @@
-use crate::cpu::{
-	instruction::{condition::Condition, decode_tables::DT, opcode::Opcode, Instruction},
-	registers::{CPURegister16::*, CPURegister8::*},
-	values::ValueRefU8,
-	Cpu,
-};
+// use super::{
+// 	condition::Condition, decode_tables::DT, opcode::Opcode, CPURegister16::*, CPURegister8::*,
+// 	Cpu, Instruction, Instruction::*, ValueRefU8,
+// };
 
+use super::decode_tables::DT;
+use super::opcode::Opcode;
+use super::CPURegister16::*;
+use super::CPURegister8::*;
+use super::Condition;
+use super::Cpu;
+use super::Instruction;
+use super::Instruction::*;
+use super::ValueRefU8;
 use crate::{arg, inst, mem}; // Macros
-
-use Instruction::*;
 
 pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 	let x = opcode.x as usize;

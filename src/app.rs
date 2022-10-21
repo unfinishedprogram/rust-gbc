@@ -1,35 +1,19 @@
 pub mod components;
 pub mod drawable;
 pub mod managed_input;
+mod style;
 
-use components::{
-	buffer_view::{render_image, BufferViewState},
-	debugger::Debugger,
-	joypad_view::joypad_view,
-};
-
-use crate::{
+use crate::emulator::{
 	cartridge::{CartridgeData, CartridgeType},
-	emulator::Emulator,
-	util::{
-		color::color,
-		debug_draw::{debug_draw_tile_data, debug_draw_window_data},
-	},
+	Emulator,
 };
 
-use eframe::epaint::Shadow;
-use egui::Visuals;
-use egui::{style::Widgets, Rounding, Stroke, Style};
+use components::{draw_cpu_status, joypad_view::joypad_view, logger, Debugger};
 use poll_promise::Promise;
-
-use self::components::logger;
 
 pub struct EmulatorManager {
 	emulator: Emulator,
 	loaded_file_data: Option<Promise<CartridgeData>>,
-	play: bool,
-	tile_view_state: BufferViewState,
-	vram_view_state: BufferViewState,
 	roms: Vec<&'static str>,
 	debugger: Debugger,
 }
@@ -39,11 +23,8 @@ impl Default for EmulatorManager {
 		let emulator = Emulator::new();
 
 		Self {
-			play: false,
 			loaded_file_data: None::<Promise<CartridgeData>>,
 			debugger: Debugger::default(),
-			tile_view_state: BufferViewState::new("Window View", (256, 256)),
-			vram_view_state: BufferViewState::new("VRAM View", (256, 256)),
 			roms: vec![
 				"roms/tetris.gb",
 				"roms/dr-mario.gb",
@@ -82,27 +63,7 @@ impl EmulatorManager {
 
 impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		let mut visuals = Visuals::default();
-		let mut widgets = Widgets::default();
-		let mut style = Style::default();
-
-		style.spacing.item_spacing = (5.0, 5.0).into();
-		style.spacing.button_padding = (10.0, 5.0).into();
-
-		widgets.noninteractive.bg_fill = color(0x1c212b);
-		widgets.noninteractive.bg_stroke = Stroke::new(1.0, color(0xBBBBBB));
-
-		widgets.inactive.rounding = Rounding::default().at_least(2.0);
-
-		visuals.widgets = widgets;
-		visuals.window_rounding = Rounding::default().at_least(2.0);
-		visuals.window_shadow = Shadow::small_dark();
-		visuals.override_text_color = Some(color(0xc5c5c5));
-		visuals.hyperlink_color = color(0x0096cf);
-
-		ctx.set_style(style);
-		ctx.set_visuals(visuals);
-
+		style::apply(ctx);
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(result) = data.ready() {
 				self.emulator.cpu.load_cartridge(result);
@@ -112,18 +73,6 @@ impl eframe::App for EmulatorManager {
 		}
 
 		joypad_view(ctx, &mut self.emulator.cpu);
-		render_image(ctx, &mut self.vram_view_state);
-		render_image(ctx, &mut self.tile_view_state);
-
-		debug_draw_tile_data(
-			&self.emulator.memory,
-			&mut self.vram_view_state.pixel_buffer,
-		);
-
-		debug_draw_window_data(
-			&self.emulator.memory,
-			&mut self.tile_view_state.pixel_buffer,
-		);
 
 		egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
@@ -142,22 +91,13 @@ impl eframe::App for EmulatorManager {
 				if ui.button("Load Bios").clicked() {
 					self.load_cartridge_by_url("roms/dmg_boot.bin", CartridgeType::BIOS);
 				}
-
-				if ui
-					.button(match self.play {
-						true => "stop",
-						false => "start",
-					})
-					.clicked()
-				{
-					self.play = !self.play
-				}
 			})
 		});
 
-		unsafe {
-			egui::SidePanel::left("left_panel").show(ctx, |ui| logger::draw(ui));
-		}
+		egui::SidePanel::left("left_panel").show(ctx, |ui| {
+			ui.vertical(|ui| draw_cpu_status(ui, &self.emulator));
+			unsafe { logger::draw(ui) };
+		});
 
 		egui::SidePanel::right("right_panel")
 			.show(ctx, |ui| self.debugger.draw(&mut self.emulator, ui));

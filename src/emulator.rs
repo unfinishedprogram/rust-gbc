@@ -1,5 +1,15 @@
-use crate::{cpu::Cpu, memory::Memory, ppu::Ppu};
 use std::{cell::RefCell, rc::Rc};
+
+pub mod cartridge;
+pub mod cpu;
+pub mod flags;
+pub mod memory;
+pub mod memory_registers;
+pub mod ppu;
+
+use cpu::Cpu;
+use memory::Memory;
+use ppu::Ppu;
 
 pub struct Emulator {
 	pub memory: Rc<RefCell<Memory>>,
@@ -9,12 +19,12 @@ pub struct Emulator {
 
 impl Emulator {
 	pub fn new() -> Self {
-		let rc: Rc<RefCell<Memory>> = Rc::new(RefCell::new(Memory::new()));
-		let cpu = Cpu::new(rc.clone()).init();
+		let rc = Rc::new(RefCell::new(Memory::new()));
+
 		return Self {
 			memory: rc.clone(),
 			ppu: Ppu::new(rc.clone()),
-			cpu,
+			cpu: Cpu::new(rc.clone()).init(),
 		};
 	}
 
