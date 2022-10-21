@@ -7,3 +7,4 @@ pub mod opcode_table;
 
 pub use buffer_view::BufferView;
 pub use debugger::Debugger;
+pub use joypad_view::joypad_view;

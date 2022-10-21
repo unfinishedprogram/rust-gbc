@@ -11,11 +11,6 @@ pub struct BufferView {
 	name: &'static str,
 }
 
-impl Default for BufferView {
-	fn default() -> Self {
-		BufferView::new("Screen", (160, 144))
-	}
-}
 impl DrawableMut for BufferView {
 	fn draw(&mut self, ui: &mut Ui) {
 		let size = [self.size.0, self.size.1];

@@ -1,30 +1,22 @@
 pub mod components;
 pub mod drawable;
 pub mod managed_input;
+
 use crate::emulator::{
 	cartridge::{CartridgeData, CartridgeType},
 	Emulator,
 };
-use crate::util::{
-	color::color,
-	debug_draw::{debug_draw_tile_data, debug_draw_window_data},
-};
-use components::{joypad_view::joypad_view, BufferView, Debugger};
-use drawable::*;
 
+use crate::util::color;
+use components::{joypad_view::joypad_view, logger, Debugger};
 use eframe::epaint::Shadow;
-use egui::Visuals;
-use egui::{style::Widgets, Rounding, Stroke, Style};
+use egui::{style::Widgets, Rounding, Stroke, Style, Visuals};
 use poll_promise::Promise;
-
-use self::components::logger;
 
 pub struct EmulatorManager {
 	emulator: Emulator,
 	loaded_file_data: Option<Promise<CartridgeData>>,
 	play: bool,
-	tile_view_state: BufferView,
-	vram_view_state: BufferView,
 	roms: Vec<&'static str>,
 	debugger: Debugger,
 }
@@ -37,8 +29,6 @@ impl Default for EmulatorManager {
 			play: false,
 			loaded_file_data: None::<Promise<CartridgeData>>,
 			debugger: Debugger::default(),
-			tile_view_state: BufferView::new("Window View", (256, 256)),
-			vram_view_state: BufferView::new("VRAM View", (256, 256)),
 			roms: vec![
 				"roms/tetris.gb",
 				"roms/dr-mario.gb",
@@ -107,23 +97,6 @@ impl eframe::App for EmulatorManager {
 		}
 
 		joypad_view(ctx, &mut self.emulator.cpu);
-
-		// render_image(ctx, &mut self.vram_view_state);
-		// render_image(ctx, &mut self.tile_view_state);
-
-		egui::Window::new("vram")
-			.resizable(false)
-			.show(ctx, |ui| self.vram_view_state.draw(ui));
-
-		debug_draw_tile_data(
-			&self.emulator.memory,
-			&mut self.vram_view_state.pixel_buffer,
-		);
-
-		debug_draw_window_data(
-			&self.emulator.memory,
-			&mut self.tile_view_state.pixel_buffer,
-		);
 
 		egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
