@@ -46,15 +46,17 @@ impl IndexMut<CPURegister8> for CPURegisters {
 	}
 }
 
-impl CPURegisters {
-	pub fn new() -> CPURegisters {
-		CPURegisters {
+impl Default for CPURegisters {
+	fn default() -> Self {
+		Self {
 			bytes: [0; 8],
 			sp: 0,
 			pc: 0x0100,
 		}
 	}
+}
 
+impl CPURegisters {
 	pub fn get_u16(&self, reg: CPURegister16) -> u16 {
 		match reg {
 			AF => u16::from_le_bytes([self[F], self[A]]),

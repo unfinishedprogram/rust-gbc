@@ -2,7 +2,9 @@ pub mod flags;
 mod gb_stack;
 pub mod instruction;
 pub mod registers;
+mod state;
 pub mod values;
+pub use state::CPUState;
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -16,8 +18,7 @@ use instruction::{
 use registers::{CPURegister16, CPURegisters};
 use values::{ValueRefU16, ValueRefU8};
 
-use self::flags::Flag;
-use self::flags::Flags;
+use self::flags::{Flag, Flags};
 use self::{instruction::condition::Condition, values::ValueRefI8};
 
 pub struct Cpu {

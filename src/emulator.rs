@@ -6,6 +6,8 @@ pub mod flags;
 pub mod memory;
 pub mod memory_registers;
 pub mod ppu;
+mod state;
+pub use state::EmulatorState;
 
 use cpu::Cpu;
 use memory::Memory;
