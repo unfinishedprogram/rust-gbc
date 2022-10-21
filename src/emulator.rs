@@ -19,12 +19,12 @@ pub struct Emulator {
 
 impl Emulator {
 	pub fn new() -> Self {
-		let rc: Rc<RefCell<Memory>> = Rc::new(RefCell::new(Memory::new()));
-		let cpu = Cpu::new(rc.clone()).init();
+		let rc = Rc::new(RefCell::new(Memory::new()));
+
 		return Self {
 			memory: rc.clone(),
 			ppu: Ppu::new(rc.clone()),
-			cpu,
+			cpu: Cpu::new(rc.clone()).init(),
 		};
 	}
 
