@@ -8,7 +8,7 @@ use crate::emulator::{
 	Emulator,
 };
 
-use components::{joypad_view::joypad_view, logger, Debugger};
+use components::{draw_cpu_status, joypad_view::joypad_view, logger, Debugger};
 use poll_promise::Promise;
 
 pub struct EmulatorManager {
@@ -106,9 +106,10 @@ impl eframe::App for EmulatorManager {
 			})
 		});
 
-		unsafe {
-			egui::SidePanel::left("left_panel").show(ctx, |ui| logger::draw(ui));
-		}
+		egui::SidePanel::left("left_panel").show(ctx, |ui| {
+			ui.vertical(|ui| draw_cpu_status(ui, &self.emulator));
+			unsafe { logger::draw(ui) };
+		});
 
 		egui::SidePanel::right("right_panel")
 			.show(ctx, |ui| self.debugger.draw(&mut self.emulator, ui));

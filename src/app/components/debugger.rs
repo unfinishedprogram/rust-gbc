@@ -1,5 +1,5 @@
 mod breakpoint_manager;
-mod cpu_status;
+pub mod cpu_status;
 mod debug_draw;
 mod memory_view;
 
