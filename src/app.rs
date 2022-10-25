@@ -3,17 +3,14 @@ pub mod drawable;
 pub mod managed_input;
 mod style;
 
-use crate::emulator::{
-	cartridge::{CartridgeData, CartridgeType},
-	Emulator,
-};
+use crate::emulator::Emulator;
 
 use components::{draw_cpu_status, joypad_view::joypad_view, logger, Debugger};
 use poll_promise::Promise;
 
 pub struct EmulatorManager {
 	emulator: Emulator,
-	loaded_file_data: Option<Promise<CartridgeData>>,
+	loaded_file_data: Option<Promise<Vec<u8>>>,
 	roms: Vec<&'static str>,
 	debugger: Debugger,
 }
@@ -23,7 +20,7 @@ impl Default for EmulatorManager {
 		let emulator = Emulator::new();
 
 		Self {
-			loaded_file_data: None::<Promise<CartridgeData>>,
+			loaded_file_data: None::<Promise<Vec<u8>>>,
 			debugger: Debugger::default(),
 			roms: vec![
 				"roms/tetris.gb",
@@ -42,7 +39,7 @@ impl EmulatorManager {
 		Default::default()
 	}
 
-	pub fn load_cartridge_by_url(&mut self, url: &str, cartridge_type: CartridgeType) {
+	pub fn load_cartridge_by_url(&mut self, url: &str) {
 		self.loaded_file_data.get_or_insert_with(|| {
 			let (sender, promise) = Promise::new();
 
@@ -51,7 +48,7 @@ impl EmulatorManager {
 			ehttp::fetch(request, move |response| {
 				let result = response.and_then(parse_response);
 				match result {
-					Ok(data) => sender.send((cartridge_type, data)),
+					Ok(data) => sender.send(data),
 					_ => {}
 				}
 			});
@@ -66,7 +63,8 @@ impl eframe::App for EmulatorManager {
 		style::apply(ctx);
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(result) = data.ready() {
-				self.emulator.cpu.load_cartridge(result);
+				// self.emulator.cpu.load_cartridge(result);
+				todo!("Load Cartridge");
 				logger::info("Loaded ROM");
 				self.loaded_file_data = None;
 			}
@@ -81,7 +79,7 @@ impl eframe::App for EmulatorManager {
 						for rom in &self.roms.clone() {
 							if ui.button(rom.to_string()).clicked() {
 								ui.add_space(5.0);
-								self.load_cartridge_by_url(rom, CartridgeType::ROM);
+								self.load_cartridge_by_url(rom);
 								ui.close_menu();
 							}
 						}
@@ -89,7 +87,7 @@ impl eframe::App for EmulatorManager {
 				});
 
 				if ui.button("Load Bios").clicked() {
-					self.load_cartridge_by_url("roms/dmg_boot.bin", CartridgeType::BIOS);
+					self.load_cartridge_by_url("roms/dmg_boot.bin");
 				}
 			})
 		});
@@ -104,10 +102,7 @@ impl eframe::App for EmulatorManager {
 
 		egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
 
-		if self.play {
-			self.debugger.step(702, &mut self.emulator);
-			ctx.request_repaint(); // wake up UI thread
-		}
+		self.debugger.step(702, &mut self.emulator);
 	}
 }
 

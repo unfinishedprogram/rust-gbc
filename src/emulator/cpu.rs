@@ -8,7 +8,6 @@ pub use state::CPUState;
 
 use std::{cell::RefCell, rc::Rc};
 
-use super::cartridge::CartridgeData;
 use super::flags::*;
 use super::memory::Memory;
 use instruction::{
@@ -33,7 +32,7 @@ impl Cpu {
 	pub fn new(memory: Rc<RefCell<Memory>>) -> Cpu {
 		Cpu {
 			memory,
-			registers: CPURegisters::new(),
+			registers: CPURegisters::default(),
 			t_buffer: 0,
 			interrupt_next_state: None,
 			interrupt_enable: false,
@@ -229,14 +228,5 @@ impl Cpu {
 		}
 		self.t_buffer -= 1;
 		return None;
-	}
-
-	pub fn load_cartridge(&mut self, rom: &CartridgeData) {
-		let mut mem = self.memory.borrow_mut();
-		let (_, data) = rom;
-
-		for i in 0..data.len() {
-			mem.write(i as u16, data[i]);
-		}
 	}
 }
