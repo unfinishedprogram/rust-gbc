@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 
 use crate::emulator::memory::Memory;
+use crate::emulator::memory_mapper::{self, MemoryMapper};
+use crate::emulator::state::EmulatorState;
 use crate::util::bit_ops::*;
 
 type TileBuffer = [[[u8; 4]; 8]; 8];
@@ -37,18 +39,16 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 	return buffer;
 }
 
-pub fn debug_draw_window_data(memory: &RefCell<Memory>, window_buffer: &mut PixelBuffer) {
+pub fn debug_draw_window_data(state: &EmulatorState, window_buffer: &mut PixelBuffer) {
 	let background_map_start = 0x9800;
 	// let background_map_start = 0x9000;
 
 	// let background_map_start = 0x9C00;
 	// let background_map_start = 0;
 
-	let memory = memory.borrow();
-
 	for y in 0..32 {
 		for x in 0..32 {
-			let offset = memory.read(background_map_start + x + y * 32) as i8;
+			let offset = state.read(background_map_start + x + y * 32) as i8;
 			let real_offset: i32 = 16 * (offset as i32);
 
 			let index = (0x9000 + real_offset) as u16;
@@ -56,7 +56,7 @@ pub fn debug_draw_window_data(memory: &RefCell<Memory>, window_buffer: &mut Pixe
 			let mut values = [0; 16];
 
 			for i in 0..16 {
-				values[i as usize] = memory.read(index + i).into();
+				values[i as usize] = state.read(index + i).into();
 			}
 
 			let tile_data = to_pixel_tile(values);
@@ -66,11 +66,9 @@ pub fn debug_draw_window_data(memory: &RefCell<Memory>, window_buffer: &mut Pixe
 	}
 }
 
-pub fn debug_draw_tile_data(memory: &RefCell<Memory>, screen_buffer: &mut PixelBuffer) {
+pub fn debug_draw_tile_data(state: &EmulatorState, screen_buffer: &mut PixelBuffer) {
 	// let start = ppu::registers::PPURegister::VramStart as usize;
 	let start = 0x8000;
-
-	let memory = memory.borrow();
 
 	for y in 0..32 {
 		for x in 0..32 {
@@ -79,7 +77,7 @@ pub fn debug_draw_tile_data(memory: &RefCell<Memory>, screen_buffer: &mut PixelB
 			let mut values = [0; 16];
 
 			for i in 0..16u16 {
-				values[i as usize] = memory.read(index + i);
+				values[i as usize] = state.read(index + i);
 			}
 
 			let tile_data = to_pixel_tile(values);

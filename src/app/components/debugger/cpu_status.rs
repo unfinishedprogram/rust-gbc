@@ -1,14 +1,10 @@
-use crate::emulator;
+use crate::emulator::{self, state::EmulatorState};
 use egui::Ui;
-use emulator::cpu::{
-	flags::{Flag, Flags},
-	registers::{CPURegister16::*, CPURegister8::*},
-};
-use emulator::Emulator;
+use emulator::cpu::registers::{CPURegister16::*, CPURegister8::*};
 
-pub fn draw_cpu_status(ui: &mut Ui, emulator: &Emulator) {
-	let cpu = &emulator.cpu;
-	let ppu = &emulator.ppu;
+pub fn draw_cpu_status(ui: &mut Ui, emulator: &EmulatorState) {
+	let cpu = &emulator.cpu_state;
+	// let ppu = &emulator.ppu_state;
 
 	ui.heading("CPU Info");
 	ui.set_width(ui.available_width());
@@ -42,15 +38,15 @@ pub fn draw_cpu_status(ui: &mut Ui, emulator: &Emulator) {
 	ui.separator();
 	ui.horizontal(|ui| {
 		ui.vertical(|ui| {
-			ui.monospace(format!("Z :{}", cpu.get_flag(Flag::Z)));
-			ui.monospace(format!("N :{}", cpu.get_flag(Flag::N)));
-			ui.monospace(format!("H :{}", cpu.get_flag(Flag::H)));
-			ui.monospace(format!("C :{}", cpu.get_flag(Flag::C)));
+			// ui.monospace(format!("Z :{}", cpu.get_flag(Flag::Z)));
+			// ui.monospace(format!("N :{}", cpu.get_flag(Flag::N)));
+			// ui.monospace(format!("H :{}", cpu.get_flag(Flag::H)));
+			// ui.monospace(format!("C :{}", cpu.get_flag(Flag::C)));
 		});
 		ui.vertical(|ui| {
 			ui.heading("PPU Info");
-			ui.monospace(format!("Mode: {:?}", ppu.get_mode()));
-			ui.monospace(format!("LY:   {:?}", ppu.get_ly()));
+			// ui.monospace(format!("Mode: {:?}", ppu.get_mode()));
+			// ui.monospace(format!("LY:   {:?}", ppu.get_ly()));
 		});
 	});
 }

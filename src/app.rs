@@ -3,13 +3,13 @@ pub mod drawable;
 pub mod managed_input;
 mod style;
 
-use crate::emulator::Emulator;
+use crate::emulator::state::EmulatorState;
 
-use components::{draw_cpu_status, joypad_view::joypad_view, logger, Debugger};
+use components::{draw_cpu_status, logger, Debugger};
 use poll_promise::Promise;
 
 pub struct EmulatorManager {
-	emulator: Emulator,
+	emulator_state: EmulatorState,
 	loaded_file_data: Option<Promise<Vec<u8>>>,
 	roms: Vec<&'static str>,
 	debugger: Debugger,
@@ -17,8 +17,6 @@ pub struct EmulatorManager {
 
 impl Default for EmulatorManager {
 	fn default() -> Self {
-		let emulator = Emulator::new();
-
 		Self {
 			loaded_file_data: None::<Promise<Vec<u8>>>,
 			debugger: Debugger::default(),
@@ -29,7 +27,7 @@ impl Default for EmulatorManager {
 				"roms/06-ld r,r.gb",
 				"roms/07-jr,jp,call,ret,rst.gb",
 			],
-			emulator,
+			emulator_state: EmulatorState::default(),
 		}
 	}
 }
@@ -70,7 +68,7 @@ impl eframe::App for EmulatorManager {
 			}
 		}
 
-		joypad_view(ctx, &mut self.emulator.cpu);
+		// joypad_view(ctx, &mut self.emulator_state);
 
 		egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
@@ -93,16 +91,16 @@ impl eframe::App for EmulatorManager {
 		});
 
 		egui::SidePanel::left("left_panel").show(ctx, |ui| {
-			ui.vertical(|ui| draw_cpu_status(ui, &self.emulator));
+			ui.vertical(|ui| draw_cpu_status(ui, &self.emulator_state));
 			unsafe { logger::draw(ui) };
 		});
 
 		egui::SidePanel::right("right_panel")
-			.show(ctx, |ui| self.debugger.draw(&mut self.emulator, ui));
+			.show(ctx, |ui| self.debugger.draw(&mut self.emulator_state, ui));
 
-		egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
+		// egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
 
-		self.debugger.step(702, &mut self.emulator);
+		// self.debugger.step(702, &mut self.emulator);
 	}
 }
 

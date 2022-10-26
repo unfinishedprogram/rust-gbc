@@ -4,8 +4,7 @@ mod debug_draw;
 mod memory_view;
 
 use super::{logger, BufferView};
-use crate::app::drawable::DrawableMut;
-use crate::emulator::Emulator;
+use crate::{app::drawable::DrawableMut, emulator::state::EmulatorState};
 use breakpoint_manager::BreakpointManager;
 use debug_draw::*;
 use egui::Ui;
@@ -37,9 +36,9 @@ impl Default for Debugger {
 }
 
 impl Debugger {
-	pub fn draw(&mut self, emulator: &mut Emulator, ui: &mut Ui) {
-		debug_draw_tile_data(&emulator.memory, &mut self.vram_view.pixel_buffer);
-		debug_draw_window_data(&emulator.memory, &mut self.window_view.pixel_buffer);
+	pub fn draw(&mut self, emulator: &mut EmulatorState, ui: &mut Ui) {
+		debug_draw_tile_data(emulator, &mut self.vram_view.pixel_buffer);
+		debug_draw_window_data(emulator, &mut self.window_view.pixel_buffer);
 
 		self.vram_view.draw_window(ui, "Vram");
 		self.window_view.draw_window(ui, "Window");
@@ -52,19 +51,19 @@ impl Debugger {
 			.draw(ui, emulator, &mut self.breakpoint_manager);
 	}
 
-	pub fn apply(&mut self, emulator: &mut Emulator) {
-		if self.breakpoint_manager.break_on(emulator.cpu.registers.pc) {}
-	}
-
-	pub fn step(&mut self, t_states: u32, emulator: &mut Emulator) {
+	pub fn step(&mut self, t_states: u32, state: &mut EmulatorState) {
 		match self.state {
 			DebuggerState::Paused => {}
 			DebuggerState::Playing => {
 				for _ in 0..t_states {
-					emulator.step();
-					if self.breakpoint_manager.break_on(emulator.cpu.registers.pc) {
+					todo!(); // state.step();
+
+					if self
+						.breakpoint_manager
+						.break_on(state.cpu_state.registers.pc)
+					{
 						self.state = DebuggerState::Paused;
-						logger::warn(format!("Paused at: {}", emulator.cpu.registers.pc));
+						logger::warn(format!("Paused at: {}", state.cpu_state.registers.pc));
 						break;
 					}
 				}
@@ -72,9 +71,12 @@ impl Debugger {
 		}
 	}
 
-	pub fn run_until_break(&mut self, emulator: &mut Emulator) {
-		if self.breakpoint_manager.break_on(emulator.cpu.registers.pc) {}
-		emulator.step();
-		self.apply(emulator);
+	pub fn run_until_break(&mut self, state: &mut EmulatorState) {
+		if self
+			.breakpoint_manager
+			.break_on(state.cpu_state.registers.pc)
+		{}
+		todo!(); // state.step();
+		 // self.apply(emulator);
 	}
 }

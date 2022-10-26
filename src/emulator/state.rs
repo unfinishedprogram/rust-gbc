@@ -1,9 +1,8 @@
-use std::rc::{self, Rc};
-
-use crate::app::components::logger;
+use std::rc::Rc;
 
 use super::cartridge::CartridgeState;
 use super::cpu::CPUState;
+use crate::app::components::logger;
 
 pub struct EmulatorState {
 	pub ram_bank: u8,
