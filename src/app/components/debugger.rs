@@ -52,12 +52,14 @@ impl Debugger {
 	}
 
 	pub fn step(&mut self, t_states: u32, state: &mut EmulatorState) {
+		state.step();
+
+		return;
+
 		match self.state {
 			DebuggerState::Paused => {}
 			DebuggerState::Playing => {
 				for _ in 0..t_states {
-					todo!(); // state.step();
-
 					if self
 						.breakpoint_manager
 						.break_on(state.cpu_state.registers.pc)

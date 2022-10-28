@@ -13,11 +13,13 @@ pub struct EmulatorManager {
 	loaded_file_data: Option<Promise<Vec<u8>>>,
 	roms: Vec<&'static str>,
 	debugger: Debugger,
+	run: bool,
 }
 
 impl Default for EmulatorManager {
 	fn default() -> Self {
 		Self {
+			run: false,
 			loaded_file_data: None::<Promise<Vec<u8>>>,
 			debugger: Debugger::default(),
 			roms: vec![
@@ -85,6 +87,9 @@ impl eframe::App for EmulatorManager {
 				if ui.button("Load Bios").clicked() {
 					self.load_cartridge_by_url("roms/dmg_boot.bin");
 				}
+				if ui.button("Toggle Play").clicked() {
+					self.run = !self.run;
+				}
 			})
 		});
 
@@ -99,6 +104,9 @@ impl eframe::App for EmulatorManager {
 		// egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
 
 		// self.debugger.step(702, &mut self.emulator);
+		if self.run {
+			self.debugger.step(1, &mut self.emulator_state)
+		}
 	}
 }
 

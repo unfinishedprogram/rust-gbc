@@ -3,7 +3,7 @@ use super::cpu::registers::CPURegister16;
 use super::cpu::values::ValueRefU16;
 use super::cpu::{CPUState, CPU};
 use super::memory_mapper::MemoryMapper;
-use super::ppu::PPUState;
+use super::ppu::{PPUState, PPU};
 use crate::app::components::logger;
 
 pub struct EmulatorState {
@@ -37,7 +37,10 @@ impl Default for EmulatorState {
 }
 
 impl<'a> EmulatorState {
-	pub fn step(&mut self) {}
+	pub fn step(&mut self) {
+		CPU::step(self);
+		// PPU::step(self);
+	}
 
 	pub fn init(&mut self) {
 		self.cpu_state.registers.pc = 0x100;
