@@ -21,12 +21,13 @@ pub struct RawCartridgeHeader {
 	pub global_checksum: u16,        // 014E-014F
 }
 
+#[derive(Debug)]
 pub struct CartridgeInfo {
-	cgb: bool,
-	sgb: bool,
-	rom_banks: u16,
-	ram_banks: u16,
-	mbc: MBC,
+	pub cgb: bool,
+	pub sgb: bool,
+	pub rom_banks: u16,
+	pub ram_banks: u16,
+	pub mbc: MBC,
 }
 
 impl RawCartridgeHeader {
