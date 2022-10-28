@@ -4,6 +4,7 @@ pub mod managed_input;
 mod style;
 
 use crate::emulator::state::EmulatorState;
+use std::rc::Rc;
 
 use components::{draw_cpu_status, logger, Debugger};
 use poll_promise::Promise;
@@ -60,10 +61,9 @@ impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 		style::apply(ctx);
 		if let Some(data) = &self.loaded_file_data {
-			if let Some(result) = data.ready() {
-				// self.emulator.cpu.load_cartridge(result);
-				todo!("Load Cartridge");
-				logger::info("Loaded ROM");
+			if let Some(rom) = data.ready() {
+				let rom_rc = Rc::new(rom.clone());
+				self.emulator_state.load_rom(rom_rc);
 				self.loaded_file_data = None;
 			}
 		}
