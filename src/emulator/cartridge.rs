@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use crate::app::components::logger;
+
 use self::header::{CartridgeInfo, RawCartridgeHeader};
 
 use super::memory_mapper::MemoryMapper;
@@ -43,10 +45,35 @@ impl Default for CartridgeState {
 
 impl MemoryMapper for CartridgeState {
 	fn read(&self, addr: u16) -> u8 {
-		todo!()
+		use mbc::MBC::*;
+
+		match self.info.mbc {
+			ROM => self.raw_data[addr as usize],
+			MBC1 => todo!(),
+			MBC2 => todo!(),
+			MMM01 => todo!(),
+			MBC3 => todo!(),
+			MBC5 => todo!(),
+			MBC6 => todo!(),
+			MBC7 => todo!(),
+			HUC3 => todo!(),
+			HUC1 => todo!(),
+		}
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
-		todo!()
+		use mbc::MBC::*;
+		match self.info.mbc {
+			ROM => logger::warn("Write to readonly memory"),
+			MBC1 => todo!(),
+			MBC2 => todo!(),
+			MMM01 => todo!(),
+			MBC3 => todo!(),
+			MBC5 => todo!(),
+			MBC6 => todo!(),
+			MBC7 => todo!(),
+			HUC3 => todo!(),
+			HUC1 => todo!(),
+		}
 	}
 }
