@@ -15,7 +15,6 @@ use condition::Condition;
 use super::{
 	registers::{CPURegister16, CPURegister8},
 	values::{ValueRefI8, ValueRefU16, ValueRefU8},
-	Cpu,
 };
 
 use crate::emulator::flags::InterruptFlag;

@@ -1,7 +1,4 @@
-use std::cell::RefCell;
-
-use crate::emulator::memory::Memory;
-use crate::emulator::memory_mapper::{self, MemoryMapper};
+use crate::emulator::memory_mapper::MemoryMapper;
 use crate::emulator::state::EmulatorState;
 use crate::util::bit_ops::*;
 
@@ -24,8 +21,8 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 	for y in 0..8 {
 		for x in 0..8 {
 			let color = match (
-				get_bit(&gb_tile[y * 2], x as u8),
-				get_bit(&gb_tile[y * 2 + 1], x as u8),
+				get_bit(gb_tile[y * 2], x as u8),
+				get_bit(gb_tile[y * 2 + 1], x as u8),
 			) {
 				(true, true) => [8, 24, 32, 255],
 				(true, false) => [224, 248, 208, 255],

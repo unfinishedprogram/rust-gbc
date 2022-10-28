@@ -1,20 +1,16 @@
-// use super::{
-// 	condition::Condition, decode_tables::DT, opcode::Opcode, CPURegister16::*, CPURegister8::*,
-// 	Cpu, Instruction, Instruction::*, ValueRefU8,
-// };
+use super::{
+	decode_tables::DT, opcode::Opcode, CPURegister16::*, CPURegister8::*, Condition, Instruction,
+	Instruction::*, ValueRefU8,
+};
 
-use super::decode_tables::DT;
-use super::opcode::Opcode;
-use super::CPURegister16::*;
-use super::CPURegister8::*;
-use super::Condition;
-use super::Cpu;
-use super::Instruction;
-use super::Instruction::*;
-use super::ValueRefU8;
+use crate::emulator::cpu::CPU;
+use crate::emulator::state::EmulatorState;
+
 use crate::{arg, inst, mem}; // Macros
 
-pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
+pub fn fetch_instruction(cpu: &mut EmulatorState) -> Instruction {
+	let opcode = Opcode::from(cpu.next_byte());
+
 	let x = opcode.x as usize;
 	let z = opcode.z as usize;
 	let y = opcode.y as usize;

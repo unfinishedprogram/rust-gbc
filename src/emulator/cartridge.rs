@@ -36,7 +36,7 @@ impl Default for CartridgeState {
 	fn default() -> Self {
 		Self {
 			info: CartridgeInfo::default(),
-			raw_data: Rc::new(vec![0; 512]),
+			raw_data: Rc::new(vec![0; 0x10000]),
 			selected_ram_bank: 1,
 			selected_rom_bank: 1,
 		}

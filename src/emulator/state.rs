@@ -1,15 +1,18 @@
 use std::rc::Rc;
 
 use super::cartridge::CartridgeState;
-use super::cpu::CPUState;
+use super::cpu::registers::CPURegister16;
+use super::cpu::values::ValueRefU16;
+use super::cpu::{CPUState, CPU};
 use super::memory_mapper::MemoryMapper;
+use super::ppu::PPUState;
 use crate::app::components::logger;
 
 pub struct EmulatorState {
 	pub ram_bank: u8,
 	pub cgb: bool,
-	pub t_states: u64,
 	pub cpu_state: CPUState,
+	pub ppu_state: PPUState,
 	pub cartridge_state: CartridgeState,
 	pub v_ram: [[u8; 0x2000]; 2],
 	pub w_ram: [[u8; 0x1000]; 8],
@@ -22,10 +25,10 @@ impl Default for EmulatorState {
 	fn default() -> Self {
 		Self {
 			cpu_state: CPUState::default(),
+			ppu_state: PPUState::default(),
 			cartridge_state: CartridgeState::default(),
 			ram_bank: 0,
 			cgb: false,
-			t_states: 0,
 			interupt_register: 0,
 			v_ram: [[0; 0x2000]; 2],
 			w_ram: [[0; 0x1000]; 8],
@@ -37,6 +40,38 @@ impl Default for EmulatorState {
 
 impl EmulatorState {
 	pub fn step(&mut self) {}
+
+	pub fn init(&mut self) {
+		self.cpu_state.registers.pc = 0x100;
+		self.cpu_state.registers.sp = 0xFFFE;
+
+		self.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
+		self.write_16(ValueRefU16::Reg(CPURegister16::BC), 0x0013);
+		self.write_16(ValueRefU16::Reg(CPURegister16::DE), 0x00D8);
+		self.write_16(ValueRefU16::Reg(CPURegister16::HL), 0x014D);
+
+		{
+			self.write(0xFF10, 0x80);
+			self.write(0xFF11, 0xBF);
+			self.write(0xFF12, 0xF3);
+			self.write(0xFF14, 0xBF);
+			self.write(0xFF16, 0x3F);
+			self.write(0xFF19, 0xBF);
+			self.write(0xFF1A, 0x7F);
+			self.write(0xFF1B, 0xFF);
+			self.write(0xFF1C, 0x9F);
+			self.write(0xFF1E, 0xBF);
+			self.write(0xFF20, 0xFF);
+			self.write(0xFF23, 0xBF);
+			self.write(0xFF24, 0x77);
+			self.write(0xFF25, 0xF3);
+			self.write(0xFF26, 0xF1);
+			self.write(0xFF40, 0x91);
+			self.write(0xFF47, 0xFC);
+			self.write(0xFF48, 0xFF);
+			self.write(0xFF49, 0xFF);
+		}
+	}
 
 	pub fn load_rom(&mut self, rom: Rc<Vec<u8>>) {
 		let rom_data = Rc::new(Box::new(rom));

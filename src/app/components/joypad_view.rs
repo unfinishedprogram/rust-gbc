@@ -1,5 +1,4 @@
-use crate::emulator::{cpu::Cpu, flags::*, state::EmulatorState};
-use egui::Context;
+use crate::emulator::flags::*;
 
 #[derive(Debug, Clone, Copy)]
 enum JoypadInput {

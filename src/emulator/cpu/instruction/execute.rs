@@ -1,15 +1,19 @@
-use super::super::flags::{Flag, Flags};
-use super::super::gb_stack::GBStack;
-use super::super::registers::{CPURegister16, CPURegister8};
+use crate::emulator::{
+	cpu::{
+		flags::{Flag, Flags},
+		gb_stack::GBStack,
+		instruction::{ALUOperation, Instruction, Instruction::*},
+		registers::{CPURegister16, CPURegister8},
+		CPU,
+	},
+	EmulatorState,
+};
 
 use std::ops::{BitAnd, BitOr, BitXor};
 
-use super::ALUOperation;
-use super::Cpu;
-use super::Instruction;
-use super::Instruction::*;
+pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) {
+	let cpu = state;
 
-pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 	match instruction {
 		NOP => {}
 		INT(interrupt) => {
@@ -243,7 +247,6 @@ pub fn execute_instruction(instruction: Instruction, cpu: &mut Cpu) {
 			Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
 			cpu,
 		),
-
 		DAA => {
 			// Decimal Adjust A Register
 			cpu.clear_flag(Flag::H);
