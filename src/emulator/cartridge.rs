@@ -11,14 +11,14 @@ pub mod mbc;
 
 pub struct CartridgeState {
 	pub info: CartridgeInfo,
-	pub raw_data: Rc<Vec<u8>>,
+	pub raw_data: Vec<u8>,
 	pub selected_ram_bank: u16,
 	pub selected_rom_bank: u16,
 }
 
 impl CartridgeState {
-	pub fn from_raw_rom(raw_data: Rc<Vec<u8>>) -> Result<Self, String> {
-		let raw_header = RawCartridgeHeader::from(&*raw_data);
+	pub fn from_raw_rom(raw_data: Vec<u8>) -> Result<Self, String> {
+		let raw_header = RawCartridgeHeader::from(&raw_data);
 		if let Ok(info) = raw_header.parse() {
 			Ok(Self {
 				info,
@@ -28,17 +28,6 @@ impl CartridgeState {
 			})
 		} else {
 			Err("Parse Error".to_owned())
-		}
-	}
-}
-
-impl Default for CartridgeState {
-	fn default() -> Self {
-		Self {
-			info: CartridgeInfo::default(),
-			raw_data: Rc::new(vec![0; 0x10000]),
-			selected_ram_bank: 1,
-			selected_rom_bank: 1,
 		}
 	}
 }

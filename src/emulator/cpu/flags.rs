@@ -1,6 +1,6 @@
 use crate::emulator::state::EmulatorState;
 
-use super::{registers::CPURegister8, CPUState, CPU};
+use super::{registers::CPURegister8, CPU};
 
 pub enum Flag {
 	Z = 7,
