@@ -40,8 +40,8 @@ impl Debugger {
 		debug_draw_tile_data(emulator, &mut self.vram_view.pixel_buffer);
 		debug_draw_window_data(emulator, &mut self.window_view.pixel_buffer);
 
-		self.vram_view.draw_window(ui, "Vram");
-		self.window_view.draw_window(ui, "Window");
+		// self.vram_view.draw_window(ui, "Vram");
+		// self.window_view.draw_window(ui, "Window");
 
 		self.breakpoint_manager.draw(ui);
 
@@ -52,7 +52,13 @@ impl Debugger {
 	}
 
 	pub fn step(&mut self, t_states: u32, state: &mut EmulatorState) {
-		state.step();
+		for _ in 0..t_states {
+			if !state.run {
+				return;
+			}
+
+			state.step();
+		}
 
 		return;
 

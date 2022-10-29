@@ -3,8 +3,8 @@ use crate::app::components::logger;
 use crate::emulator::{
 	flags,
 	flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag},
+	io_registers::IORegistersAdress::*,
 	memory_mapper::MemoryMapper,
-	memory_registers::MemoryRegister::*,
 };
 
 use super::EmulatorState;
@@ -48,7 +48,7 @@ impl PPU for EmulatorState {
 
 	fn set_ly(&mut self, value: u8) {
 		let lyc_status = self.read(LY as u16) == value;
-		self.write(LY as u16, value);
+		self.io_register_state[LY as u16] = value;
 		set_bit_flag_to(self, BitFlag::Stat(STATFlag::LYCeqLY), lyc_status);
 
 		if lyc_status && get_bit_flag(self, BitFlag::Stat(STATFlag::LYCeqLUInterruptEnable)) {

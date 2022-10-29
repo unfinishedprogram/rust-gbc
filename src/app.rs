@@ -13,13 +13,11 @@ pub struct EmulatorManager {
 	loaded_file_data: Option<Promise<Vec<u8>>>,
 	roms: Vec<&'static str>,
 	debugger: Debugger,
-	run: bool,
 }
 
 impl Default for EmulatorManager {
 	fn default() -> Self {
 		Self {
-			run: false,
 			loaded_file_data: None::<Promise<Vec<u8>>>,
 			debugger: Debugger::default(),
 			roms: vec![
@@ -88,7 +86,10 @@ impl eframe::App for EmulatorManager {
 					self.load_cartridge_by_url("roms/dmg_boot.bin");
 				}
 				if ui.button("Toggle Play").clicked() {
-					self.run = !self.run;
+					self.emulator_state.run = !self.emulator_state.run;
+				}
+				if ui.button("Step").clicked() {
+					self.emulator_state.step();
 				}
 			})
 		});
@@ -103,10 +104,8 @@ impl eframe::App for EmulatorManager {
 
 		// egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
 
-		// self.debugger.step(702, &mut self.emulator);
-		if self.run {
-			self.debugger.step(1, &mut self.emulator_state)
-		}
+		self.debugger.step(720, &mut self.emulator_state);
+		ctx.request_repaint()
 	}
 }
 

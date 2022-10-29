@@ -53,7 +53,9 @@ impl MemoryMapper for CartridgeState {
 	fn write(&mut self, addr: u16, value: u8) {
 		use mbc::MBC::*;
 		match self.info.mbc {
-			ROM => logger::warn("Write to readonly memory"),
+			ROM => {
+				logger::warn(format!("Write to readonly memory: {:X}", addr));
+			}
 			MBC1 => todo!(),
 			MBC2 => todo!(),
 			MMM01 => todo!(),

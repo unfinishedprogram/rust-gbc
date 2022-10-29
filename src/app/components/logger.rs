@@ -56,7 +56,7 @@ impl Drawable for LogMessage {
 				.strong()
 				.color(log_type.color())
 				.monospace()
-				.size(16.0),
+				.size(12.0),
 		);
 	}
 }
@@ -160,7 +160,7 @@ impl Logger {
 
 	fn log(&mut self, msg: LogMessage) {
 		self.logs.push(msg);
-		if self.logs.len() > 200 {
+		if self.logs.len() > 2000000 {
 			self.logs.remove(0);
 		}
 	}
