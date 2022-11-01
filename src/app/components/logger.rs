@@ -62,7 +62,13 @@ impl Drawable for LogMessage {
 }
 
 pub unsafe fn draw(ui: &mut Ui) {
-	ui.heading("Logs");
+	ui.horizontal(|ui| {
+		ui.heading("Logs");
+		if ui.button("clear").clicked() {
+			INSTANCE.clear()
+		}
+	});
+
 	use LogMessageType::*;
 	ui.collapsing("Levels", |ui| {
 		ui.checkbox(
@@ -133,6 +139,12 @@ pub fn debug<S: Into<String>>(msg: S) {
 	}
 }
 
+pub fn clear() {
+	unsafe {
+		INSTANCE.clear();
+	}
+}
+
 impl Logger {
 	pub const fn new() -> Logger {
 		let logger = Logger {
@@ -156,6 +168,9 @@ impl Logger {
 	}
 	pub fn debug<S: Into<String>>(&mut self, msg: S) {
 		self.log((LogMessageType::Debug, msg.into()));
+	}
+	pub fn clear(&mut self) {
+		self.logs.clear()
 	}
 
 	fn log(&mut self, msg: LogMessage) {

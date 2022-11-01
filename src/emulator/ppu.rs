@@ -17,7 +17,7 @@ pub enum PPUMode {
 	Draw = 3,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct PPUState {
 	t_states: u64,
 }

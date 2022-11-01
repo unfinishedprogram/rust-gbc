@@ -17,64 +17,64 @@ enum DebuggerState {
 
 pub struct Debugger {
 	state: DebuggerState,
+	cycle: u64,
 	breakpoint_manager: BreakpointManager,
 	memory_view: MemoryView,
 	vram_view: BufferView,
 	window_view: BufferView,
+	pub emulator_state: EmulatorState,
+	pub run: bool,
 }
 
 impl Default for Debugger {
 	fn default() -> Self {
 		Self {
+			run: false,
+			cycle: 0,
+			emulator_state: EmulatorState::default().init(),
 			state: DebuggerState::Paused,
 			breakpoint_manager: BreakpointManager::default(),
 			memory_view: MemoryView::default(),
-			vram_view: BufferView::new("VRAM", (256, 256)),
+			vram_view: BufferView::new("VRAM", (16 * 8, 24 * 8)),
 			window_view: BufferView::new("Window", (256, 256)),
 		}
 	}
 }
 
 impl Debugger {
-	pub fn draw(&mut self, emulator: &mut EmulatorState, ui: &mut Ui) {
-		debug_draw_tile_data(emulator, &mut self.vram_view.pixel_buffer);
-		debug_draw_window_data(emulator, &mut self.window_view.pixel_buffer);
+	pub fn draw(&mut self, ui: &mut Ui) {
+		debug_draw_tile_data(&self.emulator_state, &mut self.vram_view.pixel_buffer);
+		debug_draw_window_data(&self.emulator_state, &mut self.window_view.pixel_buffer);
 
-		// self.vram_view.draw_window(ui, "Vram");
-		// self.window_view.draw_window(ui, "Window");
+		self.vram_view.draw_window(ui, "Vram");
+		self.window_view.draw_window(ui, "Window");
+
+		ui.label(format!("Cycle: {:}", self.cycle));
 
 		self.breakpoint_manager.draw(ui);
 
 		ui.separator();
 
 		self.memory_view
-			.draw(ui, emulator, &mut self.breakpoint_manager);
+			.draw(ui, &mut self.emulator_state, &mut self.breakpoint_manager);
 	}
 
-	pub fn step(&mut self, t_states: u32, state: &mut EmulatorState) {
-		for _ in 0..t_states {
-			if !state.run {
-				return;
-			}
+	pub fn back(&mut self) {
+		// if let Some(state) = self.save_states.pop() {
+		// 	self.cycle -= 1;
+		// 	self.emulator_state = state;
+		// }
+	}
 
-			state.step();
+	pub fn step(&mut self) {
+		if !self.run {
+			return;
 		}
-
-		return;
-
-		match self.state {
-			DebuggerState::Paused => {}
-			DebuggerState::Playing => {
-				for _ in 0..t_states {
-					if self
-						.breakpoint_manager
-						.break_on(state.cpu_state.registers.pc)
-					{
-						self.state = DebuggerState::Paused;
-						logger::warn(format!("Paused at: {}", state.cpu_state.registers.pc));
-						break;
-					}
-				}
+		loop {
+			self.cycle += 1;
+			self.emulator_state.step();
+			if self.emulator_state.cpu_state.t_states == 0 {
+				break;
 			}
 		}
 	}
@@ -84,7 +84,6 @@ impl Debugger {
 			.breakpoint_manager
 			.break_on(state.cpu_state.registers.pc)
 		{}
-		todo!(); // state.step();
-		 // self.apply(emulator);
+		todo!();
 	}
 }

@@ -1,5 +1,6 @@
 use super::CPURegisters;
 
+#[derive(Clone, Copy)]
 pub struct CPUState {
 	pub registers: CPURegisters,
 	pub interrupt_enable: bool,

@@ -7,6 +7,7 @@ use super::memory_mapper::MemoryMapper;
 use super::ppu::{PPUState, PPU};
 use crate::app::components::logger;
 
+#[derive(Clone)]
 pub struct EmulatorState {
 	pub ram_bank: u8,
 	pub cgb: bool,
@@ -49,14 +50,14 @@ impl<'a> EmulatorState {
 		PPU::step(self);
 	}
 
-	pub fn init(&mut self) {
-		self.cpu_state.registers.pc = 0x100;
-		self.cpu_state.registers.sp = 0xFFFE;
-
+	pub fn init(mut self) -> Self {
 		self.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
 		self.write_16(ValueRefU16::Reg(CPURegister16::BC), 0x0013);
 		self.write_16(ValueRefU16::Reg(CPURegister16::DE), 0x00D8);
 		self.write_16(ValueRefU16::Reg(CPURegister16::HL), 0x014D);
+
+		self.write_16(ValueRefU16::Reg(CPURegister16::SP), 0xFFFE);
+		self.write_16(ValueRefU16::Reg(CPURegister16::PC), 0x0100);
 
 		{
 			self.write(0xFF10, 0x80);
@@ -79,6 +80,7 @@ impl<'a> EmulatorState {
 			self.write(0xFF48, 0xFF);
 			self.write(0xFF49, 0xFF);
 		}
+		return self;
 	}
 
 	pub fn load_rom(&mut self, rom: &Vec<u8>) {
@@ -118,7 +120,7 @@ impl MemoryMapper for EmulatorState {
 			} //  Cartrage RAM
 			0xC000..0xD000 => self.w_ram[0][(addr - 0xC000) as usize], // Internal RAM
 			0xD000..0xE000 => self.w_ram[1][(addr - 0xD000) as usize], // Switchable RAM in CGB mode
-			0xE000..0xFE00 => self.w_ram[0][(addr - 0xE000) as usize], // Mirror, should not be used
+			0xE000..0xFE00 => self.read(addr - 0x2000),                // Mirror, should not be used
 			0xFE00..0xFEA0 => self.oam[(addr - 0xFE00) as usize],      // Object Attribute Map
 			0xFEA0..0xFF00 => 0x0,                                     // Unusable
 			0xFF00..0xFF80 => self.read_io(addr),                      // IO Registers

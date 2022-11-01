@@ -56,6 +56,7 @@ pub enum IORegistersAdress {
 	JOYP = 0xFF00,
 }
 
+#[derive(Clone)]
 pub struct IORegisterState {
 	values: [u8; 0x80],
 	_other: u8,

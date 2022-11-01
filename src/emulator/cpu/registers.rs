@@ -26,7 +26,7 @@ pub enum CPURegister16 {
 	SP,
 	PC,
 }
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Copy)]
 pub struct CPURegisters {
 	pub bytes: [u8; 8],
 	pub sp: u16,

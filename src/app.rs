@@ -3,13 +3,10 @@ pub mod drawable;
 pub mod managed_input;
 mod style;
 
-use crate::emulator::state::EmulatorState;
-
 use components::{draw_cpu_status, logger, Debugger};
 use poll_promise::Promise;
 
 pub struct EmulatorManager {
-	emulator_state: EmulatorState,
 	loaded_file_data: Option<Promise<Vec<u8>>>,
 	roms: Vec<&'static str>,
 	debugger: Debugger,
@@ -27,7 +24,6 @@ impl Default for EmulatorManager {
 				"roms/06-ld r,r.gb",
 				"roms/07-jr,jp,call,ret,rst.gb",
 			],
-			emulator_state: EmulatorState::default(),
 		}
 	}
 }
@@ -61,12 +57,10 @@ impl eframe::App for EmulatorManager {
 		style::apply(ctx);
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(rom) = data.ready() {
-				self.emulator_state.load_rom(rom);
+				self.debugger.emulator_state.load_rom(rom);
 				self.loaded_file_data = None;
 			}
 		}
-
-		// joypad_view(ctx, &mut self.emulator_state);
 
 		egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
@@ -82,29 +76,30 @@ impl eframe::App for EmulatorManager {
 					});
 				});
 
-				if ui.button("Load Bios").clicked() {
-					self.load_cartridge_by_url("roms/dmg_boot.bin");
-				}
 				if ui.button("Toggle Play").clicked() {
-					self.emulator_state.run = !self.emulator_state.run;
+					self.debugger.run = !self.debugger.run;
 				}
-				if ui.button("Step").clicked() {
-					self.emulator_state.step();
+				if ui.button("back").clicked() {
+					self.debugger.back();
 				}
+
+				// if ui.button("Step").clicked() {
+				for _ in 0..100 {
+					self.debugger.step();
+				}
+				// }
 			})
 		});
 
 		egui::SidePanel::left("left_panel").show(ctx, |ui| {
-			ui.vertical(|ui| draw_cpu_status(ui, &self.emulator_state));
+			ui.vertical(|ui| draw_cpu_status(ui, &self.debugger.emulator_state));
 			unsafe { logger::draw(ui) };
 		});
 
-		egui::SidePanel::right("right_panel")
-			.show(ctx, |ui| self.debugger.draw(&mut self.emulator_state, ui));
+		egui::SidePanel::right("right_panel").show(ctx, |ui| self.debugger.draw(ui));
 
-		// egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
+		egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
 
-		self.debugger.step(720, &mut self.emulator_state);
 		ctx.request_repaint()
 	}
 }

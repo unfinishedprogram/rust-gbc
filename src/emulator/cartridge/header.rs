@@ -21,7 +21,7 @@ pub struct RawCartridgeHeader {
 	pub global_checksum: u16,        // 014E-014F
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CartridgeInfo {
 	pub cgb: bool,
 	pub sgb: bool,

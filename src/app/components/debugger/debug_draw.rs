@@ -67,9 +67,9 @@ pub fn debug_draw_tile_data(state: &EmulatorState, screen_buffer: &mut PixelBuff
 	// let start = ppu::registers::PPURegister::VramStart as usize;
 	let start = 0x8000;
 
-	for y in 0..32 {
-		for x in 0..32 {
-			let index: u16 = (start + ((y * 20) + x) * 16) as u16;
+	for y in 0..24 {
+		for x in 0..16 {
+			let index: u16 = (start + ((y * 16) + x) * 16) as u16;
 
 			let mut values = [0; 16];
 

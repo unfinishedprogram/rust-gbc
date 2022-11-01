@@ -26,7 +26,7 @@ impl MemoryView {
 	pub fn draw(
 		&mut self,
 		ui: &mut Ui,
-		emulator: &mut EmulatorState,
+		emulator: &EmulatorState,
 		breakpoint_manager: &mut BreakpointManager,
 	) {
 		ui.vertical(|ui| {
