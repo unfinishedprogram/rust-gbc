@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::app::components::logger;
 
 use self::header::{CartridgeInfo, RawCartridgeHeader};

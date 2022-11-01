@@ -1,13 +1,12 @@
 use std::ops::Index;
 use std::ops::IndexMut;
 
-use serde::Serialize;
 use CPURegister16::*;
 use CPURegister8::*;
 
 #[derive(Copy, Clone, Debug)]
 pub enum CPURegister8 {
-	A = 0,
+	A,
 	B,
 	C,
 	D,
@@ -26,6 +25,7 @@ pub enum CPURegister16 {
 	SP,
 	PC,
 }
+
 #[derive(Debug, Clone, Copy)]
 pub struct CPURegisters {
 	pub bytes: [u8; 8],

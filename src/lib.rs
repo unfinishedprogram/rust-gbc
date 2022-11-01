@@ -8,5 +8,4 @@ extern crate num_traits;
 
 pub mod app;
 pub mod emulator;
-pub mod lcd;
 pub mod util;

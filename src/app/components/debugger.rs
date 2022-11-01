@@ -1,9 +1,9 @@
 mod breakpoint_manager;
-pub mod cpu_status;
 mod debug_draw;
 mod memory_view;
+pub mod status;
 
-use super::{logger, BufferView};
+use super::BufferView;
 use crate::{app::drawable::DrawableMut, emulator::state::EmulatorState};
 use breakpoint_manager::BreakpointManager;
 use debug_draw::*;

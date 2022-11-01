@@ -3,8 +3,10 @@ pub mod drawable;
 pub mod managed_input;
 mod style;
 
-use components::{draw_cpu_status, logger, Debugger};
+use components::{draw_status, logger, Debugger};
 use poll_promise::Promise;
+
+use self::components::logger::draw;
 
 pub struct EmulatorManager {
 	loaded_file_data: Option<Promise<Vec<u8>>>,
@@ -92,7 +94,7 @@ impl eframe::App for EmulatorManager {
 		});
 
 		egui::SidePanel::left("left_panel").show(ctx, |ui| {
-			ui.vertical(|ui| draw_cpu_status(ui, &self.debugger.emulator_state));
+			ui.vertical(|ui| draw_status(ui, &self.debugger.emulator_state));
 			unsafe { logger::draw(ui) };
 		});
 
