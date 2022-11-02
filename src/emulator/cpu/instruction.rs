@@ -64,6 +64,11 @@ pub enum Instruction {
 	ROT(RotShiftOperation, ValueRefU8),
 
 	INT(InterruptFlag),
+
+	LD_A_INC_HL,
+	LD_A_DEC_HL,
+	LD_INC_HL_A,
+	LD_DEC_HL_A,
 }
 
 #[derive(Copy, Clone)]
@@ -110,7 +115,6 @@ impl Debug for Instruction {
 		match self {
 			Self::NOP => write!(f, "nop"),
 			Self::STOP => write!(f, "stop"),
-			Self::COMPOSE(arg0, arg1) => f.debug_tuple("COMPOSE").field(arg0).field(arg1).finish(),
 			Self::ERROR(arg0) => f.debug_tuple("error").field(arg0).finish(),
 			Self::LD_8(arg0, arg1) => write!(f, "ld {arg0:?}, {arg1:?}"),
 			Self::LD_16(arg0, arg1) => write!(f, "ld {arg0:?}, {arg1:?}"),
@@ -123,6 +127,7 @@ impl Debug for Instruction {
 			Self::ADD_SIGNED(arg0, arg1) => {
 				f.debug_tuple("ADD_SIGNED").field(arg0).field(arg1).finish()
 			}
+
 			Self::ALU_OP_8(a0, a1, a2) => write!(f, "{a0:?} {a1:?}, {a2:?}"),
 			Self::HALT => write!(f, "halt"),
 			Self::CALL(arg0, arg1) => f.debug_tuple("call").field(arg0).field(arg1).finish(),
@@ -147,6 +152,11 @@ impl Debug for Instruction {
 			Self::SET(arg0, arg1) => f.debug_tuple("set").field(arg0).field(arg1).finish(),
 			Self::ROT(arg0, arg1) => f.debug_tuple("rot").field(arg0).field(arg1).finish(),
 			Self::INT(arg0) => f.debug_tuple("int").field(arg0).finish(),
+			Self::LD_A_DEC_HL => write!(f, "ld a, [hl-]"),
+			Self::LD_A_INC_HL => write!(f, "ld a, [hl+]"),
+			Self::LD_DEC_HL_A => write!(f, "ld [hl-], a"),
+			Self::LD_INC_HL_A => write!(f, "ld [hl+], a"),
+    		Self::COMPOSE(_, _) => todo!(),
 		}
 	}
 }
