@@ -103,8 +103,12 @@ pub trait IORegisters {
 
 impl IORegisters for EmulatorState {
 	fn read_io(&self, addr: u16) -> u8 {
-		// use IORegistersAdress::*;
+		use IORegistersAdress::*;
 		match IORegistersAdress::try_from(addr) {
+			Ok(SB) => {
+				logger::error(format!("SERIAL BUS READ{:X}", addr));
+				return 0;
+			}
 			Err(_) => {
 				logger::error(format!("Unhandled Read: {:X}", addr));
 				self.io_register_state[addr]
@@ -117,6 +121,7 @@ impl IORegisters for EmulatorState {
 		use IORegistersAdress::*;
 		match IORegistersAdress::try_from(addr) {
 			Ok(DIV) => self.io_register_state[addr] = 0,
+			Ok(SB) => logger::error(format!("SERIAL BUS WRITE{:X}", addr)),
 			Err(_) => {
 				self.run = false;
 				logger::error(format!("Unhandled Write: {:X}", addr))

@@ -3,15 +3,18 @@ mod debug_draw;
 mod memory_view;
 pub mod status;
 
-use super::BufferView;
-use crate::{app::drawable::DrawableMut, emulator::state::EmulatorState};
+use super::{logger, BufferView};
+use crate::{
+	app::drawable::DrawableMut,
+	emulator::{memory_mapper::MemoryMapper, state::EmulatorState},
+};
 use breakpoint_manager::BreakpointManager;
 use debug_draw::*;
 use egui::Ui;
 use memory_view::MemoryView;
 
 enum DebuggerState {
-	Playing,
+	Running,
 	Paused,
 }
 
@@ -22,15 +25,15 @@ pub struct Debugger {
 	memory_view: MemoryView,
 	vram_view: BufferView,
 	window_view: BufferView,
+	serial_output: Vec<char>,
 	pub emulator_state: EmulatorState,
-	pub run: bool,
 }
 
 impl Default for Debugger {
 	fn default() -> Self {
 		Self {
-			run: false,
 			cycle: 0,
+			serial_output: vec![],
 			emulator_state: EmulatorState::default().init(),
 			state: DebuggerState::Paused,
 			breakpoint_manager: BreakpointManager::default(),
@@ -50,6 +53,10 @@ impl Debugger {
 		self.window_view.draw_window(ui, "Window");
 
 		ui.label(format!("Cycle: {:}", self.cycle));
+		ui.label(format!(
+			"Cycle: {:}",
+			format!("{:b}", self.emulator_state.read(0xFF02)) // self.serial_output.clone().into_iter().collect::<String>()
+		));
 
 		self.breakpoint_manager.draw(ui);
 
@@ -59,31 +66,40 @@ impl Debugger {
 			.draw(ui, &mut self.emulator_state, &mut self.breakpoint_manager);
 	}
 
-	pub fn back(&mut self) {
-		// if let Some(state) = self.save_states.pop() {
-		// 	self.cycle -= 1;
-		// 	self.emulator_state = state;
-		// }
+	pub fn start(&mut self) {
+		self.state = DebuggerState::Running;
+	}
+
+	pub fn pause(&mut self) {
+		self.state = DebuggerState::Paused;
+	}
+
+	pub fn toggle_state(&mut self) {
+		match self.state {
+			DebuggerState::Running => self.pause(),
+			DebuggerState::Paused => self.start(),
+		}
+	}
+
+	pub fn do_serial(&mut self) {
+		logger::debug(format!("{:X}", self.emulator_state.read(0xFF02)));
+		if self.emulator_state.read(0xFF02) >> 7 == 1 {
+			self.serial_output
+				.push(self.emulator_state.read(0xFF01) as char)
+		}
 	}
 
 	pub fn step(&mut self) {
-		if !self.run {
-			return;
+		match self.state {
+			DebuggerState::Paused => {}
+			DebuggerState::Running => loop {
+				self.cycle += 1;
+				self.emulator_state.step();
+				self.do_serial();
+				if self.emulator_state.cpu_state.t_states == 0 {
+					break;
+				}
+			},
 		}
-		loop {
-			self.cycle += 1;
-			self.emulator_state.step();
-			if self.emulator_state.cpu_state.t_states == 0 {
-				break;
-			}
-		}
-	}
-
-	pub fn run_until_break(&mut self, state: &mut EmulatorState) {
-		if self
-			.breakpoint_manager
-			.break_on(state.cpu_state.registers.pc)
-		{}
-		todo!();
 	}
 }

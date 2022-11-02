@@ -4,11 +4,11 @@ use super::{
 };
 
 use crate::emulator::cpu::CPU;
-use crate::emulator::state::EmulatorState;
+use crate::emulator::memory_mapper::MemoryMapper;
 
 use crate::{arg, inst, mem}; // Macros
 
-pub fn fetch_instruction(cpu: &mut EmulatorState) -> Instruction {
+pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 	let opcode = Opcode::from(cpu.next_byte());
 
 	let x = opcode.x as usize;

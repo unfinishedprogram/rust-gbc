@@ -62,8 +62,8 @@ pub enum ValueRefI8 {
 impl fmt::Debug for ValueRefU16 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			ValueRefU16::Raw(x) => write!(f, "Raw({:X})", x),
-			ValueRefU16::Mem(x) => write!(f, "Mem({:X})", x),
+			ValueRefU16::Raw(x) => write!(f, "Raw(0x{:X})", x),
+			ValueRefU16::Mem(x) => write!(f, "Mem(0x{:X})", x),
 			ValueRefU16::Reg(x) => write!(f, "Reg({:?})", x),
 		}
 	}

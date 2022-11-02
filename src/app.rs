@@ -6,8 +6,6 @@ mod style;
 use components::{draw_status, logger, Debugger};
 use poll_promise::Promise;
 
-use self::components::logger::draw;
-
 pub struct EmulatorManager {
 	loaded_file_data: Option<Promise<Vec<u8>>>,
 	roms: Vec<&'static str>,
@@ -79,10 +77,7 @@ impl eframe::App for EmulatorManager {
 				});
 
 				if ui.button("Toggle Play").clicked() {
-					self.debugger.run = !self.debugger.run;
-				}
-				if ui.button("back").clicked() {
-					self.debugger.back();
+					self.debugger.toggle_state();
 				}
 
 				// if ui.button("Step").clicked() {

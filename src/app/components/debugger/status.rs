@@ -4,7 +4,6 @@ use emulator::cpu::registers::CPURegister16::*;
 
 pub fn draw_status(ui: &mut Ui, emulator: &EmulatorState) {
 	let cpu = &emulator.cpu_state;
-	// let ppu = &emulator.ppu_state;
 
 	ui.heading("CPU Info");
 	ui.set_width(ui.available_width());

@@ -25,8 +25,16 @@ pub trait CPU {
 	fn enable_interrupts(&mut self);
 	fn add_t(&mut self, t: u64);
 	fn next_byte(&mut self) -> u8;
-	fn next_displacement(&mut self) -> i8;
-	fn next_chomp(&mut self) -> u16;
+
+	fn next_displacement(&mut self) -> i8 {
+		self.next_byte() as i8
+	}
+
+	fn next_chomp(&mut self) -> u16 {
+		let big = self.next_byte();
+		let small = self.next_byte();
+		u16::from_le_bytes([big, small])
+	}
 
 	fn read_8(&mut self, value_ref: ValueRefU8) -> u8;
 	fn read_i8(&mut self, value_ref: ValueRefI8) -> i8;
@@ -61,15 +69,6 @@ impl CPU for EmulatorState {
 	fn next_byte(&mut self) -> u8 {
 		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(1);
 		self.read(self.cpu_state.registers.pc - 1)
-	}
-
-	fn next_displacement(&mut self) -> i8 {
-		self.next_byte() as i8
-	}
-
-	fn next_chomp(&mut self) -> u16 {
-		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(2);
-		self.read_16(ValueRefU16::Mem(self.cpu_state.registers.pc - 2))
 	}
 
 	fn read_8(&mut self, value_ref: ValueRefU8) -> u8 {

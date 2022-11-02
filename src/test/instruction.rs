@@ -1,0 +1,51 @@
+use std::{assert_matches::assert_matches, vec};
+
+use crate::emulator::{
+	cpu::{
+		instruction::{fetch::fetch_instruction, Instruction},
+		registers::CPURegister16,
+		values::ValueRefU16::{self, *},
+	},
+	memory_mapper::MemoryMapper,
+};
+
+use super::mocks::mock_emulator::MockEmulator;
+
+fn parse_bytes(bytes: Vec<u8>) -> Instruction {
+	let mut state = MockEmulator::default();
+
+	for (index, byte) in bytes.into_iter().enumerate() {
+		state.write((index + 0x100) as u16, byte)
+	}
+
+	fetch_instruction(&mut state)
+}
+
+#[test]
+fn misc_ctrl() {
+	use Instruction::*;
+
+	assert_matches!(parse_bytes(vec![0x00]), NOP);
+	assert_matches!(parse_bytes(vec![0x10]), STOP);
+	assert_matches!(parse_bytes(vec![0x76]), HALT);
+	assert_matches!(parse_bytes(vec![0xF3]), DI);
+	assert_matches!(parse_bytes(vec![0xFB]), EI);
+}
+
+#[test]
+
+fn move_load_16_bit() {
+	use CPURegister16::*;
+	use Instruction::*;
+	use ValueRefU16::*;
+
+	let pb = parse_bytes;
+
+	assert_eq!(u16::from_le_bytes([0xFF, 0]), 0x00FF);
+	assert_eq!(u16::from_le_bytes([0, 0xFF]), 0xFF00);
+
+	assert_matches!(pb(vec![0x01, 0x34, 0x12]), LD_16(Reg(BC), Raw(0x1234)));
+	assert_matches!(pb(vec![0x11, 0x34, 0x12]), LD_16(Reg(DE), Raw(0x1234)));
+	assert_matches!(pb(vec![0x21, 0x34, 0x12]), LD_16(Reg(HL), Raw(0x1234)));
+	assert_matches!(pb(vec![0x31, 0x34, 0x12]), LD_16(Reg(SP), Raw(0x1234)));
+}
