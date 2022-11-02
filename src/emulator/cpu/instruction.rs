@@ -9,8 +9,8 @@ pub mod fetch;
 #[macro_use]
 pub mod mac_instruction;
 pub mod opcode;
-
 use condition::Condition;
+use core::fmt::Debug;
 
 use super::{
 	registers::{CPURegister16, CPURegister8},
@@ -19,7 +19,7 @@ use super::{
 
 use crate::emulator::flags::InterruptFlag;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 #[allow(non_camel_case_types)]
 pub enum Instruction {
 	COMPOSE(Box<Instruction>, Box<Instruction>),
@@ -66,7 +66,7 @@ pub enum Instruction {
 	INT(InterruptFlag),
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub enum ALUOperation {
 	ADD,
 	ADC,
@@ -88,4 +88,65 @@ pub enum RotShiftOperation {
 	SRA,
 	SWAP,
 	SRL,
+}
+
+impl Debug for ALUOperation {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::ADD => write!(f, "add"),
+			Self::ADC => write!(f, "adc"),
+			Self::SUB => write!(f, "sub"),
+			Self::SBC => write!(f, "sbc"),
+			Self::AND => write!(f, "and"),
+			Self::XOR => write!(f, "xor"),
+			Self::OR => write!(f, "or"),
+			Self::CP => write!(f, "cp"),
+		}
+	}
+}
+
+impl Debug for Instruction {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::NOP => write!(f, "nop"),
+			Self::STOP => write!(f, "stop"),
+			Self::COMPOSE(arg0, arg1) => f.debug_tuple("COMPOSE").field(arg0).field(arg1).finish(),
+			Self::ERROR(arg0) => f.debug_tuple("error").field(arg0).finish(),
+			Self::LD_8(arg0, arg1) => write!(f, "ld {arg0:?}, {arg1:?}"),
+			Self::LD_16(arg0, arg1) => write!(f, "ld {arg0:?}, {arg1:?}"),
+			Self::INC_8(arg0) => f.debug_tuple("inc").field(arg0).finish(),
+			Self::INC_16(arg0) => write!(f, "inc {arg0:?}"),
+			Self::DEC_8(arg0) => f.debug_tuple("dec").field(arg0).finish(),
+			Self::DEC_16(arg0) => f.debug_tuple("dec").field(arg0).finish(),
+			Self::JR(arg0, arg1) => f.debug_tuple("jr").field(arg0).field(arg1).finish(),
+			Self::ADD_16(arg0, arg1) => f.debug_tuple("add").field(arg0).field(arg1).finish(),
+			Self::ADD_SIGNED(arg0, arg1) => {
+				f.debug_tuple("ADD_SIGNED").field(arg0).field(arg1).finish()
+			}
+			Self::ALU_OP_8(a0, a1, a2) => write!(f, "{a0:?} {a1:?}, {a2:?}"),
+			Self::HALT => write!(f, "halt"),
+			Self::CALL(arg0, arg1) => f.debug_tuple("call").field(arg0).field(arg1).finish(),
+			Self::POP(arg0) => f.debug_tuple("pop").field(arg0).finish(),
+			Self::PUSH(arg0) => f.debug_tuple("push").field(arg0).finish(),
+			Self::JP(Condition::ALWAYS, arg1) => write!(f, "jp {arg1:?}"),
+			Self::JP(arg0, arg1) => write!(f, "jp {arg0:?} {arg1:?}"),
+			Self::RET(arg0) => f.debug_tuple("ret").field(arg0).finish(),
+			Self::RST(arg0) => f.debug_tuple("rst").field(arg0).finish(),
+			Self::DI => write!(f, "di"),
+			Self::EI => write!(f, "ei"),
+			Self::RLCA => write!(f, "rlca"),
+			Self::RRCA => write!(f, "rrca"),
+			Self::RLA => write!(f, "rla"),
+			Self::RRA => write!(f, "rra"),
+			Self::DAA => write!(f, "daa"),
+			Self::CPL => write!(f, "cpl"),
+			Self::SCF => write!(f, "scf"),
+			Self::CCF => write!(f, "ccf"),
+			Self::BIT(arg0, arg1) => f.debug_tuple("bit").field(arg0).field(arg1).finish(),
+			Self::RES(arg0, arg1) => f.debug_tuple("res").field(arg0).field(arg1).finish(),
+			Self::SET(arg0, arg1) => f.debug_tuple("set").field(arg0).field(arg1).finish(),
+			Self::ROT(arg0, arg1) => f.debug_tuple("rot").field(arg0).field(arg1).finish(),
+			Self::INT(arg0) => f.debug_tuple("int").field(arg0).finish(),
+		}
+	}
 }

@@ -38,7 +38,7 @@ impl Into<ValueRefU16> for u16 {
 	}
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub enum ValueRefU8 {
 	Reg(CPURegister8),
 	Mem(ValueRefU16),
@@ -62,9 +62,19 @@ pub enum ValueRefI8 {
 impl fmt::Debug for ValueRefU16 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			ValueRefU16::Raw(x) => write!(f, "Raw(0x{:X})", x),
-			ValueRefU16::Mem(x) => write!(f, "Mem(0x{:X})", x),
-			ValueRefU16::Reg(x) => write!(f, "Reg({:?})", x),
+			ValueRefU16::Raw(x) => write!(f, "${:04X}", x),
+			ValueRefU16::Mem(x) => write!(f, "(${:04X})", x),
+			ValueRefU16::Reg(x) => write!(f, "{:?}", x),
+		}
+	}
+}
+
+impl fmt::Debug for ValueRefU8 {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			ValueRefU8::Raw(x) => write!(f, "${:02X}", x),
+			ValueRefU8::Mem(x) => write!(f, "({:?})", x),
+			ValueRefU8::Reg(x) => write!(f, "{:?}", x),
 		}
 	}
 }

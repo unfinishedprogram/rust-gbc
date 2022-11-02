@@ -1,10 +1,11 @@
+use std::fmt::Debug;
 use std::ops::Index;
 use std::ops::IndexMut;
 
 use CPURegister16::*;
 use CPURegister8::*;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub enum CPURegister8 {
 	A,
 	B,
@@ -16,7 +17,7 @@ pub enum CPURegister8 {
 	L,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub enum CPURegister16 {
 	AF,
 	BC,
@@ -81,4 +82,32 @@ impl CPURegisters {
 			PC => self.pc = value,
 		}
 	}
+}
+
+impl Debug for CPURegister8 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::A => write!(f, "a"),
+            Self::B => write!(f, "b"),
+            Self::C => write!(f, "c"),
+            Self::D => write!(f, "d"),
+            Self::E => write!(f, "e"),
+            Self::F => write!(f, "f"),
+            Self::H => write!(f, "h"),
+            Self::L => write!(f, "l"),
+        }
+    }
+}
+
+impl Debug for CPURegister16 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AF => write!(f, "af"),
+            Self::BC => write!(f, "bc"),
+            Self::DE => write!(f, "de"),
+            Self::HL => write!(f, "hl"),
+            Self::SP => write!(f, "sp"),
+            Self::PC => write!(f, "pc"),
+        }
+    }
 }

@@ -3,8 +3,8 @@ use std::{assert_matches::assert_matches, vec};
 use crate::emulator::{
 	cpu::{
 		instruction::{condition::Condition, fetch::fetch_instruction, Instruction},
-		registers::CPURegister16,
-		values::{ValueRefI8, ValueRefU16},
+		registers::{CPURegister16, CPURegister8},
+		values::{ValueRefI8, ValueRefU16, ValueRefU8},
 	},
 	memory_mapper::MemoryMapper,
 };
@@ -89,4 +89,18 @@ fn relative_jumps() {
 
 	assert_matches!(pb(vec![0x38, (-63i8) as u8]), JR(C, Raw(-63)));
 	assert_matches!(pb(vec![0x38, 128]), JR(C, Raw(-128)));
+}
+
+#[test]
+fn move_load_8_bit() {
+	use CPURegister8::*;
+	use Instruction::*;
+	use ValueRefU8::*;
+
+	let pb = parse_bytes;
+
+	assert_matches!(
+		pb(vec![0xFA, 0x00]),
+		LD_8(Reg(A), Mem(ValueRefU16::Raw(0x00)))
+	);
 }
