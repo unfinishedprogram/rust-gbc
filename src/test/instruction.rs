@@ -2,9 +2,9 @@ use std::{assert_matches::assert_matches, vec};
 
 use crate::emulator::{
 	cpu::{
-		instruction::{fetch::fetch_instruction, Instruction},
+		instruction::{condition::Condition, fetch::fetch_instruction, Instruction},
 		registers::CPURegister16,
-		values::ValueRefU16::{self, *},
+		values::{ValueRefI8, ValueRefU16},
 	},
 	memory_mapper::MemoryMapper,
 };
@@ -65,4 +65,28 @@ fn opcode_gaps() {
 	assert_matches!(parse_bytes(vec![0xDD]), ERROR(0xDD));
 	assert_matches!(parse_bytes(vec![0xED]), ERROR(0xED));
 	assert_matches!(parse_bytes(vec![0xFD]), ERROR(0xFD));
+}
+
+#[test]
+fn relative_jumps() {
+	use Condition::*;
+	use Instruction::*;
+	use ValueRefI8::*;
+
+	let pb = parse_bytes;
+
+	assert_matches!(pb(vec![0x20, (-63i8) as u8]), JR(NZ, Raw(-63)));
+	assert_matches!(pb(vec![0x20, 128]), JR(NZ, Raw(-128)));
+
+	assert_matches!(pb(vec![0x30, (-63i8) as u8]), JR(NC, Raw(-63)));
+	assert_matches!(pb(vec![0x30, 128]), JR(NC, Raw(-128)));
+
+	assert_matches!(pb(vec![0x18, (-63i8) as u8]), JR(ALWAYS, Raw(-63)));
+	assert_matches!(pb(vec![0x18, 128]), JR(ALWAYS, Raw(-128)));
+
+	assert_matches!(pb(vec![0x28, (-63i8) as u8]), JR(Z, Raw(-63)));
+	assert_matches!(pb(vec![0x28, 128]), JR(Z, Raw(-128)));
+
+	assert_matches!(pb(vec![0x38, (-63i8) as u8]), JR(C, Raw(-63)));
+	assert_matches!(pb(vec![0x38, 128]), JR(C, Raw(-128)));
 }

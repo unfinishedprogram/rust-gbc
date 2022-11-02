@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use crate::emulator::{
 	cpu::{
 		instruction::{condition::Condition, Instruction},

@@ -20,7 +20,7 @@ pub fn draw_status(ui: &mut Ui, emulator: &EmulatorState) {
 			ui.monospace(format!("SP:{:04X}", cpu.registers.get_u16(SP)));
 			ui.monospace(format!("PC:{:04X}", cpu.registers.get_u16(PC)));
 		});
-		ui.vertical(|ui| {
+		ui.vertical(|_ui| {
 			// ui.monospace(format!("Z :{}", cpu.get_flag(Flag::Z)));
 			// ui.monospace(format!("N :{}", cpu.get_flag(Flag::N)));
 			// ui.monospace(format!("H :{}", cpu.get_flag(Flag::H)));
