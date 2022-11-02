@@ -131,7 +131,8 @@ fn tetris() {
 	let lines = io::BufReader::new(handle).lines();
 
 	for line in lines {
-		println!("{}", state.cpu_state.registers.pc);
-		assert_eq!(log_execute(&mut state), line.unwrap());
+		let exec = log_execute(&mut state);
+		assert_eq!(exec, line.unwrap());
+		println!("{exec}");
 	}
 }

@@ -27,12 +27,13 @@ pub enum Instruction {
 	STOP,
 	ERROR(u8),
 	LD_8(ValueRefU8, ValueRefU8),
+	LDH(ValueRefU8, ValueRefU8),
 	LD_16(ValueRefU16, ValueRefU16),
 	INC_8(ValueRefU8),
 	INC_16(ValueRefU16),
 	DEC_8(ValueRefU8),
 	DEC_16(ValueRefU16),
-	JR(Condition, ValueRefI8),
+	JR(Condition, ValueRefU16),
 	ADD_16(ValueRefU16, ValueRefU16),
 	ADD_SIGNED(ValueRefU16, ValueRefI8),
 	ALU_OP_8(ALUOperation, ValueRefU8, ValueRefU8),
@@ -117,12 +118,14 @@ impl Debug for Instruction {
 			Self::STOP => write!(f, "stop"),
 			Self::ERROR(arg0) => f.debug_tuple("error").field(arg0).finish(),
 			Self::LD_8(arg0, arg1) => write!(f, "ld {arg0:?}, {arg1:?}"),
+			Self::LDH(arg0, arg1) => write!(f, "ldh {arg0:?}, {arg1:?}"),
 			Self::LD_16(arg0, arg1) => write!(f, "ld {arg0:?}, {arg1:?}"),
 			Self::INC_8(arg0) => f.debug_tuple("inc").field(arg0).finish(),
 			Self::INC_16(arg0) => write!(f, "inc {arg0:?}"),
-			Self::DEC_8(arg0) => f.debug_tuple("dec").field(arg0).finish(),
-			Self::DEC_16(arg0) => f.debug_tuple("dec").field(arg0).finish(),
-			Self::JR(arg0, arg1) => f.debug_tuple("jr").field(arg0).field(arg1).finish(),
+			Self::DEC_8(arg0) => write!(f, "dec {arg0:?}"),
+			Self::DEC_16(arg0) => write!(f, "dec {arg0:?}"),
+			Self::JR(Condition::ALWAYS, arg1) => write!(f, "jr {arg1:?}"),
+			Self::JR(arg0, arg1) => write!(f, "jr {arg0:?}, {arg1:?}"),
 			Self::ADD_16(arg0, arg1) => f.debug_tuple("add").field(arg0).field(arg1).finish(),
 			Self::ADD_SIGNED(arg0, arg1) => {
 				f.debug_tuple("ADD_SIGNED").field(arg0).field(arg1).finish()
@@ -156,7 +159,7 @@ impl Debug for Instruction {
 			Self::LD_A_INC_HL => write!(f, "ld a, [hl+]"),
 			Self::LD_DEC_HL_A => write!(f, "ld [hl-], a"),
 			Self::LD_INC_HL_A => write!(f, "ld [hl+], a"),
-    		Self::COMPOSE(_, _) => todo!(),
+			Self::COMPOSE(_, _) => todo!(),
 		}
 	}
 }

@@ -12,10 +12,10 @@ pub enum Condition {
 impl Debug for Condition {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Self::NZ => write!(f, "NZ"),
-			Self::Z => write!(f, "Z"),
-			Self::NC => write!(f, "NC"),
-			Self::C => write!(f, "C"),
+			Self::NZ => write!(f, "nz"),
+			Self::Z => write!(f, "z"),
+			Self::NC => write!(f, "nc"),
+			Self::C => write!(f, "c"),
 			Self::ALWAYS => write!(f, ""),
 		}
 	}

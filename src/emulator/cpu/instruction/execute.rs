@@ -36,7 +36,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			execute_instruction(*b, cpu);
 		}
 
-		LD_8(to, from) => {
+		LD_8(to, from) | LDH(to, from) => {
 			let val = cpu.read_8(from);
 			cpu.write_8(to, val);
 		}
@@ -75,23 +75,10 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		STOP => todo!(),
 		ERROR(_) => {}
 
-		JP(condition, location) => {
+		JP(condition, location) | JR(condition, location) => {
 			if cpu.check_condition(condition) {
 				let loc_val = cpu.read_16(location);
 				cpu.write_16(CPURegister16::PC.into(), loc_val);
-			}
-		}
-
-		JR(condition, offset) => {
-			if cpu.check_condition(condition) {
-				let current_pc = cpu.read_16(CPURegister16::PC.into());
-
-				let offset = cpu.read_i8(offset);
-
-				cpu.write_16(
-					CPURegister16::PC.into(),
-					(current_pc as i32 + offset as i32) as u16,
-				)
 			}
 		}
 

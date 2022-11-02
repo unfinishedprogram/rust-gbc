@@ -3,6 +3,8 @@ use super::{
 	Instruction::*, ValueRefU8,
 };
 
+use crate::emulator::cpu::registers::CPURegister16;
+use crate::emulator::cpu::values::ValueRefU16;
 use crate::emulator::cpu::CPU;
 use crate::emulator::memory_mapper::MemoryMapper;
 
@@ -23,9 +25,28 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 		(0, 0, 1, _, _) => inst!(cpu, LD_16, SP, nn),
 
 		(0, 0, 2, _, _) => inst!(cpu, STOP),
-		(0, 0, 3, _, _) => inst!(cpu, JR, (Condition::ALWAYS), d),
+		(0, 0, 3, _, _) => {
+			let offset = cpu.next_displacement();
+			let addr = if offset.is_positive() {
+				cpu.read_16(CPURegister16::PC.into()) + offset.abs() as u16
+			} else {
+				cpu.read_16(CPURegister16::PC.into()) - offset.abs() as u16
+			};
 
-		(0, 0, _, _, _) => inst!(cpu, JR, (DT.cc[(y - 4)]), d),
+			inst!(cpu, JR, (Condition::ALWAYS), (ValueRefU16::Raw(addr)))
+		}
+
+		(0, 0, _, _, _) => {
+			let offset = cpu.next_displacement();
+			let addr = if offset.is_positive() {
+				cpu.read_16(CPURegister16::PC.into()) + offset.abs() as u16
+			} else {
+				cpu.read_16(CPURegister16::PC.into()) - offset.abs() as u16
+			};
+
+			inst!(cpu, JR, (DT.cc[(y - 4)]), (ValueRefU16::Raw(addr)))
+		}
+
 		(0, 1, _, _, 0) => inst!(cpu, LD_16, (DT.rp[p]), nn),
 
 		(0, 1, _, _, 1) => inst!(cpu, ADD_16, HL, (DT.rp[p])),
@@ -68,11 +89,11 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 		(3, 0, 2, _, _) => inst!(cpu, RET, (DT.cc[2])),
 		(3, 0, 3, _, _) => inst!(cpu, RET, (DT.cc[3])),
 
-		(3, 0, 4, _, _) => inst!(cpu, LD_8, [(0xFF00 + cpu.next_byte() as u16)]u8, A),
+		(3, 0, 4, _, _) => inst!(cpu, LDH, [(0xFF00 + cpu.next_byte() as u16)]u8, A),
 
 		(3, 0, 5, _, _) => inst!(cpu, ADD_SIGNED, SP, d),
 
-		(3, 0, 6, _, _) => inst!(cpu, LD_8, A, [(0xFF00 + cpu.next_byte() as u16)]u8),
+		(3, 0, 6, _, _) => inst!(cpu, LDH, A, [(0xFF00 + cpu.next_byte() as u16)]u8),
 
 		(3, 0, 7, _, _) => Instruction::COMPOSE(
 			inst!(cpu, LD_16, HL, SP).into(),
