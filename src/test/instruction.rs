@@ -49,3 +49,20 @@ fn move_load_16_bit() {
 	assert_matches!(pb(vec![0x21, 0x34, 0x12]), LD_16(Reg(HL), Raw(0x1234)));
 	assert_matches!(pb(vec![0x31, 0x34, 0x12]), LD_16(Reg(SP), Raw(0x1234)));
 }
+
+#[test]
+fn opcode_gaps() {
+	// These should all be errors, which act as no-ops
+	use Instruction::*;
+	assert_matches!(parse_bytes(vec![0xD3]), ERROR(0xD3));
+	assert_matches!(parse_bytes(vec![0xE3]), ERROR(0xE3));
+	assert_matches!(parse_bytes(vec![0xF4]), ERROR(0xF4));
+	assert_matches!(parse_bytes(vec![0xE4]), ERROR(0xE4));
+	assert_matches!(parse_bytes(vec![0xDB]), ERROR(0xDB));
+	assert_matches!(parse_bytes(vec![0xEB]), ERROR(0xEB));
+	assert_matches!(parse_bytes(vec![0xEC]), ERROR(0xEC));
+	assert_matches!(parse_bytes(vec![0xFC]), ERROR(0xFC));
+	assert_matches!(parse_bytes(vec![0xDD]), ERROR(0xDD));
+	assert_matches!(parse_bytes(vec![0xED]), ERROR(0xED));
+	assert_matches!(parse_bytes(vec![0xFD]), ERROR(0xFD));
+}
