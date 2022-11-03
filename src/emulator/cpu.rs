@@ -23,7 +23,6 @@ use self::{instruction::condition::Condition, values::ValueRefI8};
 pub trait CPU {
 	fn disable_interrupts(&mut self);
 	fn enable_interrupts(&mut self);
-	fn add_t(&mut self, t: u64);
 	fn next_byte(&mut self) -> u8;
 
 	fn next_displacement(&mut self) -> i8 {
@@ -62,10 +61,6 @@ impl CPU for EmulatorState {
 		self.cpu_state.interrupt_enable = true;
 	}
 
-	fn add_t(&mut self, t: u64) {
-		self.cpu_state.t_states += t;
-	}
-
 	fn next_byte(&mut self) -> u8 {
 		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(1);
 		self.read(self.cpu_state.registers.pc - 1)
@@ -74,7 +69,6 @@ impl CPU for EmulatorState {
 	fn read_8(&mut self, value_ref: ValueRefU8) -> u8 {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
-				self.add_t(2);
 				let index = self.read_16(addr);
 				self.read(index)
 			}
@@ -85,10 +79,7 @@ impl CPU for EmulatorState {
 
 	fn read_i8(&mut self, value_ref: ValueRefI8) -> i8 {
 		match value_ref {
-			ValueRefI8::Mem(addr) => {
-				self.add_t(2);
-				self.read(addr) as i8
-			}
+			ValueRefI8::Mem(addr) => self.read(addr) as i8,
 			ValueRefI8::Reg(reg) => self.cpu_state.registers[reg] as i8,
 			ValueRefI8::Raw(x) => x,
 		}
@@ -97,7 +88,6 @@ impl CPU for EmulatorState {
 	fn write_8(&mut self, value_ref: ValueRefU8, value: u8) {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
-				self.add_t(2);
 				let index = self.read_16(addr);
 				self.write(index, value);
 			}
@@ -108,10 +98,7 @@ impl CPU for EmulatorState {
 
 	fn read_16(&mut self, value_ref: ValueRefU16) -> u16 {
 		match value_ref {
-			ValueRefU16::Mem(i) => {
-				self.add_t(2);
-				u16::from_le_bytes([self.read(i), self.read(i.wrapping_add(1))])
-			}
+			ValueRefU16::Mem(i) => u16::from_le_bytes([self.read(i), self.read(i.wrapping_add(1))]),
 			ValueRefU16::Reg(reg) => self.cpu_state.registers.get_u16(reg),
 			ValueRefU16::Raw(x) => x,
 		}
@@ -181,8 +168,6 @@ impl CPU for EmulatorState {
 		if self.cpu_state.t_states == 0 {
 			let instruction = self.get_next_instruction_or_interrupt();
 			execute_instruction(instruction.clone(), self);
-			self.add_t(1);
-
 			return Some(instruction);
 		}
 		self.cpu_state.t_states -= 1;

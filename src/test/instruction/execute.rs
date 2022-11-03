@@ -127,7 +127,7 @@ fn tetris() {
 	println!("{}", rom.len());
 	state.load_rom(&rom);
 
-	let handle = File::open("logs/Tetris (World).log").unwrap();
+	let handle = File::open("logs/Tetris.log").unwrap();
 	let lines = io::BufReader::new(handle).lines();
 
 	for line in lines {

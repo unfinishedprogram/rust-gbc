@@ -1,9 +1,8 @@
 use std::fs;
 
 use crate::emulator::{
-	cpu::{
-		instruction::execute::execute_instruction, registers::CPURegister8, values::ValueRefU8, CPU,
-	},
+	cpu::{instruction::execute::execute_instruction, registers::CPURegister8, CPU},
+	memory_mapper::MemoryMapper,
 	EmulatorState,
 };
 
@@ -11,23 +10,24 @@ use crate::emulator::{
 
 pub fn log_execute(state: &mut EmulatorState) -> String {
 	use CPURegister8::*;
-	use ValueRefU8::Reg;
 	let pc = state.cpu_state.registers.pc;
 	let rs = format!(
-		"A:{:02x} F:{:02x} B:{:02x} C:{:02x} D:{:02x} E:{:02x} H:{:02x} L:{:02x} SP:{:02x}",
-		state.read_8(Reg(A)),
-		state.read_8(Reg(F)),
-		state.read_8(Reg(B)),
-		state.read_8(Reg(C)),
-		state.read_8(Reg(D)),
-		state.read_8(Reg(E)),
-		state.read_8(Reg(H)),
-		state.read_8(Reg(L)),
-		state.cpu_state.registers.sp
+		"A:{:02x} F:{:02x} B:{:02x} C:{:02x} D:{:02x} E:{:02x} H:{:02x} L:{:02x} LY:{:02x} SP:{:02x}  Cy:{}",
+		state.cpu_state.registers[A],
+		state.cpu_state.registers[F],
+		state.cpu_state.registers[B],
+		state.cpu_state.registers[C],
+		state.cpu_state.registers[D],
+		state.cpu_state.registers[E],
+		state.cpu_state.registers[H],
+		state.cpu_state.registers[L],
+		state.read(0xFF44),
+		state.cpu_state.registers.sp,
+		state.cycle
 	);
 
 	let instruction = state.fetch_next_instruction();
 	let inst = format!("{:?}", instruction);
 	execute_instruction(instruction, state);
-	return format!("{pc:04X} {inst:<19} {rs}  ");
+	return format!("{pc:04X} {inst:<19} {rs}");
 }

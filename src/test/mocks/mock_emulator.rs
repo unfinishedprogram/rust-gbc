@@ -37,7 +37,6 @@ impl MemoryMapper for MockEmulator {
 impl CPU for MockEmulator {
 	fn disable_interrupts(&mut self) {}
 	fn enable_interrupts(&mut self) {}
-	fn add_t(&mut self, t: u64) {}
 
 	fn next_displacement(&mut self) -> i8 {
 		self.next_byte() as i8
