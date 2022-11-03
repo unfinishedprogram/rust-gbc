@@ -1,5 +1,3 @@
-use crate::app::components::logger;
-
 use crate::emulator::{
 	flags,
 	flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag},
@@ -60,7 +58,7 @@ impl PPU for EmulatorState {
 		}
 	}
 
-	fn set_mode(&mut self, mode: PPUMode) {}
+	fn set_mode(&mut self, _mode: PPUMode) {}
 
 	fn step_ppu(&mut self) {
 		self.set_ly(self.get_ly() + 1);
@@ -80,14 +78,14 @@ impl PPU for EmulatorState {
 		}
 
 		return;
-		use PPUMode::*;
-		match (self.get_mode(), self.get_ly()) {
-			(OamScan, _) => self.set_mode(Draw),
-			(Draw, _) => self.set_mode(HBlank),
-			(HBlank, 0..=143) => self.set_mode(OamScan),
-			(HBlank, _) => self.set_mode(VBlank),
-			(VBlank, 144..=153) => self.set_mode(VBlank),
-			(VBlank, _) => self.set_mode(OamScan),
-		}
+		// use PPUMode::*;
+		// match (self.get_mode(), self.get_ly()) {
+		// 	(OamScan, _) => self.set_mode(Draw),
+		// 	(Draw, _) => self.set_mode(HBlank),
+		// 	(HBlank, 0..=143) => self.set_mode(OamScan),
+		// 	(HBlank, _) => self.set_mode(VBlank),
+		// 	(VBlank, 144..=153) => self.set_mode(VBlank),
+		// 	(VBlank, _) => self.set_mode(OamScan),
+		// }
 	}
 }

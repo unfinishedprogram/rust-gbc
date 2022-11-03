@@ -2,9 +2,9 @@ use std::{assert_matches::assert_matches, vec};
 
 use crate::emulator::{
 	cpu::{
-		instruction::{condition::Condition, fetch::fetch_instruction, Instruction},
+		instruction::{fetch::fetch_instruction, Instruction},
 		registers::{CPURegister16, CPURegister8},
-		values::{ValueRefI8, ValueRefU16, ValueRefU8},
+		values::{ValueRefU16, ValueRefU8},
 	},
 	memory_mapper::MemoryMapper,
 };

@@ -1,5 +1,3 @@
-use std::fs;
-
 use crate::emulator::{
 	cpu::{instruction::execute::execute_instruction, registers::CPURegister8, CPU},
 	memory_mapper::MemoryMapper,

@@ -4,7 +4,7 @@ use crate::emulator::{
 		gb_stack::GBStack,
 		instruction::{ALUOperation, Instruction, Instruction::*},
 		registers::{CPURegister16, CPURegister8},
-		values::{ValueRefU16, ValueRefU8},
+		values::ValueRefU16,
 		CPU,
 	},
 	EmulatorState,

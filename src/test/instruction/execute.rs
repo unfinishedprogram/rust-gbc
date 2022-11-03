@@ -2,23 +2,21 @@ use crate::{
 	emulator::{
 		cpu::{
 			flags::*,
-			instruction::{
-				condition::Condition, execute::execute_instruction, fetch::fetch_instruction,
-				Instruction,
-			},
+			instruction::{execute::execute_instruction, Instruction},
 			registers::{CPURegister16, CPURegister8},
-			values::{ValueRefI8, ValueRefU16, ValueRefU8},
+			values::{ValueRefU16, ValueRefU8},
 			CPU,
 		},
-		memory_mapper::MemoryMapper,
 		EmulatorState,
 	},
 	test::{instruction::logger::log_execute, mocks::mock_rom::create_rom},
 };
-use std::io::{self, BufRead};
-use std::path::Path;
-use std::{assert_matches::assert_matches, vec};
-use std::{fs::File, io::Read};
+
+use std::{
+	fs::File,
+	io::{self, BufRead, Read},
+	vec,
+};
 
 fn get_state(data: Vec<u8>) -> EmulatorState {
 	let mut state = EmulatorState::default().init();
@@ -102,6 +100,7 @@ fn load_16() {
 	}
 }
 
+#[test]
 fn dec_8() {
 	let mut state = get_state(vec![0]);
 	use CPURegister8::*;
