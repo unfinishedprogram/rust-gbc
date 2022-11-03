@@ -3,7 +3,7 @@ use crate::app::components::logger;
 use crate::emulator::{
 	flags,
 	flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag},
-	io_registers::IORegistersAdress::*,
+	io_registers::IORegistersAdress,
 	memory_mapper::MemoryMapper,
 };
 
@@ -19,7 +19,8 @@ pub enum PPUMode {
 
 #[derive(Default, Clone, Copy)]
 pub struct PPUState {
-	t_states: u64,
+	pub cycle: u64,
+	pub maxed: bool,
 }
 
 pub trait PPU {
@@ -27,28 +28,28 @@ pub trait PPU {
 	fn get_ly(&self) -> u8;
 	fn set_ly(&mut self, value: u8);
 	fn set_mode(&mut self, mode: PPUMode);
-	fn step(&mut self);
+	fn step_ppu(&mut self);
 }
 
 impl PPU for EmulatorState {
 	fn get_mode(&self) -> PPUMode {
-		let num = self.read(STAT as u16) & 0b00000011;
+		let num = self.read(IORegistersAdress::STAT as u16) & 0b00000011;
 		return match num {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
 			2 => PPUMode::OamScan,
 			3 => PPUMode::Draw,
-			_ => PPUMode::HBlank,
+			_ => unreachable!(), // Since we only take the last two bits
 		};
 	}
 
 	fn get_ly(&self) -> u8 {
-		return self.read(LY as u16);
+		return self.read(IORegistersAdress::LY as u16);
 	}
 
 	fn set_ly(&mut self, value: u8) {
-		let lyc_status = self.read(LY as u16) == value;
-		self.io_register_state[LY as u16] = value;
+		let lyc_status = self.read(IORegistersAdress::LY as u16) == value;
+		self.write(IORegistersAdress::LY as u16, value);
 		set_bit_flag_to(self, BitFlag::Stat(STATFlag::LYCeqLY), lyc_status);
 
 		if lyc_status && get_bit_flag(self, BitFlag::Stat(STATFlag::LYCeqLUInterruptEnable)) {
@@ -59,64 +60,34 @@ impl PPU for EmulatorState {
 		}
 	}
 
-	fn set_mode(&mut self, mode: PPUMode) {
-		use STATFlag::*;
-		match mode {
-			PPUMode::HBlank => {
-				if get_bit_flag(self, BitFlag::Stat(HBlankStatInterruptEnable)) {
-					set_bit_flag(
-						self,
-						BitFlag::InterruptRequest(flags::InterruptFlag::LcdStat),
-					);
-				}
-				self.ppu_state.t_states += 204;
-			}
-			PPUMode::VBlank => {
-				if get_bit_flag(self, BitFlag::Stat(VBlankStatInterruptEnable)) {
-					set_bit_flag(
-						self,
-						BitFlag::InterruptRequest(flags::InterruptFlag::LcdStat),
-					);
-				}
-				self.ppu_state.t_states += 456;
-				self.set_ly(self.get_ly() + 1)
-			}
+	fn set_mode(&mut self, mode: PPUMode) {}
 
-			PPUMode::OamScan => {
-				if get_bit_flag(self, BitFlag::Stat(OAMStatInterruptEnable)) {
-					set_bit_flag(
-						self,
-						BitFlag::InterruptRequest(flags::InterruptFlag::LcdStat),
-					);
-				}
+	fn step_ppu(&mut self) {
+		self.set_ly(self.get_ly() + 1);
 
-				self.ppu_state.t_states += 80;
-				if self.get_ly() >= 153 {
-					self.set_ly(0);
-				} else {
-					self.set_ly(self.get_ly() + 1);
-				}
+		if self.get_ly() >= 153 {
+			if self.ppu_state.maxed {
+				println!("PPU Maxed");
+				self.set_ly(0);
+				self.ppu_state.maxed = false;
+				self.ppu_state.cycle += 908;
+			} else {
+				self.ppu_state.cycle += 4;
+				self.ppu_state.maxed = true;
 			}
-			PPUMode::Draw => self.ppu_state.t_states += 172,
+		} else {
+			self.ppu_state.cycle += 456;
 		}
-		logger::debug(format!("PPU Start: {:?}", mode));
 
-		let current_stat = self.read(STAT as u16);
-		self.write(STAT as u16, (current_stat & 0b11111100) | mode as u8);
-	}
-
-	fn step(&mut self) {
-		if self.ppu_state.t_states == 0 {
-			use PPUMode::*;
-			match (self.get_mode(), self.get_ly()) {
-				(OamScan, _) => self.set_mode(Draw),
-				(Draw, _) => self.set_mode(HBlank),
-				(HBlank, 0..=143) => self.set_mode(OamScan),
-				(HBlank, _) => self.set_mode(VBlank),
-				(VBlank, 144..=153) => self.set_mode(VBlank),
-				(VBlank, _) => self.set_mode(OamScan),
-			}
+		return;
+		use PPUMode::*;
+		match (self.get_mode(), self.get_ly()) {
+			(OamScan, _) => self.set_mode(Draw),
+			(Draw, _) => self.set_mode(HBlank),
+			(HBlank, 0..=143) => self.set_mode(OamScan),
+			(HBlank, _) => self.set_mode(VBlank),
+			(VBlank, 144..=153) => self.set_mode(VBlank),
+			(VBlank, _) => self.set_mode(OamScan),
 		}
-		self.ppu_state.t_states -= 1;
 	}
 }

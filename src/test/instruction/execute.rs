@@ -41,11 +41,11 @@ fn initial_state() {
 	assert_eq!(state.read_16(Reg(HL)), 0x014D);
 	assert_eq!(state.read_16(Reg(SP)), 0xFFFE);
 
-	assert_eq!(state.read_8(Mem(Raw(0x0100))), 1);
-	assert_eq!(state.read_8(Mem(Raw(0x0101))), 2);
-	assert_eq!(state.read_8(Mem(Raw(0x0102))), 3);
-	assert_eq!(state.read_8(Mem(Raw(0x0103))), 4);
-	assert_eq!(state.read_8(Mem(Raw(0x0104))), 0);
+	assert_eq!(state.read_8(&Mem(Raw(0x0100))), 1);
+	assert_eq!(state.read_8(&Mem(Raw(0x0101))), 2);
+	assert_eq!(state.read_8(&Mem(Raw(0x0102))), 3);
+	assert_eq!(state.read_8(&Mem(Raw(0x0103))), 4);
+	assert_eq!(state.read_8(&Mem(Raw(0x0104))), 0);
 }
 
 fn assert_flags(state: &EmulatorState, flags: (bool, bool, bool, bool)) {
@@ -113,7 +113,7 @@ fn dec_8() {
 	state.clear_flag(Flag::N);
 	state.clear_flag(Flag::Z);
 
-	state.write_8(Reg(A), 0);
+	state.write_8(&Reg(A), 0);
 	execute_instruction(DEC_8(Reg(A)), &mut state);
 	assert_flags(&state, (false, true, true, false));
 }
@@ -121,13 +121,13 @@ fn dec_8() {
 #[test]
 fn tetris() {
 	let mut state = EmulatorState::default().init();
-	let tetris_handle = File::open("roms/tetris.gb").unwrap();
+	let tetris_handle = File::open("roms/06-ld r,r.gb").unwrap();
 	let mut rom = vec![];
 	_ = io::BufReader::new(tetris_handle).read_to_end(&mut rom);
 	println!("{}", rom.len());
 	state.load_rom(&rom);
 
-	let handle = File::open("logs/Tetris.log").unwrap();
+	let handle = File::open("logs/test.log").unwrap();
 	let lines = io::BufReader::new(handle).lines();
 
 	for line in lines {

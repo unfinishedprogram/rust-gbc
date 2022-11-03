@@ -4,6 +4,7 @@ use crate::emulator::{
 		gb_stack::GBStack,
 		instruction::{ALUOperation, Instruction, Instruction::*},
 		registers::{CPURegister16, CPURegister8},
+		values::{ValueRefU16, ValueRefU8},
 		CPU,
 	},
 	EmulatorState,
@@ -36,9 +37,14 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			execute_instruction(*b, cpu);
 		}
 
-		LD_8(to, from) | LDH(to, from) => {
-			let val = cpu.read_8(from);
-			cpu.write_8(to, val);
+		LDH(to, from) => {
+			let val = cpu.read_8(&from);
+			cpu.write_8(&to, val);
+		}
+
+		LD_8(to, from) => {
+			let val = cpu.read_8(&from);
+			cpu.write_8(&to, val);
 		}
 
 		LD_16(to, from) => {
@@ -47,11 +53,11 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		INC_8(ptr) => {
-			let val = cpu.read_8(ptr);
+			let val = cpu.read_8(&ptr);
 			cpu.set_flag_to(Flag::Z, val.wrapping_add(1) == 0);
 			cpu.clear_flag(Flag::N);
 			cpu.set_flag_to(Flag::H, ((val & 0xf).wrapping_add(1) & 0x10) == 0x10);
-			cpu.write_8(ptr, val.wrapping_add(1));
+			cpu.write_8(&ptr, val.wrapping_add(1));
 		}
 
 		INC_16(ptr) => {
@@ -60,14 +66,15 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		DEC_8(ptr) => {
-			let val = cpu.read_8(ptr);
+			let val = cpu.read_8(&ptr);
 			cpu.set_flag_to(Flag::Z, val.wrapping_sub(1) == 0);
 			cpu.set_flag(Flag::N);
 			cpu.set_flag_to(Flag::H, ((val & 0xf).wrapping_sub(1 & 0xf) & 0x10) == 0x10);
-			cpu.write_8(ptr, val.wrapping_sub(1));
+			cpu.write_8(&ptr, val.wrapping_sub(1));
 		}
 
 		DEC_16(ptr) => {
+			cpu.cycle += 1;
 			let ptr_val = cpu.read_16(ptr);
 			cpu.write_16(ptr, ptr_val - 1);
 		}
@@ -77,6 +84,11 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 		JP(condition, location) | JR(condition, location) => {
 			if cpu.check_condition(condition) {
+				match location {
+					ValueRefU16::Reg(CPURegister16::HL) => {}
+					_ => cpu.cycle += 1,
+				}
+
 				let loc_val = cpu.read_16(location);
 				cpu.write_16(CPURegister16::PC.into(), loc_val);
 			}
@@ -93,8 +105,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 		ADD_SIGNED(_, _) => todo!(),
 		ALU_OP_8(op, to, from) => {
-			let a_val = cpu.read_8(to);
-			let b_val = cpu.read_8(from);
+			let a_val = cpu.read_8(&to);
+			let b_val = cpu.read_8(&from);
 
 			let carry: u8 = match cpu.get_flag(Flag::C) {
 				false => 0,
@@ -161,10 +173,14 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					cpu.set_flag_to(Flag::Z, a_val.bitor(b_val) == 0);
 					a_val.bitor(b_val)
 				}
+
 				ALUOperation::CP => {
-					cpu.set_flag(Flag::N);
-					cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_sub(b_val) & 0x10) == 0x10);
-					cpu.set_flag_to(Flag::C, b_val > a_val);
+					cpu.set_flag_to(Flag::N, true);
+					cpu.set_flag_to(
+						Flag::H,
+						(a_val & 0xf).wrapping_sub(b_val & 0xf) & 0x10 == 0x10,
+					);
+					cpu.set_flag_to(Flag::C, a_val < b_val);
 					cpu.set_flag_to(Flag::Z, a_val == b_val);
 					a_val
 				}
@@ -174,7 +190,10 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				cpu.set_flag(Flag::Z)
 			};
 
-			cpu.write_8(to, result);
+			match op {
+				ALUOperation::CP => {}
+				_ => cpu.write_8(&to, result),
+			}
 		}
 		HALT => {}
 		CALL(condition, location) => {
@@ -212,18 +231,18 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.enable_interrupts();
 		}
 		RLCA => {
-			let value = cpu.read_8(CPURegister8::A.into());
+			let value = cpu.read_8(&CPURegister8::A.into());
 			if value & 1 != 0 {
 				cpu.set_flag(Flag::C)
 			}
-			cpu.write_8(CPURegister8::A.into(), value.rotate_left(1));
+			cpu.write_8(&CPURegister8::A.into(), value.rotate_left(1));
 		}
 		RRCA => {
-			let value = cpu.read_8(CPURegister8::A.into());
+			let value = cpu.read_8(&CPURegister8::A.into());
 			if value.rotate_right(1) & 1 != 0 {
 				cpu.set_flag(Flag::C)
 			}
-			cpu.write_8(CPURegister8::A.into(), value.rotate_right(1));
+			cpu.write_8(&CPURegister8::A.into(), value.rotate_right(1));
 		}
 
 		RLA => execute_instruction(
@@ -237,7 +256,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		DAA => {
 			// Decimal Adjust A Register
 			cpu.clear_flag(Flag::H);
-			let a_ref = CPURegister8::A.into();
+			let a_ref = &CPURegister8::A.into();
 			let a_val = cpu.read_8(a_ref);
 
 			if !cpu.get_flag(Flag::N) {
@@ -262,10 +281,10 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 		CPL => {
 			// Complement A Register
-			let current = cpu.read_8(CPURegister8::A.into());
+			let current = cpu.read_8(&CPURegister8::A.into());
 			cpu.set_flag(Flag::H);
 			cpu.set_flag(Flag::N);
-			cpu.write_8(CPURegister8::A.into(), !current);
+			cpu.write_8(&CPURegister8::A.into(), !current);
 		}
 		SCF => {
 			// Set Carry Flag
@@ -280,25 +299,25 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.set_flag_to(Flag::C, !cpu.get_flag(Flag::C));
 		}
 		BIT(bit, value) => {
-			let value = cpu.read_8(value.into());
+			let value = cpu.read_8(&value.into());
 			cpu.set_flag_to(Flag::Z, (value >> bit) & 1 == 0);
 			cpu.set_flag(Flag::H);
 			cpu.clear_flag(Flag::N);
 		}
 		RES(bit, value) => {
 			// Reset Bit
-			let current = cpu.read_8(value);
+			let current = cpu.read_8(&value);
 
-			cpu.write_8(value, current & (!(1 >> bit)));
+			cpu.write_8(&value, current & (!(1 >> bit)));
 		}
 		SET(bit, value) => {
 			// Set Bit
-			let current = cpu.read_8(value);
-			cpu.write_8(value, current | (1 >> bit));
+			let current = cpu.read_8(&value);
+			cpu.write_8(&value, current | (1 >> bit));
 		}
 		ROT(operator, val_ref) => {
 			use super::RotShiftOperation::*;
-			let value = cpu.read_8(val_ref);
+			let value = cpu.read_8(&val_ref);
 
 			let carry_bit = match cpu.get_flag(Flag::C) {
 				true => 1,
@@ -310,37 +329,38 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					if value & 1 != 0 {
 						cpu.set_flag(Flag::C)
 					}
-					cpu.write_8(val_ref, value.rotate_left(1));
+					cpu.write_8(&val_ref, value.rotate_left(1));
 				}
 				RRC => {
 					if value.rotate_right(1) & 1 != 0 {
 						cpu.set_flag(Flag::C)
 					}
-					cpu.write_8(val_ref, value.rotate_right(1));
+					cpu.write_8(&val_ref, value.rotate_right(1));
 				}
-				RL => cpu.write_8(val_ref, ((value << 1) & 0b11111110) | carry_bit),
-				RR => cpu.write_8(val_ref, ((value >> 1) & 0b01111111) | (carry_bit << 7)),
+				RL => cpu.write_8(&val_ref, ((value << 1) & 0b11111110) | carry_bit),
+				RR => cpu.write_8(&val_ref, ((value >> 1) & 0b01111111) | (carry_bit << 7)),
 				SLA => {
 					if (value >> 7) & 1 != 0 {
 						cpu.set_flag(Flag::C)
 					}
-					cpu.write_8(val_ref, value << 1);
+					cpu.write_8(&val_ref, value << 1);
 				}
 				SRA => {
 					if value & 1 != 0 {
 						cpu.set_flag(Flag::C)
 					}
-					cpu.write_8(val_ref, (value >> 1) | value & (1 << 7));
+					cpu.write_8(&val_ref, (value >> 1) | value & (1 << 7));
 				}
-				SWAP => cpu.write_8(val_ref, value.rotate_right(4)),
+				SWAP => cpu.write_8(&val_ref, value.rotate_right(4)),
 				SRL => {
 					if value & 1 != 0 {
 						cpu.set_flag(Flag::C)
 					}
-					cpu.write_8(val_ref, value >> 1);
+					cpu.write_8(&val_ref, value >> 1);
 				}
 			}
 		}
+
 		LD_A_INC_HL => {
 			execute_instruction(Instruction::INC_16(CPURegister16::HL.into()), cpu);
 			execute_instruction(
@@ -348,6 +368,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				cpu,
 			);
 		}
+
 		LD_A_DEC_HL => {
 			execute_instruction(Instruction::DEC_16(CPURegister16::HL.into()), cpu);
 			execute_instruction(
@@ -355,14 +376,18 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				cpu,
 			);
 		}
+
 		LD_INC_HL_A => {
+			cpu.cycle -= 1;
 			execute_instruction(Instruction::INC_16(CPURegister16::HL.into()), cpu);
 			execute_instruction(
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
 			);
 		}
+
 		LD_DEC_HL_A => {
+			cpu.cycle -= 1;
 			execute_instruction(Instruction::DEC_16(CPURegister16::HL.into()), cpu);
 			execute_instruction(
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),

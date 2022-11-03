@@ -3,12 +3,17 @@ use std::fs;
 use crate::emulator::{
 	cpu::{instruction::execute::execute_instruction, registers::CPURegister8, CPU},
 	memory_mapper::MemoryMapper,
+	ppu::PPU,
 	EmulatorState,
 };
 
 // 0100 nop                 A:01 F:b0 B:00 C:13 D:00 E:d8 H:01 L:4d LY:00 SP:fffe
 
 pub fn log_execute(state: &mut EmulatorState) -> String {
+	while state.cycle >= state.ppu_state.cycle / 4 {
+		state.step_ppu();
+	}
+
 	use CPURegister8::*;
 	let pc = state.cpu_state.registers.pc;
 	let rs = format!(
@@ -23,11 +28,16 @@ pub fn log_execute(state: &mut EmulatorState) -> String {
 		state.cpu_state.registers[L],
 		state.read(0xFF44),
 		state.cpu_state.registers.sp,
-		state.cycle
+		state.cycle*2
 	);
 
 	let instruction = state.fetch_next_instruction();
 	let inst = format!("{:?}", instruction);
+
+	while state.cycle >= state.ppu_state.cycle / 4 {
+		state.step_ppu();
+	}
+
 	execute_instruction(instruction, state);
 	return format!("{pc:04X} {inst:<19} {rs}");
 }

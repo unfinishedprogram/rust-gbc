@@ -27,7 +27,7 @@ impl DrawableMut for BufferView {
 
 		ui.add(Image::new(
 			texture.id(),
-			Vec2::new((self.size.0 as f32) * 2.0, (self.size.1 as f32) * 2.0),
+			Vec2::new((self.size.0 as f32) * 4.0, (self.size.1 as f32) * 4.0),
 		));
 	}
 }

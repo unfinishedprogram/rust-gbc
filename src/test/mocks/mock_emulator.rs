@@ -47,13 +47,13 @@ impl CPU for MockEmulator {
 		self.read(self.pc - 1)
 	}
 
-	fn read_8(&mut self, value_ref: ValueRefU8) -> u8 {
+	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
 		0
 	}
 	fn read_i8(&mut self, value_ref: ValueRefI8) -> i8 {
 		0
 	}
-	fn write_8(&mut self, value_ref: ValueRefU8, value: u8) {}
+	fn write_8(&mut self, value_ref: &ValueRefU8, value: u8) {}
 	fn read_16(&mut self, value_ref: ValueRefU16) -> u16 {
 		0
 	}

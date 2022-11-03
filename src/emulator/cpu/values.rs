@@ -38,10 +38,11 @@ impl Into<ValueRefU16> for u16 {
 	}
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum ValueRefU8 {
 	Reg(CPURegister8),
 	Mem(ValueRefU16),
+	MemOffset(Box<ValueRefU8>),
 	Raw(u8),
 }
 
@@ -75,6 +76,12 @@ impl fmt::Debug for ValueRefU8 {
 			ValueRefU8::Raw(x) => write!(f, "${:02X}", x),
 			ValueRefU8::Mem(x) => write!(f, "[{:?}]", x),
 			ValueRefU8::Reg(x) => write!(f, "{:?}", x),
+			ValueRefU8::MemOffset(x) => match x.as_ref() {
+				ValueRefU8::Raw(offset) => write!(f, "[${:04X}]", (*offset as u16) + 0xFF00),
+				ValueRefU8::Reg(reg) => write!(f, "[{:?}]", reg),
+				ValueRefU8::Mem(_) => todo!(),
+				ValueRefU8::MemOffset(_) => todo!(),
+			},
 		}
 	}
 }

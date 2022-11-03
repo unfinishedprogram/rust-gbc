@@ -35,9 +35,9 @@ pub trait CPU {
 		u16::from_le_bytes([big, small])
 	}
 
-	fn read_8(&mut self, value_ref: ValueRefU8) -> u8;
+	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8;
 	fn read_i8(&mut self, value_ref: ValueRefI8) -> i8;
-	fn write_8(&mut self, value_ref: ValueRefU8, value: u8);
+	fn write_8(&mut self, value_ref: &ValueRefU8, value: u8);
 	fn read_16(&mut self, value_ref: ValueRefU16) -> u16;
 	fn write_16(&mut self, value_ref: ValueRefU16, value: u16);
 
@@ -62,18 +62,26 @@ impl CPU for EmulatorState {
 	}
 
 	fn next_byte(&mut self) -> u8 {
+		let value = self.read_8(&ValueRefU8::Mem(ValueRefU16::Reg(
+			registers::CPURegister16::PC,
+		)));
 		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(1);
-		self.read(self.cpu_state.registers.pc - 1)
+		return value;
 	}
 
-	fn read_8(&mut self, value_ref: ValueRefU8) -> u8 {
-		match value_ref {
+	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
+		match value_ref.clone() {
 			ValueRefU8::Mem(addr) => {
+				self.cycle += 1;
 				let index = self.read_16(addr);
 				self.read(index)
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state.registers[reg],
 			ValueRefU8::Raw(x) => x,
+			ValueRefU8::MemOffset(offset) => {
+				let offset_value: u16 = self.read_8(&offset) as u16;
+				self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw(offset_value + 0xFF00)))
+			}
 		}
 	}
 
@@ -85,14 +93,22 @@ impl CPU for EmulatorState {
 		}
 	}
 
-	fn write_8(&mut self, value_ref: ValueRefU8, value: u8) {
+	fn write_8(&mut self, value_ref: &ValueRefU8, value: u8) {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
-				let index = self.read_16(addr);
+				let index = self.read_16(*addr);
+				self.cycle += 1;
 				self.write(index, value);
 			}
-			ValueRefU8::Reg(reg) => self.cpu_state.registers[reg] = value,
+			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg] = value,
 			ValueRefU8::Raw(_) => unreachable!(),
+			ValueRefU8::MemOffset(offset) => {
+				let offset_value: u16 = self.read_8(&offset) as u16;
+				self.write_8(
+					&ValueRefU8::Mem(ValueRefU16::Raw(offset_value + 0xFF00)),
+					value,
+				)
+			}
 		}
 	}
 
@@ -107,8 +123,9 @@ impl CPU for EmulatorState {
 	fn write_16(&mut self, value_ref: ValueRefU16, value: u16) {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
-				self.write(i + 1, (value >> 8) as u8);
-				self.write(i, (value & 0xFF) as u8);
+				let bytes = u16::to_le_bytes(value);
+				self.write(i, bytes[0]);
+				self.write(i + 1, bytes[1]);
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state.registers.set_u16(reg, value),
 			ValueRefU16::Raw(_) => unreachable!(),
@@ -147,7 +164,7 @@ impl CPU for EmulatorState {
 			for interrupt in to_check {
 				if self.check_interrupt(interrupt) {
 					self.clear_request(interrupt);
-					return Some(Instruction::INT(interrupt));
+					return Some(Instruction::INT(interrupt.clone()));
 				}
 			}
 		}
@@ -155,13 +172,13 @@ impl CPU for EmulatorState {
 	}
 
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
-		return match self.get_interrupt() {
-			Some(inst) => {
-				self.disable_interrupts();
-				inst
-			}
-			None => self.fetch_next_instruction(),
-		};
+		return self.fetch_next_instruction();
+		// return if let Some(inst) = self.get_interrupt() {
+		// 	self.disable_interrupts();
+		// 	inst
+		// } else {
+		// 	self.fetch_next_instruction()
+		// };
 	}
 
 	fn step(&mut self) -> Option<Instruction> {

@@ -4,7 +4,7 @@ use super::cpu::values::ValueRefU16;
 use super::cpu::{CPUState, CPU};
 use super::io_registers::{IORegisterState, IORegisters};
 use super::memory_mapper::MemoryMapper;
-use super::ppu::{PPUState, PPU};
+use super::ppu::{PPUMode, PPUState, PPU};
 use crate::app::components::logger;
 
 #[derive(Clone)]
@@ -49,7 +49,7 @@ impl<'a> EmulatorState {
 		if let Some(inst) = CPU::step(self) {
 			logger::debug(format!("{:?}", inst));
 		}
-		PPU::step(self);
+		PPU::step_ppu(self);
 	}
 
 	pub fn init(mut self) -> Self {
@@ -60,7 +60,8 @@ impl<'a> EmulatorState {
 
 		self.write_16(ValueRefU16::Reg(CPURegister16::SP), 0xFFFE);
 		self.write_16(ValueRefU16::Reg(CPURegister16::PC), 0x0100);
-
+		self.set_mode(PPUMode::OamScan);
+		self.ppu_state.cycle = 512;
 		{
 			self.write(0xFF10, 0x80);
 			self.write(0xFF11, 0xBF);

@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use crate::app::components::logger;
+use crate::{app::components::logger, emulator::ppu::PPU};
 
 use super::EmulatorState;
 
@@ -122,6 +122,13 @@ impl IORegisters for EmulatorState {
 		match IORegistersAdress::try_from(addr) {
 			Ok(DIV) => self.io_register_state[addr] = 0,
 			Ok(SB) => logger::error(format!("SERIAL BUS WRITE{:X}", addr)),
+			Ok(LCDC) => {
+				self.io_register_state[addr] = value;
+				if value == 3 {
+					self.set_ly(0);
+					self.ppu_state.cycle += 500000
+				}
+			}
 			Err(_) => {
 				self.run = false;
 				logger::error(format!("Unhandled Write: {:X}", addr))

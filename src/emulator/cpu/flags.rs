@@ -44,6 +44,6 @@ impl Flags for EmulatorState {
 	}
 
 	fn set_flag_byte(&mut self, byte: u8) {
-		self.write_8(CPURegister8::F.into(), byte);
+		self.write_8(&CPURegister8::F.into(), byte);
 	}
 }
