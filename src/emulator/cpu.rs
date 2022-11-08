@@ -114,7 +114,7 @@ impl CPU for EmulatorState {
 
 	fn read_16(&mut self, value_ref: ValueRefU16) -> u16 {
 		match value_ref {
-			ValueRefU16::Mem(i) => u16::from_le_bytes([self.read(i), self.read(i.wrapping_add(1))]),
+			ValueRefU16::Mem(i) => u16::from_le_bytes([self.read(i), self.read(i + 1)]),
 			ValueRefU16::Reg(reg) => self.cpu_state.registers.get_u16(reg),
 			ValueRefU16::Raw(x) => x,
 		}
@@ -172,13 +172,8 @@ impl CPU for EmulatorState {
 	}
 
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
-		return self.fetch_next_instruction();
-		// return if let Some(inst) = self.get_interrupt() {
-		// 	self.disable_interrupts();
-		// 	inst
-		// } else {
-		// 	self.fetch_next_instruction()
-		// };
+		self.get_interrupt()
+			.unwrap_or(self.fetch_next_instruction())
 	}
 
 	fn step(&mut self) -> Option<Instruction> {

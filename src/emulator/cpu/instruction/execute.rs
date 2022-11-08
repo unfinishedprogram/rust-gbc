@@ -18,6 +18,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 	match instruction {
 		NOP => {}
 		INT(interrupt) => {
+			cpu.disable_interrupts();
 			use crate::emulator::flags::InterruptFlag::*;
 			let addr = match interrupt {
 				VBlank => 0x40,
