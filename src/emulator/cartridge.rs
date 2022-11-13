@@ -41,7 +41,10 @@ impl MemoryMapper for CartridgeState {
 			ROM => self.raw_data[addr as usize],
 			MBC1 => match addr {
 				0x0000..0x4000 => self.raw_data[addr as usize], // bank 0
-				0x4000..0x8000 => self.raw_data[(addr + 0x4000 * self.selected_rom_bank) as usize], // Bank X
+				0x4000..0x8000 => {
+					let raw_offset = 0x4000 * (self.selected_rom_bank - 1);
+					self.raw_data[(addr + raw_offset) as usize]
+				} // Bank X
 				0xA000..0xC000 => {
 					if self.info.ram_banks > 0 {
 						self.raw_ram[(addr - 0xA000 + 0x2000 * self.selected_ram_bank) as usize]
