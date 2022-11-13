@@ -216,6 +216,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 		RET(condition) => {
 			if cpu.check_condition(condition) {
+				cpu.cycle += 3;
 				let ptr = cpu.pop();
 				cpu.write_16(CPURegister16::PC.into(), ptr);
 			}
