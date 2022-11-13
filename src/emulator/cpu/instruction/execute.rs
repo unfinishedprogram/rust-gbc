@@ -363,37 +363,37 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		LD_A_INC_HL => {
-			execute_instruction(Instruction::INC_16(CPURegister16::HL.into()), cpu);
 			execute_instruction(
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
 			);
+			execute_instruction(Instruction::INC_16(CPURegister16::HL.into()), cpu);
 		}
 
 		LD_A_DEC_HL => {
-			execute_instruction(Instruction::DEC_16(CPURegister16::HL.into()), cpu);
 			execute_instruction(
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,
 			);
+			execute_instruction(Instruction::DEC_16(CPURegister16::HL.into()), cpu);
 		}
 
 		LD_INC_HL_A => {
 			cpu.cycle -= 1;
-			execute_instruction(Instruction::INC_16(CPURegister16::HL.into()), cpu);
 			execute_instruction(
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
 			);
+			execute_instruction(Instruction::INC_16(CPURegister16::HL.into()), cpu);
 		}
 
 		LD_DEC_HL_A => {
 			cpu.cycle -= 1;
-			execute_instruction(Instruction::DEC_16(CPURegister16::HL.into()), cpu);
 			execute_instruction(
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,
 			);
+			execute_instruction(Instruction::DEC_16(CPURegister16::HL.into()), cpu);
 		}
 	}
 }
