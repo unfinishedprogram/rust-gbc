@@ -61,7 +61,6 @@ impl<'a> EmulatorState {
 		self.write_16(ValueRefU16::Reg(CPURegister16::SP), 0xFFFE);
 		self.write_16(ValueRefU16::Reg(CPURegister16::PC), 0x0100);
 		self.set_mode(PPUMode::OamScan);
-		self.ppu_state.cycle = 512;
 		{
 			self.write(0xFF10, 0x80);
 			self.write(0xFF11, 0xBF);
@@ -83,6 +82,8 @@ impl<'a> EmulatorState {
 			self.write(0xFF48, 0xFF);
 			self.write(0xFF49, 0xFF);
 		}
+		self.ppu_state.cycle = 512;
+
 		return self;
 	}
 

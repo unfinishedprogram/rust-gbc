@@ -78,14 +78,5 @@ impl PPU for EmulatorState {
 		}
 
 		return;
-		// use PPUMode::*;
-		// match (self.get_mode(), self.get_ly()) {
-		// 	(OamScan, _) => self.set_mode(Draw),
-		// 	(Draw, _) => self.set_mode(HBlank),
-		// 	(HBlank, 0..=143) => self.set_mode(OamScan),
-		// 	(HBlank, _) => self.set_mode(VBlank),
-		// 	(VBlank, 144..=153) => self.set_mode(VBlank),
-		// 	(VBlank, _) => self.set_mode(OamScan),
-		// }
 	}
 }

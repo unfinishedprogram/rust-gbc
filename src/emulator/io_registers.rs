@@ -124,10 +124,9 @@ impl IORegisters for EmulatorState {
 			Ok(SB) => logger::error(format!("SERIAL BUS WRITE{:X}", addr)),
 			Ok(LCDC) => {
 				self.io_register_state[addr] = value;
-				if value == 3 {
-					self.set_ly(0);
-					self.ppu_state.cycle += 500000
-				}
+				// Reset screen
+				self.set_ly(0);
+				self.ppu_state.cycle += 500000
 			}
 			Err(_) => {
 				self.run = false;
