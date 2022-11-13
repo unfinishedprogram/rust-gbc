@@ -62,6 +62,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		INC_16(ptr) => {
+			cpu.cycle += 1;
 			let ptr_val = cpu.read_16(ptr);
 			cpu.write_16(ptr, ptr_val + 1);
 		}
@@ -207,10 +208,12 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			}
 		}
 		POP(value_ref) => {
+			cpu.cycle += 2;
 			let val = cpu.pop();
 			cpu.write_16(value_ref.into(), val);
 		}
 		PUSH(value_ref) => {
+			cpu.cycle += 3;
 			let value = cpu.read_16(value_ref.into());
 			cpu.push(value)
 		}
@@ -365,6 +368,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		LD_A_INC_HL => {
+			cpu.cycle -= 1;
 			execute_instruction(
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
@@ -373,6 +377,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		LD_A_DEC_HL => {
+			cpu.cycle -= 1;
 			execute_instruction(
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,
