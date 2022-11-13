@@ -120,7 +120,7 @@ impl Debug for Instruction {
 			Self::LD_8(arg0, arg1) => write!(f, "ld {arg0:?}, {arg1:?}"),
 			Self::LDH(arg0, arg1) => write!(f, "ldh {arg0:?}, {arg1:?}"),
 			Self::LD_16(arg0, arg1) => write!(f, "ld {arg0:?}, {arg1:?}"),
-			Self::INC_8(arg0) => f.debug_tuple("inc").field(arg0).finish(),
+			Self::INC_8(arg0) => write!(f, "inc {arg0:?}"),
 			Self::INC_16(arg0) => write!(f, "inc {arg0:?}"),
 			Self::DEC_8(arg0) => write!(f, "dec {arg0:?}"),
 			Self::DEC_16(arg0) => write!(f, "dec {arg0:?}"),
@@ -133,7 +133,8 @@ impl Debug for Instruction {
 
 			Self::ALU_OP_8(a0, a1, a2) => write!(f, "{a0:?} {a1:?}, {a2:?}"),
 			Self::HALT => write!(f, "halt"),
-			Self::CALL(arg0, arg1) => f.debug_tuple("call").field(arg0).field(arg1).finish(),
+			Self::CALL(Condition::ALWAYS, arg1) => write!(f, "call {arg1:?}"),
+			Self::CALL(arg0, arg1) => write!(f, "call {arg0:?}, {arg1:?}"),
 			Self::POP(arg0) => f.debug_tuple("pop").field(arg0).finish(),
 			Self::PUSH(arg0) => f.debug_tuple("push").field(arg0).finish(),
 			Self::JP(Condition::ALWAYS, arg1) => write!(f, "jp {arg1:?}"),
