@@ -64,7 +64,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		INC_16(ptr) => {
 			cpu.cycle += 1;
 			let ptr_val = cpu.read_16(ptr);
-			cpu.write_16(ptr, ptr_val + 1);
+			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
 
 		DEC_8(ptr) => {
@@ -178,23 +178,24 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 				ALUOperation::CP => {
 					cpu.set_flag_to(Flag::N, true);
+					cpu.set_flag_to(Flag::C, a_val < b_val);
+					cpu.set_flag_to(Flag::Z, a_val == b_val);
 					cpu.set_flag_to(
 						Flag::H,
 						(a_val & 0xf).wrapping_sub(b_val & 0xf) & 0x10 == 0x10,
 					);
-					cpu.set_flag_to(Flag::C, a_val < b_val);
-					cpu.set_flag_to(Flag::Z, a_val == b_val);
 					a_val
 				}
 			};
 
-			if result == 0 {
-				cpu.set_flag(Flag::Z)
-			};
-
 			match op {
 				ALUOperation::CP => {}
-				_ => cpu.write_8(&to, result),
+				_ => {
+					cpu.write_8(&to, result);
+					if result == 0 {
+						cpu.set_flag(Flag::Z)
+					};
+				}
 			}
 		}
 		HALT => {}
