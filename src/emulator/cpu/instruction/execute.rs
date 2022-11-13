@@ -203,6 +203,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				cpu.push(current_pc);
 				let loc_value = cpu.read_16(location);
 				cpu.write_16(CPURegister16::PC.into(), loc_value);
+				cpu.cycle += 3;
 			}
 		}
 		POP(value_ref) => {
