@@ -107,7 +107,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			);
 
 			cpu.clear_flag(Flag::N);
-			cpu.set_flag_to(Flag::C, a_val + b_val < a_val);
+			cpu.set_flag_to(Flag::C, a_val.wrapping_add(b_val) < a_val);
 			cpu.write_16(a_ref, a_val.wrapping_add(b_val));
 		}
 
