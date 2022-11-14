@@ -13,6 +13,8 @@ ehttp = "0.2.0"
 poll-promise = "0.1"
 enum-primitive-derive = "0.2.2"
 num-traits = "0.2.15"
+instant = { version = "0.1", features = ["wasm-bindgen"] }
+
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tracing-subscriber = "0.3"

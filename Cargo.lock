@@ -685,6 +685,7 @@ dependencies = [
  "egui_extras",
  "ehttp",
  "enum-primitive-derive",
+ "instant",
  "num-traits",
  "poll-promise",
  "rfd",

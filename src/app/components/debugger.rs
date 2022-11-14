@@ -26,6 +26,7 @@ pub struct Debugger {
 	vram_view: BufferView,
 	window_view: BufferView,
 	serial_output: Vec<char>,
+	frame_time: String,
 	pub emulator_state: EmulatorState,
 }
 
@@ -33,6 +34,7 @@ impl Default for Debugger {
 	fn default() -> Self {
 		Self {
 			cycle: 0,
+			frame_time: "".to_string(),
 			serial_output: vec![],
 			emulator_state: EmulatorState::default().init(),
 			state: DebuggerState::Paused,
@@ -57,6 +59,7 @@ impl Debugger {
 			"Cycle: {:}",
 			format!("{:b}", self.emulator_state.read(0xFF02)) // self.serial_output.clone().into_iter().collect::<String>()
 		));
+		ui.label(format!("Frametime: {:}ms", self.frame_time));
 
 		self.breakpoint_manager.draw(ui);
 
@@ -92,14 +95,20 @@ impl Debugger {
 	pub fn step(&mut self) {
 		match self.state {
 			DebuggerState::Paused => {}
-			DebuggerState::Running => loop {
-				self.cycle += 1;
-				self.emulator_state.step();
-				self.do_serial();
-				if self.emulator_state.cpu_state.t_states == 0 {
-					break;
+			DebuggerState::Running => {
+				// self.cycle += 1;
+				let now = instant::Instant::now();
+				let start = self.emulator_state.cycle;
+				while self.emulator_state.cycle - start < 69905 {
+					self.emulator_state.step();
+					self.do_serial();
 				}
-			},
+				self.cycle = self.emulator_state.cycle;
+				self.frame_time = format!("{}", now.elapsed().as_millis());
+				// if self.emulator_state.cpu_state.t_states == 0 {
+				// break;
+				// }
+			}
 		}
 	}
 }

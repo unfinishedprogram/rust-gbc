@@ -80,11 +80,7 @@ impl eframe::App for EmulatorManager {
 					self.debugger.toggle_state();
 				}
 
-				// if ui.button("Step").clicked() {
-				for _ in 0..10000 {
-					self.debugger.step();
-				}
-				// }
+				self.debugger.step();
 			})
 		});
 
