@@ -248,6 +248,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			}
 		}
 		RST(addr) => {
+			cpu.cycle += 1;
 			let current_pc = cpu.read_16(CPURegister16::PC.into());
 			cpu.push(current_pc);
 			let new_pc = cpu.read_16(addr);
