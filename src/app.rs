@@ -81,7 +81,7 @@ impl eframe::App for EmulatorManager {
 				}
 
 				// if ui.button("Step").clicked() {
-				for _ in 0..100 {
+				for _ in 0..10000 {
 					self.debugger.step();
 				}
 				// }

@@ -175,7 +175,7 @@ impl Logger {
 
 	fn log(&mut self, msg: LogMessage) {
 		self.logs.push(msg);
-		if self.logs.len() > 2000000 {
+		if self.logs.len() > 2000 {
 			self.logs.remove(0);
 		}
 	}

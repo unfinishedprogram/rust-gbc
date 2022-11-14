@@ -123,10 +123,12 @@ impl IORegisters for EmulatorState {
 			Ok(DIV) => self.io_register_state[addr] = 0,
 			Ok(SB) => logger::error(format!("SERIAL BUS WRITE{:X}", addr)),
 			Ok(LCDC) => {
+				if value & 0b10000000 == 0 || self.io_register_state[addr] & 0b10000000 == 0 {
+					self.set_ly(0);
+					self.ppu_state.pause();
+				}
 				self.io_register_state[addr] = value;
 				// Reset screen
-				self.set_ly(0);
-				self.ppu_state.pause();
 			}
 			Err(_) => {
 				self.run = false;
