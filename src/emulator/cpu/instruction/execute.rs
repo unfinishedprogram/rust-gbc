@@ -97,6 +97,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		ADD_16(a_ref, b_ref) => {
+			cpu.cycle += 1;
 			let a_val = cpu.read_16(a_ref);
 			let b_val = cpu.read_16(b_ref);
 			cpu.clear_flag(Flag::N);
