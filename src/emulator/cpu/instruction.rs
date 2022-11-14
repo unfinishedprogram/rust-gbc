@@ -141,7 +141,9 @@ impl Debug for Instruction {
 			Self::DEC_16(arg0) => write!(f, "dec {arg0:?}"),
 			Self::JR(Condition::ALWAYS, arg1) => write!(f, "jr {arg1:?}"),
 			Self::JR(arg0, arg1) => write!(f, "jr {arg0:?}, {arg1:?}"),
-			Self::ADD_16(arg0, arg1) => f.debug_tuple("add").field(arg0).field(arg1).finish(),
+
+			Self::ADD_16(arg0, arg1) => write!(f, "add {arg0:?}, {arg1:?}"),
+
 			Self::ADD_SIGNED(arg0, arg1) => {
 				f.debug_tuple("ADD_SIGNED").field(arg0).field(arg1).finish()
 			}
