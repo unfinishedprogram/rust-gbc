@@ -268,10 +268,15 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
 			cpu,
 		),
-		RRA => execute_instruction(
-			Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
-			cpu,
-		),
+		RRA => {
+			execute_instruction(
+				Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
+				cpu,
+			);
+			cpu.clear_flag(Flag::Z);
+			cpu.clear_flag(Flag::H);
+			cpu.clear_flag(Flag::N);
+		}
 		DAA => {
 			// Decimal Adjust A Register
 			cpu.clear_flag(Flag::H);
