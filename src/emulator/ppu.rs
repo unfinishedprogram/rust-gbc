@@ -19,6 +19,7 @@ pub enum PPUMode {
 pub struct PPUState {
 	pub cycle: u64,
 	pub maxed: bool,
+	pub paused: bool,
 }
 
 pub trait PPU {
@@ -62,6 +63,7 @@ impl PPU for EmulatorState {
 
 	fn step_ppu(&mut self) {
 		self.set_ly(self.get_ly() + 1);
+		self.ppu_state.paused = false;
 
 		if self.get_ly() >= 153 {
 			if self.ppu_state.maxed {

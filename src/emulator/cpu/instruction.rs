@@ -84,7 +84,7 @@ pub enum ALUOperation {
 	CP,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub enum RotShiftOperation {
 	RLC,
 	RRC,
@@ -94,6 +94,21 @@ pub enum RotShiftOperation {
 	SRA,
 	SWAP,
 	SRL,
+}
+
+impl Debug for RotShiftOperation {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::RLC => write!(f, "rlc"),
+			Self::RRC => write!(f, "rrc"),
+			Self::RL => write!(f, "rl"),
+			Self::RR => write!(f, "rr"),
+			Self::SLA => write!(f, "sla"),
+			Self::SRA => write!(f, "sra"),
+			Self::SWAP => write!(f, "swap"),
+			Self::SRL => write!(f, "srl"),
+		}
+	}
 }
 
 impl Debug for ALUOperation {
@@ -155,7 +170,7 @@ impl Debug for Instruction {
 			Self::BIT(arg0, arg1) => f.debug_tuple("bit").field(arg0).field(arg1).finish(),
 			Self::RES(arg0, arg1) => f.debug_tuple("res").field(arg0).field(arg1).finish(),
 			Self::SET(arg0, arg1) => f.debug_tuple("set").field(arg0).field(arg1).finish(),
-			Self::ROT(arg0, arg1) => f.debug_tuple("rot").field(arg0).field(arg1).finish(),
+			Self::ROT(arg0, arg1) => write!(f, "{arg0:?} {arg1:?}"),
 			Self::INT(arg0) => f.debug_tuple("int").field(arg0).finish(),
 			Self::LD_A_DEC_HL => write!(f, "ld a, [hl-]"),
 			Self::LD_A_INC_HL => write!(f, "ld a, [hl+]"),

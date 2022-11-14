@@ -24,6 +24,15 @@ pub struct EmulatorState {
 	pub cycle: u64,
 }
 
+impl PPUState {
+	pub fn pause(&mut self) {
+		if !self.paused {
+			self.paused = true;
+			self.cycle += 190000 - 5080;
+		}
+	}
+}
+
 impl Default for EmulatorState {
 	fn default() -> Self {
 		Self {

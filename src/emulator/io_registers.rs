@@ -126,7 +126,7 @@ impl IORegisters for EmulatorState {
 				self.io_register_state[addr] = value;
 				// Reset screen
 				self.set_ly(0);
-				self.ppu_state.cycle += 500000
+				self.ppu_state.pause();
 			}
 			Err(_) => {
 				self.run = false;
