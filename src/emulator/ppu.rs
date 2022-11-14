@@ -67,7 +67,6 @@ impl PPU for EmulatorState {
 
 		if self.get_ly() >= 153 {
 			if self.ppu_state.maxed {
-				println!("PPU Maxed");
 				self.set_ly(0);
 				self.ppu_state.maxed = false;
 				self.ppu_state.cycle += 908;

@@ -129,10 +129,15 @@ fn tetris() {
 	let handle = File::open("logs/test.log").unwrap();
 	let lines = io::BufReader::new(handle).lines();
 
+	let mut last: String = "".to_string();
 	for line in lines {
 		let exec = log_execute(&mut state);
-		assert_eq!(exec, line.unwrap());
-		println!("{exec}");
-		println!("{:}", state.ppu_state.cycle / 2);
+		let line = line.unwrap();
+		if exec != line {
+			println!("{last}");
+			assert_eq!(exec, line);
+		}
+		last = line;
+		// println!("{:}", state.ppu_state.cycle / 2);
 	}
 }
