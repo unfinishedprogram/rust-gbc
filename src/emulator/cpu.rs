@@ -123,6 +123,7 @@ impl CPU for EmulatorState {
 	fn write_16(&mut self, value_ref: ValueRefU16, value: u16) {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
+				self.cycle += 2;
 				let bytes = u16::to_le_bytes(value);
 				self.write(i, bytes[0]);
 				self.write(i + 1, bytes[1]);

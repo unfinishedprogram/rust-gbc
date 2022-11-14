@@ -55,9 +55,10 @@ impl Default for EmulatorState {
 
 impl<'a> EmulatorState {
 	pub fn step(&mut self) {
-		if let Some(inst) = CPU::step(self) {
-			logger::debug(format!("{:?}", inst));
-		}
+		// if let Some(inst) = CPU::step(self) {
+		// 	logger::debug(format!("{:?}", inst));
+		// }
+		CPU::step(self);
 		PPU::step_ppu(self);
 	}
 

@@ -64,7 +64,7 @@ impl fmt::Debug for ValueRefU16 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
 			ValueRefU16::Raw(x) => write!(f, "${:04X}", x),
-			ValueRefU16::Mem(x) => write!(f, "(${:04X})", x),
+			ValueRefU16::Mem(x) => write!(f, "[${:04X}]", x),
 			ValueRefU16::Reg(x) => write!(f, "{:?}", x),
 		}
 	}

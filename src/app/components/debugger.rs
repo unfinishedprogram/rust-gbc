@@ -19,6 +19,7 @@ enum DebuggerState {
 }
 
 pub struct Debugger {
+	serial_tick: u32,
 	state: DebuggerState,
 	cycle: u64,
 	breakpoint_manager: BreakpointManager,
@@ -33,6 +34,7 @@ pub struct Debugger {
 impl Default for Debugger {
 	fn default() -> Self {
 		Self {
+			serial_tick: 0,
 			cycle: 0,
 			frame_time: "".to_string(),
 			serial_output: vec![],
@@ -56,8 +58,8 @@ impl Debugger {
 
 		ui.label(format!("Cycle: {:}", self.cycle));
 		ui.label(format!(
-			"Cycle: {:}",
-			format!("{:b}", self.emulator_state.read(0xFF02)) // self.serial_output.clone().into_iter().collect::<String>()
+			"SerialOut: {:}",
+			self.serial_output.clone().into_iter().collect::<String>()
 		));
 		ui.label(format!("Frametime: {:}ms", self.frame_time));
 
@@ -85,10 +87,13 @@ impl Debugger {
 	}
 
 	pub fn do_serial(&mut self) {
-		logger::debug(format!("{:X}", self.emulator_state.read(0xFF02)));
-		if self.emulator_state.read(0xFF02) >> 7 == 1 {
-			self.serial_output
-				.push(self.emulator_state.read(0xFF01) as char)
+		if self.emulator_state.read(0xFF02) == 0x81 {
+			self.serial_tick += 1;
+			if self.serial_tick == 8 {
+				self.serial_tick = 0;
+				let serial_val = self.emulator_state.read(0xFF01);
+				self.serial_output.push(serial_val as char);
+			}
 		}
 	}
 
@@ -105,9 +110,6 @@ impl Debugger {
 				}
 				self.cycle = self.emulator_state.cycle;
 				self.frame_time = format!("{}", now.elapsed().as_millis());
-				// if self.emulator_state.cpu_state.t_states == 0 {
-				// break;
-				// }
 			}
 		}
 	}

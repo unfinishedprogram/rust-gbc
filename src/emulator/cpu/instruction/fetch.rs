@@ -22,8 +22,7 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 	match (x, z, y, p, q) {
 		//(x, z, y, p, q)
 		(0, 0, 0, _, _) => inst!(cpu, NOP),
-		(0, 0, 1, _, _) => inst!(cpu, LD_16, SP, nn),
-
+		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp().into())), SP),
 		(0, 0, 2, _, _) => inst!(cpu, STOP),
 		(0, 0, 3, _, _) => {
 			let offset = cpu.next_displacement();

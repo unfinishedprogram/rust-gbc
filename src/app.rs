@@ -19,6 +19,7 @@ impl Default for EmulatorManager {
 			debugger: Debugger::default(),
 			roms: vec![
 				"roms/tetris.gb",
+				"roms/tetris2.gb",
 				"roms/dr-mario.gb",
 				"roms/02-interrupts.gb",
 				"roms/06-ld r,r.gb",

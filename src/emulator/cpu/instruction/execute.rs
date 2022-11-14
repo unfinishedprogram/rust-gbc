@@ -49,6 +49,11 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		LD_16(to, from) => {
+			use ValueRefU16::*;
+			match (to, from) {
+				(Reg(_), Reg(_)) => cpu.cycle += 1,
+				(_, _) => {}
+			}
 			let val = cpu.read_16(from);
 			cpu.write_16(to, val);
 		}
@@ -81,7 +86,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.write_16(ptr, ptr_val - 1);
 		}
 
-		STOP => todo!(),
+		STOP => println!("STOP"),
 		ERROR(_) => {}
 
 		JP(condition, location) | JR(condition, location) => {
@@ -111,7 +116,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.write_16(a_ref, a_val.wrapping_add(b_val));
 		}
 
-		ADD_SIGNED(_, _) => todo!(),
+		ADD_SIGNED(_, _) => println!("ADD_SIGNED"),
 		ALU_OP_8(op, to, from) => {
 			let a_val = cpu.read_8(&to);
 			let b_val = cpu.read_8(&from);
@@ -124,7 +129,10 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			let result = match op {
 				ALUOperation::ADD => {
 					cpu.clear_flag(Flag::N);
-					cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_add(b_val) & 0x10) == 0x10);
+					cpu.set_flag_to(
+						Flag::H,
+						((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10,
+					);
 					cpu.set_flag_to(Flag::C, a_val.wrapping_add(b_val) < a_val);
 					cpu.set_flag_to(Flag::Z, a_val.wrapping_add(b_val) == 0);
 					a_val.wrapping_add(b_val)
@@ -207,11 +215,11 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		HALT => {}
 		CALL(condition, location) => {
 			if cpu.check_condition(condition) {
+				cpu.cycle += 1;
 				let current_pc = cpu.read_16(CPURegister16::PC.into());
 				cpu.push(current_pc);
 				let loc_value = cpu.read_16(location);
 				cpu.write_16(CPURegister16::PC.into(), loc_value);
-				cpu.cycle += 3;
 			}
 		}
 		POP(value_ref) => {
@@ -220,7 +228,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.write_16(value_ref.into(), val);
 		}
 		PUSH(value_ref) => {
-			cpu.cycle += 3;
+			cpu.cycle += 1;
 			let value = cpu.read_16(value_ref.into());
 			cpu.push(value)
 		}

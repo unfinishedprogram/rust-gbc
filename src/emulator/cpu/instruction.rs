@@ -155,7 +155,7 @@ impl Debug for Instruction {
 			Self::POP(arg0) => write!(f, "pop {arg0:?}"),
 			Self::PUSH(arg0) => write!(f, "push {arg0:?}"),
 			Self::JP(Condition::ALWAYS, arg1) => write!(f, "jp {arg1:?}"),
-			Self::JP(arg0, arg1) => write!(f, "jp {arg0:?} {arg1:?}"),
+			Self::JP(arg0, arg1) => write!(f, "jp {arg0:?}, {arg1:?}"),
 			Self::RET(Condition::ALWAYS) => write!(f, "ret"),
 			Self::RET(arg0) => write!(f, "ret {arg0:?}"),
 			Self::RST(arg0) => f.debug_tuple("rst").field(arg0).finish(),
@@ -178,7 +178,7 @@ impl Debug for Instruction {
 			Self::LD_A_INC_HL => write!(f, "ld a, [hl+]"),
 			Self::LD_DEC_HL_A => write!(f, "ld [hl-], a"),
 			Self::LD_INC_HL_A => write!(f, "ld [hl+], a"),
-			Self::COMPOSE(_, _) => todo!(),
+			Self::COMPOSE(a, b) => write!(f, "{a:?} COMP {b:?}"),
 		}
 	}
 }
