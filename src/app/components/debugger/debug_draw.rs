@@ -37,18 +37,21 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 }
 
 pub fn debug_draw_window_data(state: &EmulatorState, window_buffer: &mut PixelBuffer) {
-	let background_map_start = 0x9800;
+	// let background_map_start = 0x9800;
 	// let background_map_start = 0x9000;
 
 	// let background_map_start = 0x9C00;
-	// let background_map_start = 0;
+	// let background_map_start = 0x8800;
+	let background_map_start = 0x8000;
 
 	for y in 0..32 {
 		for x in 0..32 {
-			let offset = state.read(background_map_start + x + y * 32) as i8;
+			let offset = state.read(background_map_start + x + y * 32);
 			let real_offset: i32 = 16 * (offset as i32);
 
 			let index = (0x9000 + real_offset) as u16;
+
+			let index = 0x8000u16 + real_offset as u16;
 
 			let mut values = [0; 16];
 
