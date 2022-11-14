@@ -133,5 +133,6 @@ fn tetris() {
 		let exec = log_execute(&mut state);
 		assert_eq!(exec, line.unwrap());
 		println!("{exec}");
+		println!("{:}", state.ppu_state.cycle / 2);
 	}
 }

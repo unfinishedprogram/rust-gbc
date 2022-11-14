@@ -28,7 +28,7 @@ impl PPUState {
 	pub fn pause(&mut self) {
 		if !self.paused {
 			self.paused = true;
-			self.cycle += 190000 - 5080;
+			self.cycle += 190000 - (5080 - 6);
 		}
 	}
 }
