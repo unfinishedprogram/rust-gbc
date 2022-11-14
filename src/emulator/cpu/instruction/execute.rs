@@ -100,8 +100,14 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.cycle += 1;
 			let a_val = cpu.read_16(a_ref);
 			let b_val = cpu.read_16(b_ref);
+
+			cpu.set_flag_to(
+				Flag::H,
+				(((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000,
+			);
+
 			cpu.clear_flag(Flag::N);
-			cpu.set_flag(Flag::C);
+			cpu.set_flag_to(Flag::C, a_val + b_val < a_val);
 			cpu.write_16(a_ref, a_val.wrapping_add(b_val));
 		}
 
