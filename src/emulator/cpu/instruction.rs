@@ -42,7 +42,7 @@ pub enum Instruction {
 	POP(CPURegister16),
 	PUSH(CPURegister16),
 	JP(Condition, ValueRefU16),
-	// Return
+	RETI,
 	RET(Condition),
 	RST(ValueRefU16),
 	DI,
@@ -179,6 +179,7 @@ impl Debug for Instruction {
 			Self::LD_DEC_HL_A => write!(f, "ld [hl-], a"),
 			Self::LD_INC_HL_A => write!(f, "ld [hl+], a"),
 			Self::COMPOSE(a, b) => write!(f, "{a:?} COMP {b:?}"),
+			Self::RETI => write!(f, "reti"),
 		}
 	}
 }

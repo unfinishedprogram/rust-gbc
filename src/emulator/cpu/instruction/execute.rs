@@ -12,6 +12,8 @@ use crate::emulator::{
 
 use std::ops::{BitAnd, BitOr, BitXor};
 
+use super::condition::Condition;
+
 pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) {
 	let cpu = state;
 
@@ -437,6 +439,11 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				cpu,
 			);
 			execute_instruction(Instruction::DEC_16(CPURegister16::HL.into()), cpu);
+		}
+
+		RETI => {
+			execute_instruction(RET(Condition::ALWAYS), cpu);
+			execute_instruction(EI, cpu);
 		}
 	}
 }
