@@ -5,7 +5,7 @@ pub mod status;
 
 use super::BufferView;
 use crate::{
-	app::drawable::DrawableMut,
+	app::drawable::{Drawable, DrawableMut},
 	emulator::{memory_mapper::MemoryMapper, state::EmulatorState},
 };
 use breakpoint_manager::BreakpointManager;
@@ -55,6 +55,8 @@ impl Debugger {
 
 		self.vram_view.draw_window(ui, "Vram");
 		self.window_view.draw_window(ui, "Window");
+
+		self.emulator_state.lcd.draw_window(ui, "LCD");
 
 		ui.label(format!("Cycle: {:}", self.cycle));
 		ui.label(format!(

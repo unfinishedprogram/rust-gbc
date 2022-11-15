@@ -3,6 +3,7 @@ use super::cpu::registers::CPURegister16;
 use super::cpu::values::ValueRefU16;
 use super::cpu::{CPUState, CPU};
 use super::io_registers::{IORegisterState, IORegisters};
+use super::lcd::LCD;
 use super::memory_mapper::MemoryMapper;
 use super::ppu::{PPUMode, PPUState, PPU};
 use crate::app::components::logger;
@@ -22,6 +23,7 @@ pub struct EmulatorState {
 	pub io_register_state: IORegisterState,
 	pub run: bool,
 	pub cycle: u64,
+	pub lcd: LCD,
 }
 
 impl PPUState {
@@ -49,6 +51,7 @@ impl Default for EmulatorState {
 			oam: [0; 0xA0],
 			hram: [0; 0x80],
 			cycle: 0,
+			lcd: LCD::new(),
 		}
 	}
 }
