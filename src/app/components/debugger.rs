@@ -3,7 +3,7 @@ mod debug_draw;
 mod memory_view;
 pub mod status;
 
-use super::{logger, BufferView};
+use super::BufferView;
 use crate::{
 	app::drawable::DrawableMut,
 	emulator::{memory_mapper::MemoryMapper, state::EmulatorState},

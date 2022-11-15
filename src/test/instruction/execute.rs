@@ -3,7 +3,7 @@ use crate::{
 		cpu::{
 			flags::*,
 			instruction::{execute::execute_instruction, Instruction},
-			registers::{CPURegister16, CPURegister8},
+			registers::CPURegister16,
 			values::{ValueRefU16, ValueRefU8},
 			CPU,
 		},

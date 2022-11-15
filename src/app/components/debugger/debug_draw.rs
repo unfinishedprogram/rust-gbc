@@ -49,7 +49,7 @@ pub fn debug_draw_window_data(state: &EmulatorState, window_buffer: &mut PixelBu
 			let offset = state.read(background_map_start + x + y * 32);
 			let real_offset: i32 = 16 * (offset as i32);
 
-			let index = (0x9000 + real_offset) as u16;
+			// let index = (0x9000 + real_offset) as u16;
 
 			let index = 0x8000u16 + real_offset as u16;
 
