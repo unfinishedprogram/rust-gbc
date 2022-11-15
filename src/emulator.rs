@@ -6,5 +6,6 @@ pub mod memory;
 pub mod memory_mapper;
 pub mod ppu;
 pub mod state;
+pub mod lcd;
 
 pub use state::EmulatorState;
