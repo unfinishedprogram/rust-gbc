@@ -3,10 +3,12 @@ use super::cpu::registers::CPURegister16;
 use super::cpu::values::ValueRefU16;
 use super::cpu::{CPUState, CPU};
 use super::io_registers::{IORegisterState, IORegisters};
-use super::lcd::LCD;
+use super::lcd::LCDDisplay;
 use super::memory_mapper::MemoryMapper;
 use super::ppu::{PPUMode, PPUState, PPU};
 use crate::app::components::logger;
+
+trait LCDDisplayWithCopy: LCDDisplay + Copy {}
 
 #[derive(Clone)]
 pub struct EmulatorState {
@@ -23,7 +25,6 @@ pub struct EmulatorState {
 	pub io_register_state: IORegisterState,
 	pub run: bool,
 	pub cycle: u64,
-	pub lcd: LCD,
 }
 
 impl PPUState {
@@ -51,18 +52,31 @@ impl Default for EmulatorState {
 			oam: [0; 0xA0],
 			hram: [0; 0x80],
 			cycle: 0,
-			lcd: LCD::new(),
 		}
 	}
 }
 
 impl<'a> EmulatorState {
-	pub fn step(&mut self) {
-		// if let Some(inst) = CPU::step(self) {
-		// 	logger::debug(format!("{:?}", inst));
-		// }
-		CPU::step(self);
-		PPU::step_ppu(self);
+	pub fn step(&mut self, lcd: Option<&mut dyn LCDDisplay>) {
+		if let Some(lcd) = lcd {
+			while self.cycle >= self.ppu_state.cycle / 4 {
+				self.step_ppu(Some(lcd));
+			}
+			CPU::step(self);
+
+			while self.cycle >= self.ppu_state.cycle / 4 {
+				self.step_ppu(Some(lcd));
+			}
+		} else {
+			while self.cycle >= self.ppu_state.cycle / 4 {
+				self.step_ppu(None);
+			}
+			CPU::step(self);
+
+			while self.cycle >= self.ppu_state.cycle / 4 {
+				self.step_ppu(None);
+			}
+		}
 	}
 
 	pub fn init(mut self) -> Self {

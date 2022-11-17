@@ -178,12 +178,8 @@ impl CPU for EmulatorState {
 	}
 
 	fn step(&mut self) -> Option<Instruction> {
-		if self.cpu_state.t_states == 0 {
-			let instruction = self.get_next_instruction_or_interrupt();
-			execute_instruction(instruction.clone(), self);
-			return Some(instruction);
-		}
-		self.cpu_state.t_states -= 1;
-		return None;
+		let instruction = self.get_next_instruction_or_interrupt();
+		execute_instruction(instruction.clone(), self);
+		return Some(instruction);
 	}
 }

@@ -6,7 +6,7 @@ pub mod status;
 use super::BufferView;
 use crate::{
 	app::drawable::{Drawable, DrawableMut},
-	emulator::{memory_mapper::MemoryMapper, state::EmulatorState},
+	emulator::{lcd::LCD, memory_mapper::MemoryMapper, state::EmulatorState},
 };
 use breakpoint_manager::BreakpointManager;
 use debug_draw::*;
@@ -29,6 +29,7 @@ pub struct Debugger {
 	serial_output: Vec<char>,
 	frame_time: String,
 	pub emulator_state: EmulatorState,
+	lcd: LCD,
 }
 
 impl Default for Debugger {
@@ -44,6 +45,7 @@ impl Default for Debugger {
 			memory_view: MemoryView::default(),
 			vram_view: BufferView::new("VRAM", (16 * 8, 24 * 8)),
 			window_view: BufferView::new("Window", (256, 256)),
+			lcd: LCD::new(),
 		}
 	}
 }
@@ -55,22 +57,22 @@ impl Debugger {
 
 		self.vram_view.draw_window(ui, "Vram");
 		self.window_view.draw_window(ui, "Window");
-
-		self.emulator_state.lcd.draw_window(ui, "LCD");
+		self.lcd.draw_window(ui, "LCD");
 
 		ui.label(format!("Cycle: {:}", self.cycle));
 		ui.label(format!(
 			"SerialOut: {:}",
 			self.serial_output.clone().into_iter().collect::<String>()
 		));
+
 		ui.label(format!("Frametime: {:}ms", self.frame_time));
 
-		self.breakpoint_manager.draw(ui);
+		// self.breakpoint_manager.draw(ui);
 
-		ui.separator();
+		// ui.separator();
 
-		self.memory_view
-			.draw(ui, &mut self.emulator_state, &mut self.breakpoint_manager);
+		// self.memory_view
+		// .draw(ui, &mut self.emulator_state, &mut self.breakpoint_manager);
 	}
 
 	pub fn start(&mut self) {
@@ -106,10 +108,12 @@ impl Debugger {
 				// self.cycle += 1;
 				let now = instant::Instant::now();
 				let start = self.emulator_state.cycle;
+
 				while self.emulator_state.cycle - start < 69905 {
-					self.emulator_state.step();
-					self.do_serial();
+					self.emulator_state.step(Some(&mut self.lcd));
+					// self.do_serial();
 				}
+
 				self.cycle = self.emulator_state.cycle;
 				self.frame_time = format!("{}", now.elapsed().as_millis());
 			}

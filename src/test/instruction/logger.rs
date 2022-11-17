@@ -9,7 +9,7 @@ use crate::emulator::{
 
 pub fn log_execute(state: &mut EmulatorState) -> String {
 	while state.cycle >= state.ppu_state.cycle / 4 {
-		state.step_ppu();
+		state.step_ppu(None);
 	}
 
 	use CPURegister8::*;
@@ -33,7 +33,7 @@ pub fn log_execute(state: &mut EmulatorState) -> String {
 	let inst = format!("{:?}", instruction);
 
 	while state.cycle >= state.ppu_state.cycle / 4 {
-		state.step_ppu();
+		state.step_ppu(None);
 	}
 
 	execute_instruction(instruction, state);

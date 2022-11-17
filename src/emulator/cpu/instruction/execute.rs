@@ -1,13 +1,16 @@
-use crate::emulator::{
-	cpu::{
-		flags::{Flag, Flags},
-		gb_stack::GBStack,
-		instruction::{ALUOperation, Instruction, Instruction::*},
-		registers::{CPURegister16, CPURegister8},
-		values::ValueRefU16,
-		CPU,
+use crate::{
+	app::components::logger,
+	emulator::{
+		cpu::{
+			flags::{Flag, Flags},
+			gb_stack::GBStack,
+			instruction::{ALUOperation, Instruction, Instruction::*},
+			registers::{CPURegister16, CPURegister8},
+			values::ValueRefU16,
+			CPU,
+		},
+		EmulatorState,
 	},
-	EmulatorState,
 };
 
 use std::ops::{BitAnd, BitOr, BitXor};
