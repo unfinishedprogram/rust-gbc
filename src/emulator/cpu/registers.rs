@@ -73,7 +73,7 @@ impl CPURegisters {
 		let bytes = u16::to_le_bytes(value);
 
 		match reg {
-			AF => [self[F], self[A]] = bytes,
+			AF => [self[F], self[A]] = [bytes[0] & 0xF0, bytes[1]],
 			BC => [self[C], self[B]] = bytes,
 			DE => [self[E], self[D]] = bytes,
 			HL => [self[L], self[H]] = bytes,
@@ -85,29 +85,29 @@ impl CPURegisters {
 }
 
 impl Debug for CPURegister8 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::A => write!(f, "a"),
-            Self::B => write!(f, "b"),
-            Self::C => write!(f, "c"),
-            Self::D => write!(f, "d"),
-            Self::E => write!(f, "e"),
-            Self::F => write!(f, "f"),
-            Self::H => write!(f, "h"),
-            Self::L => write!(f, "l"),
-        }
-    }
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::A => write!(f, "a"),
+			Self::B => write!(f, "b"),
+			Self::C => write!(f, "c"),
+			Self::D => write!(f, "d"),
+			Self::E => write!(f, "e"),
+			Self::F => write!(f, "f"),
+			Self::H => write!(f, "h"),
+			Self::L => write!(f, "l"),
+		}
+	}
 }
 
 impl Debug for CPURegister16 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::AF => write!(f, "af"),
-            Self::BC => write!(f, "bc"),
-            Self::DE => write!(f, "de"),
-            Self::HL => write!(f, "hl"),
-            Self::SP => write!(f, "sp"),
-            Self::PC => write!(f, "pc"),
-        }
-    }
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::AF => write!(f, "af"),
+			Self::BC => write!(f, "bc"),
+			Self::DE => write!(f, "de"),
+			Self::HL => write!(f, "hl"),
+			Self::SP => write!(f, "sp"),
+			Self::PC => write!(f, "pc"),
+		}
+	}
 }
