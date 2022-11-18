@@ -96,7 +96,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				}
 			}
 
-			cpu.write_16(ptr, ptr_val - 1);
+			cpu.write_16(ptr, ptr_val.wrapping_sub(1));
 		}
 
 		STOP => println!("STOP"),
@@ -129,7 +129,31 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.write_16(a_ref, a_val.wrapping_add(b_val));
 		}
 
-		ADD_SIGNED(_, _) => println!("ADD_SIGNED"),
+		ADD_SIGNED(a_ref, b_ref) => {
+			cpu.cycle += 2;
+
+			cpu.clear_flag(Flag::Z);
+			cpu.clear_flag(Flag::N);
+
+			let a_val = cpu.read_16(a_ref);
+			let b_val = cpu.read_i8(b_ref);
+
+			let b_val = if b_val < 0 {
+				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
+			} else {
+				b_val as u16
+			};
+
+			cpu.set_flag_to(Flag::C, (a_val << 8).wrapping_add(b_val << 8) < a_val << 8);
+
+			cpu.set_flag_to(
+				Flag::H,
+				((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10,
+			);
+
+			cpu.write_16(a_ref, a_val.wrapping_add(b_val));
+		}
+
 		ALU_OP_8(op, to, from) => {
 			let a_val = cpu.read_8(&to);
 			let b_val = cpu.read_8(&from);
@@ -151,14 +175,14 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					a_val.wrapping_add(b_val)
 				}
 				ALUOperation::ADC => {
-					let to_add = b_val + carry;
+					let to_add = b_val.wrapping_add(carry);
 
 					cpu.clear_flag(Flag::N);
 					cpu.set_flag_to(Flag::H, (((a_val & 0xf) + to_add) & 0x10) == 0x10);
-					cpu.set_flag_to(Flag::C, a_val + to_add < a_val);
-					cpu.set_flag_to(Flag::Z, a_val + to_add == 0);
+					cpu.set_flag_to(Flag::C, a_val.wrapping_add(to_add) < a_val);
+					cpu.set_flag_to(Flag::Z, a_val.wrapping_add(to_add) == 0);
 
-					a_val + carry
+					a_val.wrapping_add(to_add)
 				}
 				ALUOperation::SUB => {
 					cpu.set_flag(Flag::N);
@@ -412,6 +436,30 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					cpu.write_8(&val_ref, result);
 				}
 			}
+		}
+
+		LD_HL_SP_DD(value) => {
+			cpu.cycle += 1;
+			cpu.clear_flag(Flag::Z);
+			cpu.clear_flag(Flag::N);
+
+			let a_val = cpu.read_16(CPURegister16::SP.into());
+			let b_val = cpu.read_i8(value);
+
+			let b_val = if b_val < 0 {
+				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
+			} else {
+				b_val as u16
+			};
+
+			cpu.set_flag_to(Flag::C, (a_val << 8).wrapping_add(b_val << 8) < a_val << 8);
+
+			cpu.set_flag_to(
+				Flag::H,
+				((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10,
+			);
+
+			cpu.write_16(CPURegister16::HL.into(), a_val.wrapping_add(b_val));
 		}
 
 		LD_A_INC_HL => {

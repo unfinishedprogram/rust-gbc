@@ -47,7 +47,7 @@ pub enum Instruction {
 	RST(ValueRefU16),
 	DI,
 	EI,
-
+	LD_HL_SP_DD(ValueRefI8),
 	// Accumulator flag ops
 	RLCA,
 	RRCA,
@@ -141,13 +141,8 @@ impl Debug for Instruction {
 			Self::DEC_16(arg0) => write!(f, "dec {arg0:?}"),
 			Self::JR(Condition::ALWAYS, arg1) => write!(f, "jr {arg1:?}"),
 			Self::JR(arg0, arg1) => write!(f, "jr {arg0:?}, {arg1:?}"),
-
 			Self::ADD_16(arg0, arg1) => write!(f, "add {arg0:?}, {arg1:?}"),
-
-			Self::ADD_SIGNED(arg0, arg1) => {
-				f.debug_tuple("ADD_SIGNED").field(arg0).field(arg1).finish()
-			}
-
+			Self::ADD_SIGNED(arg0, arg1) => write!(f, "add {arg0:?}, {arg1:?}"),
 			Self::ALU_OP_8(a0, a1, a2) => write!(f, "{a0:?} {a1:?}, {a2:?}"),
 			Self::HALT => write!(f, "halt"),
 			Self::CALL(Condition::ALWAYS, arg1) => write!(f, "call {arg1:?}"),
@@ -179,6 +174,7 @@ impl Debug for Instruction {
 			Self::LD_A_INC_HL => write!(f, "ld a, [hl+]"),
 			Self::LD_DEC_HL_A => write!(f, "ld [hl-], a"),
 			Self::LD_INC_HL_A => write!(f, "ld [hl+], a"),
+			Self::LD_HL_SP_DD(arg0) => write!(f, "ld hl, sp + {arg0:?}"),
 			Self::COMPOSE(a, b) => write!(f, "{a:?} COMP {b:?}"),
 			Self::RETI => write!(f, "reti"),
 		}

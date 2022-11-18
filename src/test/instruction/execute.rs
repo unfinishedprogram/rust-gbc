@@ -84,7 +84,7 @@ fn load_16() {
 	let mut state = get_state(vec![1, 2, 3, 4]);
 	for i in 0..0xFFFFu16 {
 		execute_instruction(LD_16(Reg(AF), Raw(i)), &mut state);
-		assert_eq!(state.read_16(Reg(AF)), i);
+		assert_eq!(state.read_16(Reg(AF)), i & 0xFFF0);
 
 		execute_instruction(LD_16(Reg(BC), Raw(i)), &mut state);
 		assert_eq!(state.read_16(Reg(BC)), i);
@@ -142,16 +142,41 @@ fn load_16() {
 // 	}
 // }
 
+// #[test]
+// fn test7() {
+// 	let mut state = EmulatorState::default().init();
+// 	let tetris_handle = File::open("roms/07-jr,jp,call,ret,rst.gb").unwrap();
+// 	let mut rom = vec![];
+// 	_ = io::BufReader::new(tetris_handle).read_to_end(&mut rom);
+// 	println!("{}", rom.len());
+// 	state.load_rom(&rom);
+
+// 	let handle = File::open("logs/07-jr,jp,call,ret,rst.log").unwrap();
+// 	let lines = io::BufReader::new(handle).lines();
+
+// 	let mut last: String = "".to_string();
+// 	for line in lines {
+// 		let exec = log_execute(&mut state);
+// 		let line = line.unwrap();
+// 		if exec != line {
+// 			println!("{last}");
+// 			assert_eq!(exec, line);
+// 		}
+// 		last = line;
+// 		// println!("{:}", state.ppu_state.cycle / 2);
+// 	}
+// }
+
 #[test]
-fn test7() {
+fn test3() {
 	let mut state = EmulatorState::default().init();
-	let tetris_handle = File::open("roms/07-jr,jp,call,ret,rst.gb").unwrap();
+	let tetris_handle = File::open("roms/03-op sp,hl.gb").unwrap();
 	let mut rom = vec![];
 	_ = io::BufReader::new(tetris_handle).read_to_end(&mut rom);
 	println!("{}", rom.len());
 	state.load_rom(&rom);
 
-	let handle = File::open("logs/07-jr,jp,call,ret,rst.log").unwrap();
+	let handle = File::open("logs/03-op sp,hl.log").unwrap();
 	let lines = io::BufReader::new(handle).lines();
 
 	let mut last: String = "".to_string();

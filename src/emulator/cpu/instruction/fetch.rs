@@ -108,10 +108,7 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 			)
 		}
 
-		(3, 0, 7, _, _) => Instruction::COMPOSE(
-			inst!(cpu, LD_16, HL, SP).into(),
-			inst!(cpu, ADD_SIGNED, HL, d).into(),
-		),
+		(3, 0, 7, _, _) => inst!(cpu, LD_HL_SP_DD, d).into(),
 
 		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p])),
 
