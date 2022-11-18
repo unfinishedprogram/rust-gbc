@@ -53,12 +53,14 @@ pub trait CPU {
 
 impl CPU for EmulatorState {
 	fn disable_interrupts(&mut self) {
-		self.cpu_state.interrupt_enable = false;
+		self.cpu_state.ie_next_next = false;
+		// self.cpu_state.interrupt_enable = false;
 	}
 
 	fn enable_interrupts(&mut self) {
+		self.cpu_state.ie_next_next = true;
 		// TODO Add delay
-		self.cpu_state.interrupt_enable = true;
+		// self.cpu_state.interrupt_enable = true;
 	}
 
 	fn next_byte(&mut self) -> u8 {
@@ -179,6 +181,8 @@ impl CPU for EmulatorState {
 
 	fn step(&mut self) -> Option<Instruction> {
 		let instruction = self.get_next_instruction_or_interrupt();
+		self.cpu_state.interrupt_enable = self.cpu_state.ie_next;
+		self.cpu_state.ie_next = self.cpu_state.ie_next_next;
 		execute_instruction(instruction.clone(), self);
 		return Some(instruction);
 	}

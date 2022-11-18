@@ -84,7 +84,18 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 		DEC_16(ptr) => {
 			cpu.cycle += 1;
+
 			let ptr_val = cpu.read_16(ptr);
+
+			match ptr {
+				ValueRefU16::Reg(reg) => {}
+				_ => {
+					cpu.set_flag(Flag::N);
+					cpu.set_flag_to(Flag::Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.set_flag_to(Flag::H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
+				}
+			}
+
 			cpu.write_16(ptr, ptr_val - 1);
 		}
 
@@ -140,17 +151,14 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					a_val.wrapping_add(b_val)
 				}
 				ALUOperation::ADC => {
+					let to_add = b_val + carry;
+
 					cpu.clear_flag(Flag::N);
-					cpu.set_flag_to(
-						Flag::H,
-						((a_val & 0xf).wrapping_add(b_val).wrapping_add(carry) & 0x10) == 0x10,
-					);
-					cpu.set_flag_to(
-						Flag::C,
-						a_val.wrapping_add(b_val).wrapping_add(carry) < a_val,
-					);
-					cpu.set_flag_to(Flag::Z, a_val.wrapping_add(b_val).wrapping_add(carry) == 0);
-					a_val.wrapping_add(b_val).wrapping_add(carry)
+					cpu.set_flag_to(Flag::H, (((a_val & 0xf) + to_add) & 0x10) == 0x10);
+					cpu.set_flag_to(Flag::C, a_val + to_add < a_val);
+					cpu.set_flag_to(Flag::Z, a_val + to_add == 0);
+
+					a_val + carry
 				}
 				ALUOperation::SUB => {
 					cpu.set_flag(Flag::N);
