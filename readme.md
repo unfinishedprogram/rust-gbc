@@ -19,7 +19,7 @@
 
 |     | Test                          |
 | --- | ----------------------------- |
-| ❌   | roms/01-special.gb            |
+| ✅   | roms/01-special.gb            |
 | ❌   | roms/02-interrupts.gb         |
 | ❌   | roms/03-op sp,hl.gb           |
 | ❌   | roms/04-op r,imm.gb           |
