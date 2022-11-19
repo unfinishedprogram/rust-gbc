@@ -178,7 +178,10 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					let to_add = b_val.wrapping_add(carry);
 
 					cpu.clear_flag(Flag::N);
-					cpu.set_flag_to(Flag::H, (((a_val & 0xf) + to_add) & 0x10) == 0x10);
+					cpu.set_flag_to(
+						Flag::H,
+						(((a_val & 0xf).wrapping_add(to_add)) & 0x10) == 0x10,
+					);
 					cpu.set_flag_to(Flag::C, a_val.wrapping_add(to_add) < a_val);
 					cpu.set_flag_to(Flag::Z, a_val.wrapping_add(to_add) == 0);
 
@@ -372,24 +375,18 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.clear_flag(Flag::N);
 		}
 		RES(bit, value) => {
-			// Reset Bit
 			let current = cpu.read_8(&value);
-
-			cpu.write_8(&value, current & (!(1 >> bit)));
+			cpu.write_8(&value, current & (0xFF ^ (1 << bit)));
 		}
 		SET(bit, value) => {
-			// Set Bit
 			let current = cpu.read_8(&value);
-			cpu.write_8(&value, current | (1 >> bit));
+			cpu.write_8(&value, current | (1 << bit));
 		}
 		ROT(operator, val_ref) => {
 			use super::RotShiftOperation::*;
 			let value = cpu.read_8(&val_ref);
 
-			let carry_bit = match cpu.get_flag(Flag::C) {
-				true => 1,
-				false => 0,
-			};
+			let carry_bit = if cpu.get_flag(Flag::C) { 1 } else { 0 };
 
 			match operator {
 				RLC => {
