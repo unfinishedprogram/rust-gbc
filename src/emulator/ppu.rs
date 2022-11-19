@@ -1,18 +1,14 @@
 use instant::Instant;
+use log::debug;
 
-use crate::{
-	app::components::logger,
-	emulator::{
-		flags,
-		flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag},
-		io_registers::IORegistersAdress,
-		memory_mapper::MemoryMapper,
-	},
+use crate::emulator::{
+	flags,
+	flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag},
+	io_registers::IORegistersAdress,
+	memory_mapper::MemoryMapper,
 };
 
 use super::{lcd::LCDDisplay, renderer::Renderer, EmulatorState};
-
-type Color = (u8, u8, u8);
 
 #[derive(Debug)]
 pub enum PPUMode {
@@ -79,7 +75,7 @@ impl PPU for EmulatorState {
 				if let Some(lcd) = lcd {
 					let start = Instant::now();
 					self.render(lcd);
-					logger::debug(format!("Took: {:?}", start.elapsed()));
+					debug!("Took: {:?}", start.elapsed());
 				}
 
 				self.ppu_state.maxed = false;

@@ -96,8 +96,17 @@ impl Renderer for EmulatorState {
 		let sprite_size = lcdc & 0b00100000 == 0b00100000;
 		let sprite_enable = lcdc & 0b01000000 == 0b01000000;
 		let bg_window_priority = lcdc & 0b10000000 == 0b10000000;
+
+		_ = window_tile_map_display_sel;
+		_ = bg_win_tile_map_sel;
+		_ = bg_tile_map_sel;
+		_ = sprite_size;
+		_ = sprite_enable;
+		_ = bg_window_priority;
+		_ = lcd_enable;
+
 		let (scx, scy) = (self.read(0xFF42), self.read(0xFF43));
-		let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
+		// let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
 
 		// Block 0 is $8000-87FF
 		// Block 1 is $8800-8FFF

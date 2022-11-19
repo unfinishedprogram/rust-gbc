@@ -1,8 +1,7 @@
 // https://gbdev.io/pandocs/The_Cartridge_Header.html
 
 use super::mbc::MBC;
-
-use crate::app::components::logger;
+use log::error;
 
 #[derive(Debug, Clone)]
 pub enum CartridgeParseError {}
@@ -33,7 +32,7 @@ pub struct CartridgeInfo {
 impl RawCartridgeHeader {
 	fn get_rom_banks(&self) -> u16 {
 		if self.rom_size > 0x08 {
-			logger::error(format!("Invalid rom size: {:X}", self.rom_size));
+			error!("Invalid rom size: {:X}", self.rom_size);
 			return 2;
 		}
 
@@ -48,7 +47,7 @@ impl RawCartridgeHeader {
 			0x04 => 16,
 			0x05 => 8,
 			value => {
-				logger::error(format!("Invalid Rom Size: {:X}", value));
+				error!("Invalid Rom Size: {:X}", value);
 				0
 			}
 		}
@@ -69,7 +68,7 @@ impl RawCartridgeHeader {
 			0xFE => HUC3,
 			0xFF => HUC1,
 			value => {
-				logger::error(format!("Cartrage type {:x} not recognized", value));
+				error!("Cartage type {:x} not recognized", value);
 				ROM
 			}
 		}

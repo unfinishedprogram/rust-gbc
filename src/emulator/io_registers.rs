@@ -1,6 +1,8 @@
 use std::ops::{Index, IndexMut};
 
-use crate::{app::components::logger, emulator::ppu::PPU};
+use log::{error, info};
+
+use crate::emulator::ppu::PPU;
 
 use super::EmulatorState;
 
@@ -77,7 +79,7 @@ impl Index<u16> for IORegisterState {
 		match index {
 			0xFF00..0xFF80 => &self.values[(index - 0xFF00) as usize],
 			_ => {
-				logger::error(format!("read from invalid IORegister: {:X}", index));
+				error!("read from invalid IORegister: {:X}", index);
 				&self._other
 			}
 		}
@@ -89,7 +91,7 @@ impl IndexMut<u16> for IORegisterState {
 		match index {
 			0xFF00..0xFF80 => &mut self.values[(index - 0xFF00) as usize],
 			_ => {
-				logger::error(format!("write to invalid IORegister: {:X}", index));
+				error!("write to invalid IORegister: {:X}", index);
 				&mut self._other
 			}
 		}
@@ -106,11 +108,11 @@ impl IORegisters for EmulatorState {
 		use IORegistersAdress::*;
 		match IORegistersAdress::try_from(addr) {
 			Ok(SB) => {
-				logger::info(format!("SERIAL BUS READ{:X}", addr));
+				info!("SERIAL BUS READ{:X}", addr);
 				0
 			}
 			Err(_) => {
-				logger::error(format!("Unhandled Read: {:X}", addr));
+				error!("Unhandled Read: {:X}", addr);
 				self.io_register_state[addr]
 			}
 			_ => self.io_register_state[addr],
@@ -121,7 +123,7 @@ impl IORegisters for EmulatorState {
 		use IORegistersAdress::*;
 		match IORegistersAdress::try_from(addr) {
 			Ok(DIV) => self.io_register_state[addr] = 0,
-			Ok(SB) => logger::info(format!("SERIAL BUS WRITE{:X}", addr)),
+			Ok(SB) => info!("SERIAL BUS WRITE{:X}", addr),
 			Ok(LCDC) => {
 				if value & 0b10000000 == 0 || self.io_register_state[addr] & 0b10000000 == 0 {
 					self.set_ly(0);
@@ -132,7 +134,7 @@ impl IORegisters for EmulatorState {
 			}
 			Err(_) => {
 				self.run = false;
-				logger::error(format!("Unhandled Write: {:X}", addr))
+				error!("Unhandled Write: {:X}", addr);
 			}
 			_ => self.io_register_state[addr] = value,
 		}

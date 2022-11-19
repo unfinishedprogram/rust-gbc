@@ -1,4 +1,4 @@
-use crate::app::components::logger;
+use log::{error, info, warn};
 
 use self::header::{CartridgeInfo, RawCartridgeHeader};
 
@@ -48,17 +48,17 @@ impl MemoryMapper for CartridgeState {
 				0xA000..0xC000 => {
 					if self.info.ram_banks > 0 {
 						let mapped_addr = (addr - 0xA000 + 0x2000 * self.selected_ram_bank) as u16;
-						if (mapped_addr > self.info.ram_banks * 0x2000) {
-							0
-						} else {
+						if mapped_addr < self.info.ram_banks * 0x2000 {
 							self.raw_ram[mapped_addr as usize]
+						} else {
+							0
 						}
 					} else {
 						0
 					}
 				}
 				_ => {
-					logger::error(format!("MBC1 UnhandledRead: {:X}", addr));
+					error!("MBC1 UnhandledRead: {:X}", addr);
 					0
 				}
 			},
@@ -77,12 +77,12 @@ impl MemoryMapper for CartridgeState {
 		use mbc::MBC::*;
 		match self.info.mbc {
 			ROM => {
-				logger::warn(format!("Write to readonly memory: {:X}", addr));
+				warn!("Write to readonly memory: {:X}", addr);
 			}
 			MBC1 => match addr {
 				2000..4000 => {
 					self.selected_rom_bank = (value & 0b00011111) as u16;
-					logger::info(format!("Rom Bank:{:} selected", self.selected_rom_bank));
+					info!("Rom Bank:{:} selected", self.selected_rom_bank);
 				}
 				_ => {}
 			},
