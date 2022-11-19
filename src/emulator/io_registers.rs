@@ -106,8 +106,8 @@ impl IORegisters for EmulatorState {
 		use IORegistersAdress::*;
 		match IORegistersAdress::try_from(addr) {
 			Ok(SB) => {
-				logger::error(format!("SERIAL BUS READ{:X}", addr));
-				return 0;
+				logger::info(format!("SERIAL BUS READ{:X}", addr));
+				0
 			}
 			Err(_) => {
 				logger::error(format!("Unhandled Read: {:X}", addr));
@@ -121,7 +121,7 @@ impl IORegisters for EmulatorState {
 		use IORegistersAdress::*;
 		match IORegistersAdress::try_from(addr) {
 			Ok(DIV) => self.io_register_state[addr] = 0,
-			Ok(SB) => logger::error(format!("SERIAL BUS WRITE{:X}", addr)),
+			Ok(SB) => logger::info(format!("SERIAL BUS WRITE{:X}", addr)),
 			Ok(LCDC) => {
 				if value & 0b10000000 == 0 || self.io_register_state[addr] & 0b10000000 == 0 {
 					self.set_ly(0);

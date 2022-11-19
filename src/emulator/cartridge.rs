@@ -47,7 +47,12 @@ impl MemoryMapper for CartridgeState {
 				} // Bank X
 				0xA000..0xC000 => {
 					if self.info.ram_banks > 0 {
-						self.raw_ram[(addr - 0xA000 + 0x2000 * self.selected_ram_bank) as usize]
+						let mapped_addr = (addr - 0xA000 + 0x2000 * self.selected_ram_bank) as u16;
+						if (mapped_addr > self.info.ram_banks * 0x2000) {
+							0
+						} else {
+							self.raw_ram[mapped_addr as usize]
+						}
 					} else {
 						0
 					}
