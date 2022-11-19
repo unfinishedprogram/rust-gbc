@@ -1,13 +1,18 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use instant::Instant;
 
-use crate::app::components::logger;
+use crate::{
+	app::components::logger,
+	emulator::{
+		flags,
+		flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag},
+		io_registers::IORegistersAdress,
+		memory_mapper::MemoryMapper,
+	},
+};
 
-use crate::emulator::flags;
-use crate::emulator::flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag};
-use crate::emulator::memory::Memory;
+use super::{lcd::LCDDisplay, renderer::Renderer, EmulatorState};
 
-use crate::emulator::memory_registers::MemoryRegister::*;
+type Color = (u8, u8, u8);
 
 #[derive(Debug)]
 pub enum PPUMode {
@@ -17,112 +22,76 @@ pub enum PPUMode {
 	Draw = 3,
 }
 
-pub struct Ppu {
-	memory: Rc<RefCell<Memory>>,
-	t_state: u32,
+#[derive(Default, Clone, Copy)]
+pub struct PPUState {
+	pub cycle: u64,
+	pub maxed: bool,
+	pub paused: bool,
 }
 
-impl Ppu {
-	pub fn new(memory: Rc<RefCell<Memory>>) -> Ppu {
-		Ppu { memory, t_state: 0 }
-	}
+pub trait PPU {
+	fn get_mode(&self) -> PPUMode;
+	fn get_ly(&self) -> u8;
+	fn set_ly(&mut self, value: u8);
+	fn set_mode(&mut self, mode: PPUMode);
+	fn step_ppu(&mut self, lcd: Option<&mut dyn LCDDisplay>);
+}
 
-	pub fn get_mode(&self) -> PPUMode {
-		let mem = self.memory.borrow();
-		let num = mem.read(STAT as u16) & 0b00000011;
+impl PPU for EmulatorState {
+	fn get_mode(&self) -> PPUMode {
+		let num = self.read(IORegistersAdress::STAT as u16) & 0b00000011;
 		return match num {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
 			2 => PPUMode::OamScan,
 			3 => PPUMode::Draw,
-			_ => PPUMode::HBlank,
+			_ => unreachable!(), // Since we only take the last two bits
 		};
 	}
 
-	pub fn get_ly(&self) -> u8 {
-		return self.memory.borrow().read(LY as u16);
+	fn get_ly(&self) -> u8 {
+		return self.read(IORegistersAdress::LY as u16);
 	}
 
-	pub fn set_ly(&mut self, value: u8) {
-		let mut mem = self.memory.borrow_mut();
-		let lyc_status = mem.read(LY as u16) == value;
-		mem.write(LY as u16, value);
-		set_bit_flag_to(&mut mem, BitFlag::Stat(STATFlag::LYCeqLY), lyc_status);
+	fn set_ly(&mut self, value: u8) {
+		let lyc_status = self.read(IORegistersAdress::LY as u16) == value;
+		self.write(IORegistersAdress::LY as u16, value);
+		set_bit_flag_to(self, BitFlag::Stat(STATFlag::LYCeqLY), lyc_status);
 
-		if lyc_status && get_bit_flag(&mem, BitFlag::Stat(STATFlag::LYCeqLUInterruptEnable)) {
+		if lyc_status && get_bit_flag(self, BitFlag::Stat(STATFlag::LYCeqLUInterruptEnable)) {
 			set_bit_flag(
-				&mut mem,
+				self,
 				BitFlag::InterruptRequest(flags::InterruptFlag::LcdStat),
 			);
 		}
 	}
 
-	pub fn set_mode(&mut self, mode: PPUMode) {
-		use STATFlag::*;
-		match mode {
-			PPUMode::HBlank => {
-				let mut mem = self.memory.borrow_mut();
-				if get_bit_flag(&mem, BitFlag::Stat(HBlankStatInterruptEnable)) {
-					set_bit_flag(
-						&mut mem,
-						BitFlag::InterruptRequest(flags::InterruptFlag::LcdStat),
-					);
-				}
-				self.t_state += 204;
-			}
-			PPUMode::VBlank => {
-				{
-					let mut mem = self.memory.borrow_mut();
-					if get_bit_flag(&mem, BitFlag::Stat(VBlankStatInterruptEnable)) {
-						set_bit_flag(
-							&mut mem,
-							BitFlag::InterruptRequest(flags::InterruptFlag::LcdStat),
-						);
-					}
-				}
-				self.t_state += 456;
-				self.set_ly(self.get_ly() + 1)
-			}
+	fn set_mode(&mut self, _mode: PPUMode) {}
 
-			PPUMode::OamScan => {
-				{
-					let mut mem = self.memory.borrow_mut();
-					if get_bit_flag(&mem, BitFlag::Stat(OAMStatInterruptEnable)) {
-						set_bit_flag(
-							&mut mem,
-							BitFlag::InterruptRequest(flags::InterruptFlag::LcdStat),
-						);
-					}
+	fn step_ppu(&mut self, lcd: Option<&mut dyn LCDDisplay>) {
+		self.set_ly(self.get_ly() + 1);
+		self.ppu_state.paused = false;
+
+		if self.get_ly() >= 153 {
+			if self.ppu_state.maxed {
+				self.set_ly(0);
+
+				if let Some(lcd) = lcd {
+					let start = Instant::now();
+					self.render(lcd);
+					logger::debug(format!("Took: {:?}", start.elapsed()));
 				}
 
-				self.t_state += 80;
-				if self.get_ly() >= 153 {
-					self.set_ly(0);
-				} else {
-					self.set_ly(self.get_ly() + 1);
-				}
+				self.ppu_state.maxed = false;
+				self.ppu_state.cycle += 908;
+			} else {
+				self.ppu_state.cycle += 4;
+				self.ppu_state.maxed = true;
 			}
-			PPUMode::Draw => self.t_state += 172,
+		} else {
+			self.ppu_state.cycle += 456;
 		}
-		logger::debug(format!("PPU Start: {:?}", mode));
 
-		let mut mem = self.memory.borrow_mut();
-		let current_stat = mem.read(STAT as u16);
-		mem.write(STAT as u16, (current_stat & 0b11111100) | mode as u8);
-	}
-
-	pub fn step(&mut self) {
-		if self.t_state == 0 {
-			use PPUMode::*;
-			match (self.get_mode(), self.get_ly()) {
-				(OamScan, _) => self.set_mode(Draw),
-				(Draw, _) => self.set_mode(HBlank),
-				(HBlank, 0..=143) => self.set_mode(OamScan),
-				(HBlank, _) => self.set_mode(VBlank),
-				(VBlank, 144..=153) => self.set_mode(VBlank),
-				(VBlank, _) => self.set_mode(OamScan),
-			}
-		}
-		self.t_state -= 1;
+		return;
 	}
 }

@@ -1,7 +1,8 @@
 pub type BitFlagRef = (u16, u8);
 
-use crate::emulator::memory::Memory;
-use crate::util::bit_ops::{clear_bit, set_bit};
+use crate::util::bit_ops::{clear_bit_mask, get_bit, set_bit_mask};
+
+use super::memory_mapper::MemoryMapper;
 
 #[derive(Copy, Clone, Debug)]
 pub enum InterruptFlag {
@@ -64,22 +65,22 @@ fn flag_to_tuple(flag: BitFlag) -> BitFlagRef {
 	}
 }
 
-pub fn get_bit_flag(mem: &Memory, flag: BitFlag) -> bool {
+pub fn get_bit_flag(mem: &dyn MemoryMapper, flag: BitFlag) -> bool {
 	let (addr, bit) = flag_to_tuple(flag);
-	return (mem.read(addr) >> bit) & 1 == 1;
+	get_bit(mem.read(addr), bit)
 }
 
-pub fn clear_bit_flag(mem: &mut Memory, flag: BitFlag) {
+pub fn clear_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag) {
 	let (addr, bit) = flag_to_tuple(flag);
-	clear_bit(mem.get_ref(addr), bit);
+	mem.write(addr, mem.read(addr) & clear_bit_mask(bit));
 }
 
-pub fn set_bit_flag(mem: &mut Memory, flag: BitFlag) {
+pub fn set_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag) {
 	let (addr, bit) = flag_to_tuple(flag);
-	set_bit(mem.get_ref(addr), bit);
+	mem.write(addr, mem.read(addr) & set_bit_mask(bit));
 }
 
-pub fn set_bit_flag_to(mem: &mut Memory, flag: BitFlag, status: bool) {
+pub fn set_bit_flag_to(mem: &mut dyn MemoryMapper, flag: BitFlag, status: bool) {
 	if status {
 		set_bit_flag(mem, flag)
 	} else {

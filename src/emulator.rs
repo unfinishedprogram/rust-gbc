@@ -1,35 +1,12 @@
-use std::{cell::RefCell, rc::Rc};
-
 pub mod cartridge;
 pub mod cpu;
 pub mod flags;
+pub mod io_registers;
+pub mod lcd;
 pub mod memory;
-pub mod memory_registers;
+pub mod memory_mapper;
 pub mod ppu;
+pub mod renderer;
+pub mod state;
 
-use cpu::Cpu;
-use memory::Memory;
-use ppu::Ppu;
-
-pub struct Emulator {
-	pub memory: Rc<RefCell<Memory>>,
-	pub cpu: Cpu,
-	pub ppu: Ppu,
-}
-
-impl Emulator {
-	pub fn new() -> Self {
-		let rc = Rc::new(RefCell::new(Memory::new()));
-
-		return Self {
-			memory: rc.clone(),
-			ppu: Ppu::new(rc.clone()),
-			cpu: Cpu::new(rc.clone()).init(),
-		};
-	}
-
-	pub fn step(&mut self) {
-		self.ppu.step();
-		self.cpu.step();
-	}
-}
+pub use state::EmulatorState;

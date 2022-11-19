@@ -1,38 +1,94 @@
-pub enum CartridgeType {
-	ROM,
-	BIOS,
+use crate::app::components::logger;
+
+use self::header::{CartridgeInfo, RawCartridgeHeader};
+
+use super::memory_mapper::MemoryMapper;
+
+pub mod header;
+pub mod mbc;
+
+#[derive(Clone)]
+pub struct CartridgeState {
+	pub info: CartridgeInfo,
+	pub raw_data: Vec<u8>,
+	pub selected_ram_bank: u16,
+	pub selected_rom_bank: u16,
+	raw_ram: Vec<u8>,
 }
 
-pub type CartridgeData = (CartridgeType, Vec<u8>);
+impl CartridgeState {
+	pub fn from_raw_rom(raw_data: Vec<u8>) -> Result<Self, String> {
+		let raw_header = RawCartridgeHeader::from(&raw_data);
+		if let Ok(info) = raw_header.parse() {
+			Ok(Self {
+				raw_ram: vec![0; (info.ram_banks * 0x2000) as usize],
+				info,
+				raw_data,
+				selected_ram_bank: 1,
+				selected_rom_bank: 1,
+			})
+		} else {
+			Err("Parse Error".to_owned())
+		}
+	}
+}
 
-// // https://gbdev.io/pandocs/The_Cartridge_Header.html#0147---cartridge-type
-// enum CartridgeType {
-// 	ROM = 0x00,
-// 	MBC1 = 0x01,
-// 	MBC1_RAM = 0x02,
-// 	MBC1_RAM_BATTERY = 0x03,
-// 	MBC2 = 0x05,
-// 	MBC2_BATTERY = 0x06,
-// 	ROM_RAM = 0x08,
-// 	ROM_RAM_BATTERY = 0x09,
-// 	MMM01 = 0x0B,
-// 	MMM01_RAM = 0x0C,
-// 	MMM01_RAM_BATTERY = 0x0D,
-// 	MBC3_TIMER_BATTERY = 0x0F,
-// 	MBC3_TIMER_RAM_BATTERY = 0x10,
-// 	MBC3 = 0x11,
-// 	MBC3_RAM = 0x12,
-// 	MBC3_RAM_BATTERY = 0x13,
-// 	MBC5 = 0x19,
-// 	MBC5_RAM = 0x1A,
-// 	MBC5_RAM_BATTERY = 0x1B,
-// 	MBC5_RUMBLE = 0x1C,
-// 	MBC5_RUMBLE_RAM = 0x1D,
-// 	MBC5_RUMBLE_RAM_BATTERY = 0x1E,
-// 	MBC6 = 0x20,
-// 	MBC7_SENSOR_RUMBLE_RAM_BATTERY = 0x22,
-// 	POCKET_CAMERA = 0xFC,
-// 	BANDAI_TAMA5 = 0xFD,
-// 	HUC3 = 0xFE,
-// 	HUC1_RAM_BATTERY = 0xFF
-// }
+impl MemoryMapper for CartridgeState {
+	fn read(&self, addr: u16) -> u8 {
+		use mbc::MBC::*;
+
+		match self.info.mbc {
+			ROM => self.raw_data[addr as usize],
+			MBC1 => match addr {
+				0x0000..0x4000 => self.raw_data[addr as usize], // bank 0
+				0x4000..0x8000 => {
+					let raw_offset = 0x4000 * (self.selected_rom_bank - 1);
+					self.raw_data[(addr + raw_offset) as usize]
+				} // Bank X
+				0xA000..0xC000 => {
+					if self.info.ram_banks > 0 {
+						self.raw_ram[(addr - 0xA000 + 0x2000 * self.selected_ram_bank) as usize]
+					} else {
+						0
+					}
+				}
+				_ => {
+					logger::error(format!("MBC1 UnhandledRead: {:X}", addr));
+					0
+				}
+			},
+			MBC2 => todo!(),
+			MMM01 => todo!(),
+			MBC3 => todo!(),
+			MBC5 => todo!(),
+			MBC6 => todo!(),
+			MBC7 => todo!(),
+			HUC3 => todo!(),
+			HUC1 => todo!(),
+		}
+	}
+
+	fn write(&mut self, addr: u16, value: u8) {
+		use mbc::MBC::*;
+		match self.info.mbc {
+			ROM => {
+				logger::warn(format!("Write to readonly memory: {:X}", addr));
+			}
+			MBC1 => match addr {
+				2000..4000 => {
+					self.selected_rom_bank = (value & 0b00011111) as u16;
+					logger::info(format!("Rom Bank:{:} selected", self.selected_rom_bank));
+				}
+				_ => {}
+			},
+			MBC2 => todo!(),
+			MMM01 => todo!(),
+			MBC3 => todo!(),
+			MBC5 => todo!(),
+			MBC6 => todo!(),
+			MBC7 => todo!(),
+			HUC3 => todo!(),
+			HUC1 => todo!(),
+		}
+	}
+}

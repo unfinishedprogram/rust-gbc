@@ -1,13 +1,13 @@
+use std::fmt::Debug;
 use std::ops::Index;
 use std::ops::IndexMut;
 
-use serde::Serialize;
 use CPURegister16::*;
 use CPURegister8::*;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub enum CPURegister8 {
-	A = 0,
+	A,
 	B,
 	C,
 	D,
@@ -17,7 +17,7 @@ pub enum CPURegister8 {
 	L,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub enum CPURegister16 {
 	AF,
 	BC,
@@ -26,7 +26,8 @@ pub enum CPURegister16 {
 	SP,
 	PC,
 }
-#[derive(Debug, Serialize)]
+
+#[derive(Debug, Clone, Copy)]
 pub struct CPURegisters {
 	pub bytes: [u8; 8],
 	pub sp: u16,
@@ -46,15 +47,17 @@ impl IndexMut<CPURegister8> for CPURegisters {
 	}
 }
 
-impl CPURegisters {
-	pub fn new() -> CPURegisters {
-		CPURegisters {
+impl Default for CPURegisters {
+	fn default() -> Self {
+		Self {
 			bytes: [0; 8],
 			sp: 0,
 			pc: 0x0100,
 		}
 	}
+}
 
+impl CPURegisters {
 	pub fn get_u16(&self, reg: CPURegister16) -> u16 {
 		match reg {
 			AF => u16::from_le_bytes([self[F], self[A]]),
@@ -70,13 +73,41 @@ impl CPURegisters {
 		let bytes = u16::to_le_bytes(value);
 
 		match reg {
-			AF => [self[F], self[A]] = bytes,
+			AF => [self[F], self[A]] = [bytes[0] & 0xF0, bytes[1]],
 			BC => [self[C], self[B]] = bytes,
 			DE => [self[E], self[D]] = bytes,
 			HL => [self[L], self[H]] = bytes,
 
 			SP => self.sp = value,
 			PC => self.pc = value,
+		}
+	}
+}
+
+impl Debug for CPURegister8 {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::A => write!(f, "a"),
+			Self::B => write!(f, "b"),
+			Self::C => write!(f, "c"),
+			Self::D => write!(f, "d"),
+			Self::E => write!(f, "e"),
+			Self::F => write!(f, "f"),
+			Self::H => write!(f, "h"),
+			Self::L => write!(f, "l"),
+		}
+	}
+}
+
+impl Debug for CPURegister16 {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::AF => write!(f, "af"),
+			Self::BC => write!(f, "bc"),
+			Self::DE => write!(f, "de"),
+			Self::HL => write!(f, "hl"),
+			Self::SP => write!(f, "sp"),
+			Self::PC => write!(f, "pc"),
 		}
 	}
 }

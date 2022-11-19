@@ -1,5 +1,5 @@
 use super::BreakpointManager;
-use crate::emulator::Emulator;
+use crate::emulator::state::EmulatorState;
 use egui::{Color32, ScrollArea, Ui};
 
 pub struct MemoryView {
@@ -26,7 +26,7 @@ impl MemoryView {
 	pub fn draw(
 		&mut self,
 		ui: &mut Ui,
-		emulator: &mut Emulator,
+		emulator: &EmulatorState,
 		breakpoint_manager: &mut BreakpointManager,
 	) {
 		ui.vertical(|ui| {
@@ -56,7 +56,7 @@ impl MemoryView {
 						ui.add_space(layout_start);
 
 						for i in min_cell..max_cell {
-							let color = if emulator.cpu.registers.pc == i as u16 {
+							let color = if emulator.cpu_state.registers.pc == i as u16 {
 								Color32::RED
 							} else {
 								Color32::WHITE

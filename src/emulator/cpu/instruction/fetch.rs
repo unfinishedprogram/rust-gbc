@@ -1,20 +1,18 @@
-// use super::{
-// 	condition::Condition, decode_tables::DT, opcode::Opcode, CPURegister16::*, CPURegister8::*,
-// 	Cpu, Instruction, Instruction::*, ValueRefU8,
-// };
+use super::{
+	decode_tables::DT, opcode::Opcode, CPURegister16::*, CPURegister8::*, Condition, Instruction,
+	Instruction::*, ValueRefU8,
+};
 
-use super::decode_tables::DT;
-use super::opcode::Opcode;
-use super::CPURegister16::*;
-use super::CPURegister8::*;
-use super::Condition;
-use super::Cpu;
-use super::Instruction;
-use super::Instruction::*;
-use super::ValueRefU8;
+use crate::emulator::cpu::registers::CPURegister16;
+use crate::emulator::cpu::values::ValueRefU16;
+use crate::emulator::cpu::CPU;
+use crate::emulator::memory_mapper::MemoryMapper;
+
 use crate::{arg, inst, mem}; // Macros
 
-pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
+pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
+	let opcode = Opcode::from(cpu.next_byte());
+
 	let x = opcode.x as usize;
 	let z = opcode.z as usize;
 	let y = opcode.y as usize;
@@ -24,12 +22,30 @@ pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 	match (x, z, y, p, q) {
 		//(x, z, y, p, q)
 		(0, 0, 0, _, _) => inst!(cpu, NOP),
-		(0, 0, 1, _, _) => inst!(cpu, LD_16, SP, nn),
-
+		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp().into())), SP),
 		(0, 0, 2, _, _) => inst!(cpu, STOP),
-		(0, 0, 3, _, _) => inst!(cpu, JR, (Condition::ALWAYS), d),
+		(0, 0, 3, _, _) => {
+			let offset = cpu.next_displacement();
+			let addr = if offset.is_positive() {
+				cpu.read_16(CPURegister16::PC.into()) + offset.abs() as u16
+			} else {
+				cpu.read_16(CPURegister16::PC.into()) - offset.abs() as u16
+			};
 
-		(0, 0, _, _, _) => inst!(cpu, JR, (DT.cc[(y - 4)]), d),
+			inst!(cpu, JR, (Condition::ALWAYS), (ValueRefU16::Raw(addr)))
+		}
+
+		(0, 0, _, _, _) => {
+			let offset = cpu.next_displacement();
+			let addr = if offset.is_positive() {
+				cpu.read_16(CPURegister16::PC.into()) + offset.abs() as u16
+			} else {
+				cpu.read_16(CPURegister16::PC.into()) - offset.abs() as u16
+			};
+
+			inst!(cpu, JR, (DT.cc[(y - 4)]), (ValueRefU16::Raw(addr)))
+		}
+
 		(0, 1, _, _, 0) => inst!(cpu, LD_16, (DT.rp[p]), nn),
 
 		(0, 1, _, _, 1) => inst!(cpu, ADD_16, HL, (DT.rp[p])),
@@ -37,34 +53,21 @@ pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 		(0, 2, _, 0, 0) => inst!(cpu, LD_8, [BC]u8, A),
 		(0, 2, _, 1, 0) => inst!(cpu, LD_8, [DE]u8, A),
 
-		(0, 2, _, 2, 0) => Instruction::COMPOSE(
-			inst!(cpu, LD_8, [HL]u8, A).into(),
-			inst!(cpu, INC_16, HL).into(),
-		),
+		(0, 2, _, 2, 0) => inst!(cpu, LD_INC_HL_A),
 
-		(0, 2, _, 3, 0) => Instruction::COMPOSE(
-			inst!(cpu, LD_8, [HL]u8, A).into(),
-			inst!(cpu, DEC_16, HL).into(),
-		),
+		(0, 2, _, 3, 0) => inst!(cpu, LD_DEC_HL_A),
 
 		(0, 2, _, 0, 1) => inst!(cpu, LD_8, A, [BC]u8),
 		(0, 2, _, 1, 1) => inst!(cpu, LD_8, A, [DE]u8),
 
-		(0, 2, _, 2, 1) => Instruction::COMPOSE(
-			inst!(cpu, LD_8, A, [HL]u8).into(),
-			inst!(cpu, INC_16, HL).into(),
-		),
-
-		(0, 2, _, 3, 1) => Instruction::COMPOSE(
-			inst!(cpu, LD_8, A, [HL]u8).into(),
-			inst!(cpu, DEC_16, HL).into(),
-		),
+		(0, 2, _, 2, 1) => inst!(cpu, LD_A_INC_HL),
+		(0, 2, _, 3, 1) => inst!(cpu, LD_A_DEC_HL),
 
 		(0, 3, _, _, 0) => inst!(cpu, INC_16, (DT.rp[p])),
 		(0, 3, _, _, 1) => inst!(cpu, DEC_16, (DT.rp[p])),
-		(0, 4, _, _, _) => inst!(cpu, INC_8, (DT.r[y])),
-		(0, 5, _, _, _) => inst!(cpu, DEC_8, (DT.r[y])),
-		(0, 6, _, _, _) => inst!(cpu, LD_8, (DT.r[y]), n),
+		(0, 4, _, _, _) => inst!(cpu, INC_8, (DT.r[y].clone())),
+		(0, 5, _, _, _) => inst!(cpu, DEC_8, (DT.r[y].clone())),
+		(0, 6, _, _, _) => inst!(cpu, LD_8, (DT.r[y].clone()), n),
 
 		(0, 7, 0, _, _) => inst!(cpu, RLCA),
 		(0, 7, 1, _, _) => inst!(cpu, RRCA),
@@ -76,40 +79,50 @@ pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 		(0, 7, 7, _, _) => inst!(cpu, CCF),
 
 		(1, 6, 6, _, _) => inst!(cpu, HALT),
-		(1, _, _, _, _) => inst!(cpu, LD_8, (DT.r[y]), (DT.r[z])),
+		(1, _, _, _, _) => inst!(cpu, LD_8, (DT.r[y].clone()), (DT.r[z].clone())),
 
-		(2, _, _, _, _) => inst!(cpu, ALU_OP_8, (DT.alu[y]), A, (DT.r[z])),
+		(2, _, _, _, _) => inst!(cpu, ALU_OP_8, (DT.alu[y]), A, (DT.r[z].clone())),
 
 		(3, 0, 0, _, _) => inst!(cpu, RET, (DT.cc[0])),
 		(3, 0, 1, _, _) => inst!(cpu, RET, (DT.cc[1])),
 		(3, 0, 2, _, _) => inst!(cpu, RET, (DT.cc[2])),
 		(3, 0, 3, _, _) => inst!(cpu, RET, (DT.cc[3])),
 
-		(3, 0, 4, _, _) => inst!(cpu, LD_8, [(0xFF00 + cpu.next_byte() as u16)]u8, A),
+		(3, 0, 4, _, _) => {
+			inst!(
+				cpu,
+				LDH,
+				(ValueRefU8::MemOffset(Box::new(ValueRefU8::Raw(cpu.next_byte())))),
+				A
+			)
+		}
 
 		(3, 0, 5, _, _) => inst!(cpu, ADD_SIGNED, SP, d),
 
-		(3, 0, 6, _, _) => inst!(cpu, LD_8, A, [(0xFF00 + cpu.next_byte() as u16)]u8),
+		(3, 0, 6, _, _) => {
+			inst!(
+				cpu,
+				LDH,
+				A,
+				(ValueRefU8::MemOffset(Box::new(ValueRefU8::Raw(cpu.next_byte()))))
+			)
+		}
 
-		(3, 0, 7, _, _) => Instruction::COMPOSE(
-			inst!(cpu, LD_16, HL, SP).into(),
-			inst!(cpu, ADD_SIGNED, HL, d).into(),
-		),
+		(3, 0, 7, _, _) => inst!(cpu, LD_HL_SP_DD, d).into(),
 
 		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p])),
 
 		(3, 1, _, 0, 1) => inst!(cpu, RET, (Condition::ALWAYS)),
-		(3, 1, _, 1, 1) => Instruction::COMPOSE(
-			inst!(cpu, RET, (Condition::ALWAYS)).into(),
-			inst!(cpu, EI).into(),
-		),
+		(3, 1, _, 1, 1) => inst!(cpu, RETI),
 		(3, 1, _, 2, 1) => inst!(cpu, JP, (Condition::ALWAYS), HL),
 		(3, 1, _, 3, 1) => inst!(cpu, LD_16, SP, HL),
 
-		(3, 2, 4, _, _) => inst!(cpu, LD_8, [(0xFF00 + cpu.read_8(C.into()) as u16)]u8, A),
+		(3, 2, 4, _, _) => {
+			inst!(cpu, LDH, (ValueRefU8::MemOffset(Box::new(C.into()))), A)
+		}
 		(3, 2, 5, _, _) => inst!(cpu, LD_8, [nn]u8, A),
 
-		(3, 2, 6, _, _) => inst!(cpu, LD_8, A, [(0xFF00 + cpu.read_8(C.into()) as u16)]u8),
+		(3, 2, 6, _, _) => inst!(cpu, LD_8, A, (ValueRefU8::MemOffset(Box::new(C.into())))),
 		(3, 2, 7, _, _) => inst!(cpu, LD_8, A, [nn]u8),
 
 		(3, 2, c, _, _) => inst!(cpu, JP, (DT.cc[c]), nn),
@@ -123,11 +136,26 @@ pub fn fetch_instruction(cpu: &mut Cpu, opcode: Opcode) -> Instruction {
 					cpu,
 					ROT,
 					(DT.rot[cb_opcode.y as usize]),
-					(DT.r[cb_opcode.z as usize])
+					(DT.r[cb_opcode.z as usize].clone())
 				),
-				1 => inst!(cpu, BIT, (cb_opcode.y), (DT.r[cb_opcode.z as usize])),
-				2 => inst!(cpu, RES, (cb_opcode.y), (DT.r[cb_opcode.z as usize])),
-				3 => inst!(cpu, SET, (cb_opcode.y), (DT.r[cb_opcode.z as usize])),
+				1 => inst!(
+					cpu,
+					BIT,
+					(cb_opcode.y),
+					(DT.r[cb_opcode.z as usize].clone())
+				),
+				2 => inst!(
+					cpu,
+					RES,
+					(cb_opcode.y),
+					(DT.r[cb_opcode.z as usize].clone())
+				),
+				3 => inst!(
+					cpu,
+					SET,
+					(cb_opcode.y),
+					(DT.r[cb_opcode.z as usize].clone())
+				),
 				_ => inst!(cpu, ERROR, (cb_opcode.raw)),
 			}
 		}

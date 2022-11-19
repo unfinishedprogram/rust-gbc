@@ -1,4 +1,6 @@
-use super::{registers::CPURegister8, Cpu};
+use crate::emulator::state::EmulatorState;
+
+use super::{registers::CPURegister8, CPU};
 
 pub enum Flag {
 	Z = 7,
@@ -36,12 +38,12 @@ pub trait Flags {
 	}
 }
 
-impl Flags for Cpu {
+impl Flags for EmulatorState {
 	fn get_flag_byte(&self) -> u8 {
-		return self.registers[CPURegister8::F];
+		return self.cpu_state.registers[CPURegister8::F];
 	}
 
 	fn set_flag_byte(&mut self, byte: u8) {
-		self.write_8(CPURegister8::F.into(), byte);
+		self.write_8(&CPURegister8::F.into(), byte);
 	}
 }
