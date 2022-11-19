@@ -122,7 +122,7 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 		}
 		(3, 2, 5, _, _) => inst!(cpu, LD_8, [nn]u8, A),
 
-		(3, 2, 6, _, _) => inst!(cpu, LD_8, A, [(cpu.read_8(&C.into()) as u16)]u8),
+		(3, 2, 6, _, _) => inst!(cpu, LD_8, A, (ValueRefU8::MemOffset(Box::new(C.into())))),
 		(3, 2, 7, _, _) => inst!(cpu, LD_8, A, [nn]u8),
 
 		(3, 2, c, _, _) => inst!(cpu, JP, (DT.cc[c]), nn),
