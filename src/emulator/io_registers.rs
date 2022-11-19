@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use log::{error, info};
+use log::error;
 
 use crate::emulator::ppu::PPU;
 
@@ -105,12 +105,7 @@ pub trait IORegisters {
 
 impl IORegisters for EmulatorState {
 	fn read_io(&self, addr: u16) -> u8 {
-		use IORegistersAdress::*;
 		match IORegistersAdress::try_from(addr) {
-			Ok(SB) => {
-				info!("SERIAL BUS READ{:X}", addr);
-				0
-			}
 			Err(_) => {
 				error!("Unhandled Read: {:X}", addr);
 				self.io_register_state[addr]
@@ -123,7 +118,12 @@ impl IORegisters for EmulatorState {
 		use IORegistersAdress::*;
 		match IORegistersAdress::try_from(addr) {
 			Ok(DIV) => self.io_register_state[addr] = 0,
-			Ok(SB) => info!("SERIAL BUS WRITE{:X}", addr),
+			Ok(SB) => self.io_register_state[0xFF01] = value,
+			Ok(SC) => {
+				if value == 0x81 {
+					self.serial_output.push(self.io_register_state[0xFF01]);
+				}
+			}
 			Ok(LCDC) => {
 				if value & 0b10000000 == 0 || self.io_register_state[addr] & 0b10000000 == 0 {
 					self.set_ly(0);

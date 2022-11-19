@@ -25,6 +25,9 @@ console_error_panic_hook = "0.1.6"
 tracing-wasm = "0.2"
 
 
+[profile.test]
+opt-level = 3
+
 [build]
 target = "wasm32-unknown-unknown"
 rustflags = '-Ctarget-feature=+atomics,+bulk-memory,+mutable-globals'

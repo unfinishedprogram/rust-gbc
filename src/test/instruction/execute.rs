@@ -166,7 +166,55 @@ fn check_parity(rom_name: &str) {
 	}
 }
 
-#[test]
-fn blarggs_3() {
-	check_parity("03-op sp,hl");
+fn test_blargg(rom_name: &str, end: usize) {
+	let mut state = EmulatorState::default().init();
+	let rom_handle = File::open(format!("roms/{rom_name}.gb")).unwrap();
+
+	let mut rom = vec![];
+	_ = io::BufReader::new(rom_handle).read_to_end(&mut rom);
+	state.load_rom(&rom);
+
+	let mut last: usize = 0;
+	let mut left = end;
+	let mut last_write = 0;
+	while left > 0 {
+		left -= 1;
+		_ = log_execute(&mut state);
+		if state.serial_output.len() != last {
+			last = state.serial_output.len();
+			last_write = end - left;
+		}
+	}
+
+	let final_str = std::str::from_utf8(&state.serial_output).unwrap();
+	if last_write != end {
+		println!("!Test took more cycles than needed. Last Write at: {last_write}")
+	}
+	assert!(final_str.contains("Passed"))
+}
+
+macro_rules! blarggs_tests {
+    ($($name:ident: $value:expr,)*) => {
+    $(
+        #[test]
+        fn $name() {
+            let (rom, end) = $value;
+            test_blargg(rom, end);
+        }
+    )*
+    }
+}
+
+blarggs_tests! {
+	blarggs_1:("01-special", 1277946),
+	blarggs_2:("02-interrupts", 210428),
+	blarggs_3:("03-op sp,hl", 1089986),
+	blarggs_4:("04-op r,imm", 1075092),
+	blarggs_5:("05-op rp", 1789474),
+	blarggs_6:("06-ld r,r", 269289),
+	blarggs_7:("07-jr,jp,call,ret,rst", 321087),
+	blarggs_8:("08-misc instrs", 251413),
+	blarggs_9:("09-op r,r", 1057765),
+	blarggs_10:("10-bit ops", 6732598),
+	blarggs_11:("11-op a,(hl)", 3812054),
 }
