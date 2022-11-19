@@ -1,3 +1,5 @@
+use log::{error, info, warn};
+
 use super::cartridge::CartridgeState;
 use super::cpu::registers::CPURegister16;
 use super::cpu::values::ValueRefU16;
@@ -6,7 +8,6 @@ use super::io_registers::{IORegisterState, IORegisters};
 use super::lcd::LCDDisplay;
 use super::memory_mapper::MemoryMapper;
 use super::ppu::{PPUMode, PPUState, PPU};
-use crate::app::components::logger;
 
 trait LCDDisplayWithCopy: LCDDisplay + Copy {}
 
@@ -122,11 +123,12 @@ impl<'a> EmulatorState {
 		}
 
 		if let Ok(state) = CartridgeState::from_raw_rom(new_rom) {
-			logger::info("Loaded Rom");
-			logger::info(format!("{:?}", state.info));
+			info!("Loaded Rom");
+			info!("{:?}", state.info);
+
 			_ = self.cartridge_state.insert(state);
 		} else {
-			logger::error("Rom Loading Failed")
+			error!("Rom Loading Failed")
 		}
 	}
 }
@@ -177,7 +179,7 @@ impl MemoryMapper for EmulatorState {
 			0xD000..0xE000 => self.w_ram[1][(addr - 0xD000) as usize] = value, // Switchable RAM in CGB mode
 			0xE000..0xFE00 => self.write(addr - 0x2000, value),                // Mirror, should not be used
 			0xFE00..0xFEA0 => self.oam[(addr - 0xFE00) as usize] = value,      // Object Attribute Map
-			0xFEA0..0xFF00 => logger::warn("write to unusable memory"),        // Unusable
+			0xFEA0..0xFF00 => warn!("write to unusable memory"),               // Unusable
 			0xFF00..0xFF80 => self.write_io(addr, value),                      // IO Registers
 			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize] = value,     // HRAM
 			0xFFFF => {}                                                       // Interupt enable

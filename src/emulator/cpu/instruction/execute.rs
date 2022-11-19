@@ -88,7 +88,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			let ptr_val = cpu.read_16(ptr);
 
 			match ptr {
-				ValueRefU16::Reg(reg) => {}
+				ValueRefU16::Reg(_) => {}
 				_ => {
 					cpu.set_flag(Flag::N);
 					cpu.set_flag_to(Flag::Z, ptr_val.wrapping_sub(1) == 0);

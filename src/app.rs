@@ -1,20 +1,33 @@
 pub mod components;
 pub mod drawable;
+pub mod logger;
 pub mod managed_input;
 mod style;
 
-use components::{draw_status, logger, Debugger};
+use std::sync::Mutex;
+
+use components::{draw_status, Debugger};
 use poll_promise::Promise;
+
+use self::{components::log_view::draw_logs, logger::Logger};
+
+static LOGGER: Logger = Logger {
+	logs: Mutex::new(vec![]),
+};
 
 pub struct EmulatorManager {
 	loaded_file_data: Option<Promise<Vec<u8>>>,
 	roms: Vec<&'static str>,
 	debugger: Debugger,
+	logger: &'static Logger,
 }
 
 impl Default for EmulatorManager {
 	fn default() -> Self {
+		_ = log::set_logger(&LOGGER).unwrap();
+		log::set_max_level(log::LevelFilter::Info);
 		Self {
+			logger: &LOGGER,
 			loaded_file_data: None::<Promise<Vec<u8>>>,
 			debugger: Debugger::default(),
 			roms: vec![
@@ -98,7 +111,7 @@ impl eframe::App for EmulatorManager {
 
 		egui::SidePanel::left("left_panel").show(ctx, |ui| {
 			ui.vertical(|ui| draw_status(ui, &self.debugger.emulator_state));
-			unsafe { logger::draw(ui) };
+			draw_logs(ui, &self.logger.logs.lock().unwrap());
 		});
 
 		egui::SidePanel::right("right_panel").show(ctx, |ui| self.debugger.draw(ui));
