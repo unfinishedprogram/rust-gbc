@@ -1,6 +1,7 @@
+use super::opcode::parse_opcode;
 use super::{
-	decode_tables::DT, opcode::Opcode, CPURegister16::*, CPURegister8::*, Condition, Instruction,
-	Instruction::*, ValueRefU8,
+	decode_tables::DT, CPURegister16::*, CPURegister8::*, Condition, Instruction, Instruction::*,
+	ValueRefU8,
 };
 
 use crate::emulator::cpu::registers::CPURegister16;
@@ -11,14 +12,9 @@ use crate::emulator::memory_mapper::MemoryMapper;
 use crate::{arg, inst, mem}; // Macros
 
 pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
-	let opcode = Opcode::from(cpu.next_byte());
+	let raw = cpu.next_byte();
 
-	let x = opcode.x as usize;
-	let z = opcode.z as usize;
-	let y = opcode.y as usize;
-	let p = opcode.p as usize;
-	let q = opcode.q as usize;
-
+	let (x, z, y, p, q) = parse_opcode(raw);
 	match (x, z, y, p, q) {
 		//(x, z, y, p, q)
 		(0, 0, 0, _, _) => inst!(cpu, NOP),
@@ -130,33 +126,14 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 		(3, 3, 0, _, _) => inst!(cpu, JP, (Condition::ALWAYS), nn),
 
 		(3, 3, 1, _, _) => {
-			let cb_opcode = Opcode::from(cpu.next_byte());
-			match cb_opcode.x {
-				0 => inst!(
-					cpu,
-					ROT,
-					(DT.rot[cb_opcode.y as usize]),
-					(DT.r[cb_opcode.z as usize].clone())
-				),
-				1 => inst!(
-					cpu,
-					BIT,
-					(cb_opcode.y),
-					(DT.r[cb_opcode.z as usize].clone())
-				),
-				2 => inst!(
-					cpu,
-					RES,
-					(cb_opcode.y),
-					(DT.r[cb_opcode.z as usize].clone())
-				),
-				3 => inst!(
-					cpu,
-					SET,
-					(cb_opcode.y),
-					(DT.r[cb_opcode.z as usize].clone())
-				),
-				_ => inst!(cpu, ERROR, (cb_opcode.raw)),
+			let cb_raw = cpu.next_byte();
+			let (cb_x, cb_z, cb_y, _, _) = parse_opcode(cb_raw);
+			match cb_x {
+				0 => inst!(cpu, ROT, (DT.rot[cb_y]), (DT.r[cb_z].clone())),
+				1 => inst!(cpu, BIT, (cb_y as u8), (DT.r[cb_z as usize].clone())),
+				2 => inst!(cpu, RES, (cb_y as u8), (DT.r[cb_z as usize].clone())),
+				3 => inst!(cpu, SET, (cb_y as u8), (DT.r[cb_z as usize].clone())),
+				_ => inst!(cpu, ERROR, (cb_raw)),
 			}
 		}
 
@@ -176,7 +153,7 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 		(3, 5, _, 0, 1) => inst!(cpu, CALL, (Condition::ALWAYS), nn),
 
 		(3, 6, _, _, _) => inst!(cpu, ALU_OP_8, (DT.alu[y]), A, n),
-		(3, 7, _, _, _) => inst!(cpu, RST, ((opcode.y as u16) * 8)),
-		(_, _, _, _, _) => inst!(cpu, ERROR, (opcode.raw)),
+		(3, 7, _, _, _) => inst!(cpu, RST, ((y as u16) * 8)),
+		(_, _, _, _, _) => inst!(cpu, ERROR, (raw)),
 	}
 }
