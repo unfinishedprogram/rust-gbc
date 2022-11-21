@@ -36,17 +36,17 @@ pub trait PPU {
 impl PPU for EmulatorState {
 	fn get_mode(&self) -> PPUMode {
 		let num = self.read(IORegistersAdress::STAT as u16) & 0b00000011;
-		return match num {
+		match num {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
 			2 => PPUMode::OamScan,
 			3 => PPUMode::Draw,
 			_ => unreachable!(), // Since we only take the last two bits
-		};
+		}
 	}
 
 	fn get_ly(&self) -> u8 {
-		return self.read(IORegistersAdress::LY as u16);
+		self.read(IORegistersAdress::LY as u16)
 	}
 
 	fn set_ly(&mut self, value: u8) {
@@ -87,7 +87,5 @@ impl PPU for EmulatorState {
 		} else {
 			self.ppu_state.cycle += 456;
 		}
-
-		return;
 	}
 }

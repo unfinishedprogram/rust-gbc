@@ -54,5 +54,5 @@ fn to_flat(buffer: &PixelBuffer) -> Vec<u8> {
 		}
 	}
 
-	return collector;
+	collector
 }

@@ -2,39 +2,38 @@ use super::registers::CPURegister16;
 use super::registers::CPURegister8;
 use std::fmt;
 
-impl Into<ValueRefU16> for CPURegister16 {
-	fn into(self: CPURegister16) -> ValueRefU16 {
-		ValueRefU16::Reg(self)
+impl From<CPURegister16> for ValueRefU16 {
+	fn from(value: CPURegister16) -> Self {
+		Self::Reg(value)
 	}
 }
 
-impl Into<ValueRefU8> for CPURegister16 {
-	fn into(self: CPURegister16) -> ValueRefU8 {
-		ValueRefU8::Mem(self.into())
+impl From<CPURegister16> for ValueRefU8 {
+	fn from(value: CPURegister16) -> Self {
+		Self::Mem(value.into())
 	}
 }
 
-impl Into<ValueRefU8> for CPURegister8 {
-	fn into(self: CPURegister8) -> ValueRefU8 {
-		ValueRefU8::Reg(self)
+impl From<CPURegister8> for ValueRefU8 {
+	fn from(value: CPURegister8) -> Self {
+		Self::Reg(value)
 	}
 }
 
-impl Into<ValueRefU8> for u8 {
-	fn into(self: u8) -> ValueRefU8 {
-		ValueRefU8::Raw(self)
+impl From<u8> for ValueRefU8 {
+	fn from(value: u8) -> Self {
+		Self::Raw(value)
 	}
 }
 
-impl Into<ValueRefI8> for i8 {
-	fn into(self: i8) -> ValueRefI8 {
-		ValueRefI8::Raw(self)
+impl From<i8> for ValueRefI8 {
+	fn from(value: i8) -> Self {
+		Self::Raw(value)
 	}
 }
-
-impl Into<ValueRefU16> for u16 {
-	fn into(self: u16) -> ValueRefU16 {
-		ValueRefU16::Raw(self)
+impl From<u16> for ValueRefU16 {
+	fn from(value: u16) -> Self {
+		Self::Raw(value)
 	}
 }
 

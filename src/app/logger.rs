@@ -14,6 +14,12 @@ impl Logger {
 	}
 }
 
+impl Default for Logger {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl log::Log for Logger {
 	fn enabled(&self, metadata: &Metadata) -> bool {
 		metadata.level() <= Level::Info

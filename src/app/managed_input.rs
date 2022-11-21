@@ -9,10 +9,10 @@ pub struct ManagedInput<T> {
 impl<T> DrawableMut for ManagedInput<T> {
 	fn draw(&mut self, ui: &mut egui::Ui) {
 		let last_value = self.input_value.clone();
-		if ui.text_edit_singleline(&mut self.input_value).changed() {
-			if !(self.validate)(&self.input_value) {
-				self.input_value = last_value.clone();
-			}
+		if ui.text_edit_singleline(&mut self.input_value).changed()
+			&& !(self.validate)(&self.input_value)
+		{
+			self.input_value = last_value;
 		}
 	}
 }

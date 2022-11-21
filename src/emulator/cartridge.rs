@@ -47,7 +47,7 @@ impl MemoryMapper for CartridgeState {
 				} // Bank X
 				0xA000..0xC000 => {
 					if self.info.ram_banks > 0 {
-						let mapped_addr = (addr - 0xA000 + 0x2000 * self.selected_ram_bank) as u16;
+						let mapped_addr = addr - 0xA000 + 0x2000 * self.selected_ram_bank;
 						if mapped_addr < self.info.ram_banks * 0x2000 {
 							self.raw_ram[mapped_addr as usize]
 						} else {
@@ -79,13 +79,12 @@ impl MemoryMapper for CartridgeState {
 			ROM => {
 				warn!("Write to readonly memory: {:X}", addr);
 			}
-			MBC1 => match addr {
-				2000..4000 => {
+			MBC1 => {
+				if let 2000..4000 = addr {
 					self.selected_rom_bank = (value & 0b00011111) as u16;
 					info!("Rom Bank:{:} selected", self.selected_rom_bank);
 				}
-				_ => {}
-			},
+			}
 			MBC2 => todo!(),
 			MMM01 => todo!(),
 			MBC3 => todo!(),

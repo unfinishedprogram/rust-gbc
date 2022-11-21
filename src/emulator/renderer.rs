@@ -64,7 +64,7 @@ impl RendererHelpers for EmulatorState {
 		} as u16;
 
 		match (
-			get_bit(self.read(addr + y * 2 + 0), x as u8),
+			get_bit(self.read(addr + y * 2), x as u8),
 			get_bit(self.read(addr + y * 2 + 1), x as u8),
 		) {
 			(true, true) => (8, 24, 32),

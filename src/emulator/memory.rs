@@ -2,6 +2,12 @@ pub struct Memory {
 	bytes: [u8; 0x10000],
 }
 
+impl Default for Memory {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl Memory {
 	pub fn new() -> Self {
 		Self {
@@ -10,14 +16,14 @@ impl Memory {
 	}
 
 	pub fn read(&self, addr: u16) -> u8 {
-		return match addr {
+		match addr {
 			0xFEA0..=0xFEFF => 0,
 			_ => self.bytes[addr as usize],
-		};
+		}
 	}
 
 	pub fn get_ref(&mut self, addr: u16) -> &mut u8 {
-		return &mut self.bytes[addr as usize];
+		&mut self.bytes[addr as usize]
 	}
 
 	pub fn write(&mut self, addr: u16, value: u8) {

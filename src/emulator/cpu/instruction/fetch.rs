@@ -18,14 +18,14 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 	match (x, z, y, p, q) {
 		//(x, z, y, p, q)
 		(0, 0, 0, _, _) => inst!(cpu, NOP),
-		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp().into())), SP),
+		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp())), SP),
 		(0, 0, 2, _, _) => inst!(cpu, STOP),
 		(0, 0, 3, _, _) => {
 			let offset = cpu.next_displacement();
 			let addr = if offset.is_positive() {
-				cpu.read_16(CPURegister16::PC.into()) + offset.abs() as u16
+				cpu.read_16(CPURegister16::PC.into()) + offset.unsigned_abs() as u16
 			} else {
-				cpu.read_16(CPURegister16::PC.into()) - offset.abs() as u16
+				cpu.read_16(CPURegister16::PC.into()) - offset.unsigned_abs() as u16
 			};
 
 			inst!(cpu, JR, (Condition::ALWAYS), (ValueRefU16::Raw(addr)))
@@ -34,9 +34,9 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 		(0, 0, _, _, _) => {
 			let offset = cpu.next_displacement();
 			let addr = if offset.is_positive() {
-				cpu.read_16(CPURegister16::PC.into()) + offset.abs() as u16
+				cpu.read_16(CPURegister16::PC.into()) + offset.unsigned_abs() as u16
 			} else {
-				cpu.read_16(CPURegister16::PC.into()) - offset.abs() as u16
+				cpu.read_16(CPURegister16::PC.into()) - offset.unsigned_abs() as u16
 			};
 
 			inst!(cpu, JR, (DT.cc[(y - 4)]), (ValueRefU16::Raw(addr)))
@@ -104,7 +104,7 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 			)
 		}
 
-		(3, 0, 7, _, _) => inst!(cpu, LD_HL_SP_DD, d).into(),
+		(3, 0, 7, _, _) => inst!(cpu, LD_HL_SP_DD, d),
 
 		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p])),
 
@@ -130,9 +130,9 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 			let (cb_x, cb_z, cb_y, _, _) = parse_opcode(cb_raw);
 			match cb_x {
 				0 => inst!(cpu, ROT, (DT.rot[cb_y]), (DT.r[cb_z].clone())),
-				1 => inst!(cpu, BIT, (cb_y as u8), (DT.r[cb_z as usize].clone())),
-				2 => inst!(cpu, RES, (cb_y as u8), (DT.r[cb_z as usize].clone())),
-				3 => inst!(cpu, SET, (cb_y as u8), (DT.r[cb_z as usize].clone())),
+				1 => inst!(cpu, BIT, (cb_y as u8), (DT.r[cb_z].clone())),
+				2 => inst!(cpu, RES, (cb_y as u8), (DT.r[cb_z].clone())),
+				3 => inst!(cpu, SET, (cb_y as u8), (DT.r[cb_z].clone())),
 				_ => inst!(cpu, ERROR, (cb_raw)),
 			}
 		}

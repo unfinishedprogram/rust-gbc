@@ -59,7 +59,7 @@ impl Default for EmulatorState {
 	}
 }
 
-impl<'a> EmulatorState {
+impl EmulatorState {
 	pub fn step(&mut self, lcd: Option<&mut dyn LCDDisplay>) {
 		if let Some(lcd) = lcd {
 			while self.cycle >= self.ppu_state.cycle / 4 {
@@ -114,11 +114,11 @@ impl<'a> EmulatorState {
 		}
 		self.ppu_state.cycle = 512;
 
-		return self;
+		self
 	}
 
-	pub fn load_rom(&mut self, rom: &Vec<u8>) {
-		let mut new_rom = rom.clone();
+	pub fn load_rom(&mut self, rom: &[u8]) {
+		let mut new_rom = rom.to_owned();
 
 		if new_rom.len() < 0x10000 {
 			new_rom.resize(0x10000, 0);

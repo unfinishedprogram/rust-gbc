@@ -1,5 +1,5 @@
 pub fn get_bit(byte: u8, bit: u8) -> bool {
-	return (byte >> (7 - bit)) & 1 == 1;
+	(byte >> (7 - bit)) & 1 == 1
 }
 
 pub fn clear_bit_mask(bit: u8) -> u8 {

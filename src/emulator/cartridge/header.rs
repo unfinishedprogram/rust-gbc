@@ -75,10 +75,7 @@ impl RawCartridgeHeader {
 	}
 
 	pub fn parse(&self) -> Result<CartridgeInfo, CartridgeParseError> {
-		let cgb = match self.cgb_flag {
-			0x80 | 0xC0 => true,
-			_ => false,
-		};
+		let cgb = matches!(self.cgb_flag, 0x80 | 0xC0);
 
 		let sgb = self.sgb_flag == 0x03;
 

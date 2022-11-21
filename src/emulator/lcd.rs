@@ -41,7 +41,7 @@ impl LCDDisplay for LCD {
 		let (r, g, b) = color;
 		let index: usize = (y as usize * width as usize + x as usize) * 4;
 
-		self.buffer[index + 0] = r;
+		self.buffer[index] = r;
 		self.buffer[index + 1] = g;
 		self.buffer[index + 2] = b;
 	}
@@ -56,5 +56,11 @@ impl LCD {
 		Self {
 			buffer: vec![0xFF; 144 * 160 * 4],
 		}
+	}
+}
+
+impl Default for LCD {
+	fn default() -> Self {
+		Self::new()
 	}
 }

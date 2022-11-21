@@ -24,7 +24,7 @@ pub struct EmulatorManager {
 
 impl Default for EmulatorManager {
 	fn default() -> Self {
-		_ = log::set_logger(&LOGGER).unwrap();
+		log::set_logger(&LOGGER).unwrap();
 		log::set_max_level(log::LevelFilter::Info);
 		Self {
 			logger: &LOGGER,
@@ -66,9 +66,8 @@ impl EmulatorManager {
 
 			ehttp::fetch(request, move |response| {
 				let result = response.and_then(parse_response);
-				match result {
-					Ok(data) => sender.send(data),
-					_ => {}
+				if let Ok(data) = result {
+					sender.send(data)
 				}
 			});
 

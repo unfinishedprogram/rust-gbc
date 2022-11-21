@@ -68,7 +68,7 @@ impl CPU for EmulatorState {
 			registers::CPURegister16::PC,
 		)));
 		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(1);
-		return value;
+		value
 	}
 
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
@@ -105,7 +105,7 @@ impl CPU for EmulatorState {
 			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg] = value,
 			ValueRefU8::Raw(_) => unreachable!(),
 			ValueRefU8::MemOffset(offset) => {
-				let offset_value: u16 = self.read_8(&offset) as u16;
+				let offset_value: u16 = self.read_8(offset) as u16;
 				self.write_8(
 					&ValueRefU8::Mem(ValueRefU16::Raw(offset_value + 0xFF00)),
 					value,
@@ -167,16 +167,16 @@ impl CPU for EmulatorState {
 			for interrupt in to_check {
 				if self.check_interrupt(interrupt) {
 					self.clear_request(interrupt);
-					return Some(Instruction::INT(interrupt.clone()));
+					return Some(Instruction::INT(interrupt));
 				}
 			}
 		}
-		return None;
+		None
 	}
 
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
 		self.get_interrupt()
-			.unwrap_or(self.fetch_next_instruction())
+			.unwrap_or_else(|| self.fetch_next_instruction())
 	}
 
 	fn step(&mut self) -> Option<Instruction> {
@@ -184,6 +184,7 @@ impl CPU for EmulatorState {
 		self.cpu_state.interrupt_enable = self.cpu_state.ie_next;
 		self.cpu_state.ie_next = self.cpu_state.ie_next_next;
 		execute_instruction(instruction.clone(), self);
-		return Some(instruction);
+
+		Some(instruction)
 	}
 }

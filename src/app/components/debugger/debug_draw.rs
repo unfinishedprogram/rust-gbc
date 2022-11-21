@@ -33,7 +33,7 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 			buffer[y][x] = color;
 		}
 	}
-	return buffer;
+	buffer
 }
 
 pub fn debug_draw_window_data(state: &EmulatorState, window_buffer: &mut PixelBuffer) {
@@ -58,7 +58,7 @@ pub fn debug_draw_window_data(state: &EmulatorState, window_buffer: &mut PixelBu
 			let mut values = [0; 16];
 
 			for i in 0..16 {
-				values[i as usize] = state.read(index + i).into();
+				values[i as usize] = state.read(index + i);
 			}
 
 			let tile_data = to_pixel_tile(values);

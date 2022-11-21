@@ -52,10 +52,10 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 		LD_16(to, from) => {
 			use ValueRefU16::*;
-			match (to, from) {
-				(Reg(_), Reg(_)) => cpu.cycle += 1,
-				(_, _) => {}
+			if matches!((to, from), (Reg(_), Reg(_))) {
+				cpu.cycle += 1;
 			}
+
 			let val = cpu.read_16(from);
 			cpu.write_16(to, val);
 		}
@@ -369,7 +369,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.set_flag_to(Flag::C, !cpu.get_flag(Flag::C));
 		}
 		BIT(bit, value) => {
-			let value = cpu.read_8(&value.into());
+			let value = cpu.read_8(&value);
 			cpu.set_flag_to(Flag::Z, (value >> bit) & 1 == 0);
 			cpu.set_flag(Flag::H);
 			cpu.clear_flag(Flag::N);
@@ -386,7 +386,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			use super::RotShiftOperation::*;
 			let value = cpu.read_8(&val_ref);
 
-			let carry_bit = if cpu.get_flag(Flag::C) { 1 } else { 0 };
+			let carry_bit = u8::from(cpu.get_flag(Flag::C));
 
 			match operator {
 				RLC => {
