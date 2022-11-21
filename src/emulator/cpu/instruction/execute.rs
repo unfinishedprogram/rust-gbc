@@ -330,18 +330,18 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 			if !cpu.get_flag(Flag::N) {
 				if cpu.get_flag(Flag::C) || a_val > 0x99 {
-					a_val += 0x60;
+					a_val = a_val.wrapping_add(0x60);
 					cpu.set_flag(Flag::C);
 				}
 				if cpu.get_flag(Flag::H) || (a_val & 0x0f) > 0x09 {
-					a_val += 0x6;
+					a_val = a_val.wrapping_add(0x6);
 				}
 			} else {
 				if cpu.get_flag(Flag::C) {
-					a_val -= 0x60;
+					a_val = a_val.wrapping_sub(0x60);
 				}
 				if cpu.get_flag(Flag::H) {
-					a_val -= 0x6;
+					a_val = a_val.wrapping_sub(0x6);
 				}
 			}
 

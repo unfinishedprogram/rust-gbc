@@ -26,6 +26,7 @@ pub struct EmulatorState {
 	pub io_register_state: IORegisterState,
 	pub run: bool,
 	pub cycle: u64,
+	pub serial_output: Vec<u8>,
 }
 
 impl PPUState {
@@ -53,6 +54,7 @@ impl Default for EmulatorState {
 			oam: [0; 0xA0],
 			hram: [0; 0x80],
 			cycle: 0,
+			serial_output: vec![],
 		}
 	}
 }
