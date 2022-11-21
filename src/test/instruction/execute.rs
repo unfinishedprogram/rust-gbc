@@ -14,7 +14,7 @@ use crate::{
 
 use std::{
 	fs::File,
-	io::{self, BufRead, Read},
+	io::{self, Read},
 	vec,
 };
 
@@ -100,29 +100,29 @@ fn load_16() {
 	}
 }
 
-fn check_parity(rom_name: &str) {
-	let mut state = EmulatorState::default().init();
-	let rom_handle = File::open(format!("roms/{rom_name}.gb")).unwrap();
+// fn check_parity(rom_name: &str) {
+// 	let mut state = EmulatorState::default().init();
+// 	let rom_handle = File::open(format!("roms/{rom_name}.gb")).unwrap();
 
-	let mut rom = vec![];
-	_ = io::BufReader::new(rom_handle).read_to_end(&mut rom);
-	state.load_rom(&rom);
+// 	let mut rom = vec![];
+// 	_ = io::BufReader::new(rom_handle).read_to_end(&mut rom);
+// 	state.load_rom(&rom);
 
-	let log_handle = File::open(format!("logs/{rom_name}.log")).unwrap();
-	let lines = io::BufReader::new(log_handle).lines();
+// 	let log_handle = File::open(format!("logs/{rom_name}.log")).unwrap();
+// 	let lines = io::BufReader::new(log_handle).lines();
 
-	let mut last: String = "".to_string();
-	for line in lines {
-		let exec = log_execute(&mut state);
-		let line = line.unwrap();
-		if exec != line {
-			println!("Failed : {rom_name}");
-			println!("{last}");
-			assert_eq!(exec, line);
-		}
-		last = line;
-	}
-}
+// 	let mut last: String = "".to_string();
+// 	for line in lines {
+// 		let exec = log_execute(&mut state);
+// 		let line = line.unwrap();
+// 		if exec != line {
+// 			println!("Failed : {rom_name}");
+// 			println!("{last}");
+// 			assert_eq!(exec, line);
+// 		}
+// 		last = line;
+// 	}
+// }
 
 fn test_blargg(rom_name: &str, end: usize) {
 	let mut state = EmulatorState::default().init();
