@@ -39,3 +39,17 @@ pub fn log_execute(state: &mut EmulatorState) -> String {
 	execute_instruction(instruction, state);
 	return format!("{pc:04X} {inst:<19} {rs}");
 }
+
+pub fn execute(state: &mut EmulatorState) {
+	while state.cycle >= state.ppu_state.cycle / 4 {
+		state.step_ppu(None);
+	}
+
+	let instruction = state.fetch_next_instruction();
+
+	while state.cycle >= state.ppu_state.cycle / 4 {
+		state.step_ppu(None);
+	}
+
+	execute_instruction(instruction, state);
+}

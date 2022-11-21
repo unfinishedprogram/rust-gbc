@@ -18,6 +18,8 @@ use std::{
 	vec,
 };
 
+use super::logger::execute;
+
 fn get_state(data: Vec<u8>) -> EmulatorState {
 	let mut state = EmulatorState::default().init();
 	state.load_rom(&create_rom(data));
@@ -138,7 +140,8 @@ fn test_blargg(rom_name: &str, end: usize) {
 	let mut last_write = 0;
 	while left > 0 {
 		left -= 1;
-		_ = log_execute(&mut state);
+		execute(&mut state);
+
 		if state.serial_output.len() != last {
 			last = state.serial_output.len();
 			last_write = end - left;
