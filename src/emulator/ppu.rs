@@ -1,6 +1,3 @@
-use instant::Instant;
-use log::debug;
-
 use crate::emulator::{
 	flags,
 	flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag},
