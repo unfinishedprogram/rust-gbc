@@ -96,7 +96,7 @@ impl Debugger {
 				let start = self.emulator_state.cycle;
 
 				while self.emulator_state.cycle - start < 69905 {
-					self.emulator_state.step(Some(&mut self.lcd));
+					self.emulator_state.step(&mut self.lcd);
 					// self.do_serial();
 				}
 

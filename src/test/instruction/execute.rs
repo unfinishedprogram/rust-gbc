@@ -9,7 +9,7 @@ use crate::{
 		},
 		EmulatorState,
 	},
-	test::{instruction::logger::log_execute, mocks::mock_rom::create_rom},
+	test::mocks::{mock_lcd::MockLCD, mock_rom::create_rom},
 };
 
 use std::{
@@ -102,45 +102,23 @@ fn load_16() {
 	}
 }
 
-// fn check_parity(rom_name: &str) {
-// 	let mut state = EmulatorState::default().init();
-// 	let rom_handle = File::open(format!("roms/{rom_name}.gb")).unwrap();
-
-// 	let mut rom = vec![];
-// 	_ = io::BufReader::new(rom_handle).read_to_end(&mut rom);
-// 	state.load_rom(&rom);
-
-// 	let log_handle = File::open(format!("logs/{rom_name}.log")).unwrap();
-// 	let lines = io::BufReader::new(log_handle).lines();
-
-// 	let mut last: String = "".to_string();
-// 	for line in lines {
-// 		let exec = log_execute(&mut state);
-// 		let line = line.unwrap();
-// 		if exec != line {
-// 			println!("Failed : {rom_name}");
-// 			println!("{last}");
-// 			assert_eq!(exec, line);
-// 		}
-// 		last = line;
-// 	}
-// }
-
 fn test_blargg(rom_name: &str, end: usize) {
+	let mut lcd = MockLCD::default();
 	let mut state = EmulatorState::default().init();
 	let rom_handle = File::open(format!("roms/{rom_name}.gb"))
 		.expect(format!("roms/{rom_name}.gb not found").as_str());
 
 	let mut rom = vec![];
 	_ = io::BufReader::new(rom_handle).read_to_end(&mut rom);
+
 	state.load_rom(&rom);
 
-	let mut last: usize = 0;
+	let mut last = 0;
 	let mut left = end;
 	let mut last_write = 0;
 	while left > 0 {
 		left -= 1;
-		execute(&mut state);
+		state.step(&mut lcd);
 
 		if state.serial_output.len() != last {
 			last = state.serial_output.len();
@@ -168,15 +146,15 @@ macro_rules! blarggs_tests {
 }
 
 blarggs_tests! {
-	blarggs_1:("01-special", 1277946),
-	blarggs_2:("02-interrupts", 210428),
-	blarggs_3:("03-op sp,hl", 1089986),
-	blarggs_4:("04-op r,imm", 1075092),
-	blarggs_5:("05-op rp", 1789474),
-	blarggs_6:("06-ld r,r", 269289),
-	blarggs_7:("07-jr,jp,call,ret,rst", 321087),
-	blarggs_8:("08-misc instrs", 251413),
-	blarggs_9:("09-op r,r", 1057765),
-	blarggs_10:("10-bit ops", 6732598),
-	blarggs_11:("11-op a,(hl)", 3812054),
+	blarggs_1:("01-special", 1262731),
+	blarggs_2:("02-interrupts", 171077),
+	blarggs_3:("03-op sp,hl", 1070382),
+	blarggs_4:("04-op r,imm", 1059877),
+	blarggs_5:("05-op rp", 1765488),
+	blarggs_6:("06-ld r,r", 245303),
+	blarggs_7:("07-jr,jp,call,ret,rst", 292712),
+	blarggs_8:("08-misc instrs", 227427),
+	blarggs_9:("09-op r,r", 1040366),
+	blarggs_10:("10-bit ops", 6717390),
+	blarggs_11:("11-op a,(hl)", 3785870),
 }

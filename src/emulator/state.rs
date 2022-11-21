@@ -60,25 +60,15 @@ impl Default for EmulatorState {
 }
 
 impl EmulatorState {
-	pub fn step(&mut self, lcd: Option<&mut dyn LCDDisplay>) {
-		if let Some(lcd) = lcd {
-			while self.cycle >= self.ppu_state.cycle / 4 {
-				self.step_ppu(Some(lcd));
-			}
-			CPU::step(self);
+	pub fn step(&mut self, lcd: &mut dyn LCDDisplay) {
+		while self.cycle >= self.ppu_state.cycle >> 4 {
+			self.step_ppu(lcd);
+		}
 
-			while self.cycle >= self.ppu_state.cycle / 4 {
-				self.step_ppu(Some(lcd));
-			}
-		} else {
-			while self.cycle >= self.ppu_state.cycle / 4 {
-				self.step_ppu(None);
-			}
-			CPU::step(self);
+		CPU::step(self);
 
-			while self.cycle >= self.ppu_state.cycle / 4 {
-				self.step_ppu(None);
-			}
+		while self.cycle >= self.ppu_state.cycle >> 4 {
+			self.step_ppu(lcd);
 		}
 	}
 

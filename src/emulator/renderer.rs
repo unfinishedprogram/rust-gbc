@@ -112,19 +112,19 @@ impl Renderer for EmulatorState {
 		// Block 1 is $8800-8FFF
 		// Block 2 is $9000-97FF
 
-		for y in 0..144 {
-			for x in 0..160 {
-				let bg = self.get_bg_pixel(x + scx, y + scy);
-				lcd.put_pixel(x, y, bg);
-				if window_display_enable {
-					// let wn = self.get_wn_pixel(x - wx, y - wy);
-					// match wn {
-					// (224, 248, 208) => {}
-					// (_, _, _) => lcd.put_pixel(x, y, wn),
-					// }
-				}
-			}
-		}
+		// for y in 0u8..144 {
+		// 	for x in 0u8..160 {
+		// 		let bg = self.get_bg_pixel(x.wrapping_add(scx), y.wrapping_add(scy));
+		// 		lcd.put_pixel(x, y, bg);
+		// 		if window_display_enable {
+		// 			// let wn = self.get_wn_pixel(x - wx, y - wy);
+		// 			// match wn {
+		// 			// (224, 248, 208) => {}
+		// 			// (_, _, _) => lcd.put_pixel(x, y, wn),
+		// 			// }
+		// 		}
+		// 	}
+		// }
 		// self.lcd.put_pixel(x, y, color);x
 	}
 }

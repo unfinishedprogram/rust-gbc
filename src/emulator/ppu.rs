@@ -30,7 +30,7 @@ pub trait PPU {
 	fn get_ly(&self) -> u8;
 	fn set_ly(&mut self, value: u8);
 	fn set_mode(&mut self, mode: PPUMode);
-	fn step_ppu(&mut self, lcd: Option<&mut dyn LCDDisplay>);
+	fn step_ppu(&mut self, lcd: &mut dyn LCDDisplay);
 }
 
 impl PPU for EmulatorState {
@@ -64,7 +64,7 @@ impl PPU for EmulatorState {
 
 	fn set_mode(&mut self, _mode: PPUMode) {}
 
-	fn step_ppu(&mut self, lcd: Option<&mut dyn LCDDisplay>) {
+	fn step_ppu(&mut self, lcd: &mut dyn LCDDisplay) {
 		self.set_ly(self.get_ly() + 1);
 		self.ppu_state.paused = false;
 
@@ -72,11 +72,9 @@ impl PPU for EmulatorState {
 			if self.ppu_state.maxed {
 				self.set_ly(0);
 
-				if let Some(lcd) = lcd {
-					let start = Instant::now();
-					self.render(lcd);
-					debug!("Took: {:?}", start.elapsed());
-				}
+				// let start = Instant::now();
+				self.render(lcd);
+				// debug!("Took: {:?}", start.elapsed());
 
 				self.ppu_state.maxed = false;
 				self.ppu_state.cycle += 908;
