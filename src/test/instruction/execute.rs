@@ -100,48 +100,6 @@ fn load_16() {
 	}
 }
 
-// #[test]
-// fn dec_8() {
-// 	let mut state = get_state(vec![0]);
-// 	use CPURegister8::*;
-// 	use Instruction::*;
-// 	use ValueRefU8::*;
-
-// 	state.clear_flag(Flag::C);
-// 	state.clear_flag(Flag::H);
-// 	state.clear_flag(Flag::N);
-// 	state.clear_flag(Flag::Z);
-
-// 	state.write_8(&Reg(A), 0);
-// 	execute_instruction(DEC_8(Reg(A)), &mut state);
-// 	assert_flags(&state, (false, true, true, false));
-// }
-
-// #[test]
-// fn tetris() {
-// 	let mut state = EmulatorState::default().init();
-// 	let tetris_handle = File::open("roms/06-ld r,r.gb").unwrap();
-// 	let mut rom = vec![];
-// 	_ = io::BufReader::new(tetris_handle).read_to_end(&mut rom);
-// 	println!("{}", rom.len());
-// 	state.load_rom(&rom);
-
-// 	let handle = File::open("logs/test.log").unwrap();
-// 	let lines = io::BufReader::new(handle).lines();
-
-// 	let mut last: String = "".to_string();
-// 	for line in lines {
-// 		let exec = log_execute(&mut state);
-// 		let line = line.unwrap();
-// 		if exec != line {
-// 			println!("{last}");
-// 			assert_eq!(exec, line);
-// 		}
-// 		last = line;
-// 		// println!("{:}", state.ppu_state.cycle / 2);
-// 	}
-// }
-
 fn check_parity(rom_name: &str) {
 	let mut state = EmulatorState::default().init();
 	let rom_handle = File::open(format!("roms/{rom_name}.gb")).unwrap();
@@ -168,7 +126,8 @@ fn check_parity(rom_name: &str) {
 
 fn test_blargg(rom_name: &str, end: usize) {
 	let mut state = EmulatorState::default().init();
-	let rom_handle = File::open(format!("roms/{rom_name}.gb")).unwrap();
+	let rom_handle = File::open(format!("roms/{rom_name}.gb"))
+		.expect(format!("roms/{rom_name}.gb not found").as_str());
 
 	let mut rom = vec![];
 	_ = io::BufReader::new(rom_handle).read_to_end(&mut rom);
