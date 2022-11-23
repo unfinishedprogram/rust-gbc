@@ -298,10 +298,10 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.enable_interrupts();
 		}
 		RLCA => {
+			cpu.clear_flag(Flag::N);
+			cpu.clear_flag(Flag::H);
 			let value = cpu.read_8(&CPURegister8::A.into());
-			if value & 1 != 0 {
-				cpu.set_flag(Flag::C)
-			}
+			// cpu.set_flag_to(Flag::C, value & 1 != 0);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_left(1));
 		}
 		RRCA => {
@@ -312,10 +312,13 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_right(1));
 		}
 
-		RLA => execute_instruction(
-			Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
-			cpu,
-		),
+		RLA => {
+			execute_instruction(
+				Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
+				cpu,
+			);
+			cpu.clear_flag(Flag::Z);
+		}
 		RRA => {
 			execute_instruction(
 				Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
@@ -392,18 +395,27 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 			match operator {
 				RLC => {
-					if value & 1 != 0 {
-						cpu.set_flag(Flag::C)
-					}
+					cpu.clear_flag(Flag::N);
+					cpu.clear_flag(Flag::H);
+					cpu.set_flag_to(Flag::C, value & 0b10000000 == 0b10000000);
+					cpu.set_flag_to(Flag::Z, value == 0);
 					cpu.write_8(&val_ref, value.rotate_left(1));
 				}
 				RRC => {
-					if value.rotate_right(1) & 1 != 0 {
-						cpu.set_flag(Flag::C)
-					}
+					cpu.clear_flag(Flag::N);
+					cpu.clear_flag(Flag::H);
+					cpu.set_flag_to(Flag::C, value & 1 == 1);
+					cpu.set_flag_to(Flag::Z, value == 0);
 					cpu.write_8(&val_ref, value.rotate_right(1));
 				}
-				RL => cpu.write_8(&val_ref, ((value << 1) & 0b11111110) | carry_bit),
+				RL => {
+					let result = (value << 1) | carry_bit;
+					cpu.clear_flag(Flag::N);
+					cpu.clear_flag(Flag::H);
+					cpu.set_flag_to(Flag::C, value & 0b10000000 == 0b10000000);
+					cpu.set_flag_to(Flag::Z, result == 0);
+					cpu.write_8(&val_ref, result);
+				}
 				RR => {
 					let result = ((value >> 1) & 0b01111111) | (carry_bit << 7);
 					cpu.set_flag_to(Flag::C, value & 1 != 0);
@@ -413,18 +425,28 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					cpu.write_8(&val_ref, result);
 				}
 				SLA => {
-					if (value >> 7) & 1 != 0 {
-						cpu.set_flag(Flag::C)
-					}
-					cpu.write_8(&val_ref, value << 1);
+					let result = value << 1;
+					cpu.clear_flag(Flag::N);
+					cpu.clear_flag(Flag::H);
+					cpu.set_flag_to(Flag::C, value & 0b10000000 == 0b10000000);
+					cpu.set_flag_to(Flag::Z, result == 0);
+					cpu.write_8(&val_ref, result);
 				}
 				SRA => {
-					if value & 1 != 0 {
-						cpu.set_flag(Flag::C)
-					}
-					cpu.write_8(&val_ref, (value >> 1) | value & (1 << 7));
+					let result = (value >> 1) | (value & 0b10000000);
+					cpu.clear_flag(Flag::N);
+					cpu.clear_flag(Flag::H);
+					cpu.set_flag_to(Flag::C, value & 1 == 1);
+					cpu.set_flag_to(Flag::Z, result == 0);
+					cpu.write_8(&val_ref, result);
 				}
-				SWAP => cpu.write_8(&val_ref, value.rotate_right(4)),
+				SWAP => {
+					cpu.clear_flag(Flag::N);
+					cpu.clear_flag(Flag::H);
+					cpu.clear_flag(Flag::C);
+					cpu.set_flag_to(Flag::Z, value == 0);
+					cpu.write_8(&val_ref, value.rotate_right(4));
+				}
 				SRL => {
 					let result = value >> 1;
 					cpu.set_flag_to(Flag::C, value & 1 != 0);
