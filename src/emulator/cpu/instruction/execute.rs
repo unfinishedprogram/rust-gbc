@@ -186,24 +186,17 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					a_val.wrapping_add(b_val)
 				}
 				ALUOperation::ADC => {
-					let b_val = b_val.wrapping_add(carry);
-
+					let sum: u16 = a_val as u16 + b_val as u16 + carry as u16;
+					cpu.set_flag_to(
+						H,
+						(a_val & 0xF).wrapping_add(b_val & 0xF).wrapping_add(carry) > 0xF,
+					);
+					cpu.set_flag_to(C, sum > 0xFF);
 					cpu.clear_flag(N);
 
-					cpu.set_flag_to(H, ((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10);
-
-					if a_val & 0x0F == a_val {
-						cpu.set_flag(H)
-					}
-
-					cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
-
-					if a_val == 0xFF && carry == 1 {
-						cpu.set_flag(C)
-					}
-
-					a_val.wrapping_add(b_val)
+					sum as u8
 				}
+
 				ALUOperation::SUB => {
 					cpu.set_flag(N);
 					cpu.set_flag_to(H, ((a_val & 0xf).wrapping_sub(b_val) & 0x10) == 0x10);
