@@ -29,4 +29,4 @@
 | ✅   | roms/08-misc instrs.gb        |
 | ❌   | roms/09-op r,r.gb             |
 | ✅   | roms/10-bit ops.gb            |
-| ❌   | roms/11-op a,(hl).gb          |
+| ✅   | roms/11-op a,(hl).gb          |
