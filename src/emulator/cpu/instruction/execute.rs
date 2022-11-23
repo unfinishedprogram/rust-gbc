@@ -298,17 +298,19 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.enable_interrupts();
 		}
 		RLCA => {
+			let value = cpu.read_8(&CPURegister8::A.into());
 			cpu.clear_flag(Flag::N);
 			cpu.clear_flag(Flag::H);
-			let value = cpu.read_8(&CPURegister8::A.into());
-			// cpu.set_flag_to(Flag::C, value & 1 != 0);
+			cpu.clear_flag(Flag::Z);
+			cpu.set_flag_to(Flag::C, value & 0b10000000 == 0b10000000);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_left(1));
 		}
 		RRCA => {
 			let value = cpu.read_8(&CPURegister8::A.into());
-			if value.rotate_right(1) & 1 != 0 {
-				cpu.set_flag(Flag::C)
-			}
+			cpu.clear_flag(Flag::N);
+			cpu.clear_flag(Flag::H);
+			cpu.set_flag_to(Flag::C, value & 1 == 1);
+			cpu.clear_flag(Flag::Z);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_right(1));
 		}
 
