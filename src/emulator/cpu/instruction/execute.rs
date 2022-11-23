@@ -14,6 +14,23 @@ use std::ops::{BitAnd, BitOr, BitXor};
 
 use super::condition::Condition;
 
+// fn has_half_carry_u8(old: u8, new: u8) -> bool {
+// 	has_half_carry_u8_wc(old, new, false)
+// }
+// fn has_carry_u8(old: u8, new: u8) -> bool {
+// 	has_half_carry_u8_wc(old, new, false)
+// }
+
+// // Check for half carry with a carry bit
+// fn has_half_carry_u8_wc(old: u8, new: u8, carry: bool) -> bool {
+// 	((old & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10
+// }
+
+// // Check for carry with a carry bit
+// fn has_carry_u8_wc(old: u8, new: u8, carry: bool) -> bool {
+// 	return true;
+// }
+
 pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) {
 	let cpu = state;
 
@@ -155,6 +172,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		ALU_OP_8(op, to, from) => {
+			use Flag::*;
 			let a_val = cpu.read_8(&to);
 			let b_val = cpu.read_8(&from);
 
@@ -162,75 +180,69 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 			let result = match op {
 				ALUOperation::ADD => {
-					cpu.clear_flag(Flag::N);
-					cpu.set_flag_to(
-						Flag::H,
-						((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10,
-					);
-					cpu.set_flag_to(Flag::C, a_val.wrapping_add(b_val) < a_val);
-					cpu.set_flag_to(Flag::Z, a_val.wrapping_add(b_val) == 0);
+					cpu.clear_flag(N);
+					cpu.set_flag_to(H, ((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10);
+					cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 					a_val.wrapping_add(b_val)
 				}
 				ALUOperation::ADC => {
-					let to_add = b_val.wrapping_add(carry);
+					let b_val = b_val.wrapping_add(carry);
 
-					cpu.clear_flag(Flag::N);
-					cpu.set_flag_to(
-						Flag::H,
-						(((a_val & 0xf).wrapping_add(to_add)) & 0x10) == 0x10,
-					);
-					cpu.set_flag_to(Flag::C, a_val.wrapping_add(to_add) < a_val);
-					cpu.set_flag_to(Flag::Z, a_val.wrapping_add(to_add) == 0);
+					cpu.clear_flag(N);
 
-					a_val.wrapping_add(to_add)
+					cpu.set_flag_to(H, ((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10);
+
+					if a_val & 0x0F == a_val {
+						cpu.set_flag(H)
+					}
+
+					cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
+
+					if a_val == 0xFF && carry == 1 {
+						cpu.set_flag(C)
+					}
+
+					a_val.wrapping_add(b_val)
 				}
 				ALUOperation::SUB => {
-					cpu.set_flag(Flag::N);
-					cpu.set_flag_to(Flag::H, ((a_val & 0xf).wrapping_sub(b_val) & 0x10) == 0x10);
-					cpu.set_flag_to(Flag::C, b_val > a_val);
-					cpu.set_flag_to(Flag::Z, a_val.wrapping_sub(b_val) == 0);
+					cpu.set_flag(N);
+					cpu.set_flag_to(H, ((a_val & 0xf).wrapping_sub(b_val) & 0x10) == 0x10);
+					cpu.set_flag_to(C, b_val > a_val);
 					a_val.wrapping_sub(b_val)
 				}
 				ALUOperation::SBC => {
-					cpu.set_flag(Flag::N);
+					cpu.set_flag(N);
 					cpu.set_flag_to(
-						Flag::H,
+						H,
 						((a_val & 0xf).wrapping_sub(b_val).wrapping_sub(carry) & 0x10) == 0x10,
 					);
-					cpu.set_flag_to(Flag::C, b_val.wrapping_add(carry) > a_val);
-					cpu.set_flag_to(Flag::Z, a_val.wrapping_sub(b_val).wrapping_sub(carry) == 0);
+					cpu.set_flag_to(C, b_val.wrapping_add(carry) > a_val);
 					a_val.wrapping_sub(b_val).wrapping_sub(carry)
 				}
 				ALUOperation::AND => {
-					cpu.clear_flag(Flag::C);
-					cpu.set_flag(Flag::H);
-					cpu.clear_flag(Flag::N);
-					cpu.set_flag_to(Flag::Z, a_val.bitand(b_val) == 0);
+					cpu.clear_flag(C);
+					cpu.set_flag(H);
+					cpu.clear_flag(N);
 					a_val.bitand(b_val)
 				}
 				ALUOperation::XOR => {
-					cpu.clear_flag(Flag::C);
-					cpu.clear_flag(Flag::H);
-					cpu.clear_flag(Flag::N);
-					cpu.set_flag_to(Flag::Z, a_val.bitxor(b_val) == 0);
+					cpu.clear_flag(C);
+					cpu.clear_flag(H);
+					cpu.clear_flag(N);
 					a_val.bitxor(b_val)
 				}
 				ALUOperation::OR => {
-					cpu.clear_flag(Flag::C);
-					cpu.clear_flag(Flag::H);
-					cpu.clear_flag(Flag::N);
-					cpu.set_flag_to(Flag::Z, a_val.bitor(b_val) == 0);
+					cpu.clear_flag(C);
+					cpu.clear_flag(H);
+					cpu.clear_flag(N);
 					a_val.bitor(b_val)
 				}
 
 				ALUOperation::CP => {
-					cpu.set_flag_to(Flag::N, true);
-					cpu.set_flag_to(Flag::C, a_val < b_val);
-					cpu.set_flag_to(Flag::Z, a_val == b_val);
-					cpu.set_flag_to(
-						Flag::H,
-						(a_val & 0xf).wrapping_sub(b_val & 0xf) & 0x10 == 0x10,
-					);
+					cpu.set_flag_to(N, true);
+					cpu.set_flag_to(C, a_val < b_val);
+					cpu.set_flag_to(Z, a_val == b_val);
+					cpu.set_flag_to(H, (a_val & 0xf).wrapping_sub(b_val & 0xf) & 0x10 == 0x10);
 					a_val
 				}
 			};
@@ -239,9 +251,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				ALUOperation::CP => {}
 				_ => {
 					cpu.write_8(&to, result);
-					if result == 0 {
-						cpu.set_flag(Flag::Z)
-					};
+					cpu.set_flag_to(Z, result == 0);
 				}
 			}
 		}
