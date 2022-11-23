@@ -199,18 +199,20 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 				ALUOperation::SUB => {
 					cpu.set_flag(N);
-					cpu.set_flag_to(H, ((a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10) == 0x10);
+					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
 					cpu.set_flag_to(C, b_val > a_val);
 					a_val.wrapping_sub(b_val)
 				}
+
 				ALUOperation::SBC => {
+					let sum: i32 = a_val as i32 - b_val as i32 - carry as i32;
 					cpu.set_flag(N);
 					cpu.set_flag_to(
 						H,
-						((a_val & 0xf).wrapping_sub(b_val).wrapping_sub(carry) & 0x10) == 0x10,
+						(a_val & 0xF) as i32 - (b_val & 0xF) as i32 - (carry as i32) < 0,
 					);
-					cpu.set_flag_to(C, b_val.wrapping_add(carry) > a_val);
-					a_val.wrapping_sub(b_val).wrapping_sub(carry)
+					cpu.set_flag_to(C, sum < 0);
+					(sum & 0xFF) as u8
 				}
 				ALUOperation::AND => {
 					cpu.clear_flag(C);
