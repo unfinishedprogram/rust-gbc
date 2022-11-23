@@ -106,6 +106,7 @@ impl Renderer for EmulatorState {
 		_ = lcd_enable;
 
 		let (scx, scy) = (self.read(0xFF42), self.read(0xFF43));
+
 		// let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
 
 		// Block 0 is $8000-87FF

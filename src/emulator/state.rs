@@ -8,6 +8,7 @@ use super::io_registers::{IORegisterState, IORegisters};
 use super::lcd::LCDDisplay;
 use super::memory_mapper::MemoryMapper;
 use super::ppu::{PPUMode, PPUState, PPU};
+use super::timer_controller::TimerController;
 
 trait LCDDisplayWithCopy: LCDDisplay + Copy {}
 
@@ -27,6 +28,9 @@ pub struct EmulatorState {
 	pub run: bool,
 	pub cycle: u64,
 	pub serial_output: Vec<u8>,
+	pub timer_clock: u64,
+	pub div_clock: u64,
+	pub halted: bool,
 }
 
 impl PPUState {
@@ -55,6 +59,9 @@ impl Default for EmulatorState {
 			hram: [0; 0x80],
 			cycle: 0,
 			serial_output: vec![],
+			timer_clock: 0,
+			div_clock: 0,
+			halted: false,
 		}
 	}
 }
@@ -64,8 +71,11 @@ impl EmulatorState {
 		while self.cycle >= self.ppu_state.cycle >> 4 {
 			self.step_ppu(lcd);
 		}
+		let start = self.cycle;
 
 		CPU::step(self);
+
+		self.update_timer(self.cycle - start);
 
 		while self.cycle >= self.ppu_state.cycle >> 4 {
 			self.step_ppu(lcd);

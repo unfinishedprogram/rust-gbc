@@ -48,7 +48,7 @@ pub trait CPU {
 	fn clear_request(&mut self, interrupt: InterruptFlag);
 	fn get_interrupt(&mut self) -> Option<Instruction>;
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction;
-	fn step(&mut self) -> Option<Instruction>;
+	fn step(&mut self);
 }
 
 impl CPU for EmulatorState {
@@ -72,16 +72,16 @@ impl CPU for EmulatorState {
 	}
 
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
-		match value_ref.clone() {
+		match value_ref {
 			ValueRefU8::Mem(addr) => {
 				self.cycle += 1;
-				let index = self.read_16(addr);
+				let index = self.read_16(*addr);
 				self.read(index)
 			}
-			ValueRefU8::Reg(reg) => self.cpu_state.registers[reg],
-			ValueRefU8::Raw(x) => x,
+			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg],
+			ValueRefU8::Raw(x) => *x,
 			ValueRefU8::MemOffset(offset) => {
-				let offset_value: u16 = self.read_8(&offset) as u16;
+				let offset_value: u16 = self.read_8(offset) as u16;
 				self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw(offset_value + 0xFF00)))
 			}
 		}
@@ -179,12 +179,14 @@ impl CPU for EmulatorState {
 			.unwrap_or_else(|| self.fetch_next_instruction())
 	}
 
-	fn step(&mut self) -> Option<Instruction> {
+	fn step(&mut self) {
+		// if self.halted {
+		// 	if self.get_interrupt()
+		// }
+
 		let instruction = self.get_next_instruction_or_interrupt();
 		self.cpu_state.interrupt_enable = self.cpu_state.ie_next;
 		self.cpu_state.ie_next = self.cpu_state.ie_next_next;
-		execute_instruction(instruction.clone(), self);
-
-		Some(instruction)
+		execute_instruction(instruction, self);
 	}
 }

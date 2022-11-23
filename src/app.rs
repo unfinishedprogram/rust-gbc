@@ -31,6 +31,7 @@ impl Default for EmulatorManager {
 			loaded_file_data: None::<Promise<Vec<u8>>>,
 			debugger: Debugger::default(),
 			roms: vec![
+				"roms/instr_timing.gb",
 				"roms/LegendOfZelda.gb",
 				"roms/tetris.gb",
 				"roms/tetris2.gb",

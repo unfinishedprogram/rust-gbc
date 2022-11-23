@@ -158,10 +158,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			let a_val = cpu.read_8(&to);
 			let b_val = cpu.read_8(&from);
 
-			let carry: u8 = match cpu.get_flag(Flag::C) {
-				false => 0,
-				true => 1,
-			};
+			let carry = u8::from(cpu.get_flag(Flag::C));
 
 			let result = match op {
 				ALUOperation::ADD => {
@@ -208,7 +205,6 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					cpu.clear_flag(Flag::C);
 					cpu.set_flag(Flag::H);
 					cpu.clear_flag(Flag::N);
-
 					cpu.set_flag_to(Flag::Z, a_val.bitand(b_val) == 0);
 					a_val.bitand(b_val)
 				}
@@ -249,7 +245,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				}
 			}
 		}
-		HALT => {}
+		HALT => cpu.halted = true,
 		CALL(condition, location) => {
 			if cpu.check_condition(condition) {
 				cpu.cycle += 1;
@@ -271,12 +267,13 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 		RET(condition) => {
 			use super::condition::Condition::*;
+
 			cpu.cycle += match condition {
 				ALWAYS => 0,
 				_ => 1,
 			};
 
-			if cpu.check_condition(condition) {
+			if matches!(condition, Condition::ALWAYS) || cpu.check_condition(condition) {
 				cpu.cycle += 3;
 				let ptr = cpu.pop();
 				cpu.write_16(CPURegister16::PC.into(), ptr);

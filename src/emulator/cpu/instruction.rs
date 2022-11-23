@@ -19,7 +19,6 @@ use super::{
 
 use crate::emulator::flags::InterruptFlag;
 
-#[derive(Clone)]
 #[allow(non_camel_case_types)]
 pub enum Instruction {
 	COMPOSE(Box<Instruction>, Box<Instruction>),

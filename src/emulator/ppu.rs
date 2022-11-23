@@ -1,7 +1,7 @@
 use crate::emulator::{
 	flags,
 	flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag},
-	io_registers::IORegistersAdress,
+	io_registers::IORegistersAddress,
 	memory_mapper::MemoryMapper,
 };
 
@@ -32,7 +32,7 @@ pub trait PPU {
 
 impl PPU for EmulatorState {
 	fn get_mode(&self) -> PPUMode {
-		let num = self.read(IORegistersAdress::STAT as u16) & 0b00000011;
+		let num = self.read(IORegistersAddress::STAT as u16) & 0b00000011;
 		match num {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
@@ -43,12 +43,12 @@ impl PPU for EmulatorState {
 	}
 
 	fn get_ly(&self) -> u8 {
-		self.read(IORegistersAdress::LY as u16)
+		self.read(IORegistersAddress::LY as u16)
 	}
 
 	fn set_ly(&mut self, value: u8) {
-		let lyc_status = self.read(IORegistersAdress::LY as u16) == value;
-		self.write(IORegistersAdress::LY as u16, value);
+		let lyc_status = self.read(IORegistersAddress::LY as u16) == value;
+		self.write(IORegistersAddress::LY as u16, value);
 		set_bit_flag_to(self, BitFlag::Stat(STATFlag::LYCeqLY), lyc_status);
 
 		if lyc_status && get_bit_flag(self, BitFlag::Stat(STATFlag::LYCeqLUInterruptEnable)) {
@@ -65,6 +65,13 @@ impl PPU for EmulatorState {
 		self.set_ly(self.get_ly() + 1);
 		self.ppu_state.paused = false;
 
+		if self.get_ly() == 144 {
+			set_bit_flag(
+				self,
+				BitFlag::InterruptRequest(flags::InterruptFlag::VBlank),
+			)
+		}
+
 		if self.get_ly() >= 153 {
 			if self.ppu_state.maxed {
 				self.set_ly(0);
@@ -75,6 +82,10 @@ impl PPU for EmulatorState {
 
 				self.ppu_state.maxed = false;
 				self.ppu_state.cycle += 908;
+				set_bit_flag(
+					self,
+					BitFlag::InterruptRequest(flags::InterruptFlag::VBlank),
+				)
 			} else {
 				self.ppu_state.cycle += 4;
 				self.ppu_state.maxed = true;

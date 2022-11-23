@@ -7,7 +7,7 @@ use crate::emulator::ppu::PPU;
 use super::EmulatorState;
 
 #[derive(Clone, Copy, Primitive)]
-pub enum IORegistersAdress {
+pub enum IORegistersAddress {
 	// Timers
 	DIV = 0xFF04,
 	TIMA = 0xFF05,
@@ -105,7 +105,7 @@ pub trait IORegisters {
 
 impl IORegisters for EmulatorState {
 	fn read_io(&self, addr: u16) -> u8 {
-		match IORegistersAdress::try_from(addr) {
+		match IORegistersAddress::try_from(addr) {
 			Err(_) => {
 				error!("Unhandled Read: {:X}", addr);
 				self.io_register_state[addr]
@@ -115,8 +115,8 @@ impl IORegisters for EmulatorState {
 	}
 
 	fn write_io(&mut self, addr: u16, value: u8) {
-		use IORegistersAdress::*;
-		match IORegistersAdress::try_from(addr) {
+		use IORegistersAddress::*;
+		match IORegistersAddress::try_from(addr) {
 			Ok(DIV) => self.io_register_state[addr] = 0,
 			Ok(SB) => self.io_register_state[0xFF01] = value,
 			Ok(SC) => {
