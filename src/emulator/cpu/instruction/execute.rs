@@ -199,7 +199,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 				ALUOperation::SUB => {
 					cpu.set_flag(N);
-					cpu.set_flag_to(H, ((a_val & 0xf).wrapping_sub(b_val) & 0x10) == 0x10);
+					cpu.set_flag_to(H, ((a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10) == 0x10);
 					cpu.set_flag_to(C, b_val > a_val);
 					a_val.wrapping_sub(b_val)
 				}
