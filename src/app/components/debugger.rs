@@ -53,11 +53,7 @@ impl Debugger {
 		self.lcd.draw_window(ui, "LCD");
 
 		ui.label(format!("Cycle: {:}", self.cycle));
-		ui.label(format!(
-			"SerialOut: {:}",
-			self.serial_output.clone().into_iter().collect::<String>()
-		));
-
+		ui.label(format!("Halted: {:?}", self.emulator_state.halted));
 		ui.label(format!("Frametime: {:}ms", self.frame_time));
 	}
 
