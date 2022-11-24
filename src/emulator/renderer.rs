@@ -76,7 +76,7 @@ impl RendererHelpers for EmulatorState {
 }
 
 impl Renderer for EmulatorState {
-	fn render(&mut self, lcd: &mut dyn LCDDisplay) {
+	fn render(&mut self, _lcd: &mut dyn LCDDisplay) {
 		// Bit 7 - LCD Display Enable             (0=Off, 1=On)
 		// Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
 		// Bit 5 - Window Display Enable          (0=Off, 1=On)
@@ -90,7 +90,7 @@ impl Renderer for EmulatorState {
 
 		let lcd_enable = lcdc & 0b00000001 == 0b00000001;
 		let window_tile_map_display_sel = lcdc & 0b00000010 == 0b00000010;
-		let window_display_enable = lcdc & 0b00000100 == 0b00000100;
+		let _window_display_enable = lcdc & 0b00000100 == 0b00000100;
 		let bg_win_tile_map_sel = lcdc & 0b00001000 == 0b00001000;
 		let bg_tile_map_sel = lcdc & 0b00010000 == 0b00010000;
 		let sprite_size = lcdc & 0b00100000 == 0b00100000;
@@ -105,7 +105,7 @@ impl Renderer for EmulatorState {
 		_ = bg_window_priority;
 		_ = lcd_enable;
 
-		let (scx, scy) = (self.read(0xFF42), self.read(0xFF43));
+		let (_scx, _scy) = (self.read(0xFF42), self.read(0xFF43));
 
 		// let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
 

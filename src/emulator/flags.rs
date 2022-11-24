@@ -1,47 +1,55 @@
 pub type BitFlagRef = (u16, u8);
 
-use crate::util::bit_ops::{clear_bit_mask, get_bit, set_bit_mask};
-
 use super::memory_mapper::MemoryMapper;
+use crate::util::{
+	bit_ops::{clear_bit_mask, get_bit, set_bit_mask},
+	bits::*,
+};
 
 #[derive(Copy, Clone, Debug)]
+#[repr(u8)]
 pub enum InterruptFlag {
-	VBlank = 0,
-	LcdStat = 1,
-	Timer = 2,
-	Serial = 3,
-	JoyPad = 4,
+	VBlank = BIT_0,
+	LcdStat = BIT_1,
+	Timer = BIT_2,
+	Serial = BIT_3,
+	JoyPad = BIT_4,
 }
 
+#[repr(u8)]
 pub enum STATFlag {
-	LYCeqLY = 2,
-	HBlankStatInterruptEnable = 3,
-	VBlankStatInterruptEnable = 4,
-	OAMStatInterruptEnable = 5,
-	LYCeqLUInterruptEnable = 6,
+	LYCeqLY = BIT_2,
+	HBlankStatInterruptEnable = BIT_3,
+	VBlankStatInterruptEnable = BIT_4,
+	OAMStatInterruptEnable = BIT_5,
+	LYCeqLUInterruptEnable = BIT_6,
 }
 
+#[repr(u8)]
 pub enum JoyPadFlag {
-	RightOrA = 0,
-	LeftOrB = 1,
-	UpOrSelect = 2,
-	DownOrStart = 3,
-	SelectDirectionButtons = 4,
-	SelectActionButtons = 5,
+	RightOrA = BIT_0,
+	LeftOrB = BIT_1,
+	UpOrSelect = BIT_2,
+	DownOrStart = BIT_3,
+	SelectDirectionButtons = BIT_4,
+	SelectActionButtons = BIT_5,
 }
 
+#[repr(u8)]
 pub enum LCDFlag {
-	BGDisplay = 0,
-	OBJDisplayEnable = 1,
-	OBJSize = 2,
-	BGAndWindowTileDataSelect = 4,
-	BGTileMapDisplaySelect = 3,
-	WindowDisplayEnable = 5,
-	WindowTileMapDisplaySelect = 6,
-	LcdDisplayEnable = 7,
+	BGDisplay = BIT_0,
+	OBJDisplayEnable = BIT_1,
+	OBJSize = BIT_2,
+	BGTileMapDisplaySelect = BIT_3,
+	BGAndWindowTileDataSelect = BIT_4,
+	WindowDisplayEnable = BIT_5,
+	WindowTileMapDisplaySelect = BIT_6,
+	LcdDisplayEnable = BIT_7,
 }
+
+#[repr(u8)]
 pub enum TimerFlag {
-	Stop = 2,
+	Stop = BIT_2,
 }
 
 #[repr(u16)]
@@ -67,17 +75,17 @@ fn flag_to_tuple(flag: BitFlag) -> BitFlagRef {
 
 pub fn get_bit_flag(mem: &dyn MemoryMapper, flag: BitFlag) -> bool {
 	let (addr, bit) = flag_to_tuple(flag);
-	get_bit(mem.read(addr), bit)
+	mem.read(addr) & bit == bit
 }
 
 pub fn clear_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag) {
 	let (addr, bit) = flag_to_tuple(flag);
-	mem.write(addr, mem.read(addr) & clear_bit_mask(bit));
+	mem.write(addr, mem.read(addr) & (!bit));
 }
 
 pub fn set_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag) {
 	let (addr, bit) = flag_to_tuple(flag);
-	mem.write(addr, mem.read(addr) & set_bit_mask(bit));
+	mem.write(addr, mem.read(addr) | bit);
 }
 
 pub fn set_bit_flag_to(mem: &mut dyn MemoryMapper, flag: BitFlag, status: bool) {
