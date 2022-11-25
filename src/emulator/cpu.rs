@@ -149,19 +149,27 @@ impl CPU for EmulatorState {
 	}
 
 	fn check_interrupt(&self, interrupt: InterruptFlag) -> bool {
-		get_bit_flag(self, BitFlag::InterruptEnable(interrupt))
-			&& get_bit_flag(self, BitFlag::InterruptRequest(interrupt))
+		use BitFlag::{InterruptEnable, InterruptRequest};
+
+		let enabled = self.read(InterruptEnable as u16);
+		let requested = self.read(InterruptRequest as u16);
+		let mask = interrupt as u8;
+
+		enabled & requested & mask != 0
 	}
 
 	fn clear_request(&mut self, interrupt: InterruptFlag) {
-		clear_bit_flag(self, BitFlag::InterruptRequest(interrupt));
+		let request_value = self.read(BitFlag::InterruptRequest as u16);
+		self.write(
+			BitFlag::InterruptRequest as u16,
+			request_value & (!(interrupt as u8)),
+		);
 	}
 
 	fn get_interrupt(&mut self) -> Option<Instruction> {
 		use InterruptFlag::*;
-		let to_check = [VBlank, LcdStat, Timer, Serial, JoyPad];
 		if self.cpu_state.interrupt_enable {
-			for interrupt in to_check {
+			for interrupt in [VBlank, LcdStat, Timer, Serial, JoyPad] {
 				if self.check_interrupt(interrupt) {
 					self.clear_request(interrupt);
 					return Some(Instruction::INT(interrupt));

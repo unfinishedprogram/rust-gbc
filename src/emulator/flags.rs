@@ -54,44 +54,37 @@ pub enum TimerFlag {
 
 #[repr(u16)]
 pub enum BitFlag {
-	InterruptEnable(InterruptFlag) = 0xFFFF,
-	InterruptRequest(InterruptFlag) = 0xFF0F,
-	JoyPad(JoyPadFlag) = 0xFF00,
-	LCD(LCDFlag) = 0xFF40,
-	Stat(STATFlag) = 0xFF41,
-	Timer(TimerFlag) = 0xFF07,
+	InterruptEnable = 0xFFFF,
+	InterruptRequest = 0xFF0F,
+	JoyPad = 0xFF00,
+	LCD = 0xFF40,
+	Stat = 0xFF41,
+	Timer = 0xFF07,
 }
 
-fn flag_to_tuple(flag: BitFlag) -> BitFlagRef {
-	match flag {
-		BitFlag::InterruptEnable(bit) => (0xFFFF, bit as u8),
-		BitFlag::InterruptRequest(bit) => (0xFF0F, bit as u8),
-		BitFlag::LCD(bit) => (0xFF40, bit as u8),
-		BitFlag::Stat(bit) => (0xFF41, bit as u8),
-		BitFlag::Timer(bit) => (0xFF07, bit as u8),
-		BitFlag::JoyPad(bit) => (0xFF00, bit as u8),
-	}
+fn flag_to_tuple(flag: BitFlag, bit: u8) -> BitFlagRef {
+	(flag as u16, bit)
 }
 
-pub fn get_bit_flag(mem: &dyn MemoryMapper, flag: BitFlag) -> bool {
-	let (addr, bit) = flag_to_tuple(flag);
+pub fn get_bit_flag(mem: &dyn MemoryMapper, flag: BitFlag, bit: u8) -> bool {
+	let (addr, bit) = flag_to_tuple(flag, bit);
 	mem.read(addr) & bit == bit
 }
 
-pub fn clear_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag) {
-	let (addr, bit) = flag_to_tuple(flag);
+pub fn clear_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag, bit: u8) {
+	let (addr, bit) = flag_to_tuple(flag, bit);
 	mem.write(addr, mem.read(addr) & (!bit));
 }
 
-pub fn set_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag) {
-	let (addr, bit) = flag_to_tuple(flag);
+pub fn set_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag, bit: u8) {
+	let (addr, bit) = flag_to_tuple(flag, bit);
 	mem.write(addr, mem.read(addr) | bit);
 }
 
-pub fn set_bit_flag_to(mem: &mut dyn MemoryMapper, flag: BitFlag, status: bool) {
+pub fn set_bit_flag_to(mem: &mut dyn MemoryMapper, flag: BitFlag, bit: u8, status: bool) {
 	if status {
-		set_bit_flag(mem, flag)
+		set_bit_flag(mem, flag, bit)
 	} else {
-		clear_bit_flag(mem, flag)
+		clear_bit_flag(mem, flag, bit)
 	}
 }

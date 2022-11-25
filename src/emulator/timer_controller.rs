@@ -36,7 +36,11 @@ impl TimerController for EmulatorState {
 			if self.timer_clock >= self.get_speed() {
 				if self.io_register_state[Self::TIMA] == 255 {
 					self.io_register_state[Self::TIMA] = self.io_register_state[Self::TMA];
-					set_bit_flag(self, BitFlag::InterruptRequest(flags::InterruptFlag::Timer));
+					set_bit_flag(
+						self,
+						BitFlag::InterruptRequest,
+						flags::InterruptFlag::Timer as u8,
+					);
 				} else {
 					self.io_register_state[Self::TIMA] += 1;
 				}
@@ -53,10 +57,3 @@ impl TimerController for EmulatorState {
 		}
 	}
 }
-
-// 16384
-
-// 00: CPU Clock / 1024
-// 01: CPU Clock / 16
-// 10: CPU Clock / 64
-// 11: CPU Clock / 256

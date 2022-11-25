@@ -49,12 +49,13 @@ impl PPU for EmulatorState {
 	fn set_ly(&mut self, value: u8) {
 		let lyc_status = self.read(IORegistersAddress::LY as u16) == value;
 		self.write(IORegistersAddress::LY as u16, value);
-		set_bit_flag_to(self, BitFlag::Stat(STATFlag::LYCeqLY), lyc_status);
+		set_bit_flag_to(self, BitFlag::Stat, STATFlag::LYCeqLY as u8, lyc_status);
 
-		if lyc_status && get_bit_flag(self, BitFlag::Stat(STATFlag::LYCeqLUInterruptEnable)) {
+		if lyc_status && get_bit_flag(self, BitFlag::Stat, STATFlag::LYCeqLUInterruptEnable as u8) {
 			set_bit_flag(
 				self,
-				BitFlag::InterruptRequest(flags::InterruptFlag::LcdStat),
+				BitFlag::InterruptRequest,
+				flags::InterruptFlag::LcdStat as u8,
 			);
 		}
 	}
@@ -68,7 +69,8 @@ impl PPU for EmulatorState {
 		if self.get_ly() == 144 {
 			set_bit_flag(
 				self,
-				BitFlag::InterruptRequest(flags::InterruptFlag::VBlank),
+				BitFlag::InterruptRequest,
+				flags::InterruptFlag::VBlank as u8,
 			)
 		}
 
@@ -84,7 +86,8 @@ impl PPU for EmulatorState {
 				self.ppu_state.cycle += 908;
 				set_bit_flag(
 					self,
-					BitFlag::InterruptRequest(flags::InterruptFlag::VBlank),
+					BitFlag::InterruptRequest,
+					flags::InterruptFlag::VBlank as u8,
 				)
 			} else {
 				self.ppu_state.cycle += 4;
