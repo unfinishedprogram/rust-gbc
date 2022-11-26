@@ -5,7 +5,7 @@ use crate::emulator::{
 	memory_mapper::MemoryMapper,
 };
 
-use super::{lcd::LCDDisplay, renderer::Renderer, EmulatorState};
+use super::{cpu::flags::Flags, lcd::LCDDisplay, renderer::Renderer, EmulatorState};
 
 #[derive(Debug)]
 pub enum PPUMode {
@@ -60,18 +60,28 @@ impl PPU for EmulatorState {
 		}
 	}
 
-	fn set_mode(&mut self, _mode: PPUMode) {}
+	fn set_mode(&mut self, _mode: PPUMode) {
+		// let state = self.read(IORegistersAddress::STAT as u16);
+		// self.write(
+		// IORegistersAddress::STAT as u16,
+		// (state & 0b11111100) | _mode as u8,
+		// );
+	}
 
 	fn step_ppu(&mut self, lcd: &mut dyn LCDDisplay) {
+		// use PPUMode::*;
+		// match self.get_mode() {
+		// 	PPUMode::HBlank => todo!(),
+		// 	PPUMode::VBlank => todo!(),
+		// 	PPUMode::OamScan => todo!(),
+		// 	PPUMode::Draw => self.set_mode(HBlank),
+		// }
+
 		self.set_ly(self.get_ly() + 1);
 		self.ppu_state.paused = false;
 
 		if self.get_ly() == 144 {
-			set_bit_flag(
-				self,
-				BitFlag::InterruptRequest,
-				flags::InterruptFlag::VBlank as u8,
-			)
+			self.set_mode(PPUMode::VBlank);
 		}
 
 		if self.get_ly() >= 153 {
@@ -88,7 +98,8 @@ impl PPU for EmulatorState {
 					self,
 					BitFlag::InterruptRequest,
 					flags::InterruptFlag::VBlank as u8,
-				)
+				);
+				self.set_mode(PPUMode::OamScan)
 			} else {
 				self.ppu_state.cycle += 4;
 				self.ppu_state.maxed = true;

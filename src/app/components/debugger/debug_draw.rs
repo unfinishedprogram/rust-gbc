@@ -43,17 +43,16 @@ pub fn debug_draw_window_data(state: &EmulatorState, window_buffer: &mut PixelBu
 	// let background_map_start = 0x9C00;
 	// let background_map_start = 0x8800;
 	let background_map_start = 0x9800;
-	// let tile_map_offset = 0x8000;
-	let tile_map_offset = 0x9000;
+	// let tile_map_offset = 0x9000;
+	let tile_map_offset = 0x8000;
 
 	for y in 0..32 {
 		for x in 0..32 {
 			let offset = state.read(background_map_start + x + y * 32);
 
-			// let real_offset: i32 = 16 * (offset as i32) + tile_map_offset; // Tests
-			let real_offset: i32 = 16 * (offset as i8) as i32 + tile_map_offset; // DR Mario
+			let real_offset: i32 = 16 * (offset as i32) + tile_map_offset; // Tests
 
-			// let index = (0x9000 + real_offset) as u16;
+			// let real_offset: i32 = 16 * (offset as i8) as i32 + tile_map_offset; // DR Mario
 
 			let index = real_offset as u16;
 
