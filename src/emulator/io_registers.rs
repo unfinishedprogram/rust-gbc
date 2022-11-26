@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 use log::error;
 
-use crate::emulator::ppu::PPU;
+use crate::{emulator::ppu::PPU, util::bits::BIT_0};
 
 use super::EmulatorState;
 
@@ -106,6 +106,8 @@ pub trait IORegisters {
 impl IORegisters for EmulatorState {
 	fn read_io(&self, addr: u16) -> u8 {
 		match IORegistersAddress::try_from(addr) {
+			// All 0 is off
+			Ok(IORegistersAddress::JOYP) => 0xFF,
 			Err(_) => {
 				error!("Unhandled Read: {:X}", addr);
 				self.io_register_state[addr]
@@ -130,7 +132,6 @@ impl IORegisters for EmulatorState {
 					self.ppu_state.pause();
 				}
 				self.io_register_state[addr] = value;
-				// Reset screen
 			}
 			Err(_) => {
 				self.run = false;
