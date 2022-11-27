@@ -168,7 +168,8 @@ impl CPU for EmulatorState {
 
 	fn get_interrupt(&mut self) -> Option<Instruction> {
 		use InterruptFlag::*;
-		if self.cpu_state.interrupt_enable {
+
+		if self.cpu_state.interrupt_enable || self.halted {
 			for interrupt in [VBlank, LcdStat, Timer, Serial, JoyPad] {
 				if self.check_interrupt(interrupt) {
 					self.clear_request(interrupt);
@@ -187,8 +188,10 @@ impl CPU for EmulatorState {
 	fn step(&mut self) {
 		if self.halted {
 			if let Some(inst) = self.get_interrupt() {
-				self.halted = false;
 				execute_instruction(inst, self);
+				self.halted = false;
+			} else {
+				self.cycle += 1;
 			}
 		}
 

@@ -90,11 +90,8 @@ impl Debugger {
 				// self.cycle += 1;
 				let now = instant::Instant::now();
 				let start = self.emulator_state.cycle;
-
-				while self.emulator_state.cycle - start < 6990 {
-					// while self.emulator_state.cycle - start < 69905 {
+				while self.emulator_state.cycle - start < 1_048_576 / 144 {
 					self.emulator_state.step(&mut self.lcd);
-					// self.do_serial();
 				}
 
 				self.cycle = self.emulator_state.cycle;

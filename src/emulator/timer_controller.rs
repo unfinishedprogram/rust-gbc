@@ -49,6 +49,7 @@ impl TimerController for EmulatorState {
 		}
 
 		if self.div_clock >= 256 {
+			self.div_clock -= 256;
 			if self.io_register_state[Self::DIV] == 255 {
 				self.io_register_state[Self::DIV] = 0;
 			} else {
