@@ -5,7 +5,7 @@ use crate::emulator::{
 	memory_mapper::MemoryMapper,
 };
 
-use super::{cpu::flags::Flags, lcd::LCDDisplay, renderer::Renderer, EmulatorState};
+use super::{lcd::LCDDisplay, renderer::Renderer, EmulatorState};
 
 #[derive(Debug)]
 pub enum PPUMode {

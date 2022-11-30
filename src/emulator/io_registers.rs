@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 use log::error;
 
-use crate::{emulator::ppu::PPU, util::bits::BIT_0};
+use crate::emulator::ppu::PPU;
 
 use super::EmulatorState;
 

@@ -1,5 +1,3 @@
-use log::warn;
-
 use crate::util::bits::*;
 
 pub struct Sprite {

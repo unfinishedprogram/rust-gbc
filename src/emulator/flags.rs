@@ -1,10 +1,7 @@
 pub type BitFlagRef = (u16, u8);
 
 use super::memory_mapper::MemoryMapper;
-use crate::util::{
-	bit_ops::{clear_bit_mask, get_bit, set_bit_mask},
-	bits::*,
-};
+use crate::util::bits::*;
 
 #[derive(Copy, Clone, Debug)]
 #[repr(u8)]

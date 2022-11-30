@@ -21,24 +21,17 @@ trait RendererHelpers {
 
 impl RendererHelpers for EmulatorState {
 	fn fetch_sprites(&mut self) -> Vec<Sprite> {
-		vec![Sprite::new((
-			self.read(0xFE00),
-			self.read(0xFE01),
-			self.read(0xFE02),
-			self.read(0xFE03),
-		))]
-
-		// (0..40)
-		// 	.map(|i| {
-		// 		let index = 0xFE00 + i * 4;
-		// 		Sprite::new((
-		// 			self.read(index + 0),
-		// 			self.read(index + 1),
-		// 			self.read(index + 2),
-		// 			self.read(index + 3),
-		// 		))
-		// 	})
-		// 	.collect()
+		(0..40)
+			.map(|i| {
+				let index = 0xFE00 + i * 4;
+				Sprite::new((
+					self.read(index + 0),
+					self.read(index + 1),
+					self.read(index + 2),
+					self.read(index + 3),
+				))
+			})
+			.collect()
 	}
 
 	fn render_sprites(&mut self, lcd: &mut dyn LCDDisplay) {
@@ -144,7 +137,7 @@ impl Renderer for EmulatorState {
 		// let bg_window_priority = lcdc & 0b10000000 == 0b10000000;
 
 		let (scx, scy) = (self.read(0xFF43), self.read(0xFF42));
-		let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
+		let (_wx, _wy) = (self.read(0xFF4B), self.read(0xFF4A));
 
 		for y in 0u8..144 {
 			for x in 0u8..160 {
