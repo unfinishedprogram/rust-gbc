@@ -53,8 +53,8 @@ pub enum IORegistersAddress {
 	// Serial Transfer
 	SB = 0xFF01,
 	SC = 0xFF02,
-
-	IFL = 0xFF0F,
+	IE = 0xFFFF,
+	IF = 0xFF0F,
 	JOYP = 0xFF00,
 }
 
@@ -108,6 +108,7 @@ impl IORegisters for EmulatorState {
 		match IORegistersAddress::try_from(addr) {
 			// All 0 is off
 			Ok(IORegistersAddress::JOYP) => 0xFF,
+			Ok(IORegistersAddress::TAC) => self.io_register_state[addr] | 0xF8,
 			Err(_) => {
 				error!("Unhandled Read: {:X}", addr);
 				self.io_register_state[addr]

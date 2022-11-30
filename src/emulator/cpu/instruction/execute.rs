@@ -14,23 +14,6 @@ use std::ops::{BitAnd, BitOr, BitXor};
 
 use super::condition::Condition;
 
-// fn has_half_carry_u8(old: u8, new: u8) -> bool {
-// 	has_half_carry_u8_wc(old, new, false)
-// }
-// fn has_carry_u8(old: u8, new: u8) -> bool {
-// 	has_half_carry_u8_wc(old, new, false)
-// }
-
-// // Check for half carry with a carry bit
-// fn has_half_carry_u8_wc(old: u8, new: u8, carry: bool) -> bool {
-// 	((old & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10
-// }
-
-// // Check for carry with a carry bit
-// fn has_carry_u8_wc(old: u8, new: u8, carry: bool) -> bool {
-// 	return true;
-// }
-
 pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) {
 	let cpu = state;
 

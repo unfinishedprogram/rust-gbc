@@ -1,4 +1,6 @@
-use crate::emulator::{self, state::EmulatorState};
+use crate::emulator::{
+	self, memory_mapper::MemoryMapper, state::EmulatorState, timer_controller::TimerController,
+};
 use egui::Ui;
 use emulator::cpu::registers::CPURegister16::*;
 
@@ -19,15 +21,11 @@ pub fn draw_status(ui: &mut Ui, emulator: &EmulatorState) {
 			ui.monospace(format!("HL:{:04X}", cpu.registers.get_u16(HL)));
 			ui.monospace(format!("SP:{:04X}", cpu.registers.get_u16(SP)));
 			ui.monospace(format!("PC:{:04X}", cpu.registers.get_u16(PC)));
+
+			ui.monospace(format!("INT ENABLE GLOBAL:{}", cpu.interrupt_enable));
+			ui.monospace(format!("IE:{:<08b}", emulator.read(0xFFFF)));
+			ui.monospace(format!("IR:{:<08b}", emulator.read(0xFF0F)));
+			ui.monospace(format!("Timer Enabled:{}", emulator.is_enabled()));
 		});
-		ui.vertical(|_ui| {
-			// ui.monospace(format!("Z :{}", cpu.get_flag(Flag::Z)));
-			// ui.monospace(format!("N :{}", cpu.get_flag(Flag::N)));
-			// ui.monospace(format!("H :{}", cpu.get_flag(Flag::H)));
-			// ui.monospace(format!("C :{}", cpu.get_flag(Flag::C)));
-		});
-	});
-	ui.horizontal(|ui| {
-		ui.monospace(format!("IE:{}", cpu.interrupt_enable));
 	});
 }
