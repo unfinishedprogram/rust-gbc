@@ -34,7 +34,7 @@ impl Default for Debugger {
 			cycle: 0,
 			frame_time: "".to_string(),
 			serial_output: vec![],
-			emulator_state: EmulatorState::default().init(),
+			emulator_state: EmulatorState::default(),
 			state: DebuggerState::Paused,
 			vram_view: BufferView::new("VRAM", (16 * 8, 24 * 8)),
 			window_view: BufferView::new("Window", (256, 256)),

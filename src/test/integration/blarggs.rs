@@ -7,7 +7,7 @@ use crate::{emulator::EmulatorState, test::mocks::mock_lcd::MockLCD};
 
 fn test_blargg(rom_name: &str, end: usize) {
 	let mut lcd = MockLCD::default();
-	let mut state = EmulatorState::default().init();
+	let mut state = EmulatorState::default();
 
 	let rom_handle = File::open(format!("roms/{rom_name}.gb"))
 		.unwrap_or_else(|_| panic!("roms/{rom_name}.gb not found"));

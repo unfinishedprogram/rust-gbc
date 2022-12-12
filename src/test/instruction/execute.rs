@@ -15,7 +15,7 @@ use crate::{
 use std::vec;
 
 fn get_state(data: Vec<u8>) -> EmulatorState {
-	let mut state = EmulatorState::default().init();
+	let mut state = EmulatorState::default();
 	state.load_rom(&create_rom(data));
 	state
 }
