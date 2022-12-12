@@ -1,5 +1,5 @@
 use super::{
-	flags::{self, set_bit_flag, BitFlag},
+	flags::{INTERRUPT_REQUEST, INT_TIMER},
 	EmulatorState,
 };
 
@@ -36,11 +36,7 @@ impl TimerController for EmulatorState {
 			if self.timer_clock >= self.get_speed() {
 				if self.io_register_state[Self::TIMA] == 255 {
 					self.io_register_state[Self::TIMA] = self.io_register_state[Self::TMA];
-					set_bit_flag(
-						self,
-						BitFlag::InterruptRequest,
-						flags::InterruptFlag::Timer as u8,
-					);
+					self.io_register_state[INTERRUPT_REQUEST] |= INT_TIMER;
 				} else {
 					self.io_register_state[Self::TIMA] += 1;
 				}

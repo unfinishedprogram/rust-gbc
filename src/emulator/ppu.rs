@@ -1,11 +1,13 @@
-use crate::emulator::{
-	flags,
-	flags::{get_bit_flag, set_bit_flag, set_bit_flag_to, BitFlag, STATFlag},
-	io_registers::IORegistersAddress,
-	memory_mapper::MemoryMapper,
-};
+use crate::emulator::{io_registers::IORegistersAddress, memory_mapper::MemoryMapper};
 
-use super::{lcd::LCDDisplay, renderer::Renderer, EmulatorState};
+use super::{
+	flags::{
+		INTERRUPT_REQUEST, INT_LCD_STAT, INT_V_BLANK, STAT, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE,
+	},
+	lcd::LCDDisplay,
+	renderer::Renderer,
+	EmulatorState,
+};
 
 #[derive(Debug)]
 pub enum PPUMode {
@@ -49,14 +51,15 @@ impl PPU for EmulatorState {
 	fn set_ly(&mut self, value: u8) {
 		let lyc_status = self.read(IORegistersAddress::LY as u16) == value;
 		self.write(IORegistersAddress::LY as u16, value);
-		set_bit_flag_to(self, BitFlag::Stat, STATFlag::LYCeqLY as u8, lyc_status);
 
-		if lyc_status && get_bit_flag(self, BitFlag::Stat, STATFlag::LYCeqLUInterruptEnable as u8) {
-			set_bit_flag(
-				self,
-				BitFlag::InterruptRequest,
-				flags::InterruptFlag::LcdStat as u8,
-			);
+		if lyc_status {
+			self.io_register_state[STAT] |= STAT_LYC_EQ_LY
+		} else {
+			self.io_register_state[STAT] &= !STAT_LYC_EQ_LY
+		}
+
+		if lyc_status && self.io_register_state[STAT] & STAT_LYC_EQ_LY_IE != 0 {
+			self.io_register_state[INTERRUPT_REQUEST] |= INT_LCD_STAT;
 		}
 	}
 
@@ -94,11 +97,7 @@ impl PPU for EmulatorState {
 
 				self.ppu_state.maxed = false;
 				self.ppu_state.cycle += 908;
-				set_bit_flag(
-					self,
-					BitFlag::InterruptRequest,
-					flags::InterruptFlag::VBlank as u8,
-				);
+				self.io_register_state[INTERRUPT_REQUEST] |= INT_V_BLANK;
 				self.set_mode(PPUMode::OamScan)
 			} else {
 				self.ppu_state.cycle += 4;

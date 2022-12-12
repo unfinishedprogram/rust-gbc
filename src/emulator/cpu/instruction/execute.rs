@@ -7,6 +7,7 @@ use crate::emulator::{
 		values::ValueRefU16,
 		CPU,
 	},
+	flags::{INT_JOY_PAD, INT_LCD_STAT, INT_SERIAL, INT_TIMER, INT_V_BLANK},
 	EmulatorState,
 };
 
@@ -21,13 +22,13 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		NOP => {}
 		INT(interrupt) => {
 			cpu.disable_interrupts();
-			use crate::emulator::flags::InterruptFlag::*;
 			let addr = match interrupt {
-				VBlank => 0x40,
-				LcdStat => 0x48,
-				Timer => 0x50,
-				Serial => 0x58,
-				JoyPad => 0x60,
+				_ if interrupt == INT_V_BLANK => 0x40,
+				_ if interrupt == INT_LCD_STAT => 0x48,
+				_ if interrupt == INT_TIMER => 0x50,
+				_ if interrupt == INT_SERIAL => 0x58,
+				_ if interrupt == INT_JOY_PAD => 0x60,
+				_ => unreachable!(),
 			};
 			let current_pc = cpu.read_16(CPURegister16::PC.into());
 			cpu.push(current_pc);

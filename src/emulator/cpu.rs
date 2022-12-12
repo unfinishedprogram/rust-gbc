@@ -44,8 +44,8 @@ pub trait CPU {
 	fn fetch_next_instruction(&mut self) -> Instruction;
 
 	fn check_condition(&self, condition: Condition) -> bool;
-	fn check_interrupt(&self, interrupt: InterruptFlag) -> bool;
-	fn clear_request(&mut self, interrupt: InterruptFlag);
+	fn check_interrupt(&self, interrupt: u8) -> bool;
+	fn clear_request(&mut self, interrupt: u8);
 	fn get_interrupt(&mut self) -> Option<Instruction>;
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction;
 	fn step(&mut self);
@@ -148,29 +148,26 @@ impl CPU for EmulatorState {
 		}
 	}
 
-	fn check_interrupt(&self, interrupt: InterruptFlag) -> bool {
-		use BitFlag::{InterruptEnable, InterruptRequest};
-
-		let enabled = self.read(InterruptEnable as u16);
-		let requested = self.read(InterruptRequest as u16);
-		let mask = interrupt as u8;
-
-		enabled & requested & mask != 0
+	fn check_interrupt(&self, interrupt: u8) -> bool {
+		let enabled = self.read(INTERRUPT_ENABLE);
+		let requested = self.read(INTERRUPT_REQUEST);
+		enabled & requested & interrupt == interrupt
 	}
 
-	fn clear_request(&mut self, interrupt: InterruptFlag) {
-		let request_value = self.read(BitFlag::InterruptRequest as u16);
-		self.write(
-			BitFlag::InterruptRequest as u16,
-			request_value & (!(interrupt as u8)),
-		);
+	fn clear_request(&mut self, interrupt: u8) {
+		let request_value = self.read(INTERRUPT_REQUEST);
+		self.write(INTERRUPT_REQUEST, request_value & !interrupt);
 	}
 
 	fn get_interrupt(&mut self) -> Option<Instruction> {
-		use InterruptFlag::*;
-
 		if self.cpu_state.interrupt_enable || self.halted {
-			for interrupt in [VBlank, LcdStat, Timer, Serial, JoyPad] {
+			for interrupt in [
+				INT_V_BLANK,
+				INT_LCD_STAT,
+				INT_TIMER,
+				INT_SERIAL,
+				INT_JOY_PAD,
+			] {
 				if self.check_interrupt(interrupt) {
 					self.clear_request(interrupt);
 					return Some(Instruction::INT(interrupt));

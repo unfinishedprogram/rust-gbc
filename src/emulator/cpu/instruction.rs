@@ -17,8 +17,6 @@ use super::{
 	values::{ValueRefI8, ValueRefU16, ValueRefU8},
 };
 
-use crate::emulator::flags::InterruptFlag;
-
 #[allow(non_camel_case_types)]
 pub enum Instruction {
 	COMPOSE(Box<Instruction>, Box<Instruction>),
@@ -63,7 +61,7 @@ pub enum Instruction {
 	SET(u8, ValueRefU8),
 	ROT(RotShiftOperation, ValueRefU8),
 
-	INT(InterruptFlag),
+	INT(u8),
 
 	LD_A_INC_HL,
 	LD_A_DEC_HL,

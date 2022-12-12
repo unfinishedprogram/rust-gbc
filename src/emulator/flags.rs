@@ -1,87 +1,40 @@
-pub type BitFlagRef = (u16, u8);
-
-use super::memory_mapper::MemoryMapper;
 use crate::util::bits::*;
 
-#[derive(Copy, Clone, Debug)]
-#[repr(u8)]
-pub enum InterruptFlag {
-	VBlank = BIT_0,
-	LcdStat = BIT_1,
-	Timer = BIT_2,
-	Serial = BIT_3,
-	JoyPad = BIT_4,
-}
+// Memory addresses of flag registers
+pub const INTERRUPT_ENABLE: u16 = 0xFFFF;
+pub const INTERRUPT_REQUEST: u16 = 0xFF0F;
+pub const JOY_PAD: u16 = 0xFF00;
+pub const LCD: u16 = 0xFF40;
+pub const STAT: u16 = 0xFF41;
+pub const TIMER: u16 = 0xFF07;
 
-#[repr(u8)]
-pub enum STATFlag {
-	LYCeqLY = BIT_2,
-	HBlankStatInterruptEnable = BIT_3,
-	VBlankStatInterruptEnable = BIT_4,
-	OAMStatInterruptEnable = BIT_5,
-	LYCeqLUInterruptEnable = BIT_6,
-}
+// Interrupt flag masks, Same for INTERRUPT_ENABLE andINTERRUPT_REQUEST
+pub const INT_V_BLANK: u8 = BIT_0;
+pub const INT_LCD_STAT: u8 = BIT_1;
+pub const INT_TIMER: u8 = BIT_2;
+pub const INT_SERIAL: u8 = BIT_3;
+pub const INT_JOY_PAD: u8 = BIT_4;
 
-#[repr(u8)]
-pub enum JoyPadFlag {
-	RightOrA = BIT_0,
-	LeftOrB = BIT_1,
-	UpOrSelect = BIT_2,
-	DownOrStart = BIT_3,
-	SelectDirectionButtons = BIT_4,
-	SelectActionButtons = BIT_5,
-}
+// Stat Flag
+pub const STAT_LYC_EQ_LY: u8 = BIT_2;
+pub const STAT_H_BLANK_IE: u8 = BIT_3;
+pub const STAT_V_BLANK_IE: u8 = BIT_4;
+pub const STAT_OAM_IE: u8 = BIT_5;
+pub const STAT_LYC_EQ_LY_IE: u8 = BIT_6;
 
-#[repr(u8)]
-pub enum LCDFlag {
-	BGDisplay = BIT_0,
-	OBJDisplayEnable = BIT_1,
-	OBJSize = BIT_2,
-	BGTileMapDisplaySelect = BIT_3,
-	BGAndWindowTileDataSelect = BIT_4,
-	WindowDisplayEnable = BIT_5,
-	WindowTileMapDisplaySelect = BIT_6,
-	LcdDisplayEnable = BIT_7,
-}
-
-#[repr(u8)]
-pub enum TimerFlag {
-	Stop = BIT_2,
-}
-
-#[repr(u16)]
-pub enum BitFlag {
-	InterruptEnable = 0xFFFF,
-	InterruptRequest = 0xFF0F,
-	JoyPad = 0xFF00,
-	LCD = 0xFF40,
-	Stat = 0xFF41,
-	Timer = 0xFF07,
-}
-
-fn flag_to_tuple(flag: BitFlag, bit: u8) -> BitFlagRef {
-	(flag as u16, bit)
-}
-
-pub fn get_bit_flag(mem: &dyn MemoryMapper, flag: BitFlag, bit: u8) -> bool {
-	let (addr, bit) = flag_to_tuple(flag, bit);
-	mem.read(addr) & bit == bit
-}
-
-pub fn clear_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag, bit: u8) {
-	let (addr, bit) = flag_to_tuple(flag, bit);
-	mem.write(addr, mem.read(addr) & (!bit));
-}
-
-pub fn set_bit_flag(mem: &mut dyn MemoryMapper, flag: BitFlag, bit: u8) {
-	let (addr, bit) = flag_to_tuple(flag, bit);
-	mem.write(addr, mem.read(addr) | bit);
-}
-
-pub fn set_bit_flag_to(mem: &mut dyn MemoryMapper, flag: BitFlag, bit: u8, status: bool) {
-	if status {
-		set_bit_flag(mem, flag, bit)
-	} else {
-		clear_bit_flag(mem, flag, bit)
-	}
-}
+// LCD Flags
+pub const LCD_BG_DISPLAY: u8 = BIT_0;
+pub const LCD_OBJ_DISPLAY_ENABLE: u8 = BIT_1;
+pub const LCD_OBJ_SIZE: u8 = BIT_2;
+pub const LCD_BG_TILE_MAP_DISPLAY_SELECT: u8 = BIT_3;
+pub const LCD_BG_AND_WINDOW_TILE_DATA_SELECT: u8 = BIT_4;
+pub const LCD_WINDOW_DISPLAY_ENABLE: u8 = BIT_5;
+pub const LCD_WINDOW_TILE_MAP_DISPLAY_SELECT: u8 = BIT_6;
+pub const LCD_DISPLAY_ENABLE: u8 = BIT_7;
+// JoyPad Flags
+pub const JOYP_RIGHT_OR_A: u8 = BIT_0;
+pub const JOYP_LEFT_OR_B: u8 = BIT_1;
+pub const JOYP_UP_OR_SELECT: u8 = BIT_2;
+pub const JOYP_DOWN_OR_START: u8 = BIT_3;
+pub const JOYP_SELECT_DIRECTION_BUTTONS: u8 = BIT_4;
+pub const JOYP_SELECT_ACTION_BUTTONS: u8 = BIT_5;

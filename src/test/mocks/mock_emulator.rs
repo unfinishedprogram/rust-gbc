@@ -7,7 +7,6 @@ use crate::emulator::{
 		values::{ValueRefI8, ValueRefU16, ValueRefU8},
 		CPU,
 	},
-	flags::InterruptFlag,
 	memory_mapper::MemoryMapper,
 };
 
@@ -66,10 +65,10 @@ impl CPU for MockEmulator {
 	fn check_condition(&self, condition: Condition) -> bool {
 		false
 	}
-	fn check_interrupt(&self, interrupt: InterruptFlag) -> bool {
+	fn check_interrupt(&self, interrupt: u8) -> bool {
 		false
 	}
-	fn clear_request(&mut self, interrupt: InterruptFlag) {}
+	fn clear_request(&mut self, interrupt: u8) {}
 	fn get_interrupt(&mut self) -> Option<Instruction> {
 		None
 	}
