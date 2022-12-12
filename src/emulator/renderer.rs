@@ -25,7 +25,7 @@ impl RendererHelpers for EmulatorState {
 			.map(|i| {
 				let index = 0xFE00 + i * 4;
 				Sprite::new((
-					self.read(index + 0),
+					self.read(index),
 					self.read(index + 1),
 					self.read(index + 2),
 					self.read(index + 3),

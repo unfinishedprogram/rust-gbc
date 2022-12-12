@@ -33,7 +33,6 @@ fn misc_ctrl() {
 }
 
 #[test]
-
 fn move_load_16_bit() {
 	use CPURegister16::*;
 	use Instruction::*;

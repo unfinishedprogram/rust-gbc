@@ -104,7 +104,7 @@ fn test_blargg(rom_name: &str, end: usize) {
 	let mut lcd = MockLCD::default();
 	let mut state = EmulatorState::default().init();
 	let rom_handle = File::open(format!("roms/{rom_name}.gb"))
-		.expect(format!("roms/{rom_name}.gb not found").as_str());
+		.unwrap_or_else(|_| panic!("roms/{rom_name}.gb not found"));
 
 	let mut rom = vec![];
 	_ = io::BufReader::new(rom_handle).read_to_end(&mut rom);
@@ -131,7 +131,7 @@ fn test_blargg(rom_name: &str, end: usize) {
 	}
 
 	if !final_str.contains("Passed") {
-		panic!("\n{}\n", final_str)
+		panic!("\n{final_str}\n",)
 	}
 }
 

@@ -18,7 +18,9 @@ pub struct CartridgeState {
 
 impl CartridgeState {
 	pub fn from_raw_rom(raw_data: Vec<u8>) -> Result<Self, String> {
+		log::error!("Len:{}", raw_data.len());
 		let raw_header = RawCartridgeHeader::from(&raw_data);
+
 		if let Ok(info) = raw_header.parse() {
 			Ok(Self {
 				raw_ram: vec![0; (info.ram_banks * 0x2000) as usize],
@@ -38,7 +40,15 @@ impl MemoryMapper for CartridgeState {
 		use mbc::MBC::*;
 
 		match self.info.mbc {
-			ROM => self.raw_data[addr as usize],
+			ROM => {
+				if matches!(addr, 0..0x8000) {
+					self.raw_data[addr as usize]
+				} else {
+					log::error!("Invalid Read memory: {addr}");
+					0
+				}
+			}
+
 			MBC1 => match addr {
 				0x0000..0x4000 => self.raw_data[addr as usize], // bank 0
 				0x4000..0x8000 => {

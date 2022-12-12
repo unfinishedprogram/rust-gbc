@@ -153,7 +153,7 @@ impl Debug for Instruction {
 			Self::RET(Condition::ALWAYS) => write!(f, "ret"),
 			Self::RET(arg0) => write!(f, "ret {arg0:?}"),
 			Self::RST(ValueRefU16::Raw(arg0)) => write!(f, "rst ${:02X}", *arg0 as u8),
-			Self::RST(arg0) => write!(f, "rst {:?}", arg0),
+			Self::RST(arg0) => write!(f, "rst {arg0:?}"),
 			Self::DI => write!(f, "di"),
 			Self::EI => write!(f, "ei"),
 			Self::RLCA => write!(f, "rlca"),

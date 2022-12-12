@@ -118,13 +118,9 @@ impl EmulatorState {
 	}
 
 	pub fn load_rom(&mut self, rom: &[u8]) {
-		let mut new_rom = rom.to_owned();
+		let rom = rom.to_owned();
 
-		if new_rom.len() < 0x10000 {
-			new_rom.resize(0x10000, 0);
-		}
-
-		if let Ok(state) = CartridgeState::from_raw_rom(new_rom) {
+		if let Ok(state) = CartridgeState::from_raw_rom(rom) {
 			info!("Loaded Rom");
 			info!("{:?}", state.info);
 
