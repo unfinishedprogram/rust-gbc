@@ -1,6 +1,6 @@
 use crate::emulator::memory_mapper::MemoryMapper;
 use crate::emulator::state::EmulatorState;
-use crate::util::bit_ops::*;
+use crate::util::bits::bit;
 
 type TileBuffer = [[[u8; 4]; 8]; 8];
 type PixelBuffer = Vec<Vec<[u8; 4]>>;
@@ -21,8 +21,8 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 	for y in 0..8 {
 		for x in 0..8 {
 			let color = match (
-				get_bit(gb_tile[y * 2], x as u8),
-				get_bit(gb_tile[y * 2 + 1], x as u8),
+				gb_tile[y * 2] & bit(x as u8) != 0,
+				gb_tile[y * 2 + 1] & bit(x as u8) != 0,
 			) {
 				(true, true) => [8, 24, 32, 255],
 				(true, false) => [224, 248, 208, 255],

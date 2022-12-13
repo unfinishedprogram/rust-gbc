@@ -1,5 +1,5 @@
 type Color = (u8, u8, u8);
-use crate::util::{bit_ops::get_bit, bits::*};
+use crate::util::bits::*;
 pub mod sprite;
 
 use self::sprite::Sprite;
@@ -103,8 +103,8 @@ impl RendererHelpers for EmulatorState {
 		} as u16;
 
 		match (
-			get_bit(self.read(addr + y * 2), x as u8),
-			get_bit(self.read(addr + y * 2 + 1), x as u8),
+			self.read(addr + y * 2) & bit(x as u8) != 0,
+			self.read(addr + y * 2 + 1) & bit(x as u8) != 0,
 		) {
 			(true, true) => (8, 24, 32),
 			(true, false) => (224, 248, 208),

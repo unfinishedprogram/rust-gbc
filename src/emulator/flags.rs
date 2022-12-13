@@ -31,6 +31,7 @@ pub const LCD_BG_AND_WINDOW_TILE_DATA_SELECT: u8 = BIT_4;
 pub const LCD_WINDOW_DISPLAY_ENABLE: u8 = BIT_5;
 pub const LCD_WINDOW_TILE_MAP_DISPLAY_SELECT: u8 = BIT_6;
 pub const LCD_DISPLAY_ENABLE: u8 = BIT_7;
+
 // JoyPad Flags
 pub const JOYP_RIGHT_OR_A: u8 = BIT_0;
 pub const JOYP_LEFT_OR_B: u8 = BIT_1;
