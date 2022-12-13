@@ -1,4 +1,6 @@
 type Color = (u8, u8, u8);
+use log::info;
+
 use crate::util::bits::*;
 pub mod sprite;
 
@@ -36,8 +38,8 @@ impl RendererHelpers for EmulatorState {
 
 	fn render_sprites(&mut self, lcd: &mut dyn LCDDisplay) {
 		// Get only the visible sprites
-		let sprites = self.fetch_sprites().into_iter().filter(|s| s.is_visible());
-
+		let sprites = self.fetch_sprites();
+		let sprites = sprites.into_iter().filter(|s| s.is_visible());
 		for sprite in sprites {
 			log::error!("Rendering Sprite");
 			for x in sprite.x..sprite.x + 8 {

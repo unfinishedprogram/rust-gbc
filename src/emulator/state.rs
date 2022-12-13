@@ -72,6 +72,7 @@ impl Default for EmulatorState {
 		emulator.write_16(ValueRefU16::Reg(CPURegister16::PC), 0x0100);
 		emulator.set_mode(PPUMode::OamScan);
 
+		emulator.write(0xFF04, 0xAB);
 		emulator.write(0xFF10, 0x80);
 		emulator.write(0xFF11, 0xBF);
 		emulator.write(0xFF12, 0xF3);

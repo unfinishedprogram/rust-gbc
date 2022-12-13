@@ -85,23 +85,15 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 		(3, 0, 3, _, _) => inst!(cpu, RET, (DT.cc[3])),
 
 		(3, 0, 4, _, _) => {
-			inst!(
-				cpu,
-				LDH,
-				(ValueRefU8::MemOffset(Box::new(ValueRefU8::Raw(cpu.next_byte())))),
-				A
-			)
+			use ValueRefU8::*;
+			inst!(cpu, LDH, (MemOffset(Box::new(cpu.next_byte().into()))), A)
 		}
 
 		(3, 0, 5, _, _) => inst!(cpu, ADD_SIGNED, SP, d),
 
 		(3, 0, 6, _, _) => {
-			inst!(
-				cpu,
-				LDH,
-				A,
-				(ValueRefU8::MemOffset(Box::new(ValueRefU8::Raw(cpu.next_byte()))))
-			)
+			use ValueRefU8::*;
+			inst!(cpu, LDH, A, (MemOffset(Box::new(cpu.next_byte().into()))))
 		}
 
 		(3, 0, 7, _, _) => inst!(cpu, LD_HL_SP_DD, d),
@@ -118,7 +110,7 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 		}
 		(3, 2, 5, _, _) => inst!(cpu, LD_8, [nn]u8, A),
 
-		(3, 2, 6, _, _) => inst!(cpu, LD_8, A, (ValueRefU8::MemOffset(Box::new(C.into())))),
+		(3, 2, 6, _, _) => inst!(cpu, LDH, A, (ValueRefU8::MemOffset(Box::new(C.into())))),
 		(3, 2, 7, _, _) => inst!(cpu, LD_8, A, [nn]u8),
 
 		(3, 2, c, _, _) => inst!(cpu, JP, (DT.cc[c]), nn),

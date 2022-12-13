@@ -50,6 +50,10 @@ impl Default for EmulatorManager {
 				"roms/09-op r,r.gb",
 				"roms/10-bit ops.gb",
 				"roms/11-op a,(hl).gb",
+				"roms/mem_timing.gb",
+				"roms/01-read_timing.gb",
+				"roms/02-write_timing.gb",
+				"roms/03-modify_timing.gb",
 			],
 		}
 	}

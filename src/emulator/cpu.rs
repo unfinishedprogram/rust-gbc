@@ -8,7 +8,6 @@ pub mod values;
 use crate::emulator::cpu::flags::Flags;
 
 use super::memory_mapper::MemoryMapper;
-use log::info;
 pub use state::CPUState;
 
 use super::flags::*;

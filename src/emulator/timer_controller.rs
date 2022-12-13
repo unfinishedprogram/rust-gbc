@@ -31,7 +31,7 @@ impl TimerController for EmulatorState {
 	fn update_timer(&mut self, cycles: u64) {
 		self.div_clock += cycles;
 
-		if self.is_enabled() {
+		if self.is_enabled() && !self.halted {
 			self.timer_clock += cycles;
 			if self.timer_clock >= self.get_speed() {
 				let (next_tima, overflow) = self.io_register_state[Self::TIMA].overflowing_add(1);
