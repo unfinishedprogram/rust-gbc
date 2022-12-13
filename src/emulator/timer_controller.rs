@@ -16,10 +16,10 @@ pub trait TimerController {
 impl TimerController for EmulatorState {
 	fn get_speed(&self) -> u64 {
 		match self.io_register_state[Self::TAC] & 0b11 {
-			0 => 1024,
-			1 => 16,
-			2 => 64,
-			3 => 256,
+			0 => 1024 / 4,
+			1 => 16 / 4,
+			2 => 64 / 4,
+			3 => 256 / 4,
 			_ => unreachable!(),
 		}
 	}
@@ -34,11 +34,13 @@ impl TimerController for EmulatorState {
 		if self.is_enabled() {
 			self.timer_clock += cycles;
 			if self.timer_clock >= self.get_speed() {
-				if self.io_register_state[Self::TIMA] == 255 {
+				let (next_tima, overflow) = self.io_register_state[Self::TIMA].overflowing_add(1);
+
+				if overflow {
 					self.io_register_state[Self::TIMA] = self.io_register_state[Self::TMA];
 					self.io_register_state[INTERRUPT_REQUEST] |= INT_TIMER;
 				} else {
-					self.io_register_state[Self::TIMA] += 1;
+					self.io_register_state[Self::TIMA] = next_tima;
 				}
 				self.timer_clock -= self.get_speed();
 			}
