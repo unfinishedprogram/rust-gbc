@@ -41,7 +41,6 @@ impl MemoryMapper for EmulatorState {
 		match addr {
 			0x0000..0x8000 => {
 				if let Some(rom) = &mut self.cartridge_state {
-					warn!("Writing to rom: {addr:x}, {value}");
 					rom.write(addr, value);
 				}
 			} // Cartridge Rom

@@ -2,8 +2,7 @@ use egui::Ui;
 use egui_extras::{Size, TableBuilder};
 
 pub fn draw_logs(ui: &mut Ui, logs: &Vec<String>) {
-	ui.label("Logs");
-	ui.label(format!("{:}", logs.len()));
+	ui.label(format!("Logs: {:}", logs.len()));
 	TableBuilder::new(ui)
 		.scroll(true)
 		.striped(true)

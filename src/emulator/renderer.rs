@@ -103,8 +103,8 @@ impl RendererHelpers for EmulatorState {
 		} as u16;
 
 		match (
-			self.read(addr + y * 2) & bit(x as u8) != 0,
-			self.read(addr + y * 2 + 1) & bit(x as u8) != 0,
+			self.read(addr + y * 2) & bit(7 - x as u8) != 0,
+			self.read(addr + y * 2 + 1) & bit(7 - x as u8) != 0,
 		) {
 			(true, true) => (8, 24, 32),
 			(true, false) => (224, 248, 208),

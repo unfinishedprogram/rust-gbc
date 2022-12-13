@@ -21,8 +21,8 @@ pub fn to_pixel_tile(gb_tile: [u8; 16]) -> TileBuffer {
 	for y in 0..8 {
 		for x in 0..8 {
 			let color = match (
-				gb_tile[y * 2] & bit(x as u8) != 0,
-				gb_tile[y * 2 + 1] & bit(x as u8) != 0,
+				gb_tile[y * 2] & bit(7 - x as u8) != 0,
+				gb_tile[y * 2 + 1] & bit(7 - x as u8) != 0,
 			) {
 				(true, true) => [8, 24, 32, 255],
 				(true, false) => [224, 248, 208, 255],

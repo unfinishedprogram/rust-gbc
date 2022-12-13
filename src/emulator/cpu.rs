@@ -8,6 +8,7 @@ pub mod values;
 use crate::emulator::cpu::flags::Flags;
 
 use super::memory_mapper::MemoryMapper;
+use log::info;
 pub use state::CPUState;
 
 use super::flags::*;
@@ -79,7 +80,7 @@ impl CPU for EmulatorState {
 			ValueRefU8::Raw(x) => *x,
 			ValueRefU8::MemOffset(offset) => {
 				let offset_value: u16 = self.read_8(offset) as u16;
-				self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw(offset_value + 0xFF00)))
+				self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw(offset_value | 0xFF00)))
 			}
 		}
 	}
@@ -104,7 +105,7 @@ impl CPU for EmulatorState {
 			ValueRefU8::MemOffset(offset) => {
 				let offset_value: u16 = self.read_8(offset) as u16;
 				self.write_8(
-					&ValueRefU8::Mem(ValueRefU16::Raw(offset_value + 0xFF00)),
+					&ValueRefU8::Mem(ValueRefU16::Raw(offset_value | 0xFF00)),
 					value,
 				)
 			}
