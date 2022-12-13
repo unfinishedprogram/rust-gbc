@@ -83,7 +83,9 @@ impl eframe::App for EmulatorManager {
 		style::apply(ctx);
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(rom) = data.ready() {
-				self.debugger.emulator_state.load_rom(rom);
+				if let Err(e) = self.debugger.emulator_state.load_rom(rom) {
+					log::error!("{e:?}");
+				}
 				self.loaded_file_data = None;
 			}
 		}

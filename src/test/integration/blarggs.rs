@@ -17,7 +17,7 @@ fn test_blargg(rom_name: &str, end: usize) {
 		.map(|byte| byte.unwrap())
 		.collect();
 
-	state.load_rom(&rom);
+	state.load_rom(&rom).unwrap();
 
 	let mut last = 0;
 	let mut left = end;

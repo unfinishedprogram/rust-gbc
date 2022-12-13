@@ -1,5 +1,4 @@
-use log::{error, info};
-
+use super::cartridge::header::CartridgeParseError;
 use super::cartridge::CartridgeState;
 use super::cpu::registers::CPURegister16;
 use super::cpu::values::ValueRefU16;
@@ -114,13 +113,9 @@ impl EmulatorState {
 		}
 	}
 
-	pub fn load_rom(&mut self, rom: &[u8]) {
-		if let Ok(state) = CartridgeState::from_raw_rom(rom.to_owned()) {
-			info!("Loaded Rom");
-			info!("{:?}", state.info);
-			self.cartridge_state = Some(state);
-		} else {
-			error!("Rom Loading Failed")
-		}
+	pub fn load_rom(&mut self, rom: &[u8]) -> Result<(), CartridgeParseError> {
+		let cartridge = CartridgeState::from_raw_rom(rom.to_owned())?;
+		self.cartridge_state = Some(cartridge);
+		Ok(())
 	}
 }

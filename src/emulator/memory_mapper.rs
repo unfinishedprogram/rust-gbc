@@ -49,6 +49,8 @@ impl MemoryMapper for EmulatorState {
 			0xA000..0xC000 => {
 				if let Some(rom) = &mut self.cartridge_state {
 					rom.write(addr, value);
+				} else {
+					warn!("Writing to vram bank without rom: {value:X}")
 				}
 			} // Cartage RAM
 			0xC000..0xD000 => self.w_ram[0][(addr - 0xC000) as usize] = value, // Internal RAM
