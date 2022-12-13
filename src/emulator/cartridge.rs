@@ -1,6 +1,6 @@
 use log::{error, info, warn};
 
-use self::header::{CartridgeInfo, RawCartridgeHeader};
+use self::header::{CartridgeInfo, CartridgeParseError, RawCartridgeHeader};
 
 use super::memory_mapper::MemoryMapper;
 
@@ -17,21 +17,17 @@ pub struct CartridgeState {
 }
 
 impl CartridgeState {
-	pub fn from_raw_rom(raw_data: Vec<u8>) -> Result<Self, String> {
+	pub fn from_raw_rom(raw_data: Vec<u8>) -> Result<Self, CartridgeParseError> {
 		log::error!("Len:{}", raw_data.len());
 		let raw_header = RawCartridgeHeader::from(&raw_data);
-
-		if let Ok(info) = raw_header.parse() {
-			Ok(Self {
-				raw_ram: vec![0; (info.ram_banks * 0x2000) as usize],
-				info,
-				raw_data,
-				selected_ram_bank: 1,
-				selected_rom_bank: 1,
-			})
-		} else {
-			Err("Parse Error".to_owned())
-		}
+		let info = raw_header.parse()?;
+		Ok(Self {
+			raw_ram: vec![0; (info.ram_banks * 0x2000) as usize],
+			info,
+			raw_data,
+			selected_ram_bank: 1,
+			selected_rom_bank: 1,
+		})
 	}
 }
 

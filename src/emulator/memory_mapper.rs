@@ -15,11 +15,8 @@ impl MemoryMapper for EmulatorState {
 	fn read(&self, addr: u16) -> u8 {
 		match addr {
 			0x0000..0x8000 => {
-				if let Some(rom) = &self.cartridge_state {
-					rom.read(addr)
-				} else {
-					0
-				}
+				let Some(rom) = &self.cartridge_state else { return 0 };
+				rom.read(addr)
 			} // Cartridge Rom
 			0x8000..0xA000 => self.v_ram[0][(addr - 0x8000) as usize], //  VRAM
 			0xA000..0xC000 => {
