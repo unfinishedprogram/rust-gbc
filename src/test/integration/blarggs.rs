@@ -57,7 +57,7 @@ macro_rules! blarggs_tests {
 
 blarggs_tests! {
 	blarggs_1:("01-special", 1262731),
-	blarggs_2:("02-interrupts", 17107700),
+	blarggs_2:("02-interrupts", 171080),
 	blarggs_3:("03-op sp,hl", 1070382),
 	blarggs_4:("04-op r,imm", 1264726),
 	blarggs_5:("05-op rp", 1765488),
