@@ -1,7 +1,7 @@
 // https://gbdev.io/pandocs/The_Cartridge_Header.html
 
 use super::mbc::MBC;
-use log::error;
+use log::{error, info};
 
 #[derive(Debug, Clone)]
 pub enum CartridgeParseError {}
@@ -31,12 +31,13 @@ pub struct CartridgeInfo {
 
 impl RawCartridgeHeader {
 	fn get_rom_banks(&self) -> u16 {
+		info!("Getting rom banks");
 		if self.rom_size > 0x08 {
 			error!("Invalid rom size: {:X}", self.rom_size);
 			return 2;
 		}
 
-		2 >> (self.rom_size + 1)
+		2 * (1 << self.rom_size)
 	}
 
 	fn get_ram_banks(&self) -> u16 {

@@ -1,4 +1,4 @@
-use log::{error, info, warn};
+use log::{error, warn};
 
 use self::header::{CartridgeInfo, CartridgeParseError, RawCartridgeHeader};
 
@@ -48,7 +48,7 @@ impl MemoryMapper for CartridgeState {
 			MBC1 => match addr {
 				0x0000..0x4000 => self.raw_data[addr as usize], // bank 0
 				0x4000..0x8000 => {
-					let raw_offset = 0x4000 * (self.selected_rom_bank - 1);
+					let raw_offset = 0x4000 * (self.selected_rom_bank.max(1) - 1);
 					self.raw_data[(addr + raw_offset) as usize]
 				} // Bank X
 				0xA000..0xC000 => {
@@ -86,9 +86,8 @@ impl MemoryMapper for CartridgeState {
 				warn!("Write to readonly memory: {:X}", addr);
 			}
 			MBC1 => {
-				if let 2000..4000 = addr {
+				if let 0x2000..0x4000 = addr {
 					self.selected_rom_bank = (value & 0b00011111) as u16;
-					info!("Rom Bank:{:} selected", self.selected_rom_bank);
 				}
 			}
 			MBC2 => todo!(),
