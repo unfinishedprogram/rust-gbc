@@ -1,5 +1,6 @@
 pub mod components;
 pub mod drawable;
+mod file_selector;
 pub mod logger;
 pub mod managed_input;
 mod style;
@@ -7,7 +8,10 @@ mod style;
 use std::sync::Mutex;
 
 use components::{draw_status, Debugger};
+use egui::Key;
 use poll_promise::Promise;
+
+use crate::util::bits::bit;
 
 use self::{components::log_view::draw_logs, logger::Logger};
 
@@ -64,6 +68,21 @@ impl EmulatorManager {
 		Default::default()
 	}
 
+	fn update_key_input(&mut self, ctx: &egui::Context) {
+		use Key::*;
+		let keys = [
+			Enter, Space, X, Z, ArrowDown, ArrowUp, ArrowLeft, ArrowRight,
+		];
+
+		self.debugger.emulator_state.raw_joyp_input = 0xFF;
+
+		for (index, key) in keys.into_iter().enumerate() {
+			if ctx.input().key_down(key) {
+				self.debugger.emulator_state.raw_joyp_input &= !bit(index as u8);
+			};
+		}
+	}
+
 	pub fn load_cartridge_by_url(&mut self, url: &str) {
 		self.loaded_file_data.get_or_insert_with(|| {
 			let (sender, promise) = Promise::new();
@@ -85,6 +104,7 @@ impl EmulatorManager {
 impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 		style::apply(ctx);
+		self.update_key_input(ctx);
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(rom) = data.ready() {
 				if let Err(e) = self.debugger.emulator_state.load_rom(rom) {
