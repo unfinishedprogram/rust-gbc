@@ -26,6 +26,8 @@ pub fn draw_status(ui: &mut Ui, emulator: &EmulatorState) {
 			ui.monospace(format!("IE:{:<08b}", emulator.read(0xFFFF)));
 			ui.monospace(format!("IR:{:<08b}", emulator.read(0xFF0F)));
 			ui.monospace(format!("Timer Enabled:{}", emulator.is_enabled()));
+			ui.monospace(format!("Input:{:<08b}", emulator.read(0xFF00)));
+			ui.monospace(format!("RawIn:{:<08b}", emulator.raw_joyp_input));
 		});
 	});
 }

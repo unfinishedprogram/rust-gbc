@@ -1,5 +1,4 @@
 type Color = (u8, u8, u8);
-use log::info;
 
 use crate::util::bits::*;
 pub mod sprite;

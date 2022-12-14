@@ -30,6 +30,7 @@ pub struct EmulatorState {
 	pub div_clock: u64,
 	pub halted: bool,
 	pub interrupt_enable_register: u8,
+	pub raw_joyp_input: u8,
 }
 
 impl PPUState {
@@ -61,6 +62,7 @@ impl Default for EmulatorState {
 			div_clock: 0,
 			halted: false,
 			interrupt_enable_register: 0,
+			raw_joyp_input: 0,
 		};
 
 		emulator.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
