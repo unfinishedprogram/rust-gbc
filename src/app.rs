@@ -27,7 +27,6 @@ lazy_static! {
 
 pub struct EmulatorManager {
 	loaded_file_data: Option<Promise<Vec<u8>>>,
-	roms: Entry,
 	debugger: Debugger,
 	logger: &'static Logger,
 }
@@ -40,7 +39,6 @@ impl Default for EmulatorManager {
 			logger: &LOGGER,
 			loaded_file_data: None::<Promise<Vec<u8>>>,
 			debugger: Debugger::default(),
-			roms: ROMS.clone(), // .unwrap_or(Entry::File("ERROR".to_string(), "ERROR".to_string())),
 		}
 	}
 }
