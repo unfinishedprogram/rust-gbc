@@ -4,14 +4,16 @@ mod file_selector;
 pub mod logger;
 pub mod managed_input;
 mod style;
+use crate::app::file_selector::file_selector;
 
 use std::sync::Mutex;
 
 use components::{draw_status, Debugger};
 use egui::Key;
+use lazy_static::lazy_static;
 use poll_promise::Promise;
 
-use crate::util::bits::bit;
+use crate::util::{bits::bit, file_types::Entry};
 
 use self::{components::log_view::draw_logs, logger::Logger};
 
@@ -19,9 +21,13 @@ static LOGGER: Logger = Logger {
 	logs: Mutex::new(vec![]),
 };
 
+lazy_static! {
+	static ref ROMS: Entry = serde_json::from_str::<Entry>(include_str!("../roms.json")).unwrap();
+}
+
 pub struct EmulatorManager {
 	loaded_file_data: Option<Promise<Vec<u8>>>,
-	roms: Vec<&'static str>,
+	roms: Entry,
 	debugger: Debugger,
 	logger: &'static Logger,
 }
@@ -34,31 +40,7 @@ impl Default for EmulatorManager {
 			logger: &LOGGER,
 			loaded_file_data: None::<Promise<Vec<u8>>>,
 			debugger: Debugger::default(),
-			roms: vec![
-				"roms/SuperMarioWorld.gb",
-				"roms/instr_timing.gb",
-				"roms/LegendOfZelda.gb",
-				"roms/tetris.gb",
-				"roms/tetris2.gb",
-				"roms/dr-mario.gb",
-				"roms/cpu_instrs.gb",
-				"roms/PokemonRed.gb",
-				"roms/01-special.gb",
-				"roms/02-interrupts.gb",
-				"roms/03-op sp,hl.gb",
-				"roms/04-op r,imm.gb",
-				"roms/05-op rp.gb",
-				"roms/06-ld r,r.gb",
-				"roms/07-jr,jp,call,ret,rst.gb",
-				"roms/08-misc instrs.gb",
-				"roms/09-op r,r.gb",
-				"roms/10-bit ops.gb",
-				"roms/11-op a,(hl).gb",
-				"roms/mem_timing.gb",
-				"roms/01-read_timing.gb",
-				"roms/02-write_timing.gb",
-				"roms/03-modify_timing.gb",
-			],
+			roms: ROMS.clone(), // .unwrap_or(Entry::File("ERROR".to_string(), "ERROR".to_string())),
 		}
 	}
 }
@@ -117,14 +99,8 @@ impl eframe::App for EmulatorManager {
 		egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
 				ui.menu_button("file", |ui| {
-					ui.menu_button("load rom", |ui| {
-						for rom in &self.roms.clone() {
-							if ui.button(rom.to_string()).clicked() {
-								ui.add_space(5.0);
-								self.load_cartridge_by_url(rom);
-								ui.close_menu();
-							}
-						}
+					file_selector(ui, &ROMS, &mut |selected| {
+						self.load_cartridge_by_url(selected)
 					});
 				});
 
