@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use log::{error, info};
+use log::error;
 
 use crate::{emulator::ppu::PPU, util::bits::bit};
 
