@@ -11,7 +11,7 @@ pub fn file_selector(ui: &mut Ui, files: &Entry, on_select: &mut impl FnMut(&str
 		}
 		Entry::Dir(name, entries) => {
 			ui.menu_button(name, |ui| {
-				for entry in entries.values() {
+				for entry in entries {
 					file_selector(ui, entry, on_select);
 				}
 			});

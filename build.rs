@@ -1,6 +1,6 @@
 use std::{
-	collections::HashMap,
-	fs::{self, read_dir},
+	cmp::Ordering,
+	fs::{self, read_dir, DirEntry},
 	io::Error,
 };
 
@@ -9,32 +9,41 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone)]
 pub enum Entry {
 	File(String, String),
-	Dir(String, HashMap<String, Entry>),
+	Dir(String, Vec<Entry>),
 }
 
-fn recursive_dir_parse(root: String) -> Result<Entry, Error> {
-	let folder = read_dir(&root)?;
+fn compare_dir_entry(a: &DirEntry, b: &DirEntry) -> Ordering {
+	a.file_name()
+		.to_ascii_lowercase()
+		.cmp(&b.file_name().to_ascii_lowercase())
+}
 
-	let mut dir_hash: HashMap<String, Entry> = HashMap::new();
+// Recursively parses a given directory structure into a nested enum
+fn recursive_dir_parse(root: &str) -> Result<Entry, Error> {
+	let folder = read_dir(root)?;
 
-	for file in folder.flatten() {
+	let mut dir_listing: Vec<Entry> = vec![];
+	let mut files = folder.flatten().collect::<Vec<DirEntry>>();
+	files.sort_by(compare_dir_entry);
+
+	for ref file in files {
 		if file.metadata()?.is_dir() {
-			let name = file.file_name().into_string().unwrap();
-			let entries = recursive_dir_parse(file.path().to_str().unwrap().to_owned())?;
-			dir_hash.insert(name, entries);
+			let entries = recursive_dir_parse(file.path().to_str().unwrap())?;
+			dir_listing.push(entries);
 		} else {
 			let name = file.file_name().into_string().unwrap();
 			let path = file.path().to_string_lossy().into_owned();
-			dir_hash.insert(name.clone(), Entry::File(name, path));
+			dir_listing.push(Entry::File(name, path));
 		}
 	}
-	Ok(Entry::Dir(root, dir_hash))
+	Ok(Entry::Dir(root.into(), dir_listing))
 }
 
 fn main() -> Result<(), Error> {
-	let entries = recursive_dir_parse("roms".to_string()).unwrap();
-	let serialized = serde_json::to_string(&entries).unwrap();
-	fs::write("roms.json", serialized.as_bytes()).unwrap();
+	let entries = recursive_dir_parse("roms")?;
+	let serialized = serde_json::to_string(&entries)?;
+	fs::write("roms.json", serialized.as_bytes())?;
 	println!("cargo:rerun-if-changed=roms");
+
 	Ok(())
 }
