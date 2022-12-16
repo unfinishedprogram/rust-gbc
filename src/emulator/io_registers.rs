@@ -2,7 +2,10 @@ use std::ops::{Index, IndexMut};
 
 use log::error;
 
-use crate::{emulator::ppu::PPU, util::bits::bit};
+use crate::{
+	emulator::{memory_mapper::MemoryMapper, ppu::PPU},
+	util::bits::bit,
+};
 
 use super::EmulatorState;
 
@@ -149,6 +152,12 @@ impl IORegisters for EmulatorState {
 			}
 			Ok(IF) => self.io_register_state[addr] = value & 0b00011111,
 			Ok(IE) => self.io_register_state[addr] = value & 0b00011111,
+			Ok(DMA) => {
+				let real_addr = (value as u16) * 0x100;
+				for i in 0..0xA0u16 {
+					self.oam[i as usize] = self.read(real_addr + i);
+				}
+			}
 			Err(_) => {
 				self.run = false;
 				error!("Unhandled Write: {:X}", addr);

@@ -11,7 +11,7 @@ pub struct Sprite {
 
 impl Sprite {
 	pub fn new(bytes: (u8, u8, u8, u8)) -> Self {
-		let (x, y, tile_index, attributes) = bytes;
+		let (y, x, tile_index, attributes) = bytes;
 		if x != 0 && y != 0 {
 			log::error!("{bytes:?}");
 		}

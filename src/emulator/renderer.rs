@@ -40,23 +40,24 @@ impl RendererHelpers for EmulatorState {
 		let sprites = self.fetch_sprites();
 		let sprites = sprites.into_iter().filter(|s| s.is_visible());
 		for sprite in sprites {
-			log::error!("Rendering Sprite");
-			for x in sprite.x..sprite.x + 8 {
-				for y in sprite.y..sprite.y + 8 {
-					log::error!("Drawing Sprite");
-					if y <= 16 || x <= 8 {
+			for x in 0..8 {
+				for y in 0..8 {
+					if y + sprite.y <= 16 || x + sprite.x <= 8 {
 						continue;
 					}
-
-					lcd.put_pixel(x - 8, y - 16, self.get_sprite_pixel(&sprite, x, y));
+					lcd.put_pixel(
+						x + sprite.x - 8,
+						y + sprite.y - 16,
+						self.get_sprite_pixel(&sprite, x, y),
+					);
 				}
 			}
 		}
 	}
 
 	fn get_sprite_pixel(&mut self, sprite: &Sprite, x: u8, y: u8) -> Color {
-		let x = if sprite.flip_x { 8 - x } else { x };
-		let y = if sprite.flip_y { 8 - y } else { y };
+		let x = if sprite.flip_x { 7 - x } else { x };
+		let y = if sprite.flip_y { 7 - y } else { y };
 
 		self.get_tile_pixel(x, y, sprite.tile_index, true)
 	}
@@ -96,6 +97,7 @@ impl RendererHelpers for EmulatorState {
 
 	fn get_tile_pixel(&mut self, x: u8, y: u8, tile_index: u8, mode: bool) -> Color {
 		let (x, y) = (x as u16, y as u16);
+		assert!(x <= 7 && y <= 7);
 
 		let addr: u16 = if mode {
 			0x8000 + 16 * tile_index as i32

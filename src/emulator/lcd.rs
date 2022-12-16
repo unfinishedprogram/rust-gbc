@@ -23,7 +23,7 @@ impl Drawable for LCD {
 			egui::TextureFilter::Nearest,
 		);
 
-		ui.add(Image::new(texture.id(), (x as f32 * 2.0, y as f32 * 2.0)));
+		ui.add(Image::new(texture.id(), (x as f32 * 4.0, y as f32 * 4.0)));
 	}
 }
 
