@@ -111,10 +111,10 @@ impl IORegisters for EmulatorState {
 		match IORegistersAddress::try_from(addr) {
 			// All 0 is off
 			Ok(IORegistersAddress::JOYP) => {
-				if self.io_register_state[addr] & bit(4) == bit(5) {
-					(self.raw_joyp_input >> 4) & 0b1111
-				} else if self.io_register_state[addr] & bit(5) == bit(5) {
+				if self.io_register_state[addr] & bit(4) == bit(4) {
 					self.raw_joyp_input & 0b1111
+				} else if self.io_register_state[addr] & bit(5) == bit(5) {
+					(self.raw_joyp_input >> 4) & 0b1111
 				} else {
 					0b1111
 				}
@@ -134,9 +134,7 @@ impl IORegisters for EmulatorState {
 			Ok(DIV) => self.io_register_state[addr] = 0,
 			Ok(SB) => self.io_register_state[0xFF01] = value,
 			Ok(JOYP) => {
-				let masked_v = value & 0b00110000;
-				let masked_old = self.io_register_state[addr] & 0b11001111;
-				self.io_register_state[addr] = masked_v | masked_old;
+				self.io_register_state[addr] = value & 0b00110000;
 			}
 			Ok(SC) => {
 				if value == 0x81 {

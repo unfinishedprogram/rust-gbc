@@ -51,7 +51,7 @@ impl EmulatorManager {
 	fn update_key_input(&mut self, ctx: &egui::Context) {
 		use Key::*;
 		let keys = [
-			Enter, Space, X, Z, ArrowDown, ArrowUp, ArrowLeft, ArrowRight,
+			Z, X, Space, Enter, ArrowRight, ArrowLeft, ArrowUp, ArrowDown,
 		];
 
 		self.debugger.emulator_state.raw_joyp_input = 0xFF;
