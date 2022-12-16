@@ -119,7 +119,7 @@ impl IORegisters for EmulatorState {
 			Ok(IORegistersAddress::TAC) => self.io_register_state[addr] | 0xF8,
 			Err(_) => {
 				error!("Unhandled Read: {:X}", addr);
-				self.io_register_state[addr]
+				0xFF
 			}
 			_ => self.io_register_state[addr],
 		}
