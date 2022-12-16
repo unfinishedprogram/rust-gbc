@@ -34,7 +34,7 @@ pub struct EmulatorManager {
 impl Default for EmulatorManager {
 	fn default() -> Self {
 		log::set_logger(&LOGGER).unwrap();
-		log::set_max_level(log::LevelFilter::Info);
+		log::set_max_level(log::LevelFilter::Debug);
 		Self {
 			logger: &LOGGER,
 			loaded_file_data: None::<Promise<Vec<u8>>>,
@@ -104,6 +104,9 @@ impl eframe::App for EmulatorManager {
 
 				if ui.button("Toggle Play").clicked() {
 					self.debugger.toggle_state();
+				}
+				if ui.button("Step").clicked() {
+					self.debugger.step_once();
 				}
 
 				self.debugger.step();

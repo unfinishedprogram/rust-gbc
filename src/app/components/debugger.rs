@@ -83,6 +83,10 @@ impl Debugger {
 		}
 	}
 
+	pub fn step_once(&mut self) {
+		self.emulator_state.step(&mut self.lcd);
+	}
+
 	pub fn step(&mut self) {
 		match self.state {
 			DebuggerState::Paused => {}

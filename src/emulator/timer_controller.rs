@@ -1,5 +1,6 @@
 use super::{
 	flags::{INTERRUPT_REQUEST, INT_TIMER},
+	memory_mapper::MemoryMapper,
 	EmulatorState,
 };
 
@@ -31,14 +32,15 @@ impl TimerController for EmulatorState {
 	fn update_timer(&mut self, cycles: u64) {
 		self.div_clock += cycles;
 
-		if self.is_enabled() && !self.halted {
+		if self.is_enabled() {
 			self.timer_clock += cycles;
 			if self.timer_clock >= self.get_speed() {
 				let (next_tima, overflow) = self.io_register_state[Self::TIMA].overflowing_add(1);
 
 				if overflow {
 					self.io_register_state[Self::TIMA] = self.io_register_state[Self::TMA];
-					self.io_register_state[INTERRUPT_REQUEST] |= INT_TIMER;
+					let _last = self.read(INTERRUPT_REQUEST);
+					self.write(INTERRUPT_REQUEST, _last | INT_TIMER);
 				} else {
 					self.io_register_state[Self::TIMA] = next_tima;
 				}

@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use log::error;
+use log::{error, info};
 
 use crate::{emulator::ppu::PPU, util::bits::bit};
 
@@ -53,8 +53,8 @@ pub enum IORegistersAddress {
 	// Serial Transfer
 	SB = 0xFF01,
 	SC = 0xFF02,
-	IE = 0xFFFF,
 	IF = 0xFF0F,
+	IE = 0xFFFF,
 	JOYP = 0xFF00,
 }
 
@@ -147,6 +147,8 @@ impl IORegisters for EmulatorState {
 				}
 				self.io_register_state[addr] = value;
 			}
+			Ok(IF) => self.io_register_state[addr] = value & 0b00011111,
+			Ok(IE) => self.io_register_state[addr] = value & 0b00011111,
 			Err(_) => {
 				self.run = false;
 				error!("Unhandled Write: {:X}", addr);

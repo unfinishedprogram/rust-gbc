@@ -90,14 +90,12 @@ impl PPU for EmulatorState {
 		if self.get_ly() >= 153 {
 			if self.ppu_state.maxed {
 				self.set_ly(0);
-
-				// let start = Instant::now();
 				self.render(lcd);
-				// debug!("Took: {:?}", start.elapsed());
-
 				self.ppu_state.maxed = false;
 				self.ppu_state.cycle += 908;
-				self.io_register_state[INTERRUPT_REQUEST] |= INT_V_BLANK;
+				let interrupt_state = self.read(INTERRUPT_REQUEST);
+				self.write(INTERRUPT_REQUEST, interrupt_state | INT_V_BLANK);
+
 				self.set_mode(PPUMode::OamScan)
 			} else {
 				self.ppu_state.cycle += 4;

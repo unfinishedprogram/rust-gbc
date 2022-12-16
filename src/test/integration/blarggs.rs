@@ -57,7 +57,7 @@ macro_rules! blarggs_tests {
 
 blarggs_tests! {
 	blarggs_1:("cpu_instrs/01-special", 1262731),
-	blarggs_2:("cpu_instrs/02-interrupts", 171080),
+	blarggs_2:("cpu_instrs/02-interrupts", 164761),
 	blarggs_3:("cpu_instrs/03-op sp,hl", 1070382),
 	blarggs_4:("cpu_instrs/04-op r,imm", 1264726),
 	blarggs_5:("cpu_instrs/05-op rp", 1765488),

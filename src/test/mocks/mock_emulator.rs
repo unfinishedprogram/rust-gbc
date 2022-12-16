@@ -68,6 +68,9 @@ impl CPU for MockEmulator {
 	fn check_interrupt(&self, interrupt: u8) -> bool {
 		false
 	}
+	fn interrupt_pending(&self) -> bool {
+		false
+	}
 	fn clear_request(&mut self, interrupt: u8) {}
 	fn get_interrupt(&mut self) -> Option<Instruction> {
 		None

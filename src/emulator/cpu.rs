@@ -42,6 +42,7 @@ pub trait CPU {
 	fn write_16(&mut self, value_ref: ValueRefU16, value: u16);
 
 	fn fetch_next_instruction(&mut self) -> Instruction;
+	fn interrupt_pending(&self) -> bool;
 
 	fn check_condition(&self, condition: Condition) -> bool;
 	fn check_interrupt(&self, interrupt: u8) -> bool;
@@ -159,40 +160,47 @@ impl CPU for EmulatorState {
 		self.write(INTERRUPT_REQUEST, request_value & !interrupt);
 	}
 
+	fn interrupt_pending(&self) -> bool {
+		self.read(INTERRUPT_ENABLE) & self.read(INTERRUPT_REQUEST) != 0
+	}
+
 	fn get_interrupt(&mut self) -> Option<Instruction> {
-		if self.cpu_state.interrupt_enable || self.halted {
-			for interrupt in [
-				INT_V_BLANK,
-				INT_LCD_STAT,
-				INT_TIMER,
-				INT_SERIAL,
-				INT_JOY_PAD,
-			] {
-				if self.check_interrupt(interrupt) {
-					self.clear_request(interrupt);
-					return Some(Instruction::INT(interrupt));
-				}
+		if !self.cpu_state.interrupt_enable {
+			return None;
+		}
+
+		for interrupt in [
+			INT_V_BLANK,
+			INT_LCD_STAT,
+			INT_TIMER,
+			INT_SERIAL,
+			INT_JOY_PAD,
+		] {
+			if self.check_interrupt(interrupt) {
+				self.clear_request(interrupt);
+				return Some(Instruction::INT(interrupt));
 			}
 		}
 		None
 	}
 
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
-		self.get_interrupt()
-			.unwrap_or_else(|| self.fetch_next_instruction())
+		if let Some(interrupt_instruction) = self.get_interrupt() {
+			return interrupt_instruction;
+		}
+		self.fetch_next_instruction()
 	}
 
 	fn step(&mut self) {
 		if self.halted {
-			if let Some(inst) = self.get_interrupt() {
-				execute_instruction(inst, self);
+			if self.interrupt_pending() {
 				self.halted = false;
 			} else {
 				self.cycle += 1;
 			}
+		} else {
+			let instruction = self.get_next_instruction_or_interrupt();
+			execute_instruction(instruction, self);
 		}
-
-		let instruction = self.get_next_instruction_or_interrupt();
-		execute_instruction(instruction, self);
 	}
 }

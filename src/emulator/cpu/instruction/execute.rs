@@ -22,7 +22,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		NOP => {}
 		INT(interrupt) => {
 			cpu.disable_interrupts();
-			let addr = match interrupt {
+			let location = match interrupt {
 				_ if interrupt == INT_V_BLANK => 0x40,
 				_ if interrupt == INT_LCD_STAT => 0x48,
 				_ if interrupt == INT_TIMER => 0x50,
@@ -32,7 +32,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			};
 			let current_pc = cpu.read_16(CPURegister16::PC.into());
 			cpu.push(current_pc);
-			cpu.write_16(CPURegister16::PC.into(), addr);
+			cpu.write_16(CPURegister16::PC.into(), location);
 			cpu.disable_interrupts();
 		}
 
@@ -132,27 +132,26 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 		ADD_SIGNED(a_ref, b_ref) => {
 			cpu.cycle += 2;
-
 			cpu.clear_flag(Flag::Z);
 			cpu.clear_flag(Flag::N);
 
 			let a_val = cpu.read_16(a_ref);
-			let b_val = cpu.read_i8(b_ref);
+			let b_val = cpu.read_i8(b_ref) as i16;
 
-			let b_val = if b_val < 0 {
+			let ub_val = if b_val < 0 {
 				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
 			} else {
 				b_val as u16
 			};
 
-			cpu.set_flag_to(Flag::C, (a_val << 8).wrapping_add(b_val << 8) < a_val << 8);
+			cpu.set_flag_to(Flag::C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
 
 			cpu.set_flag_to(
 				Flag::H,
-				((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10,
+				((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10,
 			);
 
-			cpu.write_16(a_ref, a_val.wrapping_add(b_val));
+			cpu.write_16(a_ref, a_val.wrapping_add_signed(b_val));
 		}
 
 		ALU_OP_8(op, to, from) => {
@@ -451,22 +450,22 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.clear_flag(Flag::N);
 
 			let a_val = cpu.read_16(CPURegister16::SP.into());
-			let b_val = cpu.read_i8(value);
+			let b_val = cpu.read_i8(value) as i16;
 
-			let b_val = if b_val < 0 {
+			let ub_val = if b_val < 0 {
 				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
 			} else {
 				b_val as u16
 			};
 
-			cpu.set_flag_to(Flag::C, (a_val << 8).wrapping_add(b_val << 8) < a_val << 8);
+			cpu.set_flag_to(Flag::C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
 
 			cpu.set_flag_to(
 				Flag::H,
-				((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10,
+				((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10,
 			);
 
-			cpu.write_16(CPURegister16::HL.into(), a_val.wrapping_add(b_val));
+			cpu.write_16(CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
 		}
 
 		LD_A_INC_HL => {

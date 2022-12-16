@@ -105,6 +105,7 @@ impl EmulatorState {
 		while self.cycle >= self.ppu_state.cycle >> 4 {
 			self.step_ppu(lcd);
 		}
+
 		let start = self.cycle;
 
 		CPU::step(self);

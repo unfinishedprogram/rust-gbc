@@ -89,10 +89,10 @@ impl fmt::Debug for ValueRefI8 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
 			ValueRefI8::Raw(x) => {
-				if *x > 0 {
+				if *x >= 0 {
 					write!(f, "${x:02X}")
 				} else {
-					write!(f, "-${:02X}", (*x as u8) - 0xFE)
+					write!(f, "-${:02X}", x.unsigned_abs())
 				}
 			}
 			ValueRefI8::Mem(x) => write!(f, "[{x:?}]"),
