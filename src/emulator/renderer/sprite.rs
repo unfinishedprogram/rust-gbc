@@ -5,28 +5,33 @@ pub struct Sprite {
 	pub y: u8,
 	pub flip_y: bool,
 	pub flip_x: bool,
-	pub bg_priority: bool,
+	pub above_bg: bool,
 	pub tile_index: u8,
+	pub pallet_address: u16,
+	pub addr: u16,
 }
 
 impl Sprite {
-	pub fn new(bytes: (u8, u8, u8, u8)) -> Self {
+	pub fn new(addr: u16, bytes: (u8, u8, u8, u8)) -> Self {
 		let (y, x, tile_index, attributes) = bytes;
-		if x != 0 && y != 0 {
-			log::error!("{bytes:?}");
-		}
-
-		let bg_priority = attributes & BIT_7 != 0;
+		let above_bg = attributes & BIT_7 == 0;
 		let flip_y = attributes & BIT_6 != 0;
 		let flip_x = attributes & BIT_5 != 0;
+		let pallet_address = if attributes & BIT_4 != 0 {
+			0xFF49
+		} else {
+			0xFF48
+		};
 
 		Self {
+			addr,
 			x,
 			y,
 			flip_y,
 			flip_x,
-			bg_priority,
+			above_bg,
 			tile_index,
+			pallet_address,
 		}
 	}
 

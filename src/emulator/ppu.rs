@@ -22,6 +22,7 @@ pub struct PPUState {
 	pub cycle: u64,
 	pub maxed: bool,
 	pub paused: bool,
+	pub window_line: u8,
 }
 
 pub trait PPU {
@@ -49,7 +50,7 @@ impl PPU for EmulatorState {
 	}
 
 	fn set_ly(&mut self, value: u8) {
-		let lyc_status = self.read(IORegistersAddress::LY as u16) == value;
+		let lyc_status = self.read(IORegistersAddress::LYC as u16) == value;
 		self.write(IORegistersAddress::LY as u16, value);
 
 		if lyc_status {
@@ -72,13 +73,9 @@ impl PPU for EmulatorState {
 	}
 
 	fn step_ppu(&mut self, lcd: &mut dyn LCDDisplay) {
-		// use PPUMode::*;
-		// match self.get_mode() {
-		// 	PPUMode::HBlank => todo!(),
-		// 	PPUMode::VBlank => todo!(),
-		// 	PPUMode::OamScan => todo!(),
-		// 	PPUMode::Draw => self.set_mode(HBlank),
-		// }
+		if self.get_ly() < 144 {
+			self.render_scanline(lcd, self.get_ly());
+		}
 
 		self.set_ly(self.get_ly() + 1);
 		self.ppu_state.paused = false;
@@ -90,12 +87,10 @@ impl PPU for EmulatorState {
 		if self.get_ly() >= 153 {
 			if self.ppu_state.maxed {
 				self.set_ly(0);
-				self.render(lcd);
 				self.ppu_state.maxed = false;
 				self.ppu_state.cycle += 908;
 				let interrupt_state = self.read(INTERRUPT_REQUEST);
 				self.write(INTERRUPT_REQUEST, interrupt_state | INT_V_BLANK);
-
 				self.set_mode(PPUMode::OamScan)
 			} else {
 				self.ppu_state.cycle += 4;

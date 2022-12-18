@@ -4,7 +4,7 @@ use crate::util::bits::*;
 pub const INTERRUPT_ENABLE: u16 = 0xFFFF;
 pub const INTERRUPT_REQUEST: u16 = 0xFF0F;
 pub const JOY_PAD: u16 = 0xFF00;
-pub const LCD: u16 = 0xFF40;
+pub const LCDC: u16 = 0xFF40;
 pub const STAT: u16 = 0xFF41;
 pub const TIMER: u16 = 0xFF07;
 
