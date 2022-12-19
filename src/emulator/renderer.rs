@@ -4,14 +4,20 @@ use crate::util::bits::*;
 pub mod sprite;
 
 use self::sprite::Sprite;
-use core::cmp::Ordering;
 
 use super::{flags::LCDC, lcd::LCDDisplay, memory_mapper::MemoryMapper, ppu::PPU, EmulatorState};
 
 pub trait Renderer {
-	fn render_scanline(&mut self, lcd: &mut dyn LCDDisplay, line: u8);
-	fn render_screen_pixel(&self, lcd: &mut dyn LCDDisplay, x: u8, y: u8, state: &ScanlineState);
+	fn render_screen_pixel(
+		&self,
+		lcd: &mut dyn LCDDisplay,
+		x: u8,
+		y: u8,
+		scanline_state: &ScanlineState,
+		pixel_state: PixelState,
+	);
 	fn fetch_scanline_state(&mut self) -> ScanlineState;
+	fn fetch_pixel_state(&self) -> PixelState;
 }
 
 enum TileMode {
@@ -134,28 +140,43 @@ impl RendererHelpers for EmulatorState {
 #[derive(Default, Clone)]
 pub struct ScanlineState {
 	pub lcdc: u8,
-	pub bg_enabled: bool,
 	pub wn_enabled: bool,
-	pub sp_enabled: bool,
 	pub w_index: u8,
 	pub sprite_height: u8,
 	pub sprites: Vec<Sprite>,
 }
 
+pub struct PixelState {
+	pub bg_enabled: bool,
+	pub sp_enabled: bool,
+	pub lcdc: u8,
+}
+
 impl Renderer for EmulatorState {
-	fn render_screen_pixel(&self, lcd: &mut dyn LCDDisplay, x: u8, y: u8, state: &ScanlineState) {
+	fn render_screen_pixel(
+		&self,
+		lcd: &mut dyn LCDDisplay,
+		x: u8,
+		y: u8,
+		scanline_state: &ScanlineState,
+		pixel_state: PixelState,
+	) {
 		let (scx, scy) = (self.read(0xFF43), self.read(0xFF42));
 		let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
 
-		let ScanlineState {
+		let PixelState {
 			lcdc: _,
 			bg_enabled,
-			wn_enabled,
 			sp_enabled,
+		} = pixel_state;
+
+		let ScanlineState {
+			lcdc: _,
+			wn_enabled,
 			w_index,
 			sprite_height: _,
 			sprites,
-		} = state;
+		} = scanline_state;
 
 		let wn_in_view = x + 7 >= wx && y >= wy;
 		let wn_visible = wn_in_view && *wn_enabled;
@@ -164,7 +185,7 @@ impl Renderer for EmulatorState {
 			let x = x - wx + 7;
 			let y = *w_index;
 			self.get_pixel(TileMode::Window, x, y)
-		} else if *bg_enabled {
+		} else if bg_enabled {
 			let (x, y) = (x.wrapping_add(scx), y.wrapping_add(scy));
 			self.get_pixel(TileMode::Background, x, y)
 		} else {
@@ -203,61 +224,15 @@ impl Renderer for EmulatorState {
 		}
 	}
 
-	fn render_scanline(&mut self, lcd: &mut dyn LCDDisplay, line: u8) {
-		let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
-
-		if line == 0 {
-			self.ppu_state.window_line = 0;
-		}
-
+	fn fetch_pixel_state(&self) -> PixelState {
 		let lcdc = self.read(LCDC);
-
-		// Background Enabled
 		let bg_enabled = lcdc & BIT_0 == BIT_0;
-
-		// Window Enabled
-		let wn_enabled = lcdc & BIT_5 == BIT_5 && bg_enabled;
-
-		// Sprites Enabled
 		let sp_enabled = lcdc & BIT_1 == BIT_1;
 
-		// Sprite double height mode
-		let sprite_height = 8 + if lcdc & BIT_2 == BIT_2 { 8 } else { 0 };
-
-		let sprites = {
-			let mut sprites = self
-				.fetch_sprites()
-				.into_iter()
-				.filter(|sprite| sprite.y > line + 8 && sprite.y <= line + 8 + sprite_height)
-				.take(10)
-				.collect::<Vec<Sprite>>();
-
-			// Order by the X position, and then index in OAM
-			sprites.sort_by(|b, a| match a.x.cmp(&b.x) {
-				Ordering::Equal => a.addr.cmp(&b.addr),
-				o => o,
-			});
-			sprites
-		};
-
-		let w_index = self.ppu_state.window_line;
-
-		let state = ScanlineState {
-			lcdc,
+		PixelState {
 			bg_enabled,
-			wn_enabled,
-			w_index,
 			sp_enabled,
-			sprite_height,
-			sprites,
-		};
-
-		if wn_enabled && line >= wy && wx < 144 - 7 {
-			self.ppu_state.window_line += 1;
-		}
-
-		for x in 0..160 {
-			self.render_screen_pixel(lcd, x, line, &state);
+			lcdc,
 		}
 	}
 
@@ -267,7 +242,6 @@ impl Renderer for EmulatorState {
 
 		let bg_enabled = lcdc & BIT_0 == BIT_0;
 		let wn_enabled = lcdc & BIT_5 == BIT_5 && bg_enabled;
-		let sp_enabled = lcdc & BIT_1 == BIT_1;
 		let sprite_height = 8 + if lcdc & BIT_2 == BIT_2 { 8 } else { 0 };
 
 		let sprites = {
@@ -291,10 +265,8 @@ impl Renderer for EmulatorState {
 
 		ScanlineState {
 			lcdc,
-			bg_enabled,
 			wn_enabled,
 			w_index,
-			sp_enabled,
 			sprite_height,
 			sprites,
 		}

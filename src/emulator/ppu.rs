@@ -36,7 +36,6 @@ pub trait PPU {
 	fn set_ly(&mut self, value: u8);
 	fn set_mode(&mut self, mode: PPUMode);
 	fn step_ppu(&mut self, lcd: &mut dyn LCDDisplay);
-	fn new_step_ppu(&mut self, lcd: &mut dyn LCDDisplay);
 }
 
 impl PPU for EmulatorState {
@@ -120,23 +119,24 @@ impl PPU for EmulatorState {
 				} else {
 					self.set_ly(0);
 					self.ppu_state.cycle += 80;
-					self.ppu_state.scanline_state = self.fetch_scanline_state();
+					// self.ppu_state.scanline_state = self.fetch_scanline_state();
 					self.set_mode(OamScan);
 				}
 			}
 			OamScan => {
+				// if self.ppu_state.current_pixel == 0 {
+				self.ppu_state.scanline_state = self.fetch_scanline_state();
+				// }
 				self.ppu_state.cycle += 172;
 				self.set_mode(Draw);
 			}
 			Draw => {
-				if self.ppu_state.current_pixel == 0 {
-					self.ppu_state.scanline_state = self.fetch_scanline_state();
-				}
 				self.render_screen_pixel(
 					lcd,
 					self.ppu_state.current_pixel,
 					self.get_ly(),
 					&self.ppu_state.scanline_state,
+					self.fetch_pixel_state(),
 				);
 				self.ppu_state.current_pixel += 1;
 				if self.ppu_state.current_pixel == 160 {
@@ -145,35 +145,6 @@ impl PPU for EmulatorState {
 					self.set_mode(HBlank);
 				}
 			}
-		}
-	}
-
-	fn new_step_ppu(&mut self, lcd: &mut dyn LCDDisplay) {
-		if self.get_ly() < 144 {
-			self.render_scanline(lcd, self.get_ly());
-		}
-
-		self.set_ly(self.get_ly() + 1);
-		self.ppu_state.paused = false;
-
-		if self.get_ly() == 144 {
-			self.set_mode(PPUMode::VBlank);
-		}
-
-		if self.get_ly() >= 153 {
-			if self.ppu_state.maxed {
-				self.set_ly(0);
-				self.ppu_state.maxed = false;
-				self.ppu_state.cycle += 908;
-				let interrupt_state = self.read(INTERRUPT_REQUEST);
-				self.write(INTERRUPT_REQUEST, interrupt_state | INT_V_BLANK);
-				self.set_mode(PPUMode::OamScan)
-			} else {
-				self.ppu_state.cycle += 4;
-				self.ppu_state.maxed = true;
-			}
-		} else {
-			self.ppu_state.cycle += 456;
 		}
 	}
 }
