@@ -138,11 +138,10 @@ impl PPU for EmulatorState {
 					self.get_ly(),
 					&self.ppu_state.scanline_state,
 				);
-				self.ppu_state.cycle += 2;
 				self.ppu_state.current_pixel += 1;
-				if self.ppu_state.current_pixel >= 160 {
+				if self.ppu_state.current_pixel == 160 {
 					self.ppu_state.current_pixel = 0;
-					self.ppu_state.cycle += 204;
+					self.ppu_state.cycle += 206;
 					self.set_mode(HBlank);
 				}
 			}
