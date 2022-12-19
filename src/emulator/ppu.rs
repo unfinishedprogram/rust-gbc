@@ -1,11 +1,14 @@
-use crate::emulator::{io_registers::IORegistersAddress, memory_mapper::MemoryMapper};
+use crate::emulator::{
+	flags::STAT_H_BLANK_IE, io_registers::IORegistersAddress, memory_mapper::MemoryMapper,
+};
 
 use super::{
 	flags::{
 		INTERRUPT_REQUEST, INT_LCD_STAT, INT_V_BLANK, STAT, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE,
+		STAT_OAM_IE, STAT_V_BLANK_IE,
 	},
 	lcd::LCDDisplay,
-	renderer::Renderer,
+	renderer::{Renderer, ScanlineState},
 	EmulatorState,
 };
 
@@ -17,12 +20,14 @@ pub enum PPUMode {
 	Draw = 3,
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone)]
 pub struct PPUState {
 	pub cycle: u64,
 	pub maxed: bool,
 	pub paused: bool,
 	pub window_line: u8,
+	pub current_pixel: u8,
+	pub scanline_state: ScanlineState,
 }
 
 pub trait PPU {
@@ -31,6 +36,7 @@ pub trait PPU {
 	fn set_ly(&mut self, value: u8);
 	fn set_mode(&mut self, mode: PPUMode);
 	fn step_ppu(&mut self, lcd: &mut dyn LCDDisplay);
+	fn new_step_ppu(&mut self, lcd: &mut dyn LCDDisplay);
 }
 
 impl PPU for EmulatorState {
@@ -64,15 +70,86 @@ impl PPU for EmulatorState {
 		}
 	}
 
-	fn set_mode(&mut self, _mode: PPUMode) {
-		// let state = self.read(IORegistersAddress::STAT as u16);
-		// self.write(
-		// IORegistersAddress::STAT as u16,
-		// (state & 0b11111100) | _mode as u8,
-		// );
+	fn set_mode(&mut self, mode: PPUMode) {
+		let stat = self.read(IORegistersAddress::STAT as u16);
+
+		// Do Interrupts
+		use PPUMode::*;
+		let interrupt_triggered = match mode {
+			HBlank => stat & STAT_H_BLANK_IE != 0,
+			VBlank => stat & STAT_V_BLANK_IE != 0,
+			OamScan => stat & STAT_OAM_IE != 0,
+			Draw => false,
+		};
+
+		if matches!(mode, VBlank) {
+			self.io_register_state[INTERRUPT_REQUEST] |= INT_V_BLANK;
+		}
+
+		if interrupt_triggered {
+			self.io_register_state[INTERRUPT_REQUEST] |= INT_LCD_STAT;
+		}
+
+		self.write(
+			IORegistersAddress::STAT as u16,
+			(stat & 0b11111100) | mode as u8,
+		);
 	}
 
 	fn step_ppu(&mut self, lcd: &mut dyn LCDDisplay) {
+		use PPUMode::*;
+		match self.get_mode() {
+			HBlank => {
+				self.set_ly(self.get_ly() + 1);
+				if self.get_ly() <= 143 {
+					self.ppu_state.cycle += 80;
+					self.set_mode(OamScan);
+				} else {
+					self.ppu_state.cycle += 456;
+					self.ppu_state.window_line = 0;
+					let interrupt_state = self.read(INTERRUPT_REQUEST);
+
+					self.write(INTERRUPT_REQUEST, interrupt_state | INT_V_BLANK);
+					self.set_mode(VBlank);
+				}
+			}
+			VBlank => {
+				if self.get_ly() < 153 {
+					self.ppu_state.cycle += 456;
+					self.set_ly(self.get_ly() + 1);
+				} else {
+					self.set_ly(0);
+					self.ppu_state.cycle += 80;
+					self.ppu_state.scanline_state = self.fetch_scanline_state();
+					self.set_mode(OamScan);
+				}
+			}
+			OamScan => {
+				self.ppu_state.cycle += 172;
+				self.set_mode(Draw);
+			}
+			Draw => {
+				if self.ppu_state.current_pixel == 0 {
+					self.ppu_state.scanline_state = self.fetch_scanline_state();
+				}
+				self.render_screen_pixel(
+					lcd,
+					self.ppu_state.current_pixel,
+					self.get_ly(),
+					&self.ppu_state.scanline_state,
+				);
+				self.ppu_state.cycle += 2;
+				self.ppu_state.current_pixel += 1;
+				if self.ppu_state.current_pixel >= 160 {
+					self.ppu_state.current_pixel = 0;
+					self.ppu_state.cycle += 204;
+					self.set_mode(HBlank);
+				}
+			}
+		}
+	}
+
+	fn new_step_ppu(&mut self, lcd: &mut dyn LCDDisplay) {
 		if self.get_ly() < 144 {
 			self.render_scanline(lcd, self.get_ly());
 		}

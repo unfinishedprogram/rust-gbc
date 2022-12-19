@@ -102,7 +102,7 @@ impl Default for EmulatorState {
 
 impl EmulatorState {
 	pub fn step(&mut self, lcd: &mut dyn LCDDisplay) {
-		while self.cycle >= self.ppu_state.cycle >> 4 {
+		while self.cycle * 16 > self.ppu_state.cycle {
 			self.step_ppu(lcd);
 		}
 
@@ -112,7 +112,7 @@ impl EmulatorState {
 
 		self.update_timer(self.cycle - start);
 
-		while self.cycle >= self.ppu_state.cycle >> 4 {
+		while self.cycle * 16 >= self.ppu_state.cycle {
 			self.step_ppu(lcd);
 		}
 	}

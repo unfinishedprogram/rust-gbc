@@ -61,6 +61,7 @@ impl MemoryMapper for EmulatorState {
 					self.oam[(addr - 0xFE00) as usize] = value;
 				} else {
 					warn!("BLOCKED OAM Write {addr:X}:{value:X}");
+					self.oam[(addr - 0xFE00) as usize] = value;
 				}
 			} // Object Attribute Map
 			0xFEA0..0xFF00 => warn!("Invalid Write {addr:X}:{value:X}"),
