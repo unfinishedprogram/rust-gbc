@@ -17,10 +17,10 @@ pub trait Timer {
 impl Timer for EmulatorState {
 	fn timer_speed(&self) -> u64 {
 		match self.io_register_state[Self::TAC] & 0b11 {
-			0 => 1024 / 4,
-			1 => 16 / 4,
-			2 => 64 / 4,
-			3 => 256 / 4,
+			0 => 1024,
+			1 => 16,
+			2 => 64,
+			3 => 256,
 			_ => unreachable!(),
 		}
 	}
@@ -49,11 +49,7 @@ impl Timer for EmulatorState {
 
 		if self.timer_state.div_clock >= 256 {
 			self.timer_state.div_clock -= 256;
-			if self.io_register_state[Self::DIV] == 255 {
-				self.io_register_state[Self::DIV] = 0;
-			} else {
-				self.io_register_state[Self::DIV] += 1;
-			}
+			self.io_register_state[Self::DIV] = self.io_register_state[Self::DIV].wrapping_add(1);
 		}
 	}
 }

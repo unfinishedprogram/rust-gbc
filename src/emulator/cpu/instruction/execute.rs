@@ -54,7 +54,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		LD_16(to, from) => {
 			use ValueRefU16::*;
 			if matches!((to, from), (Reg(_), Reg(_))) {
-				cpu.cycle += 1;
+				cpu.tick_m_cycles(1);
 			}
 
 			let val = cpu.read_16(from);
@@ -70,7 +70,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		INC_16(ptr) => {
-			cpu.cycle += 1;
+			cpu.tick_m_cycles(1);
 			let ptr_val = cpu.read_16(ptr);
 			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
@@ -84,7 +84,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		DEC_16(ptr) => {
-			cpu.cycle += 1;
+			cpu.tick_m_cycles(1);
 
 			let ptr_val = cpu.read_16(ptr);
 
@@ -105,9 +105,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 		JP(condition, location) | JR(condition, location) => {
 			if cpu.check_condition(condition) {
-				match location {
-					ValueRefU16::Reg(CPURegister16::HL) => {}
-					_ => cpu.cycle += 1,
+				if !matches!(location, ValueRefU16::Reg(CPURegister16::HL)) {
+					cpu.tick_m_cycles(1);
 				}
 
 				let loc_val = cpu.read_16(location);
@@ -116,7 +115,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		ADD_16(a_ref, b_ref) => {
-			cpu.cycle += 1;
+			cpu.tick_m_cycles(1);
+
 			let a_val = cpu.read_16(a_ref);
 			let b_val = cpu.read_16(b_ref);
 
@@ -131,7 +131,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		ADD_SIGNED(a_ref, b_ref) => {
-			cpu.cycle += 2;
+			cpu.tick_m_cycles(2);
+
 			cpu.clear_flag(Flag::Z);
 			cpu.clear_flag(Flag::N);
 
@@ -236,7 +237,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		HALT => cpu.halted = true,
 		CALL(condition, location) => {
 			if cpu.check_condition(condition) {
-				cpu.cycle += 1;
+				cpu.tick_m_cycles(1);
 				let current_pc = cpu.read_16(CPURegister16::PC.into());
 				cpu.push(current_pc);
 				let loc_value = cpu.read_16(location);
@@ -244,31 +245,30 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			}
 		}
 		POP(value_ref) => {
-			cpu.cycle += 2;
+			cpu.tick_m_cycles(2);
 			let val = cpu.pop();
 			cpu.write_16(value_ref.into(), val);
 		}
 		PUSH(value_ref) => {
-			cpu.cycle += 1;
 			let value = cpu.read_16(value_ref.into());
+			cpu.tick_m_cycles(1);
 			cpu.push(value)
 		}
 		RET(condition) => {
 			use super::condition::Condition::*;
 
-			cpu.cycle += match condition {
-				ALWAYS => 0,
-				_ => 1,
-			};
+			if matches!(condition, ALWAYS) {
+				cpu.tick_m_cycles(1);
+			}
 
 			if matches!(condition, Condition::ALWAYS) || cpu.check_condition(condition) {
-				cpu.cycle += 3;
+				cpu.tick_m_cycles(3);
 				let ptr = cpu.pop();
 				cpu.write_16(CPURegister16::PC.into(), ptr);
 			}
 		}
 		RST(addr) => {
-			cpu.cycle += 1;
+			cpu.tick_m_cycles(1);
 			let current_pc = cpu.read_16(CPURegister16::PC.into());
 			cpu.push(current_pc);
 			let new_pc = cpu.read_16(addr);
@@ -445,7 +445,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		LD_HL_SP_DD(value) => {
-			cpu.cycle += 1;
+			cpu.tick_m_cycles(1);
 			cpu.clear_flag(Flag::Z);
 			cpu.clear_flag(Flag::N);
 
@@ -469,7 +469,6 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		LD_A_INC_HL => {
-			cpu.cycle -= 1;
 			execute_instruction(
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
@@ -478,7 +477,6 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		LD_A_DEC_HL => {
-			cpu.cycle -= 1;
 			execute_instruction(
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
@@ -487,7 +485,6 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		LD_INC_HL_A => {
-			cpu.cycle -= 1;
 			execute_instruction(
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,
@@ -496,7 +493,6 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		}
 
 		LD_DEC_HL_A => {
-			cpu.cycle -= 1;
 			execute_instruction(
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,

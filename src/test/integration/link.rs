@@ -6,23 +6,15 @@ use std::{
 use crate::emulator::{
 	cpu::{instruction::execute::execute_instruction, registers::CPURegister8, CPU},
 	memory_mapper::MemoryMapper,
-	ppu::PPU,
-	timer::Timer,
 	EmulatorState,
 };
 
 fn debug_step_state(state: &mut EmulatorState) -> Option<String> {
-	while state.cycle * 16 > state.ppu_state.cycle {
-		state.step_ppu();
-	}
-
-	let start = state.cycle;
-
 	if state.halted {
 		if state.interrupt_pending() {
 			state.halted = false;
 		} else {
-			state.cycle += 1;
+			state.tick_m_cycles(1);
 		}
 	} else {
 		use CPURegister8::*;
@@ -39,25 +31,14 @@ fn debug_step_state(state: &mut EmulatorState) -> Option<String> {
             state.cpu_state.registers[L],
             state.cpu_state.registers.sp,
             state.read(0xFF44),
-            state.cycle*2 + 2940552
+            state.get_cycle()*2 + 2940552
 	    );
 
 		let instruction = state.get_next_instruction_or_interrupt();
 		let inst = format!("{instruction:?}");
 		execute_instruction(instruction, state);
 
-		state.update_timer(state.cycle - start);
-
-		while state.cycle * 16 >= state.ppu_state.cycle {
-			state.step_ppu();
-		}
 		return Some(format!("{pc:04X} {inst:<19} {rs}"));
-	}
-
-	state.update_timer(state.cycle - start);
-
-	while state.cycle * 16 >= state.ppu_state.cycle {
-		state.step_ppu();
 	}
 
 	None

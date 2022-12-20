@@ -95,6 +95,11 @@ impl PPU for EmulatorState {
 	}
 
 	fn step_ppu(&mut self) {
+		if self.ppu_state.cycle != 0 {
+			self.ppu_state.cycle -= 1;
+			return;
+		}
+
 		use PPUMode::*;
 		match self.get_mode() {
 			HBlank => {
@@ -116,14 +121,11 @@ impl PPU for EmulatorState {
 				} else {
 					self.set_ly(0);
 					self.ppu_state.cycle += 80;
-					// self.ppu_state.scanline_state = self.fetch_scanline_state();
 					self.set_mode(OamScan);
 				}
 			}
 			OamScan => {
-				// if self.ppu_state.current_pixel == 0 {
 				self.ppu_state.scanline_state = self.fetch_scanline_state();
-				// }
 				self.ppu_state.cycle += 172;
 				self.set_mode(Draw);
 			}

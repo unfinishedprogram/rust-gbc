@@ -72,8 +72,8 @@ impl CPU for EmulatorState {
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
-				self.cycle += 1;
 				let index = self.read_16(*addr);
+				self.tick_m_cycles(1);
 				self.read(index)
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg],
@@ -97,7 +97,7 @@ impl CPU for EmulatorState {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
 				let index = self.read_16(*addr);
-				self.cycle += 1;
+				self.tick_m_cycles(1);
 				self.write(index, value);
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg] = value,
@@ -123,8 +123,8 @@ impl CPU for EmulatorState {
 	fn write_16(&mut self, value_ref: ValueRefU16, value: u16) {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
-				self.cycle += 2;
 				let bytes = u16::to_le_bytes(value);
+				self.tick_m_cycles(2);
 				self.write(i, bytes[0]);
 				self.write(i + 1, bytes[1]);
 			}
@@ -196,7 +196,7 @@ impl CPU for EmulatorState {
 			if self.interrupt_pending() {
 				self.halted = false;
 			} else {
-				self.cycle += 1;
+				self.tick_m_cycles(1);
 			}
 		} else {
 			let instruction = self.get_next_instruction_or_interrupt();

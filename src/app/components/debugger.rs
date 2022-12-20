@@ -95,12 +95,12 @@ impl Debugger {
 			DebuggerState::Running => {
 				// self.cycle += 1;
 				let now = instant::Instant::now();
-				let start = self.emulator_state.cycle;
-				while self.emulator_state.cycle - start < 1_048_576 / (144 * 4) {
+				let start = self.emulator_state.get_cycle();
+				while self.emulator_state.get_cycle() - start < 1_048_576 / 144 {
 					self.emulator_state.step();
 				}
 
-				self.cycle = self.emulator_state.cycle;
+				self.cycle = self.emulator_state.get_cycle();
 				self.frame_time = format!("{}", now.elapsed().as_millis());
 			}
 		}

@@ -24,13 +24,13 @@ pub struct EmulatorState {
 	pub oam: [u8; 0xA0],
 	pub hram: [u8; 0x80],
 	pub io_register_state: IORegisterState,
-	pub cycle: u64,
 	pub serial_output: Vec<u8>,
 	pub timer_state: TimerState,
 	pub halted: bool,
 	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
 	pub lcd: Option<LCD>,
+	t_states: u64,
 }
 
 impl PPUState {
@@ -55,13 +55,13 @@ impl Default for EmulatorState {
 			w_ram: [[0; 0x1000]; 8],
 			oam: [0; 0xA0],
 			hram: [0; 0x80],
-			cycle: 0,
 			serial_output: vec![],
 			timer_state: TimerState::default(),
 			halted: false,
 			interrupt_enable_register: 0,
 			raw_joyp_input: 0,
 			lcd: None,
+			t_states: 0,
 		};
 
 		emulator.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
@@ -101,32 +101,28 @@ impl Default for EmulatorState {
 }
 
 impl EmulatorState {
+	pub fn get_cycle(&self) -> u64 {
+		self.t_states / 4
+	}
+
 	pub fn step(&mut self) {
-		while self.cycle * 16 > self.ppu_state.cycle {
-			self.step_ppu();
-		}
-
-		let start = self.cycle;
 		self.step_cpu();
-		self.update_timer(self.cycle - start);
-
-		while self.cycle * 16 >= self.ppu_state.cycle {
-			self.step_ppu();
-		}
 	}
 
 	pub fn bind_lcd(&mut self, lcd: LCD) {
 		self.lcd = Some(lcd);
 	}
 
-	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
+	pub fn tick_m_cycles(&mut self, m_cycles: u64) {
 		self.tick_t_states(m_cycles * 4);
 	}
 
-	pub fn tick_t_states(&mut self, t_states: u32) {
+	fn tick_t_states(&mut self, t_states: u64) {
 		for _ in 0..t_states {
 			self.step_ppu();
+			self.update_timer(1);
 		}
+		self.t_states += t_states;
 	}
 
 	pub fn request_interrupt(&mut self, interrupt: u8) {
