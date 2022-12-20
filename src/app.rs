@@ -4,10 +4,7 @@ mod file_selector;
 pub mod logger;
 pub mod managed_input;
 mod style;
-use crate::{
-	app::file_selector::file_selector,
-	emulator::flags::{INTERRUPT_REQUEST, INT_JOY_PAD},
-};
+use crate::{app::file_selector::file_selector, emulator::flags::INT_JOY_PAD};
 
 use std::sync::Mutex;
 
@@ -66,8 +63,7 @@ impl EmulatorManager {
 				self.debugger.emulator_state.raw_joyp_input &= !bit(index as u8);
 
 				if last_input & bit(index as u8) != 0 {
-					self.debugger.emulator_state.io_register_state[INTERRUPT_REQUEST] |=
-						INT_JOY_PAD;
+					self.debugger.emulator_state.request_interrupt(INT_JOY_PAD);
 				}
 			};
 		}

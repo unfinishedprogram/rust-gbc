@@ -4,8 +4,8 @@ use crate::emulator::{
 
 use super::{
 	flags::{
-		INTERRUPT_REQUEST, INT_LCD_STAT, INT_V_BLANK, STAT, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE,
-		STAT_OAM_IE, STAT_V_BLANK_IE,
+		INT_LCD_STAT, INT_V_BLANK, STAT, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE,
+		STAT_V_BLANK_IE,
 	},
 	lcd::LCDDisplay,
 	renderer::{Renderer, ScanlineState},
@@ -65,7 +65,7 @@ impl PPU for EmulatorState {
 		}
 
 		if lyc_status && self.io_register_state[STAT] & STAT_LYC_EQ_LY_IE != 0 {
-			self.io_register_state[INTERRUPT_REQUEST] |= INT_LCD_STAT;
+			self.request_interrupt(INT_LCD_STAT);
 		}
 	}
 
@@ -82,11 +82,11 @@ impl PPU for EmulatorState {
 		};
 
 		if matches!(mode, VBlank) {
-			self.io_register_state[INTERRUPT_REQUEST] |= INT_V_BLANK;
+			self.request_interrupt(INT_V_BLANK);
 		}
 
 		if interrupt_triggered {
-			self.io_register_state[INTERRUPT_REQUEST] |= INT_LCD_STAT;
+			self.request_interrupt(INT_LCD_STAT);
 		}
 
 		self.write(
@@ -106,9 +106,7 @@ impl PPU for EmulatorState {
 				} else {
 					self.ppu_state.cycle += 456;
 					self.ppu_state.window_line = 0;
-					let interrupt_state = self.read(INTERRUPT_REQUEST);
-
-					self.write(INTERRUPT_REQUEST, interrupt_state | INT_V_BLANK);
+					self.request_interrupt(INT_V_BLANK);
 					self.set_mode(VBlank);
 				}
 			}
