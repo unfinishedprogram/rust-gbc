@@ -108,7 +108,7 @@ impl PPU for EmulatorState {
 					self.ppu_state.cycle += 80;
 					self.set_mode(OamScan);
 				} else {
-					self.ppu_state.cycle += 456;
+					self.ppu_state.cycle += 458;
 					self.ppu_state.window_line = 0;
 					self.request_interrupt(INT_V_BLANK);
 					self.set_mode(VBlank);
@@ -116,7 +116,7 @@ impl PPU for EmulatorState {
 			}
 			VBlank => {
 				if self.get_ly() < 153 {
-					self.ppu_state.cycle += 456;
+					self.ppu_state.cycle += 458;
 					self.set_ly(self.get_ly() + 1);
 				} else {
 					self.set_ly(0);
@@ -126,7 +126,7 @@ impl PPU for EmulatorState {
 			}
 			OamScan => {
 				self.ppu_state.scanline_state = self.fetch_scanline_state();
-				self.ppu_state.cycle += 172;
+				self.ppu_state.cycle += 12;
 				self.set_mode(Draw);
 			}
 			Draw => {
@@ -135,13 +135,15 @@ impl PPU for EmulatorState {
 					self.get_ly(),
 					self.fetch_pixel_state(),
 				);
+				self.ppu_state.cycle += 1;
 				self.ppu_state.current_pixel += 1;
 				if self.ppu_state.current_pixel == 160 {
 					self.ppu_state.current_pixel = 0;
-					self.ppu_state.cycle += 206;
+					self.ppu_state.cycle += 204;
 					self.set_mode(HBlank);
 				}
 			}
 		}
+		// self.ppu_state.cycle -= 1;
 	}
 }

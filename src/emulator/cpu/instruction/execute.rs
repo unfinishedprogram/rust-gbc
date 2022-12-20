@@ -257,7 +257,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		RET(condition) => {
 			use super::condition::Condition::*;
 
-			if matches!(condition, ALWAYS) {
+			if !matches!(condition, ALWAYS) {
 				cpu.tick_m_cycles(1);
 			}
 
@@ -473,7 +473,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
 			);
-			execute_instruction(Instruction::INC_16(CPURegister16::HL.into()), cpu);
+			let ptr = CPURegister16::HL.into();
+			let ptr_val = cpu.read_16(ptr);
+			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
 
 		LD_A_DEC_HL => {
@@ -481,7 +483,19 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
 			);
-			execute_instruction(Instruction::DEC_16(CPURegister16::HL.into()), cpu);
+			let ptr = CPURegister16::HL.into();
+			let ptr_val = cpu.read_16(ptr);
+
+			match ptr {
+				ValueRefU16::Reg(_) => {}
+				_ => {
+					cpu.set_flag(Flag::N);
+					cpu.set_flag_to(Flag::Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.set_flag_to(Flag::H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
+				}
+			}
+
+			cpu.write_16(ptr, ptr_val.wrapping_sub(1));
 		}
 
 		LD_INC_HL_A => {
@@ -489,7 +503,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,
 			);
-			execute_instruction(Instruction::INC_16(CPURegister16::HL.into()), cpu);
+			let ptr = CPURegister16::HL.into();
+			let ptr_val = cpu.read_16(ptr);
+			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
 
 		LD_DEC_HL_A => {
@@ -497,7 +513,20 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,
 			);
-			execute_instruction(Instruction::DEC_16(CPURegister16::HL.into()), cpu);
+
+			let ptr = CPURegister16::HL.into();
+			let ptr_val = cpu.read_16(ptr);
+
+			match ptr {
+				ValueRefU16::Reg(_) => {}
+				_ => {
+					cpu.set_flag(Flag::N);
+					cpu.set_flag_to(Flag::Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.set_flag_to(Flag::H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
+				}
+			}
+
+			cpu.write_16(ptr, ptr_val.wrapping_sub(1));
 		}
 
 		RETI => {
