@@ -3,10 +3,9 @@ use std::{
 	io::{BufReader, Read},
 };
 
-use crate::{emulator::EmulatorState, test::mocks::mock_lcd::MockLCD};
+use crate::emulator::EmulatorState;
 
 fn test_blargg(rom_name: &str, end: usize) {
-	let mut lcd = MockLCD::default();
 	let mut state = EmulatorState::default();
 
 	let rom_handle = File::open(format!("roms/{rom_name}.gb"))
@@ -24,7 +23,7 @@ fn test_blargg(rom_name: &str, end: usize) {
 	let mut last_write = 0;
 	while left > 0 {
 		left -= 1;
-		state.step(&mut lcd);
+		state.step();
 
 		if state.serial_output.len() != last {
 			last = state.serial_output.len();

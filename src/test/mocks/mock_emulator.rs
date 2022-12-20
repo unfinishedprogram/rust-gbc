@@ -78,7 +78,7 @@ impl CPU for MockEmulator {
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
 		todo!()
 	}
-	fn step(&mut self) {
+	fn step_cpu(&mut self) {
 		todo!()
 	}
 }

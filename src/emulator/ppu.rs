@@ -7,7 +7,6 @@ use super::{
 		INT_LCD_STAT, INT_V_BLANK, STAT, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE,
 		STAT_V_BLANK_IE,
 	},
-	lcd::LCDDisplay,
 	renderer::{Renderer, ScanlineState},
 	EmulatorState,
 };
@@ -35,7 +34,7 @@ pub trait PPU {
 	fn get_ly(&self) -> u8;
 	fn set_ly(&mut self, value: u8);
 	fn set_mode(&mut self, mode: PPUMode);
-	fn step_ppu(&mut self, lcd: &mut dyn LCDDisplay);
+	fn step_ppu(&mut self);
 }
 
 impl PPU for EmulatorState {
@@ -95,7 +94,7 @@ impl PPU for EmulatorState {
 		);
 	}
 
-	fn step_ppu(&mut self, lcd: &mut dyn LCDDisplay) {
+	fn step_ppu(&mut self) {
 		use PPUMode::*;
 		match self.get_mode() {
 			HBlank => {
@@ -130,10 +129,8 @@ impl PPU for EmulatorState {
 			}
 			Draw => {
 				self.render_screen_pixel(
-					lcd,
 					self.ppu_state.current_pixel,
 					self.get_ly(),
-					&self.ppu_state.scanline_state,
 					self.fetch_pixel_state(),
 				);
 				self.ppu_state.current_pixel += 1;

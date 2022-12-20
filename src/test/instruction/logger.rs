@@ -1,6 +1,5 @@
 use crate::emulator::{
 	cpu::{instruction::execute::execute_instruction, registers::CPURegister8, CPU},
-	lcd::LCDDisplay,
 	memory_mapper::MemoryMapper,
 	ppu::PPU,
 	EmulatorState,
@@ -8,9 +7,9 @@ use crate::emulator::{
 
 // 0100 nop                 A:01 F:b0 B:00 C:13 D:00 E:d8 H:01 L:4d LY:00 SP:fffe
 
-pub fn log_execute(state: &mut EmulatorState, lcd: &mut dyn LCDDisplay) -> String {
+pub fn log_execute(state: &mut EmulatorState) -> String {
 	while state.cycle >= state.ppu_state.cycle / 4 {
-		state.step_ppu(lcd);
+		state.step_ppu();
 	}
 
 	use CPURegister8::*;
@@ -34,13 +33,13 @@ pub fn log_execute(state: &mut EmulatorState, lcd: &mut dyn LCDDisplay) -> Strin
 	let inst = format!("{instruction:?}",);
 
 	while state.cycle >= state.ppu_state.cycle / 4 {
-		state.step_ppu(lcd);
+		state.step_ppu();
 	}
 
 	execute_instruction(instruction, state);
 	format!("{pc:04X} {inst:<19} {rs}")
 }
 
-pub fn execute(state: &mut EmulatorState, lcd: &mut dyn LCDDisplay) {
-	state.step(lcd);
+pub fn execute(state: &mut EmulatorState) {
+	state.step();
 }

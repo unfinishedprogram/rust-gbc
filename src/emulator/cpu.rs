@@ -49,7 +49,7 @@ pub trait CPU {
 	fn clear_request(&mut self, interrupt: u8);
 	fn get_interrupt(&mut self) -> Option<Instruction>;
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction;
-	fn step(&mut self);
+	fn step_cpu(&mut self);
 }
 
 impl CPU for EmulatorState {
@@ -101,15 +101,14 @@ impl CPU for EmulatorState {
 				self.write(index, value);
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg] = value,
-			ValueRefU8::Raw(_) => unreachable!(),
 			ValueRefU8::MemOffset(offset) => {
 				let offset_value: u16 = self.read_8(offset) as u16;
-				// self.cycle += 1;
 				self.write_8(
 					&ValueRefU8::Mem(ValueRefU16::Raw(offset_value | 0xFF00)),
 					value,
 				)
 			}
+			ValueRefU8::Raw(_) => unreachable!(),
 		}
 	}
 
@@ -192,7 +191,7 @@ impl CPU for EmulatorState {
 		self.fetch_next_instruction()
 	}
 
-	fn step(&mut self) {
+	fn step_cpu(&mut self) {
 		if self.halted {
 			if self.interrupt_pending() {
 				self.halted = false;

@@ -8,14 +8,7 @@ use self::sprite::Sprite;
 use super::{flags::LCDC, lcd::LCDDisplay, memory_mapper::MemoryMapper, ppu::PPU, EmulatorState};
 
 pub trait Renderer {
-	fn render_screen_pixel(
-		&self,
-		lcd: &mut dyn LCDDisplay,
-		x: u8,
-		y: u8,
-		scanline_state: &ScanlineState,
-		pixel_state: PixelState,
-	);
+	fn render_screen_pixel(&mut self, x: u8, y: u8, pixel_state: PixelState);
 	fn fetch_scanline_state(&mut self) -> ScanlineState;
 	fn fetch_pixel_state(&self) -> PixelState;
 }
@@ -154,11 +147,11 @@ pub struct PixelState {
 
 impl Renderer for EmulatorState {
 	fn render_screen_pixel(
-		&self,
-		lcd: &mut dyn LCDDisplay,
+		&mut self,
+		// lcd: &mut dyn LCDDisplay,
 		x: u8,
 		y: u8,
-		scanline_state: &ScanlineState,
+		// scanline_state: &ScanlineState,
 		pixel_state: PixelState,
 	) {
 		let (scx, scy) = (self.read(0xFF43), self.read(0xFF42));
@@ -176,7 +169,7 @@ impl Renderer for EmulatorState {
 			w_index,
 			sprite_height: _,
 			sprites,
-		} = scanline_state;
+		} = &self.ppu_state.scanline_state;
 
 		let wn_in_view = x + 7 >= wx && y >= wy;
 		let wn_visible = wn_in_view && *wn_enabled;
@@ -213,15 +206,18 @@ impl Renderer for EmulatorState {
 				base_color = self.map_pallet_color(sprite.pallet_address, sprite_color);
 			}
 		}
-		if sprite_pixel {
-			lcd.put_pixel(x, y, self.get_color_from_pallet_index(base_color));
+
+		let color = if sprite_pixel {
+			self.get_color_from_pallet_index(base_color)
 		} else {
-			lcd.put_pixel(
-				x,
-				y,
-				self.get_color_from_pallet_index(self.map_pallet_color(0xFF47, base_color)),
-			);
-		}
+			self.get_color_from_pallet_index(self.map_pallet_color(0xFF47, base_color))
+		};
+
+		let Some(lcd) = self.lcd.as_mut() else {
+			return;
+		};
+
+		lcd.put_pixel(x, y, color);
 	}
 
 	fn fetch_pixel_state(&self) -> PixelState {

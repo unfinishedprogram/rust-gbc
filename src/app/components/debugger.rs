@@ -24,21 +24,21 @@ pub struct Debugger {
 	serial_output: Vec<char>,
 	frame_time: String,
 	pub emulator_state: EmulatorState,
-	lcd: LCD,
 }
 
 impl Default for Debugger {
 	fn default() -> Self {
+		let mut emulator_state = EmulatorState::default();
+		emulator_state.bind_lcd(LCD::new());
 		Self {
 			serial_tick: 0,
 			cycle: 0,
 			frame_time: "".to_string(),
 			serial_output: vec![],
-			emulator_state: EmulatorState::default(),
+			emulator_state,
 			state: DebuggerState::Paused,
 			vram_view: BufferView::new("VRAM", (16 * 8, 24 * 8)),
 			window_view: BufferView::new("Window", (256, 256)),
-			lcd: LCD::new(),
 		}
 	}
 }
@@ -50,7 +50,9 @@ impl Debugger {
 
 		self.vram_view.draw_window(ui, "Vram");
 		self.window_view.draw_window(ui, "Window");
-		self.lcd.draw_window(ui, "LCD");
+		if let Some(lcd) = self.emulator_state.lcd.as_ref() {
+			lcd.draw_window(ui, "LCD");
+		}
 
 		ui.label(format!("Cycle: {:}", self.cycle));
 		ui.label(format!("Halted: {:?}", self.emulator_state.halted));
@@ -84,7 +86,7 @@ impl Debugger {
 	}
 
 	pub fn step_once(&mut self) {
-		self.emulator_state.step(&mut self.lcd);
+		self.emulator_state.step();
 	}
 
 	pub fn step(&mut self) {
@@ -95,7 +97,7 @@ impl Debugger {
 				let now = instant::Instant::now();
 				let start = self.emulator_state.cycle;
 				while self.emulator_state.cycle - start < 1_048_576 / (144 * 4) {
-					self.emulator_state.step(&mut self.lcd);
+					self.emulator_state.step();
 				}
 
 				self.cycle = self.emulator_state.cycle;

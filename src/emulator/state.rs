@@ -5,7 +5,7 @@ use super::cpu::values::ValueRefU16;
 use super::cpu::{CPUState, CPU};
 use super::flags::INTERRUPT_REQUEST;
 use super::io_registers::IORegisterState;
-use super::lcd::LCDDisplay;
+use super::lcd::{LCDDisplay, LCD};
 use super::memory_mapper::MemoryMapper;
 use super::ppu::{PPUMode, PPUState, PPU};
 use super::timer::{Timer, TimerState};
@@ -30,6 +30,7 @@ pub struct EmulatorState {
 	pub halted: bool,
 	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
+	pub lcd: Option<LCD>,
 }
 
 impl PPUState {
@@ -60,6 +61,7 @@ impl Default for EmulatorState {
 			halted: false,
 			interrupt_enable_register: 0,
 			raw_joyp_input: 0,
+			lcd: None,
 		};
 
 		emulator.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
@@ -99,27 +101,33 @@ impl Default for EmulatorState {
 }
 
 impl EmulatorState {
-	pub fn step(&mut self, lcd: &mut dyn LCDDisplay) {
+	pub fn step(&mut self) {
 		while self.cycle * 16 > self.ppu_state.cycle {
-			self.step_ppu(lcd);
+			self.step_ppu();
 		}
 
 		let start = self.cycle;
-
-		CPU::step(self);
-
+		self.step_cpu();
 		self.update_timer(self.cycle - start);
 
 		while self.cycle * 16 >= self.ppu_state.cycle {
-			self.step_ppu(lcd);
+			self.step_ppu();
 		}
+	}
+
+	pub fn bind_lcd(&mut self, lcd: LCD) {
+		self.lcd = Some(lcd);
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
 		self.tick_t_states(m_cycles * 4);
 	}
 
-	pub fn tick_t_states(&mut self, t_states: u32) {}
+	pub fn tick_t_states(&mut self, t_states: u32) {
+		for _ in 0..t_states {
+			self.step_ppu();
+		}
+	}
 
 	pub fn request_interrupt(&mut self, interrupt: u8) {
 		self.write(INTERRUPT_REQUEST, self.read(INTERRUPT_REQUEST) | interrupt);

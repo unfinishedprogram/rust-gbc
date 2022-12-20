@@ -3,21 +3,17 @@ use std::{
 	io::{BufRead, BufReader, Read},
 };
 
-use crate::{
-	emulator::{
-		cpu::{instruction::execute::execute_instruction, registers::CPURegister8, CPU},
-		lcd::LCDDisplay,
-		memory_mapper::MemoryMapper,
-		ppu::PPU,
-		timer::Timer,
-		EmulatorState,
-	},
-	test::mocks::mock_lcd::MockLCD,
+use crate::emulator::{
+	cpu::{instruction::execute::execute_instruction, registers::CPURegister8, CPU},
+	memory_mapper::MemoryMapper,
+	ppu::PPU,
+	timer::Timer,
+	EmulatorState,
 };
 
-fn debug_step_state(state: &mut EmulatorState, lcd: &mut dyn LCDDisplay) -> Option<String> {
+fn debug_step_state(state: &mut EmulatorState) -> Option<String> {
 	while state.cycle * 16 > state.ppu_state.cycle {
-		state.step_ppu(lcd);
+		state.step_ppu();
 	}
 
 	let start = state.cycle;
@@ -53,7 +49,7 @@ fn debug_step_state(state: &mut EmulatorState, lcd: &mut dyn LCDDisplay) -> Opti
 		state.update_timer(state.cycle - start);
 
 		while state.cycle * 16 >= state.ppu_state.cycle {
-			state.step_ppu(lcd);
+			state.step_ppu();
 		}
 		return Some(format!("{pc:04X} {inst:<19} {rs}"));
 	}
@@ -61,7 +57,7 @@ fn debug_step_state(state: &mut EmulatorState, lcd: &mut dyn LCDDisplay) -> Opti
 	state.update_timer(state.cycle - start);
 
 	while state.cycle * 16 >= state.ppu_state.cycle {
-		state.step_ppu(lcd);
+		state.step_ppu();
 	}
 
 	None
@@ -70,7 +66,6 @@ fn debug_step_state(state: &mut EmulatorState, lcd: &mut dyn LCDDisplay) -> Opti
 #[test]
 fn link() {
 	let rom_name = "games/LegendOfZelda";
-	let mut lcd = MockLCD::default();
 	let mut state = EmulatorState::default();
 
 	let rom_handle = File::open(format!("roms/{rom_name}.gb"))
@@ -89,7 +84,7 @@ fn link() {
 	let mut lc = 0;
 	let mut last_line: String = "".to_owned();
 	for _ in 0..10000000 {
-		if let Some(res) = debug_step_state(&mut state, &mut lcd) {
+		if let Some(res) = debug_step_state(&mut state) {
 			let line = lines.next().unwrap().unwrap();
 			lc += 1;
 			if res != line {
