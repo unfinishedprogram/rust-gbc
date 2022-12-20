@@ -47,7 +47,7 @@ fn debug_step_state(state: &mut EmulatorState, lcd: &mut dyn LCDDisplay) -> Opti
 	    );
 
 		let instruction = state.get_next_instruction_or_interrupt();
-		let inst = format!("{:?}", instruction);
+		let inst = format!("{instruction:?}");
 		execute_instruction(instruction, state);
 
 		state.update_timer(state.cycle - start);

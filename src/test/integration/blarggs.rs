@@ -56,15 +56,15 @@ macro_rules! blarggs_tests {
 }
 
 blarggs_tests! {
-	blarggs_1:("cpu_instrs/01-special", 1262605),
-	blarggs_2:("cpu_instrs/02-interrupts", 164885),
-	blarggs_3:("cpu_instrs/03-op sp,hl", 1073175),
-	blarggs_4:("cpu_instrs/04-op r,imm", 1266861),
-	blarggs_5:("cpu_instrs/05-op rp", 1766566),
-	blarggs_6:("cpu_instrs/06-ld r,r", 247711),
-	blarggs_7:("cpu_instrs/07-jr,jp,call,ret,rst", 291270),
-	blarggs_8:("cpu_instrs/08-misc instrs", 227385),
-	blarggs_9:("cpu_instrs/09-op r,r", 4424099),
-	blarggs_10:("cpu_instrs/10-bit ops", 6716593),
-	blarggs_11:("cpu_instrs/11-op a,(hl)", 7431526),
+	blarggs_1:("cpu_instrs/01-special", 1261836),
+	blarggs_2:("cpu_instrs/02-interrupts", 164125),
+	blarggs_3:("cpu_instrs/03-op sp,hl", 1072657),
+	blarggs_4:("cpu_instrs/04-op r,imm", 1267841),
+	blarggs_5:("cpu_instrs/05-op rp", 1766356),
+	blarggs_6:("cpu_instrs/06-ld r,r", 247201),
+	blarggs_7:("cpu_instrs/07-jr,jp,call,ret,rst", 290473),
+	blarggs_8:("cpu_instrs/08-misc instrs", 225796),
+	blarggs_9:("cpu_instrs/09-op r,r", 4425926),
+	blarggs_10:("cpu_instrs/10-bit ops", 6718006),
+	blarggs_11:("cpu_instrs/11-op a,(hl)", 7430953),
 }

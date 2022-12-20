@@ -96,7 +96,7 @@ impl Default for EmulatorState {
 		emulator.write(0xFF48, 0xFF);
 		emulator.write(0xFF49, 0xFF);
 
-		emulator.ppu_state.cycle = 695;
+		emulator.ppu_state.cycle = 512;
 		emulator
 	}
 }
