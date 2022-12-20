@@ -157,7 +157,6 @@ impl IORegisters for EmulatorState {
 				}
 			}
 			Err(_) => {
-				self.run = false;
 				error!("Unhandled Write: {:X}", addr);
 			}
 			Ok(_) => self.io_register_state[addr] = value,

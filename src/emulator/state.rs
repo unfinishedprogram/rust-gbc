@@ -23,7 +23,6 @@ pub struct EmulatorState {
 	pub oam: [u8; 0xA0],
 	pub hram: [u8; 0x80],
 	pub io_register_state: IORegisterState,
-	pub run: bool,
 	pub cycle: u64,
 	pub serial_output: Vec<u8>,
 	pub timer_clock: u64,
@@ -45,7 +44,6 @@ impl PPUState {
 impl Default for EmulatorState {
 	fn default() -> Self {
 		let mut emulator = Self {
-			run: false,
 			cpu_state: CPUState::default(),
 			ppu_state: PPUState::default(),
 			io_register_state: IORegisterState::default(),
