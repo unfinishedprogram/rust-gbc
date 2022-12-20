@@ -104,6 +104,7 @@ impl CPU for EmulatorState {
 			ValueRefU8::Raw(_) => unreachable!(),
 			ValueRefU8::MemOffset(offset) => {
 				let offset_value: u16 = self.read_8(offset) as u16;
+				// self.cycle += 1;
 				self.write_8(
 					&ValueRefU8::Mem(ValueRefU16::Raw(offset_value | 0xFF00)),
 					value,
