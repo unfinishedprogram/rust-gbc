@@ -9,7 +9,7 @@ use crate::{
 		lcd::LCDDisplay,
 		memory_mapper::MemoryMapper,
 		ppu::PPU,
-		timer_controller::TimerController,
+		timer::Timer,
 		EmulatorState,
 	},
 	test::mocks::mock_lcd::MockLCD,

@@ -3,11 +3,12 @@ use super::cartridge::CartridgeState;
 use super::cpu::registers::CPURegister16;
 use super::cpu::values::ValueRefU16;
 use super::cpu::{CPUState, CPU};
+use super::flags::INTERRUPT_REQUEST;
 use super::io_registers::IORegisterState;
 use super::lcd::LCDDisplay;
 use super::memory_mapper::MemoryMapper;
 use super::ppu::{PPUMode, PPUState, PPU};
-use super::timer_controller::TimerController;
+use super::timer::{Timer, TimerState};
 
 trait LCDDisplayWithCopy: LCDDisplay + Copy {}
 
@@ -25,8 +26,7 @@ pub struct EmulatorState {
 	pub io_register_state: IORegisterState,
 	pub cycle: u64,
 	pub serial_output: Vec<u8>,
-	pub timer_clock: u64,
-	pub div_clock: u64,
+	pub timer_state: TimerState,
 	pub halted: bool,
 	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
@@ -56,8 +56,7 @@ impl Default for EmulatorState {
 			hram: [0; 0x80],
 			cycle: 0,
 			serial_output: vec![],
-			timer_clock: 0,
-			div_clock: 0,
+			timer_state: TimerState::default(),
 			halted: false,
 			interrupt_enable_register: 0,
 			raw_joyp_input: 0,
@@ -114,6 +113,16 @@ impl EmulatorState {
 		while self.cycle * 16 >= self.ppu_state.cycle {
 			self.step_ppu(lcd);
 		}
+	}
+
+	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
+		self.tick_t_states(m_cycles * 4);
+	}
+
+	pub fn tick_t_states(&mut self, t_states: u32) {}
+
+	pub fn request_interrupt(&mut self, interrupt: u8) {
+		self.write(INTERRUPT_REQUEST, self.read(INTERRUPT_REQUEST) | interrupt);
 	}
 
 	pub fn load_rom(&mut self, rom: &[u8]) -> Result<(), CartridgeParseError> {
