@@ -127,7 +127,7 @@ impl MemoryMapper for CartridgeState {
 					}
 				}
 				0xA000..0xC000 => {
-					if self.ram_enabled {
+					if self.ram_enabled && self.info.ram_banks > 0 {
 						let mapped_addr = 0x2000 * self.get_ram_bank() - 0xA000;
 						self.raw_ram[(mapped_addr + addr) as usize] = value;
 					}
