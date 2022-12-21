@@ -4,7 +4,7 @@ pub mod status;
 
 use super::BufferView;
 use crate::{
-	app::drawable::{Drawable, DrawableMut},
+	app::drawable::DrawableMut,
 	emulator::{lcd::LCD, memory_mapper::MemoryMapper, state::EmulatorState},
 };
 use debug_draw::*;
@@ -50,9 +50,6 @@ impl Debugger {
 
 		self.vram_view.draw_window(ui, "Vram");
 		self.window_view.draw_window(ui, "Window");
-		if let Some(lcd) = self.emulator_state.lcd.as_ref() {
-			lcd.draw_window(ui, "LCD");
-		}
 
 		ui.label(format!("Cycle: {:}", self.cycle));
 		ui.label(format!("Halted: {:?}", self.emulator_state.halted));

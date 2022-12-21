@@ -9,13 +9,13 @@ use crate::{app::file_selector::file_selector, emulator::flags::INT_JOY_PAD};
 use std::sync::Mutex;
 
 use components::{draw_status, Debugger};
-use egui::Key;
+use egui::{CentralPanel, Key, SidePanel, TopBottomPanel};
 use lazy_static::lazy_static;
 use poll_promise::Promise;
 
 use crate::util::{bits::bit, file_types::Entry};
 
-use self::{components::log_view::draw_logs, logger::Logger};
+use self::{components::log_view::draw_logs, drawable::Drawable, logger::Logger};
 
 static LOGGER: Logger = Logger {
 	logs: Mutex::new(vec![]),
@@ -29,6 +29,7 @@ pub struct EmulatorManager {
 	loaded_file_data: Option<Promise<Vec<u8>>>,
 	debugger: Debugger,
 	logger: &'static Logger,
+	debug: bool,
 }
 
 impl Default for EmulatorManager {
@@ -36,6 +37,7 @@ impl Default for EmulatorManager {
 		log::set_logger(&LOGGER).unwrap();
 		log::set_max_level(log::LevelFilter::Debug);
 		Self {
+			debug: false,
 			logger: &LOGGER,
 			loaded_file_data: None::<Promise<Vec<u8>>>,
 			debugger: Debugger::default(),
@@ -100,7 +102,7 @@ impl eframe::App for EmulatorManager {
 			}
 		}
 
-		egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+		TopBottomPanel::top("top_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
 				ui.menu_button("file", |ui| {
 					file_selector(ui, &ROMS, &mut |selected| {
@@ -115,18 +117,26 @@ impl eframe::App for EmulatorManager {
 					self.debugger.step_once();
 				}
 
-				self.debugger.step();
+				ui.checkbox(&mut self.debug, "Debug");
 			})
 		});
 
-		egui::SidePanel::left("left_panel").show(ctx, |ui| {
-			ui.vertical(|ui| draw_status(ui, &self.debugger.emulator_state));
-			draw_logs(ui, &self.logger.logs.lock().unwrap());
+		self.debugger.step();
+
+		if self.debug {
+			SidePanel::left("left_panel").show(ctx, |ui| {
+				ui.vertical(|ui| draw_status(ui, &self.debugger.emulator_state));
+				draw_logs(ui, &self.logger.logs.lock().unwrap());
+			});
+
+			SidePanel::right("right_panel").show(ctx, |ui| self.debugger.draw(ui));
+		}
+
+		CentralPanel::default().show(ctx, |ui| {
+			if let Some(lcd) = self.debugger.emulator_state.lcd.as_ref() {
+				lcd.draw_window(ui, "LCD");
+			}
 		});
-
-		egui::SidePanel::right("right_panel").show(ctx, |ui| self.debugger.draw(ui));
-
-		egui::CentralPanel::default().show(ctx, |ui| ui.heading("Central Panel"));
 
 		ctx.request_repaint()
 	}
