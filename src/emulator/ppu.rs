@@ -145,6 +145,5 @@ impl PPU for EmulatorState {
 				}
 			}
 		}
-		// self.ppu_state.cycle -= 1;
 	}
 }
