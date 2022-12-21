@@ -93,7 +93,6 @@ impl Debugger {
 		match self.state {
 			DebuggerState::Paused => {}
 			DebuggerState::Running => {
-				// self.cycle += 1;
 				let now = instant::Instant::now();
 				let start = self.emulator_state.get_cycle();
 				while self.emulator_state.get_cycle() - start < 1_048_576 / 144 {

@@ -29,7 +29,6 @@ impl log::Log for Logger {
 		if let Ok(mut logs) = self.logs.lock() {
 			logs.push(format!("{} - {}", record.level(), record.args()))
 		}
-		// }
 	}
 
 	fn flush(&self) {
