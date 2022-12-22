@@ -57,6 +57,7 @@ impl RendererHelpers for EmulatorState {
 			self.get_tile_pixel_pallet_index(x, y, sprite.tile_index, true)
 		} else {
 			// 8x16 Mode
+			let y = y + 16;
 			let y = if sprite.flip_y { y } else { 15 - y };
 			if y < 8 {
 				self.get_tile_pixel_pallet_index(x, y, sprite.tile_index & 0xFE, true)
@@ -167,7 +168,7 @@ impl Renderer for EmulatorState {
 			lcdc: _,
 			wn_enabled,
 			w_index,
-			sprite_height: _,
+			sprite_height,
 			sprites,
 		} = &self.ppu_state.scanline_state;
 
@@ -195,7 +196,8 @@ impl Renderer for EmulatorState {
 				continue; // Not inside sprite
 			}
 
-			let sprite_color = self.get_sprite_pixel(sprite, sprite.x - (x + 1), sprite.y - y - 9);
+			let sprite_color =
+				self.get_sprite_pixel(sprite, sprite.x - (x + 1), sprite.y - y - sprite_height - 1);
 
 			if sprite_color == 0 {
 				continue; // transparency
@@ -238,13 +240,20 @@ impl Renderer for EmulatorState {
 
 		let bg_enabled = lcdc & BIT_0 == BIT_0;
 		let wn_enabled = lcdc & BIT_5 == BIT_5 && bg_enabled;
-		let sprite_height = 8 + if lcdc & BIT_2 == BIT_2 { 8 } else { 0 };
+		let sprite_height = if lcdc & BIT_2 == BIT_2 { 16 } else { 8 };
+		let dhs = lcdc & BIT_2 == BIT_2;
 
 		let sprites = {
 			let mut sprites: Vec<Sprite> = self
 				.fetch_sprites()
 				.into_iter()
-				.filter(|sprite| sprite.y > line + 8 && sprite.y <= line + 8 + sprite_height)
+				.filter(|sprite| {
+					if dhs {
+						(sprite.y > line) && (sprite.y <= line + 16)
+					} else {
+						(sprite.y > line + 8) && (sprite.y <= line + 16)
+					}
+				})
 				.take(10)
 				.collect();
 
