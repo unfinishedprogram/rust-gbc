@@ -1,5 +1,6 @@
 use super::cartridge::header::CartridgeParseError;
-use super::cartridge::CartridgeState;
+use super::cartridge::load_cartridge;
+use super::cartridge::memory_bank_controller::Cartridge;
 use super::cpu::registers::CPURegister16;
 use super::cpu::values::ValueRefU16;
 use super::cpu::{CPUState, CPU};
@@ -18,7 +19,7 @@ pub struct EmulatorState {
 	pub cgb: bool,
 	pub cpu_state: CPUState,
 	pub ppu_state: PPUState,
-	pub cartridge_state: Option<CartridgeState>,
+	pub cartridge_state: Option<Cartridge>,
 	pub v_ram: [[u8; 0x2000]; 2],
 	pub w_ram: [[u8; 0x1000]; 8],
 	pub oam: [u8; 0xA0],
@@ -133,7 +134,7 @@ impl EmulatorState {
 	}
 
 	pub fn load_rom(&mut self, rom: &[u8]) -> Result<(), CartridgeParseError> {
-		let cartridge = CartridgeState::from_raw_rom(rom.to_owned())?;
+		let cartridge = Cartridge::try_from(rom)?;
 		self.cartridge_state = Some(cartridge);
 		Ok(())
 	}
