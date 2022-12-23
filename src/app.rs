@@ -4,7 +4,10 @@ mod file_selector;
 pub mod logger;
 pub mod managed_input;
 mod style;
-use crate::{app::file_selector::file_selector, emulator::flags::INT_JOY_PAD};
+use crate::{
+	app::file_selector::file_selector,
+	emulator::{flags::INT_JOY_PAD, lcd::LCD},
+};
 
 use std::sync::Mutex;
 
@@ -27,7 +30,7 @@ lazy_static! {
 
 pub struct EmulatorManager {
 	loaded_file_data: Option<Promise<Vec<u8>>>,
-	debugger: Debugger,
+	pub debugger: Debugger,
 	logger: &'static Logger,
 	debug: bool,
 }
@@ -46,8 +49,10 @@ impl Default for EmulatorManager {
 }
 
 impl EmulatorManager {
-	pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-		Default::default()
+	pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+		let mut res = EmulatorManager::default();
+		res.debugger.emulator_state.bind_lcd(LCD::new(&cc.egui_ctx));
+		res
 	}
 
 	fn update_key_input(&mut self, ctx: &egui::Context) {

@@ -5,7 +5,7 @@ pub mod status;
 use super::BufferView;
 use crate::{
 	app::drawable::DrawableMut,
-	emulator::{lcd::LCD, memory_mapper::MemoryMapper, state::EmulatorState},
+	emulator::{memory_mapper::MemoryMapper, state::EmulatorState},
 };
 use debug_draw::*;
 use egui::Ui;
@@ -28,14 +28,12 @@ pub struct Debugger {
 
 impl Default for Debugger {
 	fn default() -> Self {
-		let mut emulator_state = EmulatorState::default();
-		emulator_state.bind_lcd(LCD::new());
 		Self {
 			serial_tick: 0,
 			cycle: 0,
 			frame_time: "".to_string(),
 			serial_output: vec![],
-			emulator_state,
+			emulator_state: EmulatorState::default(),
 			state: DebuggerState::Paused,
 			vram_view: BufferView::new("VRAM", (16 * 8, 24 * 8)),
 			window_view: BufferView::new("Window", (256, 256)),
