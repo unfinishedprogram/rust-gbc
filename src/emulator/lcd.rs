@@ -10,16 +10,22 @@ pub trait LCDDisplay {
 
 #[derive(Clone)]
 pub struct LCD {
-	buffer: Vec<u8>,
+	buffers: (Vec<u8>, Vec<u8>),
+	current_buffer: bool,
 }
 
 impl Drawable for LCD {
 	fn draw(&self, ui: &mut egui::Ui) {
 		let (x, y) = self.get_size();
 
+		let buffer = match self.current_buffer {
+			true => &self.buffers.0,
+			false => &self.buffers.1,
+		};
+
 		let texture = ui.ctx().load_texture(
 			"LCD",
-			ColorImage::from_rgba_unmultiplied([x as usize, y as usize], &self.buffer),
+			ColorImage::from_rgba_unmultiplied([x as usize, y as usize], buffer),
 			egui::TextureFilter::Nearest,
 		);
 
@@ -34,28 +40,40 @@ impl LCDDisplay for LCD {
 
 	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8)) {
 		let (width, height) = self.get_size();
-
-		let x = x % width;
-		let y = y % height;
+		if x >= width || y >= height {
+			return;
+		}
 
 		let (r, g, b) = color;
 		let index: usize = (y as usize * width as usize + x as usize) * 4;
 
-		self.buffer[index] = r;
-		self.buffer[index + 1] = g;
-		self.buffer[index + 2] = b;
+		let buffer = match self.current_buffer {
+			true => &mut self.buffers.1,
+			false => &mut self.buffers.0,
+		};
+
+		buffer[index] = r;
+		buffer[index + 1] = g;
+		buffer[index + 2] = b;
 	}
 
 	fn get_image_data(&self) -> &Vec<u8> {
-		&self.buffer
+		match self.current_buffer {
+			true => &self.buffers.0,
+			false => &self.buffers.1,
+		}
 	}
 }
 
 impl LCD {
 	pub fn new() -> Self {
 		Self {
-			buffer: vec![0xFF; 144 * 160 * 4],
+			current_buffer: false,
+			buffers: (vec![0xFF; 144 * 160 * 4], vec![0xFF; 144 * 160 * 4]),
 		}
+	}
+	pub fn swap_buffers(&mut self) {
+		self.current_buffer = !self.current_buffer;
 	}
 }
 

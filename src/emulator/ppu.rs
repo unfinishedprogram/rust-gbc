@@ -111,6 +111,11 @@ impl PPU for EmulatorState {
 					self.ppu_state.cycle += 458;
 					self.ppu_state.window_line = 0;
 					self.request_interrupt(INT_V_BLANK);
+
+					if let Some(lcd) = &mut self.lcd {
+						lcd.swap_buffers();
+					}
+
 					self.set_mode(VBlank);
 				}
 			}

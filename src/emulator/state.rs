@@ -1,5 +1,4 @@
 use super::cartridge::header::CartridgeParseError;
-use super::cartridge::load_cartridge;
 use super::cartridge::memory_bank_controller::Cartridge;
 use super::cpu::registers::CPURegister16;
 use super::cpu::values::ValueRefU16;
