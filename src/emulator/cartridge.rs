@@ -9,6 +9,7 @@ use self::{
 mod cartridge_data;
 pub mod header;
 pub mod mbc1;
+pub mod mbc2;
 pub mod memory_bank_controller;
 
 pub fn load_cartridge(data: &[u8]) -> Result<Cartridge, CartridgeParseError> {

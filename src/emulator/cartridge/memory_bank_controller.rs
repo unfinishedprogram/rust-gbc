@@ -4,6 +4,7 @@ use super::{
 	cartridge_data::CartridgeData,
 	header::{CartridgeParseError, RawCartridgeHeader},
 	mbc1::MBC1State,
+	mbc2::MBC2State,
 };
 
 pub trait MemoryBankController: Default + Clone {
@@ -15,7 +16,7 @@ pub trait MemoryBankController: Default + Clone {
 pub enum Cartridge {
 	ROM(CartridgeData),
 	MBC1(CartridgeData, MBC1State),
-	MBC2,
+	MBC2(CartridgeData, MBC2State),
 	MMM01,
 	MBC3,
 	MBC5,
@@ -38,7 +39,7 @@ impl TryFrom<&[u8]> for Cartridge {
 		match raw_header.cartridge_type {
 			0x00 => Ok(ROM(data)),
 			0x01 | 0x02 | 0x03 => Ok(MBC1(data, MBC1State::default())),
-			0x05 | 0x06 => Ok(MBC2),
+			0x05 | 0x06 => Ok(MBC2(data, MBC2State::default())),
 			0x08 | 0x09 => Ok(ROM(data)),
 			0x0B | 0x0C | 0x0D => Ok(MMM01),
 			0x0F | 0x10 | 0x11 | 0x12 | 0x13 => Ok(MBC3),
@@ -78,7 +79,22 @@ impl MemoryMapper for Cartridge {
 
 				_ => unreachable!(),
 			},
-			MBC2 => todo!(),
+			MBC2(data, state) => match addr {
+				0..0x4000 => data.rom_banks[0][addr as usize],
+				0x4000..0x8000 => {
+					let bank = state.rom_bank;
+					data.rom_banks[bank as usize][(addr - 0x4000) as usize]
+				}
+				0xA000..0xC000 => {
+					let local_addr = ((addr - 0xA000) % 512) as usize;
+					if state.ram_enabled {
+						state.ram_data[local_addr] & 0x0F
+					} else {
+						0x0F
+					}
+				}
+				_ => 0xFF,
+			},
 			MMM01 => todo!(),
 			MBC3 => todo!(),
 			MBC5 => todo!(),
@@ -108,7 +124,16 @@ impl MemoryMapper for Cartridge {
 				}
 				_ => unreachable!(),
 			},
-			MBC2 => {}
+			MBC2(_, state) => match addr {
+				0x0000..0x4000 => state.set_register(addr, value),
+				0xA000..0xC000 => {
+					let local_addr = ((addr - 0xA000) % 512) as usize;
+					if state.ram_enabled {
+						state.ram_data[local_addr] = value & 0x0F
+					}
+				}
+				_ => {}
+			},
 			MMM01 => {}
 			MBC3 => {}
 			MBC5 => {}
