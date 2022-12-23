@@ -5,7 +5,9 @@ use std::{
 
 use crate::emulator::EmulatorState;
 
-fn test_blargg(rom_name: &str, end: usize) {
+fn test_blargg(rom_name: &str) {
+	let timeout = 9000000;
+
 	let mut state = EmulatorState::default();
 
 	let rom_handle = File::open(format!("roms/{rom_name}.gb"))
@@ -17,28 +19,32 @@ fn test_blargg(rom_name: &str, end: usize) {
 		.collect();
 
 	state.load_rom(&rom).unwrap();
+	let mut steps_since_last_serial_out: usize = 0;
 
-	let mut last = 0;
-	let mut left = end;
-	let mut last_write = 0;
-	while left > 0 {
-		left -= 1;
+	let mut last_out_len = 0;
+
+	while steps_since_last_serial_out < timeout {
 		state.step();
 
-		if state.serial_output.len() != last {
-			last = state.serial_output.len();
-			last_write = end - left;
+		steps_since_last_serial_out += 1;
+		if state.serial_output.len() != last_out_len {
+			last_out_len = state.serial_output.len();
+			steps_since_last_serial_out = 0;
+			let final_str = std::str::from_utf8(&state.serial_output).unwrap();
+			if final_str.contains("Passed") {
+				break;
+			}
 		}
 	}
 
 	let final_str = std::str::from_utf8(&state.serial_output).unwrap();
 
-	if last_write != end {
-		panic!("!Test took more cycles than needed. Last Write at: {last_write}")
-	}
-
 	if !final_str.contains("Passed") {
-		panic!("\n{final_str}\n",)
+		if !final_str.contains("Failed") {
+			panic!("Timed out without explicit failure, \n{final_str}\n",)
+		} else {
+			panic!("Failed, \n{final_str}\n",)
+		}
 	}
 }
 
@@ -47,32 +53,28 @@ macro_rules! blarggs_tests {
     $(
         #[test]
         fn $name() {
-            let (rom, end) = $value;
-            test_blargg(rom, end);
+            let rom = $value;
+            test_blargg(rom);
         }
     )*
     }
 }
 
 blarggs_tests! {
-	blarggs_1:("cpu_instrs/01-special", 1283844),
-	blarggs_2:("cpu_instrs/02-interrupts", 182072),
-	blarggs_3:("cpu_instrs/03-op sp,hl", 1089349),
-	blarggs_4:("cpu_instrs/04-op r,imm", 1278464),
-	blarggs_5:("cpu_instrs/05-op rp", 1788445),
-	blarggs_6:("cpu_instrs/06-ld r,r", 263304),
-	blarggs_7:("cpu_instrs/07-jr,jp,call,ret,rst", 315064),
-	blarggs_8:("cpu_instrs/08-misc instrs", 239583),
-	blarggs_9:("cpu_instrs/09-op r,r", 4442282),
-	blarggs_10:("cpu_instrs/10-bit ops", 6739714),
-	blarggs_11:("cpu_instrs/11-op a,(hl)", 7452100),
+	blarggs_1:"cpu_instrs/01-special",
+	blarggs_2:"cpu_instrs/02-interrupts",
+	blarggs_3:"cpu_instrs/03-op sp,hl",
+	blarggs_4:"cpu_instrs/04-op r,imm",
+	blarggs_5:"cpu_instrs/05-op rp",
+	blarggs_6:"cpu_instrs/06-ld r,r",
+	blarggs_7:"cpu_instrs/07-jr,jp,call,ret,rst",
+	blarggs_8:"cpu_instrs/08-misc instrs",
+	blarggs_9:"cpu_instrs/09-op r,r",
+	blarggs_10:"cpu_instrs/10-bit ops",
+	blarggs_11:"cpu_instrs/11-op a,(hl)",
 
-
-
-	read_timing:("mem_timing/01-read_timing", 189183),
-	write_timing:("mem_timing/02-write_timing", 190143),
-	modify_timing:("mem_timing/03-modify_timing", 219951),
-
-
-	instr_timing:("other/instr_timing", 267265),
+	read_timing:"mem_timing/01-read_timing",
+	write_timing:"mem_timing/02-write_timing",
+	modify_timing:"mem_timing/03-modify_timing",
+	instr_timing:"other/instr_timing",
 }
