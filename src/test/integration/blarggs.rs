@@ -10,8 +10,8 @@ fn test_blargg(rom_name: &str) {
 
 	let mut state = EmulatorState::default();
 
-	let rom_handle = File::open(format!("roms/{rom_name}.gb"))
-		.unwrap_or_else(|_| panic!("roms/{rom_name}.gb not found"));
+	let rom_handle = File::open(format!("roms/test/{rom_name}.gb"))
+		.unwrap_or_else(|_| panic!("roms/test/{rom_name}.gb not found"));
 
 	let rom: Vec<u8> = BufReader::new(rom_handle)
 		.bytes()
@@ -76,5 +76,5 @@ blarggs_tests! {
 	read_timing:"mem_timing/01-read_timing",
 	write_timing:"mem_timing/02-write_timing",
 	modify_timing:"mem_timing/03-modify_timing",
-	instr_timing:"other/instr_timing",
+	instr_timing:"instr_timing",
 }
