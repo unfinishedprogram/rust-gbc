@@ -7,6 +7,15 @@ use self::sprite::Sprite;
 
 use super::{flags::LCDC, lcd::LCDDisplay, memory_mapper::MemoryMapper, ppu::PPU, EmulatorState};
 
+const COLORS: [Color; 4] = [
+	(0xFF, 0xFF, 0xFF),
+	(0xAA, 0xAA, 0xAA),
+	(0x55, 0x55, 0x55),
+	(0x00, 0x00, 0x00),
+];
+
+// const COLORS: [Color; 4] = [(224, 248, 208), (136, 192, 112), (52, 104, 86), (8, 24, 32)];
+
 pub trait Renderer {
 	fn render_screen_pixel(&mut self, x: u8, y: u8, pixel_state: PixelState);
 	fn fetch_scanline_state(&mut self) -> ScanlineState;
@@ -57,7 +66,7 @@ impl RendererHelpers for EmulatorState {
 			self.get_tile_pixel_pallet_index(x, y, sprite.tile_index, true)
 		} else {
 			// 8x16 Mode
-			let y = y + 16;
+			let y = y.wrapping_add(16);
 			let y = if sprite.flip_y { y } else { 15 - y };
 			if y < 8 {
 				self.get_tile_pixel_pallet_index(x, y, sprite.tile_index & 0xFE, true)
@@ -104,7 +113,7 @@ impl RendererHelpers for EmulatorState {
 	}
 
 	fn get_color_from_pallet_index(&self, index: u8) -> Color {
-		[(224, 248, 208), (136, 192, 112), (52, 104, 86), (8, 24, 32)][index as usize]
+		COLORS[index as usize]
 	}
 
 	fn get_tile_pixel_pallet_index(&self, x: u8, y: u8, tile_index: u8, mode: bool) -> u8 {
@@ -176,7 +185,7 @@ impl Renderer for EmulatorState {
 		let wn_visible = wn_in_view && *wn_enabled;
 
 		let mut base_color = if wn_visible {
-			let x = x - wx + 7;
+			let x = x.wrapping_sub(wx).wrapping_add(7);
 			let y = *w_index;
 			self.get_pixel(TileMode::Window, x, y)
 		} else if bg_enabled {
@@ -196,8 +205,16 @@ impl Renderer for EmulatorState {
 				continue; // Not inside sprite
 			}
 
-			let sprite_color =
-				self.get_sprite_pixel(sprite, sprite.x - (x + 1), sprite.y - y - sprite_height - 1);
+			let sprite_color = {
+				let x = sprite.x.wrapping_sub(x + 1);
+				let y = sprite
+					.y
+					.wrapping_sub(y)
+					.wrapping_sub(*sprite_height)
+					.wrapping_sub(1);
+
+				self.get_sprite_pixel(sprite, x, y)
+			};
 
 			if sprite_color == 0 {
 				continue; // transparency

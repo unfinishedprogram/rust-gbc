@@ -18,7 +18,7 @@ use poll_promise::Promise;
 
 use crate::util::{bits::bit, file_types::Entry};
 
-use self::{components::log_view::draw_logs, drawable::Drawable, logger::Logger};
+use self::{components::log_view::draw_logs, drawable::DrawableMut, logger::Logger};
 
 static LOGGER: Logger = Logger {
 	logs: Mutex::new(vec![]),
@@ -49,9 +49,9 @@ impl Default for EmulatorManager {
 }
 
 impl EmulatorManager {
-	pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+	pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
 		let mut res = EmulatorManager::default();
-		res.debugger.emulator_state.bind_lcd(LCD::new(&cc.egui_ctx));
+		res.debugger.emulator_state.bind_lcd(LCD::new());
 		res
 	}
 
@@ -138,7 +138,7 @@ impl eframe::App for EmulatorManager {
 		}
 
 		CentralPanel::default().show(ctx, |ui| {
-			if let Some(lcd) = self.debugger.emulator_state.lcd.as_ref() {
+			if let Some(lcd) = self.debugger.emulator_state.lcd.as_mut() {
 				lcd.draw_window(ui, "LCD");
 			}
 		});

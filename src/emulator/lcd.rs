@@ -1,6 +1,6 @@
 use egui::{Color32, ColorImage, Image, TextureHandle};
 
-use crate::app::drawable::Drawable;
+use crate::app::drawable::DrawableMut;
 
 pub trait LCDDisplay {
 	fn get_size(&self) -> (u8, u8);
@@ -11,16 +11,23 @@ pub trait LCDDisplay {
 pub struct LCD {
 	buffers: Vec<ColorImage>,
 	current_buffer: usize,
-	texture: TextureHandle,
+	texture: Option<TextureHandle>,
 	pub scale: f32,
 }
 
-impl Drawable for LCD {
-	fn draw(&self, ui: &mut egui::Ui) {
+impl DrawableMut for LCD {
+	fn draw(&mut self, ui: &mut egui::Ui) {
 		let (x, y) = self.get_size();
-
 		ui.add(Image::new(
-			self.texture.id(),
+			self.texture
+				.get_or_insert_with(|| {
+					ui.ctx().load_texture(
+						"LCD",
+						self.buffers[self.current_buffer].clone(),
+						egui::TextureFilter::Nearest,
+					)
+				})
+				.id(),
 			(x as f32 * self.scale, y as f32 * self.scale),
 		));
 	}
@@ -47,15 +54,14 @@ impl LCDDisplay for LCD {
 }
 
 impl LCD {
-	pub fn new(ctx: &egui::Context) -> Self {
+	pub fn new() -> Self {
 		let buffers = vec![
 			ColorImage::new([160, 144], Color32::BLACK),
 			ColorImage::new([160, 144], Color32::BLACK),
 		];
-		let texture = ctx.load_texture("LCD", buffers[0].clone(), egui::TextureFilter::Nearest);
 		Self {
 			scale: 4.0,
-			texture,
+			texture: None,
 			current_buffer: 0,
 			buffers,
 		}
@@ -63,9 +69,29 @@ impl LCD {
 
 	pub fn swap_buffers(&mut self) {
 		self.current_buffer ^= 1;
-		self.texture.set(
-			self.buffers[self.current_buffer].clone(),
-			egui::TextureFilter::Nearest,
-		)
+		if let Some(texture) = &mut self.texture {
+			texture.set(
+				self.buffers[self.current_buffer].clone(),
+				egui::TextureFilter::Nearest,
+			)
+		}
+	}
+
+	pub fn get_current_as_bytes(&self) -> Vec<u8> {
+		let mut res: Vec<u8> = vec![];
+
+		for pixel in &self.buffers[self.current_buffer].pixels {
+			res.push(pixel.r());
+			res.push(pixel.g());
+			res.push(pixel.b());
+		}
+
+		res
+	}
+}
+
+impl Default for LCD {
+	fn default() -> Self {
+		Self::new()
 	}
 }
