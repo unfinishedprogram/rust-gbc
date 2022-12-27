@@ -95,7 +95,8 @@ impl Debugger {
 				let now = instant::Instant::now();
 				let start = self.emulator_state.get_cycle();
 
-				while self.emulator_state.get_cycle() - start < (delta * 1_048_576.0) as u64 {
+				while self.emulator_state.get_cycle() - start < ((delta * 1.5) * 1_048_576.0) as u64
+				{
 					self.emulator_state.step();
 				}
 

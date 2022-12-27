@@ -1,24 +1,27 @@
 pub mod components;
+mod controller;
 pub mod drawable;
 mod file_selector;
 pub mod logger;
 pub mod managed_input;
 mod style;
-use crate::{
-	app::file_selector::file_selector,
-	emulator::{flags::INT_JOY_PAD, lcd::LCD},
-};
+use crate::{app::file_selector::file_selector, emulator::lcd::LCD};
 
 use std::sync::Mutex;
+use wasm_bindgen::JsCast;
+use web_sys::{window, Gamepad};
 
 use components::{draw_status, Debugger};
-use egui::{CentralPanel, Key, SidePanel, TopBottomPanel};
+use egui::{CentralPanel, SidePanel, TopBottomPanel};
 use lazy_static::lazy_static;
 use poll_promise::Promise;
 
-use crate::util::{bits::bit, file_types::Entry};
+use crate::util::file_types::Entry;
 
-use self::{components::log_view::draw_logs, drawable::DrawableMut, logger::Logger};
+use self::{
+	components::log_view::draw_logs, controller::ControllerState, drawable::DrawableMut,
+	logger::Logger,
+};
 
 static LOGGER: Logger = Logger {
 	logs: Mutex::new(vec![]),
@@ -55,24 +58,29 @@ impl EmulatorManager {
 		res
 	}
 
-	fn update_key_input(&mut self, ctx: &egui::Context) {
-		use Key::*;
-		let keys = [
-			Z, X, Space, Enter, ArrowRight, ArrowLeft, ArrowUp, ArrowDown,
-		];
-
+	fn set_input_state(&mut self, state: ControllerState) {
 		let last_input = self.debugger.emulator_state.raw_joyp_input;
+		self.debugger.emulator_state.raw_joyp_input = state.as_byte();
+		// TODO
+		// Add Interrupt handling
+	}
 
-		self.debugger.emulator_state.raw_joyp_input = 0xFF;
+	fn get_gamepad(&self) -> Option<Gamepad> {
+		window()?
+			.navigator()
+			.get_gamepads()
+			.ok()?
+			.get(0)
+			.dyn_into::<Gamepad>()
+			.ok()
+	}
 
-		for (index, key) in keys.into_iter().enumerate() {
-			if ctx.input().key_down(key) {
-				self.debugger.emulator_state.raw_joyp_input &= !bit(index as u8);
-
-				if last_input & bit(index as u8) != 0 {
-					self.debugger.emulator_state.request_interrupt(INT_JOY_PAD);
-				}
-			};
+	fn fetch_input_state(&self, ctx: &egui::Context) -> ControllerState {
+		if let Some(gp) = &self.get_gamepad() {
+			gp.into()
+		} else {
+			let keys = &ctx.input().keys_down;
+			keys.into()
 		}
 	}
 
@@ -98,7 +106,9 @@ impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 		ctx.request_repaint();
 		style::apply(ctx);
-		self.update_key_input(ctx);
+		self.set_input_state(self.fetch_input_state(ctx));
+
+		// self.update_key_input(ctx);
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(rom) = data.ready() {
 				if let Err(e) = self.debugger.emulator_state.load_rom(rom) {

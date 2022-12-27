@@ -758,6 +758,8 @@ dependencies = [
  "serde_json",
  "tracing-subscriber",
  "tracing-wasm",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
