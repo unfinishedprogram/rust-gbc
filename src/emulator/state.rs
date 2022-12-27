@@ -121,8 +121,9 @@ impl EmulatorState {
 	fn tick_t_states(&mut self, t_states: u64) {
 		for _ in 0..t_states {
 			self.step_ppu();
-			self.update_timer(1);
 		}
+		self.update_timer(t_states);
+
 		self.t_states += t_states;
 	}
 

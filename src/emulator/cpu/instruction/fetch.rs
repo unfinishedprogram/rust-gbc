@@ -1,13 +1,11 @@
-use super::opcode::parse_opcode;
 use super::{
-	decode_tables::DT, CPURegister16::*, CPURegister8::*, Condition, Instruction, Instruction::*,
-	ValueRefU8,
+	decode_tables::DT, opcode::parse_opcode, CPURegister16::*, CPURegister8::*, Condition,
+	Instruction, Instruction::*, ValueRefU8,
 };
-
-use crate::emulator::cpu::registers::CPURegister16;
-use crate::emulator::cpu::values::ValueRefU16;
-use crate::emulator::cpu::CPU;
-use crate::emulator::memory_mapper::MemoryMapper;
+use crate::emulator::{
+	cpu::{registers::CPURegister16, values::ValueRefU16, CPU},
+	memory_mapper::MemoryMapper,
+};
 
 use crate::{arg, inst, mem}; // Macros
 
