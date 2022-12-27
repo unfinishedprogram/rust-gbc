@@ -51,7 +51,7 @@ impl Debugger {
 
 		ui.label(format!("Cycle: {:}", self.cycle));
 		ui.label(format!("Halted: {:?}", self.emulator_state.halted));
-		ui.label(format!("Frametime: {:}ms", self.frame_time));
+		ui.label(format!("Frametime: {:}s", ui.ctx().input().unstable_dt));
 		ui.label(format!(
 			"SerialOut: {:}",
 			std::str::from_utf8(&self.emulator_state.serial_output).unwrap()
@@ -88,13 +88,14 @@ impl Debugger {
 		self.emulator_state.step();
 	}
 
-	pub fn step(&mut self) {
+	pub fn step(&mut self, delta: f32) {
 		match self.state {
 			DebuggerState::Paused => {}
 			DebuggerState::Running => {
 				let now = instant::Instant::now();
 				let start = self.emulator_state.get_cycle();
-				while self.emulator_state.get_cycle() - start < 1_048_576 / (144 / 4) {
+
+				while self.emulator_state.get_cycle() - start < (delta * 1_048_576.0) as u64 {
 					self.emulator_state.step();
 				}
 

@@ -96,6 +96,7 @@ impl EmulatorManager {
 
 impl eframe::App for EmulatorManager {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+		ctx.request_repaint();
 		style::apply(ctx);
 		self.update_key_input(ctx);
 		if let Some(data) = &self.loaded_file_data {
@@ -126,7 +127,7 @@ impl eframe::App for EmulatorManager {
 			})
 		});
 
-		self.debugger.step();
+		self.debugger.step(ctx.input().unstable_dt);
 
 		if self.debug {
 			SidePanel::left("left_panel").show(ctx, |ui| {
@@ -142,8 +143,6 @@ impl eframe::App for EmulatorManager {
 				lcd.draw_window(ui, "LCD");
 			}
 		});
-
-		ctx.request_repaint()
 	}
 }
 
