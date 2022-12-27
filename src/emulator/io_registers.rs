@@ -9,7 +9,7 @@ use crate::{
 
 use super::EmulatorState;
 
-#[derive(Clone, Copy, Primitive)]
+#[derive(Clone, Primitive)]
 pub enum IORegistersAddress {
 	// Timers
 	DIV = 0xFF04,

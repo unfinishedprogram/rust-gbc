@@ -36,10 +36,10 @@ pub trait CPU {
 	}
 
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8;
-	fn read_i8(&mut self, value_ref: ValueRefI8) -> i8;
+	fn read_i8(&mut self, value_ref: &ValueRefI8) -> i8;
 	fn write_8(&mut self, value_ref: &ValueRefU8, value: u8);
-	fn read_16(&mut self, value_ref: ValueRefU16) -> u16;
-	fn write_16(&mut self, value_ref: ValueRefU16, value: u16);
+	fn read_16(&mut self, value_ref: &ValueRefU16) -> u16;
+	fn write_16(&mut self, value_ref: &ValueRefU16, value: u16);
 
 	fn fetch_next_instruction(&mut self) -> Instruction;
 	fn interrupt_pending(&self) -> bool;
@@ -72,11 +72,11 @@ impl CPU for EmulatorState {
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
-				let index = self.read_16(*addr);
+				let index = self.read_16(addr);
 				self.tick_m_cycles(1);
 				self.read(index)
 			}
-			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg],
+			ValueRefU8::Reg(reg) => self.cpu_state.registers[reg.clone()],
 			ValueRefU8::Raw(x) => *x,
 			ValueRefU8::MemOffset(offset) => {
 				let offset_value: u16 = self.read_8(offset) as u16;
@@ -85,22 +85,22 @@ impl CPU for EmulatorState {
 		}
 	}
 
-	fn read_i8(&mut self, value_ref: ValueRefI8) -> i8 {
+	fn read_i8(&mut self, value_ref: &ValueRefI8) -> i8 {
 		match value_ref {
-			ValueRefI8::Mem(addr) => self.read(addr) as i8,
-			ValueRefI8::Reg(reg) => self.cpu_state.registers[reg] as i8,
-			ValueRefI8::Raw(x) => x,
+			ValueRefI8::Mem(addr) => self.read(*addr) as i8,
+			ValueRefI8::Reg(reg) => self.cpu_state.registers[reg.clone()] as i8,
+			ValueRefI8::Raw(x) => *x,
 		}
 	}
 
 	fn write_8(&mut self, value_ref: &ValueRefU8, value: u8) {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
-				let index = self.read_16(*addr);
+				let index = self.read_16(addr);
 				self.tick_m_cycles(1);
 				self.write(index, value);
 			}
-			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg] = value,
+			ValueRefU8::Reg(reg) => self.cpu_state.registers[reg.clone()] = value,
 			ValueRefU8::MemOffset(offset) => {
 				let offset_value: u16 = self.read_8(offset) as u16;
 				self.write_8(
@@ -112,23 +112,23 @@ impl CPU for EmulatorState {
 		}
 	}
 
-	fn read_16(&mut self, value_ref: ValueRefU16) -> u16 {
+	fn read_16(&mut self, value_ref: &ValueRefU16) -> u16 {
 		match value_ref {
-			ValueRefU16::Mem(i) => u16::from_le_bytes([self.read(i), self.read(i + 1)]),
-			ValueRefU16::Reg(reg) => self.cpu_state.registers.get_u16(reg),
-			ValueRefU16::Raw(x) => x,
+			ValueRefU16::Mem(i) => u16::from_le_bytes([self.read(*i), self.read(i + 1)]),
+			ValueRefU16::Reg(reg) => self.cpu_state.registers.get_u16(reg.clone()),
+			ValueRefU16::Raw(x) => *x,
 		}
 	}
 
-	fn write_16(&mut self, value_ref: ValueRefU16, value: u16) {
+	fn write_16(&mut self, value_ref: &ValueRefU16, value: u16) {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				let bytes = u16::to_le_bytes(value);
 				self.tick_m_cycles(2);
-				self.write(i, bytes[0]);
-				self.write(i + 1, bytes[1]);
+				self.write(*i, bytes[0]);
+				self.write(*i + 1, bytes[1]);
 			}
-			ValueRefU16::Reg(reg) => self.cpu_state.registers.set_u16(reg, value),
+			ValueRefU16::Reg(reg) => self.cpu_state.registers.set_u16(reg.clone(), value),
 			ValueRefU16::Raw(_) => unreachable!(),
 		}
 	}

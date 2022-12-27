@@ -30,9 +30,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				_ if interrupt == INT_JOY_PAD => 0x60,
 				_ => unreachable!(),
 			};
-			let current_pc = cpu.read_16(CPURegister16::PC.into());
+			let current_pc = cpu.read_16(&CPURegister16::PC.into());
 			cpu.push(current_pc);
-			cpu.write_16(CPURegister16::PC.into(), location);
+			cpu.write_16(&CPURegister16::PC.into(), location);
 			cpu.disable_interrupts();
 		}
 
@@ -53,12 +53,12 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 		LD_16(to, from) => {
 			use ValueRefU16::*;
-			if matches!((to, from), (Reg(_), Reg(_))) {
+			if matches!((&to, &from), (Reg(_), Reg(_))) {
 				cpu.tick_m_cycles(1);
 			}
 
-			let val = cpu.read_16(from);
-			cpu.write_16(to, val);
+			let val = cpu.read_16(&from);
+			cpu.write_16(&to, val);
 		}
 
 		INC_8(ptr) => {
@@ -71,8 +71,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 		INC_16(ptr) => {
 			cpu.tick_m_cycles(1);
-			let ptr_val = cpu.read_16(ptr);
-			cpu.write_16(ptr, ptr_val.wrapping_add(1));
+			let ptr_val = cpu.read_16(&ptr);
+			cpu.write_16(&ptr, ptr_val.wrapping_add(1));
 		}
 
 		DEC_8(ptr) => {
@@ -86,7 +86,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		DEC_16(ptr) => {
 			cpu.tick_m_cycles(1);
 
-			let ptr_val = cpu.read_16(ptr);
+			let ptr_val = cpu.read_16(&ptr);
 
 			match ptr {
 				ValueRefU16::Reg(_) => {}
@@ -97,7 +97,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				}
 			}
 
-			cpu.write_16(ptr, ptr_val.wrapping_sub(1));
+			cpu.write_16(&ptr, ptr_val.wrapping_sub(1));
 		}
 
 		STOP => println!("STOP"),
@@ -109,16 +109,16 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 					cpu.tick_m_cycles(1);
 				}
 
-				let loc_val = cpu.read_16(location);
-				cpu.write_16(CPURegister16::PC.into(), loc_val);
+				let loc_val = cpu.read_16(&location);
+				cpu.write_16(&CPURegister16::PC.into(), loc_val);
 			}
 		}
 
 		ADD_16(a_ref, b_ref) => {
 			cpu.tick_m_cycles(1);
 
-			let a_val = cpu.read_16(a_ref);
-			let b_val = cpu.read_16(b_ref);
+			let a_val = cpu.read_16(&a_ref);
+			let b_val = cpu.read_16(&b_ref);
 
 			cpu.set_flag_to(
 				Flag::H,
@@ -127,7 +127,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 
 			cpu.clear_flag(Flag::N);
 			cpu.set_flag_to(Flag::C, a_val.wrapping_add(b_val) < a_val);
-			cpu.write_16(a_ref, a_val.wrapping_add(b_val));
+			cpu.write_16(&a_ref, a_val.wrapping_add(b_val));
 		}
 
 		ADD_SIGNED(a_ref, b_ref) => {
@@ -136,8 +136,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.clear_flag(Flag::Z);
 			cpu.clear_flag(Flag::N);
 
-			let a_val = cpu.read_16(a_ref);
-			let b_val = cpu.read_i8(b_ref) as i16;
+			let a_val = cpu.read_16(&a_ref);
+			let b_val = cpu.read_i8(&b_ref) as i16;
 
 			let ub_val = if b_val < 0 {
 				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
@@ -152,7 +152,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10,
 			);
 
-			cpu.write_16(a_ref, a_val.wrapping_add_signed(b_val));
+			cpu.write_16(&a_ref, a_val.wrapping_add_signed(b_val));
 		}
 
 		ALU_OP_8(op, to, from) => {
@@ -238,19 +238,19 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 		CALL(condition, location) => {
 			if cpu.check_condition(condition) {
 				cpu.tick_m_cycles(1);
-				let current_pc = cpu.read_16(CPURegister16::PC.into());
+				let current_pc = cpu.read_16(&CPURegister16::PC.into());
 				cpu.push(current_pc);
-				let loc_value = cpu.read_16(location);
-				cpu.write_16(CPURegister16::PC.into(), loc_value);
+				let loc_value = cpu.read_16(&location);
+				cpu.write_16(&CPURegister16::PC.into(), loc_value);
 			}
 		}
 		POP(value_ref) => {
 			cpu.tick_m_cycles(2);
 			let val = cpu.pop();
-			cpu.write_16(value_ref.into(), val);
+			cpu.write_16(&value_ref.into(), val);
 		}
 		PUSH(value_ref) => {
-			let value = cpu.read_16(value_ref.into());
+			let value = cpu.read_16(&value_ref.into());
 			cpu.tick_m_cycles(1);
 			cpu.push(value)
 		}
@@ -264,15 +264,15 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			if matches!(condition, Condition::ALWAYS) || cpu.check_condition(condition) {
 				cpu.tick_m_cycles(3);
 				let ptr = cpu.pop();
-				cpu.write_16(CPURegister16::PC.into(), ptr);
+				cpu.write_16(&CPURegister16::PC.into(), ptr);
 			}
 		}
 		RST(addr) => {
 			cpu.tick_m_cycles(1);
-			let current_pc = cpu.read_16(CPURegister16::PC.into());
+			let current_pc = cpu.read_16(&CPURegister16::PC.into());
 			cpu.push(current_pc);
-			let new_pc = cpu.read_16(addr);
-			cpu.write_16(CPURegister16::PC.into(), new_pc);
+			let new_pc = cpu.read_16(&addr);
+			cpu.write_16(&CPURegister16::PC.into(), new_pc);
 		}
 		DI => {
 			cpu.disable_interrupts();
@@ -449,8 +449,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 			cpu.clear_flag(Flag::Z);
 			cpu.clear_flag(Flag::N);
 
-			let a_val = cpu.read_16(CPURegister16::SP.into());
-			let b_val = cpu.read_i8(value) as i16;
+			let a_val = cpu.read_16(&CPURegister16::SP.into());
+			let b_val = cpu.read_i8(&value) as i16;
 
 			let ub_val = if b_val < 0 {
 				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
@@ -465,7 +465,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10,
 			);
 
-			cpu.write_16(CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
+			cpu.write_16(&CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
 		}
 
 		LD_A_INC_HL => {
@@ -473,7 +473,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
 			);
-			let ptr = CPURegister16::HL.into();
+			let ptr = &CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
 			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
@@ -483,7 +483,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
 			);
-			let ptr = CPURegister16::HL.into();
+			let ptr = &CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
 
 			match ptr {
@@ -503,7 +503,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,
 			);
-			let ptr = CPURegister16::HL.into();
+			let ptr = &CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
 			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
@@ -514,7 +514,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 				cpu,
 			);
 
-			let ptr = CPURegister16::HL.into();
+			let ptr = &CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
 
 			match ptr {

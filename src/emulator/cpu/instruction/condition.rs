@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum Condition {
 	NZ,
 	Z,

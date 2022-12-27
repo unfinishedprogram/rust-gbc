@@ -5,7 +5,7 @@ use std::ops::IndexMut;
 use CPURegister16::*;
 use CPURegister8::*;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum CPURegister8 {
 	A,
 	B,
@@ -17,7 +17,7 @@ pub enum CPURegister8 {
 	L,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum CPURegister16 {
 	AF,
 	BC,
@@ -27,7 +27,7 @@ pub enum CPURegister16 {
 	PC,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct CPURegisters {
 	pub bytes: [u8; 8],
 	pub sp: u16,

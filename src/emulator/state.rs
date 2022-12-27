@@ -5,12 +5,10 @@ use super::cpu::values::ValueRefU16;
 use super::cpu::{CPUState, CPU};
 use super::flags::INTERRUPT_REQUEST;
 use super::io_registers::IORegisterState;
-use super::lcd::{LCDDisplay, LCD};
+use super::lcd::LCD;
 use super::memory_mapper::MemoryMapper;
 use super::ppu::{PPUMode, PPUState, PPU};
 use super::timer::{Timer, TimerState};
-
-trait LCDDisplayWithCopy: LCDDisplay + Copy {}
 
 #[derive(Clone)]
 pub struct EmulatorState {
@@ -64,13 +62,13 @@ impl Default for EmulatorState {
 			t_states: 0,
 		};
 
-		emulator.write_16(ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
-		emulator.write_16(ValueRefU16::Reg(CPURegister16::BC), 0x0013);
-		emulator.write_16(ValueRefU16::Reg(CPURegister16::DE), 0x00D8);
-		emulator.write_16(ValueRefU16::Reg(CPURegister16::HL), 0x014D);
+		emulator.write_16(&ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
+		emulator.write_16(&ValueRefU16::Reg(CPURegister16::BC), 0x0013);
+		emulator.write_16(&ValueRefU16::Reg(CPURegister16::DE), 0x00D8);
+		emulator.write_16(&ValueRefU16::Reg(CPURegister16::HL), 0x014D);
 
-		emulator.write_16(ValueRefU16::Reg(CPURegister16::SP), 0xFFFE);
-		emulator.write_16(ValueRefU16::Reg(CPURegister16::PC), 0x0100);
+		emulator.write_16(&ValueRefU16::Reg(CPURegister16::SP), 0xFFFE);
+		emulator.write_16(&ValueRefU16::Reg(CPURegister16::PC), 0x0100);
 		emulator.set_mode(PPUMode::OamScan);
 
 		emulator.io_register_state[0xFF04] = 0x1F;
