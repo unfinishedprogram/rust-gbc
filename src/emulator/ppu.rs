@@ -1,12 +1,10 @@
-use crate::emulator::{
-	flags::STAT_H_BLANK_IE, io_registers::IORegistersAddress, memory_mapper::MemoryMapper,
-};
+use crate::emulator::{flags::STAT_H_BLANK_IE, memory_mapper::MemoryMapper};
 
 use super::{
 	flags::{
-		INT_LCD_STAT, INT_V_BLANK, STAT, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE,
-		STAT_V_BLANK_IE,
+		INT_LCD_STAT, INT_V_BLANK, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE, STAT_V_BLANK_IE,
 	},
+	io_registers::{LY, LYC, STAT},
 	renderer::{Renderer, ScanlineState},
 	EmulatorState,
 };
@@ -39,7 +37,7 @@ pub trait PPU {
 
 impl PPU for EmulatorState {
 	fn get_mode(&self) -> PPUMode {
-		let num = self.read(IORegistersAddress::STAT as u16) & 0b00000011;
+		let num = self.read(STAT) & 0b00000011;
 		match num {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
@@ -50,12 +48,12 @@ impl PPU for EmulatorState {
 	}
 
 	fn get_ly(&self) -> u8 {
-		self.read(IORegistersAddress::LY as u16)
+		self.read(LY)
 	}
 
 	fn set_ly(&mut self, value: u8) {
-		let lyc_status = self.read(IORegistersAddress::LYC as u16) == value;
-		self.write(IORegistersAddress::LY as u16, value);
+		let lyc_status = self.read(LYC) == value;
+		self.write(LY, value);
 
 		if lyc_status {
 			self.io_register_state[STAT] |= STAT_LYC_EQ_LY;
@@ -68,7 +66,7 @@ impl PPU for EmulatorState {
 	}
 
 	fn set_mode(&mut self, mode: PPUMode) {
-		let stat = self.read(IORegistersAddress::STAT as u16);
+		let stat = self.read(STAT);
 
 		// Do Interrupts
 		use PPUMode::*;
@@ -87,10 +85,7 @@ impl PPU for EmulatorState {
 			self.request_interrupt(INT_LCD_STAT);
 		}
 
-		self.write(
-			IORegistersAddress::STAT as u16,
-			(stat & 0b11111100) | mode as u8,
-		);
+		self.write(STAT, (stat & 0b11111100) | mode as u8);
 	}
 
 	fn step_ppu(&mut self) {
