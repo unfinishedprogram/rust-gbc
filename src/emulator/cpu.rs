@@ -62,9 +62,8 @@ impl CPU for EmulatorState {
 	}
 
 	fn next_byte(&mut self) -> u8 {
-		let value = self.read_8(&ValueRefU8::Mem(ValueRefU16::Reg(
-			registers::CPURegister16::PC,
-		)));
+		self.tick_m_cycles(1);
+		let value = self.read(self.cpu_state.registers.pc);
 		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(1);
 		value
 	}

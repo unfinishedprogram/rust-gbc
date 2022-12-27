@@ -13,7 +13,6 @@ pub trait Flags {
 	fn get_flag_byte(&self) -> u8;
 	fn set_flag_byte(&mut self, byte: u8);
 
-	#[inline(always)]
 	fn set_flag_to(&mut self, flag: Flag, value: bool) {
 		if value {
 			self.set_flag(flag)
@@ -22,29 +21,24 @@ pub trait Flags {
 		}
 	}
 
-	#[inline(always)]
 	fn clear_flag(&mut self, flag: Flag) {
 		self.set_flag_byte(self.get_flag_byte() & !(flag as u8));
 	}
 
-	#[inline(always)]
 	fn set_flag(&mut self, flag: Flag) {
 		self.set_flag_byte(self.get_flag_byte() | flag as u8);
 	}
 
-	#[inline(always)]
 	fn get_flag(&self, flag: Flag) -> bool {
 		self.get_flag_byte() & flag as u8 != 0
 	}
 }
 
 impl Flags for EmulatorState {
-	#[inline(always)]
 	fn get_flag_byte(&self) -> u8 {
 		self.cpu_state.registers[CPURegister8::F]
 	}
 
-	#[inline(always)]
 	fn set_flag_byte(&mut self, byte: u8) {
 		self.write_8(&CPURegister8::F.into(), byte);
 	}

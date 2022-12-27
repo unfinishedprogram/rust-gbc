@@ -20,22 +20,18 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 		(0, 0, 2, _, _) => inst!(cpu, STOP),
 		(0, 0, 3, _, _) => {
 			let offset = cpu.next_displacement();
-			let addr = if offset.is_positive() {
-				cpu.read_16(&CPURegister16::PC.into()) + offset.unsigned_abs() as u16
-			} else {
-				cpu.read_16(&CPURegister16::PC.into()) - offset.unsigned_abs() as u16
-			};
+			let addr = cpu
+				.read_16(&CPURegister16::PC.into())
+				.wrapping_add_signed(offset as i16);
 
 			inst!(cpu, JR, (Condition::ALWAYS), (ValueRefU16::Raw(addr)))
 		}
 
 		(0, 0, _, _, _) => {
 			let offset = cpu.next_displacement();
-			let addr = if offset.is_positive() {
-				cpu.read_16(&CPURegister16::PC.into()) + offset.unsigned_abs() as u16
-			} else {
-				cpu.read_16(&CPURegister16::PC.into()) - offset.unsigned_abs() as u16
-			};
+			let addr = cpu
+				.read_16(&CPURegister16::PC.into())
+				.wrapping_add_signed(offset as i16);
 
 			inst!(cpu, JR, (DT.cc[(y - 4)].clone()), (ValueRefU16::Raw(addr)))
 		}
