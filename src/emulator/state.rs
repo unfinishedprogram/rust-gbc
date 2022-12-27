@@ -1,14 +1,13 @@
-use super::cartridge::header::CartridgeParseError;
-use super::cartridge::memory_bank_controller::Cartridge;
-use super::cpu::registers::CPURegister16;
-use super::cpu::values::ValueRefU16;
-use super::cpu::{CPUState, CPU};
-use super::flags::INTERRUPT_REQUEST;
-use super::io_registers::IORegisterState;
-use super::lcd::LCD;
-use super::memory_mapper::MemoryMapper;
-use super::ppu::{PPUMode, PPUState, PPU};
-use super::timer::{Timer, TimerState};
+use super::{
+	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
+	cpu::{registers::CPURegister16, values::ValueRefU16, CPUState, CPU},
+	flags::INTERRUPT_REQUEST,
+	io_registers::IORegisterState,
+	lcd::LCD,
+	memory_mapper::MemoryMapper,
+	ppu::{PPUMode, PPUState, PPU},
+	timer::{Timer, TimerState},
+};
 
 #[derive(Clone)]
 pub struct EmulatorState {

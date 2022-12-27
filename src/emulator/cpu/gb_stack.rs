@@ -1,6 +1,6 @@
 use crate::emulator::state::EmulatorState;
 
-use super::{registers::CPURegister16, values::ValueRefU16, CPU};
+use super::{values::ValueRefU16, CPU};
 
 pub trait GBStack {
 	fn push(&mut self, value: u16);
@@ -9,14 +9,14 @@ pub trait GBStack {
 
 impl GBStack for EmulatorState {
 	fn push(&mut self, value: u16) {
-		let sp = self.read_16(&CPURegister16::SP.into());
-		self.write_16(&CPURegister16::SP.into(), sp.wrapping_sub(2));
-		self.write_16(&ValueRefU16::Mem(sp.wrapping_sub(2)), value);
+		self.cpu_state.registers.sp = self.cpu_state.registers.sp.wrapping_sub(2);
+		self.write_16(&ValueRefU16::Mem(self.cpu_state.registers.sp), value)
 	}
 
 	fn pop(&mut self) -> u16 {
-		let sp = self.read_16(&CPURegister16::SP.into());
-		self.write_16(&CPURegister16::SP.into(), sp.wrapping_add(2));
-		self.read_16(&ValueRefU16::Mem(sp))
+		self.cpu_state.registers.sp = self.cpu_state.registers.sp.wrapping_add(2);
+		self.read_16(&ValueRefU16::Mem(
+			self.cpu_state.registers.sp.wrapping_sub(2),
+		))
 	}
 }
