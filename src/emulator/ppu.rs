@@ -58,13 +58,12 @@ impl PPU for EmulatorState {
 		self.write(IORegistersAddress::LY as u16, value);
 
 		if lyc_status {
-			self.io_register_state[STAT] |= STAT_LYC_EQ_LY
+			self.io_register_state[STAT] |= STAT_LYC_EQ_LY;
+			if self.io_register_state[STAT] & STAT_LYC_EQ_LY_IE != 0 {
+				self.request_interrupt(INT_LCD_STAT);
+			}
 		} else {
 			self.io_register_state[STAT] &= !STAT_LYC_EQ_LY
-		}
-
-		if lyc_status && self.io_register_state[STAT] & STAT_LYC_EQ_LY_IE != 0 {
-			self.request_interrupt(INT_LCD_STAT);
 		}
 	}
 

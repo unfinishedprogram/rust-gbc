@@ -26,7 +26,6 @@ pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
 
 			inst!(cpu, JR, (Condition::ALWAYS), (ValueRefU16::Raw(addr)))
 		}
-
 		(0, 0, _, _, _) => {
 			let offset = cpu.next_displacement();
 			let addr = cpu

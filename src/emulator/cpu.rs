@@ -141,10 +141,10 @@ impl CPU for EmulatorState {
 
 		match condition {
 			ALWAYS => true,
-			Condition::NZ => !self.get_flag(Flag::Z),
-			Condition::Z => self.get_flag(Flag::Z),
-			Condition::NC => !self.get_flag(Flag::C),
-			Condition::C => self.get_flag(Flag::C),
+			NZ => !self.get_flag(Flag::Z),
+			Z => self.get_flag(Flag::Z),
+			NC => !self.get_flag(Flag::C),
+			C => self.get_flag(Flag::C),
 		}
 	}
 

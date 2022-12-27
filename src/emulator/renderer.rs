@@ -281,6 +281,7 @@ impl Renderer for EmulatorState {
 		let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
 
 		let w_index = self.ppu_state.window_line;
+
 		if wn_enabled && line >= wy && wx < 144 - 7 {
 			self.ppu_state.window_line += 1;
 		}
