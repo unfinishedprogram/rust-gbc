@@ -21,6 +21,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) 
 	match instruction {
 		NOP => {}
 		INT(interrupt) => {
+			cpu.tick_m_cycles(3);
+
 			cpu.disable_interrupts();
 			let location = match interrupt {
 				_ if interrupt == INT_V_BLANK => 0x40,
