@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::emulator::{cartridge::mbc3, memory_mapper::MemoryMapper};
 
 use super::{
@@ -13,7 +15,7 @@ pub trait MemoryBankController: Default + Clone {
 	fn write(&mut self, addr: u16, value: u8);
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub enum Cartridge {
 	ROM(CartridgeData),
 	MBC1(CartridgeData, MBC1State),

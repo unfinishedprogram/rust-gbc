@@ -1,7 +1,9 @@
-#[derive(Clone)]
+use serde::Serialize;
+
+#[derive(Clone, Serialize)]
 pub struct MBC2State {
 	pub ram_enabled: bool,
-	pub ram_data: [u8; 512],
+	pub ram_data: Vec<u8>,
 	pub rom_bank: u8,
 }
 
@@ -10,7 +12,7 @@ impl Default for MBC2State {
 		Self {
 			rom_bank: 1,
 			ram_enabled: Default::default(),
-			ram_data: [0; 512],
+			ram_data: vec![0; 512],
 		}
 	}
 }

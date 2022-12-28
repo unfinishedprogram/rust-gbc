@@ -1,16 +1,18 @@
-#[derive(Clone)]
+use serde::Serialize;
+
+#[derive(Clone, Serialize)]
 pub struct CartridgeData {
-	pub rom_banks: Vec<[u8; 0x4000]>,
-	pub ram_banks: Vec<[u8; 0x2000]>,
+	pub rom_banks: Vec<Vec<u8>>,
+	pub ram_banks: Vec<Vec<u8>>,
 }
 
 impl CartridgeData {
-	fn create_rom_banks(banks: u32) -> Vec<[u8; 0x4000]> {
-		(0..banks).map(|_| [0; 0x4000]).collect()
+	fn create_rom_banks(banks: u32) -> Vec<Vec<u8>> {
+		(0..banks).map(|_| vec![0; 0x4000]).collect()
 	}
 
-	fn create_ram_banks(banks: u32) -> Vec<[u8; 0x2000]> {
-		(0..banks).map(|_| [0; 0x2000]).collect()
+	fn create_ram_banks(banks: u32) -> Vec<Vec<u8>> {
+		(0..banks).map(|_| vec![0; 0x2000]).collect()
 	}
 
 	pub fn new(raw_data: &[u8], rom_banks: impl Into<u32>, ram_banks: impl Into<u32>) -> Self {

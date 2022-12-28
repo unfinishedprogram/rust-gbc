@@ -1,4 +1,5 @@
 use egui::{Color32, ColorImage, Image, TextureHandle};
+use serde::Serialize;
 
 use crate::app::drawable::DrawableMut;
 
@@ -7,11 +8,10 @@ pub trait LCDDisplay {
 	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8));
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct LCD {
 	buffers: Vec<ColorImage>,
 	current_buffer: usize,
-	texture: Option<TextureHandle>,
 	pub scale: f32,
 }
 
@@ -19,14 +19,12 @@ impl DrawableMut for LCD {
 	fn draw(&mut self, ui: &mut egui::Ui) {
 		let (x, y) = self.get_size();
 		ui.add(Image::new(
-			self.texture
-				.get_or_insert_with(|| {
-					ui.ctx().load_texture(
-						"LCD",
-						self.buffers[self.current_buffer].clone(),
-						egui::TextureFilter::Nearest,
-					)
-				})
+			ui.ctx()
+				.load_texture(
+					"LCD",
+					self.buffers[self.current_buffer].clone(),
+					egui::TextureFilter::Nearest,
+				)
 				.id(),
 			(x as f32 * self.scale, y as f32 * self.scale),
 		));
@@ -61,7 +59,6 @@ impl LCD {
 		];
 		Self {
 			scale: 4.0,
-			texture: None,
 			current_buffer: 0,
 			buffers,
 		}
@@ -69,12 +66,6 @@ impl LCD {
 
 	pub fn swap_buffers(&mut self) {
 		self.current_buffer ^= 1;
-		if let Some(texture) = &mut self.texture {
-			texture.set(
-				self.buffers[self.current_buffer].clone(),
-				egui::TextureFilter::Nearest,
-			)
-		}
 	}
 
 	pub fn get_current_as_bytes(&self) -> Vec<u8> {

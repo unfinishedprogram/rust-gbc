@@ -1,6 +1,7 @@
 use std::ops::{Index, IndexMut};
 
 use log::error;
+use serde::Serialize;
 
 use crate::{
 	emulator::{memory_mapper::MemoryMapper, ppu::PPU},
@@ -58,15 +59,15 @@ pub const IF: u16 = 0xFF0F;
 pub const IE: u16 = 0xFFFF;
 pub const JOYP: u16 = 0xFF00;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct IORegisterState {
-	values: [u8; 0x80],
+	values: Vec<u8>,
 	_other: u8,
 }
 impl Default for IORegisterState {
 	fn default() -> Self {
 		Self {
-			values: [0; 0x80],
+			values: vec![0; 0x80],
 			_other: 0,
 		}
 	}

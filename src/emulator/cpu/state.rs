@@ -1,6 +1,8 @@
+use serde::Serialize;
+
 use super::CPURegisters;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize)]
 pub struct CPUState {
 	pub registers: CPURegisters,
 	pub interrupt_enable: bool,

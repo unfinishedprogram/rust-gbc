@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
 	cpu::{registers::CPURegister16, values::ValueRefU16, CPUState, CPU},
@@ -9,17 +11,17 @@ use super::{
 	timer::{Timer, TimerState},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct EmulatorState {
 	pub ram_bank: u8,
 	pub cgb: bool,
 	pub cpu_state: CPUState,
 	pub ppu_state: PPUState,
 	pub cartridge_state: Option<Cartridge>,
-	pub v_ram: [[u8; 0x2000]; 2],
-	pub w_ram: [[u8; 0x1000]; 8],
-	pub oam: [u8; 0xA0],
-	pub hram: [u8; 0x80],
+	pub v_ram: Vec<Vec<u8>>,
+	pub w_ram: Vec<Vec<u8>>,
+	pub oam: Vec<u8>,
+	pub hram: Vec<u8>,
 	pub io_register_state: IORegisterState,
 	pub serial_output: Vec<u8>,
 	pub timer_state: TimerState,
@@ -48,10 +50,10 @@ impl Default for EmulatorState {
 			cartridge_state: None,
 			ram_bank: 0,
 			cgb: false,
-			v_ram: [[0; 0x2000]; 2],
-			w_ram: [[0; 0x1000]; 8],
-			oam: [0; 0xA0],
-			hram: [0; 0x80],
+			v_ram: vec![vec![0; 0x2000]; 2],
+			w_ram: vec![vec![0; 0x1000]; 8],
+			oam: vec![0; 0xA0],
+			hram: vec![0; 0x80],
 			serial_output: vec![],
 			timer_state: TimerState::default(),
 			halted: false,

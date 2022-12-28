@@ -7,7 +7,8 @@ pub mod managed_input;
 mod style;
 use crate::{app::file_selector::file_selector, emulator::lcd::LCD};
 
-use std::sync::Mutex;
+use serde::__private::doc;
+use std::{error::Error, f32::consts::E, sync::Mutex};
 use wasm_bindgen::JsCast;
 use web_sys::{window, Gamepad};
 
@@ -56,6 +57,29 @@ impl EmulatorManager {
 		let mut res = EmulatorManager::default();
 		res.debugger.emulator_state.bind_lcd(LCD::new());
 		res
+	}
+
+	pub fn save_state(&self) {
+		let serialized_str =
+			serde_json::to_string(&self.debugger.emulator_state).expect("Cant serialize");
+		let window = web_sys::window().expect("Window not found");
+		let document = window.document().expect("Document not found");
+		let body = document.body().expect("Body not found");
+		let element = document.create_element("a").expect("Can't create element");
+		element
+			.set_attribute(
+				"href",
+				&format!("data:text/plain;charset=utf-8,{serialized_str}"),
+			)
+			.unwrap();
+
+		element.set_attribute("download", "save.json").unwrap();
+		body.append_child(&element).unwrap();
+		element
+			.dispatch_event(&web_sys::Event::new("click").unwrap())
+			.unwrap();
+
+		element.remove();
 	}
 
 	fn set_input_state(&mut self, state: ControllerState) {
@@ -131,6 +155,10 @@ impl eframe::App for EmulatorManager {
 				}
 				if ui.button("Step").clicked() {
 					self.debugger.step_once();
+				}
+
+				if ui.button("Save").clicked() {
+					self.save_state()
 				}
 
 				ui.checkbox(&mut self.debug, "Debug");

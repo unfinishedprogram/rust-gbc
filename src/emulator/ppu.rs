@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::emulator::{flags::STAT_H_BLANK_IE, memory_mapper::MemoryMapper};
 
 use super::{
@@ -17,7 +19,7 @@ pub enum PPUMode {
 	Draw = 3,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Serialize)]
 pub struct PPUState {
 	pub cycle: u64,
 	pub maxed: bool,
