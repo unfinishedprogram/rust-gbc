@@ -9,8 +9,10 @@ pub fn run_mooneye_test(rom: &str) {
 		for _ in 0..1_048_576 {
 			state.step();
 		}
-		if let [_, 3, 5, 8, 13, _, 21, 34] = state.cpu_state.registers.bytes {
-			return;
+		match state.cpu_state.registers.bytes {
+			[_, 3, 5, 8, 13, _, 21, 34] => return,   // Success code
+			[_, 66, 66, 66, 66, _, 66, 66] => break, // Failure code
+			_ => {}                                  // Run untill success or failure
 		}
 	}
 	panic!("Test Failed")

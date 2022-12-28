@@ -4,4 +4,19 @@ use crate::test::util::mooneye_test::run_mooneye_test;
 mooneye_tests! {
 	dda:"mooneye/acceptance/daa",
 	ie_push:"mooneye/acceptance/ie_push",
+
+	// MBC1
+	mbc1_bits_bank1: "mooneye/mbc1/bits_bank1",
+	mbc1_bits_bank2: "mooneye/mbc1/bits_bank2",
+	mbc1_bits_mode: "mooneye/mbc1/bits_mode",
+	mbc1_bits_ramg: "mooneye/mbc1/bits_ramg",
+	mbc1_multicart_rom_8_mb: "mooneye/mbc1/multicart_rom_8Mb",
+	mbc1_ram_256kb: "mooneye/mbc1/ram_256kb",
+	mbc1_ram_64kb: "mooneye/mbc1/ram_64kb",
+	mbc1_rom_16_mb: "mooneye/mbc1/rom_16Mb",
+	mbc1_rom_1_mb: "mooneye/mbc1/rom_1Mb",
+	mbc1_rom_2_mb: "mooneye/mbc1/rom_2Mb",
+	mbc1_rom_4_mb: "mooneye/mbc1/rom_4Mb",
+	mbc1_rom_512kb: "mooneye/mbc1/rom_512kb",
+	mbc1_rom_8_mb: "mooneye/mbc1/rom_8Mb",
 }
