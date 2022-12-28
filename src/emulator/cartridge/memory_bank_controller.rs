@@ -102,7 +102,7 @@ impl MemoryMapper for Cartridge {
 				0..0x4000 => data.rom_banks[0][addr as usize],
 				0x4000..0x8000 => {
 					let bank = state.get_rom_bank();
-					data.rom_banks[bank as usize][(addr - 0x4000) as usize]
+					data.rom_banks[bank][(addr - 0x4000) as usize]
 				}
 				0xA000..0xC000 => match state.banking_mode {
 					mbc3::BankingMode::Ram => {

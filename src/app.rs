@@ -7,8 +7,7 @@ pub mod managed_input;
 mod style;
 use crate::{app::file_selector::file_selector, emulator::lcd::LCD};
 
-use serde::__private::doc;
-use std::{error::Error, f32::consts::E, sync::Mutex};
+use std::sync::Mutex;
 use wasm_bindgen::JsCast;
 use web_sys::{window, Gamepad};
 
@@ -83,7 +82,7 @@ impl EmulatorManager {
 	}
 
 	fn set_input_state(&mut self, state: ControllerState) {
-		let last_input = self.debugger.emulator_state.raw_joyp_input;
+		let _last_input = self.debugger.emulator_state.raw_joyp_input;
 		self.debugger.emulator_state.raw_joyp_input = state.as_byte();
 		// TODO
 		// Add Interrupt handling
@@ -165,7 +164,7 @@ impl eframe::App for EmulatorManager {
 			})
 		});
 
-		self.debugger.step(ctx.input().unstable_dt);
+		self.debugger.step(ctx.input().unstable_dt.max(0.5));
 
 		if self.debug {
 			SidePanel::left("left_panel").show(ctx, |ui| {

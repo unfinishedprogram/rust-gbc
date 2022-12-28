@@ -1,4 +1,4 @@
-use egui::{Color32, ColorImage, Image, TextureHandle};
+use egui::{Color32, ColorImage, Image};
 use serde::Serialize;
 
 use crate::app::drawable::DrawableMut;
