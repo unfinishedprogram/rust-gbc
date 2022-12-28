@@ -1,29 +1,33 @@
-use egui::{ColorImage, Image};
+use egui::{Color32, ColorImage, Image, TextureHandle};
+use serde::Serialize;
 
-use crate::app::drawable::Drawable;
+use crate::app::drawable::DrawableMut;
 
 pub trait LCDDisplay {
 	fn get_size(&self) -> (u8, u8);
 	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8));
-	fn get_image_data(&self) -> &Vec<u8>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct LCD {
-	buffer: Vec<u8>,
+	buffers: Vec<ColorImage>,
+	current_buffer: usize,
+	pub scale: f32,
 }
 
-impl Drawable for LCD {
-	fn draw(&self, ui: &mut egui::Ui) {
+impl DrawableMut for LCD {
+	fn draw(&mut self, ui: &mut egui::Ui) {
 		let (x, y) = self.get_size();
-
-		let texture = ui.ctx().load_texture(
-			"LCD",
-			ColorImage::from_rgba_unmultiplied([x as usize, y as usize], &self.buffer),
-			egui::TextureFilter::Nearest,
-		);
-
-		ui.add(Image::new(texture.id(), (x as f32 * 4.0, y as f32 * 4.0)));
+		ui.add(Image::new(
+			ui.ctx()
+				.load_texture(
+					"LCD",
+					self.buffers[self.current_buffer].clone(),
+					egui::TextureFilter::Nearest,
+				)
+				.id(),
+			(x as f32 * self.scale, y as f32 * self.scale),
+		));
 	}
 }
 
@@ -34,28 +38,46 @@ impl LCDDisplay for LCD {
 
 	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8)) {
 		let (width, height) = self.get_size();
-
-		let x = x % width;
-		let y = y % height;
+		if x >= width || y >= height {
+			return;
+		}
 
 		let (r, g, b) = color;
-		let index: usize = (y as usize * width as usize + x as usize) * 4;
 
-		self.buffer[index] = r;
-		self.buffer[index + 1] = g;
-		self.buffer[index + 2] = b;
-	}
+		let index: usize = y as usize * width as usize + x as usize;
 
-	fn get_image_data(&self) -> &Vec<u8> {
-		&self.buffer
+		let image = &mut self.buffers[self.current_buffer];
+		image.pixels[index] = Color32::from_rgb(r, g, b);
 	}
 }
 
 impl LCD {
 	pub fn new() -> Self {
+		let buffers = vec![
+			ColorImage::new([160, 144], Color32::BLACK),
+			ColorImage::new([160, 144], Color32::BLACK),
+		];
 		Self {
-			buffer: vec![0xFF; 144 * 160 * 4],
+			scale: 4.0,
+			current_buffer: 0,
+			buffers,
 		}
+	}
+
+	pub fn swap_buffers(&mut self) {
+		self.current_buffer ^= 1;
+	}
+
+	pub fn get_current_as_bytes(&self) -> Vec<u8> {
+		let mut res: Vec<u8> = vec![];
+
+		for pixel in &self.buffers[self.current_buffer].pixels {
+			res.push(pixel.r());
+			res.push(pixel.g());
+			res.push(pixel.b());
+		}
+
+		res
 	}
 }
 

@@ -1,7 +1,5 @@
 // https://gbdev.io/pandocs/The_Cartridge_Header.html
 
-use super::mbc::MBC;
-
 #[derive(Debug, Clone)]
 pub enum CartridgeParseError {
 	MBCType,
@@ -29,7 +27,6 @@ pub struct CartridgeInfo {
 	pub sgb: bool,
 	pub rom_banks: u16,
 	pub ram_banks: u16,
-	pub mbc: MBC,
 }
 
 impl RawCartridgeHeader {
@@ -52,37 +49,18 @@ impl RawCartridgeHeader {
 		}
 	}
 
-	fn get_mbc(&self) -> Result<MBC, CartridgeParseError> {
-		use MBC::*;
-		match self.cartridge_type {
-			0x00 => Ok(ROM),
-			0x01 | 0x02 | 0x03 => Ok(MBC1),
-			0x05 | 0x06 => Ok(MBC2),
-			0x08 | 0x09 => Ok(ROM),
-			0x0B | 0x0C | 0x0D => Ok(MMM01),
-			0x0F | 0x10 | 0x11 | 0x12 | 0x13 => Ok(MBC3),
-			0x19 | 0x1A | 0x1B | 0x1C | 0x1D | 0x1E => Ok(MBC5),
-			0x20 => Ok(MBC6),
-			0x22 => Ok(MBC7),
-			0xFE => Ok(HUC3),
-			0xFF => Ok(HUC1),
-			_ => Err(CartridgeParseError::MBCType),
-		}
-	}
-
 	pub fn parse(&self) -> Result<CartridgeInfo, CartridgeParseError> {
 		Ok(CartridgeInfo {
 			cgb: matches!(self.cgb_flag, 0x80 | 0xC0),
 			sgb: matches!(self.sgb_flag, 0x03),
 			rom_banks: self.get_rom_banks()?,
 			ram_banks: self.get_ram_banks()?,
-			mbc: self.get_mbc()?,
 		})
 	}
 }
 
-impl From<&Vec<u8>> for RawCartridgeHeader {
-	fn from(rom: &Vec<u8>) -> Self {
+impl From<&[u8]> for RawCartridgeHeader {
+	fn from(rom: &[u8]) -> Self {
 		RawCartridgeHeader {
 			cgb_flag: rom[0x0143],                                             // 0143
 			license_code: ((rom[0x0144] as u16) << 8) | rom[0x0145] as u16,    // 0144-0145

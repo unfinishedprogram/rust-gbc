@@ -4,8 +4,8 @@ pub mod status;
 
 use super::BufferView;
 use crate::{
-	app::drawable::{Drawable, DrawableMut},
-	emulator::{lcd::LCD, memory_mapper::MemoryMapper, state::EmulatorState},
+	app::drawable::DrawableMut,
+	emulator::{memory_mapper::MemoryMapper, state::EmulatorState},
 };
 use debug_draw::*;
 use egui::Ui;
@@ -24,7 +24,6 @@ pub struct Debugger {
 	serial_output: Vec<char>,
 	frame_time: String,
 	pub emulator_state: EmulatorState,
-	lcd: LCD,
 }
 
 impl Default for Debugger {
@@ -38,7 +37,6 @@ impl Default for Debugger {
 			state: DebuggerState::Paused,
 			vram_view: BufferView::new("VRAM", (16 * 8, 24 * 8)),
 			window_view: BufferView::new("Window", (256, 256)),
-			lcd: LCD::new(),
 		}
 	}
 }
@@ -50,11 +48,14 @@ impl Debugger {
 
 		self.vram_view.draw_window(ui, "Vram");
 		self.window_view.draw_window(ui, "Window");
-		self.lcd.draw_window(ui, "LCD");
 
 		ui.label(format!("Cycle: {:}", self.cycle));
 		ui.label(format!("Halted: {:?}", self.emulator_state.halted));
-		ui.label(format!("Frametime: {:}ms", self.frame_time));
+		ui.label(format!("Frametime: {:}s", ui.ctx().input().unstable_dt));
+		ui.label(format!(
+			"SerialOut: {:}",
+			std::str::from_utf8(&self.emulator_state.serial_output).unwrap()
+		));
 	}
 
 	pub fn start(&mut self) {
@@ -84,21 +85,22 @@ impl Debugger {
 	}
 
 	pub fn step_once(&mut self) {
-		self.emulator_state.step(&mut self.lcd);
+		self.emulator_state.step();
 	}
 
-	pub fn step(&mut self) {
+	pub fn step(&mut self, delta: f32) {
 		match self.state {
 			DebuggerState::Paused => {}
 			DebuggerState::Running => {
-				// self.cycle += 1;
 				let now = instant::Instant::now();
-				let start = self.emulator_state.cycle;
-				while self.emulator_state.cycle - start < 1_048_576 / (144 * 4) {
-					self.emulator_state.step(&mut self.lcd);
+				let start = self.emulator_state.get_cycle();
+
+				while self.emulator_state.get_cycle() - start < ((delta * 1.5) * 1_048_576.0) as u64
+				{
+					self.emulator_state.step();
 				}
 
-				self.cycle = self.emulator_state.cycle;
+				self.cycle = self.emulator_state.get_cycle();
 				self.frame_time = format!("{}", now.elapsed().as_millis());
 			}
 		}

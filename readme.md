@@ -17,6 +17,8 @@
 
 ### Blarggs ✅
 
+#### Instructions
+
 |     | Test                          |
 | --- | ----------------------------- |
 | ✅   | roms/01-special.gb            |

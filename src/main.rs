@@ -28,7 +28,7 @@ fn main() {
 
 	let web_options = eframe::WebOptions::default();
 	eframe::start_web(
-		"the_canvas_id", // hardcode it
+		"gameboy_canvas", // hardcode it
 		web_options,
 		Box::new(|cc| Box::new(EmulatorManager::new(cc))),
 	)

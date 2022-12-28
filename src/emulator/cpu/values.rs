@@ -45,14 +45,14 @@ pub enum ValueRefU8 {
 	Raw(u8),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum ValueRefU16 {
 	Reg(CPURegister16),
 	Mem(u16),
 	Raw(u16),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum ValueRefI8 {
 	Reg(CPURegister8),
 	Mem(u16),

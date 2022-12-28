@@ -1,6 +1,4 @@
-use crate::emulator::{
-	self, memory_mapper::MemoryMapper, state::EmulatorState, timer_controller::TimerController,
-};
+use crate::emulator::{self, memory_mapper::MemoryMapper, state::EmulatorState, timer::Timer};
 use egui::Ui;
 use emulator::cpu::registers::CPURegister16::*;
 
@@ -25,7 +23,7 @@ pub fn draw_status(ui: &mut Ui, emulator: &EmulatorState) {
 			ui.monospace(format!("INT ENABLE GLOBAL:{}", cpu.interrupt_enable));
 			ui.monospace(format!("IE:{:<08b}", emulator.read(0xFFFF)));
 			ui.monospace(format!("IR:{:<08b}", emulator.read(0xFF0F)));
-			ui.monospace(format!("Timer Enabled:{}", emulator.is_enabled()));
+			ui.monospace(format!("Timer Enabled:{}", emulator.timer_enabled()));
 			ui.monospace(format!("Input:{:<08b}", emulator.read(0xFF00)));
 			ui.monospace(format!("RawIn:{:<08b}", emulator.raw_joyp_input));
 		});

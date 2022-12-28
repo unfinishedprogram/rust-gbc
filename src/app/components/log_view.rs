@@ -14,7 +14,7 @@ pub fn draw_logs(ui: &mut Ui, logs: &Vec<String>) {
 		.body(|body| {
 			body.rows(18.0, logs.len(), |index, mut row| {
 				row.col(|ui| {
-					ui.label(logs[index].clone());
+					ui.label(&logs[index]);
 				});
 			});
 		});

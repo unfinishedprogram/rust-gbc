@@ -1,6 +1,8 @@
+use serde::Serialize;
+
 use crate::util::bits::*;
 use std::{cmp::PartialOrd, option::Option};
-#[derive(Clone, Eq)]
+#[derive(Clone, Eq, Serialize)]
 pub struct Sprite {
 	pub x: u8,
 	pub y: u8,

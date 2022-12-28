@@ -49,14 +49,14 @@ impl CPU for MockEmulator {
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
 		0
 	}
-	fn read_i8(&mut self, value_ref: ValueRefI8) -> i8 {
+	fn read_i8(&mut self, value_ref: &ValueRefI8) -> i8 {
 		0
 	}
 	fn write_8(&mut self, value_ref: &ValueRefU8, value: u8) {}
-	fn read_16(&mut self, value_ref: ValueRefU16) -> u16 {
+	fn read_16(&mut self, value_ref: &ValueRefU16) -> u16 {
 		0
 	}
-	fn write_16(&mut self, value_ref: ValueRefU16, value: u16) {}
+	fn write_16(&mut self, value_ref: &ValueRefU16, value: u16) {}
 
 	fn fetch_next_instruction(&mut self) -> Instruction {
 		todo!()
@@ -78,7 +78,7 @@ impl CPU for MockEmulator {
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
 		todo!()
 	}
-	fn step(&mut self) {
+	fn step_cpu(&mut self) {
 		todo!()
 	}
 }
