@@ -30,7 +30,7 @@ impl Timer for EmulatorState {
 	}
 
 	fn update_timer(&mut self, cycles: u64) {
-		self.timer_state.div_clock += cycles;
+		self.timer_state.div_clock = self.timer_state.div_clock.wrapping_add(cycles as u8);
 
 		if self.timer_enabled() {
 			self.timer_state.timer_clock += cycles;
@@ -47,8 +47,9 @@ impl Timer for EmulatorState {
 			}
 		}
 
-		if self.timer_state.div_clock >= 256 {
-			self.timer_state.div_clock -= 256;
+		let (timer, overflow) = self.timer_state.div_clock.overflowing_add(cycles as u8);
+		self.timer_state.div_clock = timer;
+		if overflow {
 			self.io_register_state[Self::DIV] = self.io_register_state[Self::DIV].wrapping_add(1);
 		}
 	}

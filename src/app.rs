@@ -131,7 +131,6 @@ impl eframe::App for EmulatorManager {
 		style::apply(ctx);
 		self.set_input_state(self.fetch_input_state(ctx));
 
-		// self.update_key_input(ctx);
 		if let Some(data) = &self.loaded_file_data {
 			if let Some(rom) = data.ready() {
 				if let Err(e) = self.debugger.emulator_state.load_rom(rom) {
@@ -152,6 +151,7 @@ impl eframe::App for EmulatorManager {
 				if ui.button("Toggle Play").clicked() {
 					self.debugger.toggle_state();
 				}
+
 				if ui.button("Step").clicked() {
 					self.debugger.step_once();
 				}

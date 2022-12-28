@@ -1,6 +1,5 @@
 use std::ops::{Index, IndexMut};
 
-use log::error;
 use serde::Serialize;
 
 use crate::{
@@ -62,13 +61,11 @@ pub const JOYP: u16 = 0xFF00;
 #[derive(Clone, Serialize)]
 pub struct IORegisterState {
 	values: Vec<u8>,
-	_other: u8,
 }
 impl Default for IORegisterState {
 	fn default() -> Self {
 		Self {
 			values: vec![0; 0x80],
-			_other: 0,
 		}
 	}
 }
@@ -79,10 +76,7 @@ impl Index<u16> for IORegisterState {
 	fn index(&self, index: u16) -> &Self::Output {
 		match index {
 			0xFF00..0xFF80 => &self.values[(index - 0xFF00) as usize],
-			_ => {
-				error!("read from invalid IORegister: {:X}", index);
-				&self._other
-			}
+			_ => unreachable!(),
 		}
 	}
 }
@@ -91,10 +85,7 @@ impl IndexMut<u16> for IORegisterState {
 	fn index_mut(&mut self, index: u16) -> &mut Self::Output {
 		match index {
 			0xFF00..0xFF80 => &mut self.values[(index - 0xFF00) as usize],
-			_ => {
-				error!("write to invalid IORegister: {:X}", index);
-				&mut self._other
-			}
+			_ => unreachable!(),
 		}
 	}
 }
