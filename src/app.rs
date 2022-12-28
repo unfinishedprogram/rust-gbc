@@ -146,7 +146,7 @@ impl eframe::App for EmulatorManager {
 			ui.horizontal(|ui| {
 				ui.menu_button("file", |ui| {
 					file_selector(ui, &ROMS, &mut |selected| {
-						self.load_cartridge_by_url(selected)
+						self.load_cartridge_by_url(&format!("rust-gbc/{selected}"))
 					});
 				});
 
