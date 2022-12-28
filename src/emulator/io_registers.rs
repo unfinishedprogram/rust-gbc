@@ -114,7 +114,11 @@ impl IORegisters for EmulatorState {
 
 	fn write_io(&mut self, addr: u16, value: u8) {
 		match addr {
-			DIV => self.io_register_state[DIV] = 0,
+			DIV => {
+				self.io_register_state[DIV] = 0;
+				self.io_register_state[TIMA] = self.io_register_state[TMA];
+				self.timer_state.timer_clock = 0;
+			}
 			SB => self.io_register_state[0xFF01] = value,
 			JOYP => {
 				self.io_register_state[JOYP] = value & 0b00110000;
