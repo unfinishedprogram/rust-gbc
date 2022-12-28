@@ -5,7 +5,7 @@ use serde::Serialize;
 
 use crate::{
 	emulator::{memory_mapper::MemoryMapper, ppu::PPU},
-	util::bits::bit,
+	util::bits::{BIT_4, BIT_5},
 };
 
 use super::EmulatorState;
@@ -108,9 +108,9 @@ impl IORegisters for EmulatorState {
 	fn read_io(&self, addr: u16) -> u8 {
 		match addr {
 			JOYP => {
-				if self.io_register_state[JOYP] & bit(4) == bit(4) {
+				if self.io_register_state[JOYP] & BIT_4 == BIT_4 {
 					self.raw_joyp_input & 0b1111
-				} else if self.io_register_state[addr] & bit(5) == bit(5) {
+				} else if self.io_register_state[addr] & BIT_5 == BIT_5 {
 					(self.raw_joyp_input >> 4) & 0b1111
 				} else {
 					0b1111
