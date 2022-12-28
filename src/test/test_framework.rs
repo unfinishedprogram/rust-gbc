@@ -3,7 +3,7 @@ use std::fs::read;
 
 use crate::emulator::{lcd::LCD, EmulatorState};
 
-pub fn run_integration_test(rom: &str, expected: &str, cycles: usize) {
+pub fn run_screenshot_test(rom: &str, expected: &str, cycles: usize) {
 	let mut state = EmulatorState::default();
 
 	let rom = read(rom).expect("Rom does not exist");

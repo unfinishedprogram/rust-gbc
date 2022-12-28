@@ -1,19 +1,19 @@
-use crate::test::test_framework::run_integration_test;
+use crate::test::test_framework::run_screenshot_test;
 
-macro_rules! integration_tests {
+macro_rules! screenshot_tests {
     ($($name:ident: ($value:expr, $seconds:expr),)*) => {
 		$(
 			#[test]
 			fn $name() {
 				let rom = format!("roms/test/{}.gb", $value);
 				let expected = format!("test_expected/{}.png", $value);
-				run_integration_test(&rom, &expected, $seconds);
+				run_screenshot_test(&rom, &expected, $seconds);
 			}
 		)*
     }
 }
 
-integration_tests! {
+screenshot_tests! {
 	cpu_instrs:("blargg/cpu_instrs", 55),
 	dmg_sound:("blargg/dmg_sound", 36),
 	halt_bug:("blargg/halt_bug", 2),
