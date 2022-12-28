@@ -1,5 +1,4 @@
 /pkg
 /target
 /node_modules
-/dist
 *.log
