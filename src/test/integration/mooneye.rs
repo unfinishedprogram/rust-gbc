@@ -3,4 +3,5 @@ use crate::test::util::mooneye_test::run_mooneye_test;
 
 mooneye_tests! {
 	dda:"mooneye/acceptance/daa",
+	ie_push:"mooneye/acceptance/ie_push",
 }
