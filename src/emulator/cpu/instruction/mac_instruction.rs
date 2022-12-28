@@ -9,7 +9,6 @@ macro_rules! arg {
 	($cpu:tt, nn) => {
 		$cpu.next_chomp().into()
 	};
-
 	($cpu:tt, $p:tt) => {
 		$p.into()
 	};

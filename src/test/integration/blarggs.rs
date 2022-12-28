@@ -1,17 +1,5 @@
-use crate::test::test_framework::run_screenshot_test;
-
-macro_rules! screenshot_tests {
-    ($($name:ident: ($value:expr, $seconds:expr),)*) => {
-		$(
-			#[test]
-			fn $name() {
-				let rom = format!("roms/test/{}.gb", $value);
-				let expected = format!("test_expected/{}.png", $value);
-				run_screenshot_test(&rom, &expected, $seconds);
-			}
-		)*
-    }
-}
+use crate::screenshot_tests;
+use crate::test::utils::screenshot_test::run_screenshot_test;
 
 screenshot_tests! {
 	cpu_instrs:("blargg/cpu_instrs", 55),
