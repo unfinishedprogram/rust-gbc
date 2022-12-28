@@ -58,7 +58,7 @@ impl LCD {
 			ColorImage::new([160, 144], Color32::BLACK),
 		];
 		Self {
-			scale: 4.0,
+			scale: 3.0,
 			current_buffer: 0,
 			buffers,
 		}
