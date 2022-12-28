@@ -89,14 +89,14 @@ impl MemoryMapper for Cartridge {
 				0..0x4000 => data.rom_banks[0][addr as usize],
 				0x4000..0x8000 => {
 					let bank = state.rom_bank;
-					data.rom_banks[bank as usize][(addr - 0x4000) as usize]
+					data.rom_banks[bank as usize % data.rom_banks.len()][(addr - 0x4000) as usize]
 				}
 				0xA000..0xC000 => {
 					let local_addr = ((addr - 0xA000) % 512) as usize;
 					if state.ram_enabled {
-						state.ram_data[local_addr] & 0x0F
+						state.ram_data[local_addr] | 0xF0
 					} else {
-						0x0F
+						0xFF
 					}
 				}
 				_ => 0xFF,
@@ -148,7 +148,7 @@ impl MemoryMapper for Cartridge {
 				0xA000..0xC000 => {
 					let local_addr = ((addr - 0xA000) % 512) as usize;
 					if state.ram_enabled {
-						state.ram_data[local_addr] = value & 0x0F
+						state.ram_data[local_addr] = value | 0xF0
 					}
 				}
 				_ => {}
