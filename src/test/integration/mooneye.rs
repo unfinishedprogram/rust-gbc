@@ -10,7 +10,7 @@ mooneye_tests! {
 	mbc1_bits_bank2: "mooneye/mbc1/bits_bank2",
 	mbc1_bits_mode: "mooneye/mbc1/bits_mode",
 	mbc1_bits_ramg: "mooneye/mbc1/bits_ramg",
-	mbc1_multicart_rom_8_mb: "mooneye/mbc1/multicart_rom_8Mb",
+	// mbc1_multicart_rom_8_mb: "mooneye/mbc1/multicart_rom_8Mb",
 	mbc1_ram_256kb: "mooneye/mbc1/ram_256kb",
 	mbc1_ram_64kb: "mooneye/mbc1/ram_64kb",
 	mbc1_rom_16_mb: "mooneye/mbc1/rom_16Mb",

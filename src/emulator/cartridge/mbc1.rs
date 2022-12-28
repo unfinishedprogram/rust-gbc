@@ -2,13 +2,13 @@ use serde::Serialize;
 
 #[derive(Clone, Serialize)]
 enum BankingMode {
-	Rom,
-	Ram,
+	Simple,
+	Complex,
 }
 
 impl Default for BankingMode {
 	fn default() -> Self {
-		Self::Rom
+		Self::Simple
 	}
 }
 
@@ -16,24 +16,31 @@ impl Default for BankingMode {
 pub struct MBC1State {
 	banking_mode: BankingMode,
 	banking_register: u8,
-	ram_enabled: bool,
+	pub ram_enabled: bool,
 }
 
 impl MBC1State {
-	pub fn get_rom_bank(&self) -> u16 {
-		let bank_mask = match &self.banking_mode {
-			BankingMode::Rom => 0b01111111,
-			BankingMode::Ram => 0b00011111,
-		};
-		let bank = self.banking_register & bank_mask;
+	pub fn get_zero_rom_bank(&self) -> u16 {
+		let bank = self.banking_register;
+		match self.banking_mode {
+			BankingMode::Simple => 0,
+			BankingMode::Complex => (bank as u16) & 0b01100000,
+		}
+	}
 
-		(if bank & 0b00011111 == 0 { 1 } else { bank }) as u16
+	pub fn get_rom_bank(&self) -> u16 {
+		let bank = self.banking_register & 0b01111111;
+		(if bank & 0b00011111 == 0 {
+			bank + 1
+		} else {
+			bank
+		}) as u16
 	}
 
 	pub fn get_ram_bank(&self) -> u16 {
 		(match &self.banking_mode {
-			BankingMode::Rom => 0,
-			BankingMode::Ram => (self.banking_register >> 5) & 0b11,
+			BankingMode::Simple => 0,
+			BankingMode::Complex => (self.banking_register >> 5) & 0b11,
 		} as u16)
 	}
 
@@ -54,9 +61,9 @@ impl MBC1State {
 	}
 
 	pub fn set_banking_mode(&mut self, value: u8) {
-		self.banking_mode = match value & 1 == 1 {
-			true => BankingMode::Ram,
-			false => BankingMode::Rom,
+		self.banking_mode = match value == 1 {
+			true => BankingMode::Complex,
+			false => BankingMode::Simple,
 		};
 	}
 }

@@ -67,16 +67,19 @@ impl MemoryMapper for Cartridge {
 				_ => unreachable!(),
 			},
 			MBC1(data, state) => match addr {
-				0..0x4000 => data.rom_banks[0][addr as usize],
+				0..0x4000 => {
+					data.rom_banks[state.get_zero_rom_bank() as usize % data.rom_banks.len()]
+						[addr as usize]
+				}
 				0x4000..0x8000 => {
-					let bank = state.get_rom_bank();
+					let bank = state.get_rom_bank() % data.rom_banks.len() as u16;
 					data.rom_banks[bank as usize][(addr - 0x4000) as usize]
 				}
 				0xA000..0xC000 => {
-					if data.ram_banks.is_empty() {
+					if data.ram_banks.is_empty() || !state.ram_enabled {
 						return 0xFF;
 					}
-					let bank = state.get_ram_bank();
+					let bank = state.get_ram_bank() % data.ram_banks.len() as u16;
 					data.ram_banks[bank as usize][(addr - 0xA000) as usize]
 				}
 
@@ -132,10 +135,10 @@ impl MemoryMapper for Cartridge {
 				0x4000..0x6000 => state.set_ram_bank(value),
 				0x6000..0x8000 => state.set_banking_mode(value),
 				0xA000..0xC000 => {
-					if data.ram_banks.is_empty() {
+					if data.ram_banks.is_empty() || !state.ram_enabled {
 						return;
 					}
-					let bank = state.get_ram_bank();
+					let bank = state.get_ram_bank() % data.ram_banks.len() as u16;
 					data.ram_banks[bank as usize][(addr - 0xA000) as usize] = value;
 				}
 				_ => unreachable!(),
