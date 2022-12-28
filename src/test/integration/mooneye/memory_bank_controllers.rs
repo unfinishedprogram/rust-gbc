@@ -25,4 +25,15 @@ mooneye_tests! {
 	mbc2_rom_1_mb: "mooneye/mbc2/rom_1Mb",
 	mbc2_rom_2_mb: "mooneye/mbc2/rom_2Mb",
 	mbc2_rom_512kb: "mooneye/mbc2/rom_512kb",
+
+
+	// MBC5
+	rom_16_mb: "mooneye/mbc5/rom_16Mb",
+	rom_1_mb: "mooneye/mbc5/rom_1Mb",
+	rom_2_mb: "mooneye/mbc5/rom_2Mb",
+	rom_32_mb: "mooneye/mbc5/rom_32Mb",
+	rom_4_mb: "mooneye/mbc5/rom_4Mb",
+	rom_512_kb: "mooneye/mbc5/rom_512kb",
+	rom_64_mb: "mooneye/mbc5/rom_64Mb",
+	rom_8_mb: "mooneye/mbc5/rom_8Mb",
 }
