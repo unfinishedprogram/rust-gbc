@@ -1,5 +1,5 @@
 use crate::screenshot_tests;
-use crate::test::utils::screenshot_test::run_screenshot_test;
+use crate::test::util::screenshot_test::run_screenshot_test;
 
 screenshot_tests! {
 	cpu_instrs:("blargg/cpu_instrs", 55),
