@@ -1,12 +1,13 @@
 use serde::Serialize;
 
-use crate::emulator::{flags::STAT_H_BLANK_IE, memory_mapper::MemoryMapper};
+use crate::emulator::{flags::STAT_H_BLANK_IE, memory_mapper::SourcedMemoryMapper};
 
 use super::{
 	flags::{
 		INT_LCD_STAT, INT_V_BLANK, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE, STAT_V_BLANK_IE,
 	},
 	io_registers::{LY, LYC, STAT},
+	memory_mapper::Source,
 	renderer::{Renderer, ScanlineState},
 	EmulatorState,
 };
@@ -39,7 +40,7 @@ pub trait PPU {
 
 impl PPU for EmulatorState {
 	fn get_mode(&self) -> PPUMode {
-		let num = self.read(STAT) & 0b00000011;
+		let num = self.read_from(STAT, Source::Ppu) & 0b00000011;
 		match num {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
@@ -50,12 +51,12 @@ impl PPU for EmulatorState {
 	}
 
 	fn get_ly(&self) -> u8 {
-		self.read(LY)
+		self.read_from(LY, Source::Ppu)
 	}
 
 	fn set_ly(&mut self, value: u8) {
-		let lyc_status = self.read(LYC) == value;
-		self.write(LY, value);
+		let lyc_status = self.read_from(LYC, Source::Ppu) == value;
+		self.write_from(LY, value, Source::Ppu);
 
 		if lyc_status {
 			self.io_register_state[STAT] |= STAT_LYC_EQ_LY;
@@ -68,7 +69,7 @@ impl PPU for EmulatorState {
 	}
 
 	fn set_mode(&mut self, mode: PPUMode) {
-		let stat = self.read(STAT);
+		let stat = self.read_from(STAT, Source::Ppu);
 
 		// Do Interrupts
 		use PPUMode::*;
@@ -87,7 +88,7 @@ impl PPU for EmulatorState {
 			self.request_interrupt(INT_LCD_STAT);
 		}
 
-		self.write(STAT, (stat & 0b11111100) | mode as u8);
+		self.write_from(STAT, (stat & 0b11111100) | mode as u8, Source::Ppu);
 	}
 
 	fn step_ppu(&mut self) {

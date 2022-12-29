@@ -6,7 +6,7 @@ use super::{
 	flags::INTERRUPT_REQUEST,
 	io_registers::IORegisterState,
 	lcd::LCD,
-	memory_mapper::MemoryMapper,
+	memory_mapper::{Source, SourcedMemoryMapper},
 	ppu::{PPUMode, PPUState, PPU},
 	timer::{Timer, TimerState},
 };
@@ -75,26 +75,26 @@ impl Default for EmulatorState {
 		emulator.set_mode(PPUMode::OamScan);
 
 		emulator.io_register_state[0xFF04] = 0x1F;
-		emulator.write(0xFF10, 0x80);
-		emulator.write(0xFF11, 0xBF);
-		emulator.write(0xFF12, 0xF3);
-		emulator.write(0xFF14, 0xBF);
-		emulator.write(0xFF16, 0x3F);
-		emulator.write(0xFF19, 0xBF);
-		emulator.write(0xFF1A, 0x7F);
-		emulator.write(0xFF1B, 0xFF);
-		emulator.write(0xFF1C, 0x9F);
-		emulator.write(0xFF1E, 0xBF);
-		emulator.write(0xFF20, 0xFF);
-		emulator.write(0xFF23, 0xBF);
-		emulator.write(0xFF24, 0x77);
-		emulator.write(0xFF25, 0xF3);
-		emulator.write(0xFF26, 0xF1);
-		emulator.write(0xFF40, 0x91);
-		emulator.write(0xFF44, 0x90);
-		emulator.write(0xFF47, 0xFC);
-		emulator.write(0xFF48, 0xFF);
-		emulator.write(0xFF49, 0xFF);
+		emulator.write_from(0xFF10, 0x80, Source::Raw);
+		emulator.write_from(0xFF11, 0xBF, Source::Raw);
+		emulator.write_from(0xFF12, 0xF3, Source::Raw);
+		emulator.write_from(0xFF14, 0xBF, Source::Raw);
+		emulator.write_from(0xFF16, 0x3F, Source::Raw);
+		emulator.write_from(0xFF19, 0xBF, Source::Raw);
+		emulator.write_from(0xFF1A, 0x7F, Source::Raw);
+		emulator.write_from(0xFF1B, 0xFF, Source::Raw);
+		emulator.write_from(0xFF1C, 0x9F, Source::Raw);
+		emulator.write_from(0xFF1E, 0xBF, Source::Raw);
+		emulator.write_from(0xFF20, 0xFF, Source::Raw);
+		emulator.write_from(0xFF23, 0xBF, Source::Raw);
+		emulator.write_from(0xFF24, 0x77, Source::Raw);
+		emulator.write_from(0xFF25, 0xF3, Source::Raw);
+		emulator.write_from(0xFF26, 0xF1, Source::Raw);
+		emulator.write_from(0xFF40, 0x91, Source::Raw);
+		emulator.write_from(0xFF44, 0x90, Source::Raw);
+		emulator.write_from(0xFF47, 0xFC, Source::Raw);
+		emulator.write_from(0xFF48, 0xFF, Source::Raw);
+		emulator.write_from(0xFF49, 0xFF, Source::Raw);
 
 		for _ in 0..258 {
 			emulator.step_ppu();
@@ -134,7 +134,11 @@ impl EmulatorState {
 	}
 
 	pub fn request_interrupt(&mut self, interrupt: u8) {
-		self.write(INTERRUPT_REQUEST, self.read(INTERRUPT_REQUEST) | interrupt);
+		self.write_from(
+			INTERRUPT_REQUEST,
+			self.read_from(INTERRUPT_REQUEST, Source::Raw) | interrupt,
+			Source::Raw,
+		);
 	}
 
 	pub fn load_rom(&mut self, rom: &[u8]) -> Result<(), CartridgeParseError> {

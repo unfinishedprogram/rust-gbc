@@ -1,28 +1,76 @@
-use super::{io_registers::IORegisters, EmulatorState};
+use super::{
+	io_registers::{IORegisters, DMA},
+	EmulatorState,
+};
 
+/// Allows reading and writing to memory using a 16 bit address
 pub trait MemoryMapper {
 	fn read(&self, addr: u16) -> u8;
 	fn write(&mut self, addr: u16, value: u8);
 }
 
-impl MemoryMapper for EmulatorState {
-	fn read(&self, addr: u16) -> u8 {
-		if self.dma_timer > 0 && !matches!(addr, 0xFF80..0xFFFF) {
+/// Similar to `MemoryMapper` but allows specifying a source,
+/// This is needed for accurate emulation,
+pub trait SourcedMemoryMapper {
+	fn read_from(&self, addr: u16, source: Source) -> u8;
+	fn write_from(&mut self, addr: u16, value: u8, source: Source);
+}
+
+/// Defines a source for a given read/write
+pub enum Source {
+	/// From the CPU
+	Cpu,
+
+	/// From the PPI
+	Ppu,
+
+	/// No source, useful for debugging
+	Raw,
+}
+
+impl SourcedMemoryMapper for EmulatorState {
+	fn read_from(&self, addr: u16, source: Source) -> u8 {
+		if matches!(source, Source::Cpu)
+			&& self.dma_timer > 0
+			&& !matches!(addr, 0xFF80..0xFFFF)
+			&& addr != DMA
+		{
 			return 0xFF;
 		}
 
+		// // Don't allow reading from memory outside of HRAM from CPU during DMA transfer
+		// if matches!(source, Source::Cpu) && self.dma_timer > 0 && !matches!(addr, 0xFF80..0xFFFF) {
+		// 	return 0xFF;
+		// }
+
+		self.read(addr)
+	}
+
+	fn write_from(&mut self, addr: u16, value: u8, source: Source) {
+		// Don't allow reading from memory outside of HRAM from CPU during DMA transfer
+		if matches!(source, Source::Cpu)
+			&& self.dma_timer > 0
+			&& !matches!(addr, 0xFF80..0xFFFF)
+			&& addr != DMA
+		{
+			return;
+		}
+
+		self.write(addr, value)
+	}
+}
+
+impl MemoryMapper for EmulatorState {
+	fn read(&self, addr: u16) -> u8 {
 		match addr {
 			0x0000..0x8000 => {
-				let Some(rom) = &self.cartridge_state else { return 0 };
+				let Some(rom) = &self.cartridge_state else { return 0xFF };
 				rom.read(addr)
 			} // Cartridge Rom
 			0x8000..0xA000 => self.v_ram[0][(addr - 0x8000) as usize], //  VRAM
 			0xA000..0xC000 => {
-				if let Some(rom) = &self.cartridge_state {
-					rom.read(addr)
-				} else {
-					0
-				}
+				let Some(rom) = &self.cartridge_state else { return 0xFF };
+				rom.read(addr)
 			} //  Cartage RAM
 			0xC000..0xD000 => self.w_ram[0][(addr - 0xC000) as usize], // Internal RAM
 			0xD000..0xE000 => self.w_ram[1][(addr - 0xD000) as usize], // Switchable RAM in CGB mode
@@ -36,9 +84,6 @@ impl MemoryMapper for EmulatorState {
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
-		if self.dma_timer > 0 && !matches!(addr, 0xFF80..0xFFFF) {
-			return;
-		}
 		match addr {
 			0x0000..0x8000 => {
 				if let Some(rom) = &mut self.cartridge_state {
@@ -49,8 +94,6 @@ impl MemoryMapper for EmulatorState {
 			0xA000..0xC000 => {
 				if let Some(rom) = &mut self.cartridge_state {
 					rom.write(addr, value);
-				} else {
-					// warn!("Writing to vram bank without rom: {value:X}")
 				}
 			} // Cartage RAM
 			0xC000..0xD000 => self.w_ram[0][(addr - 0xC000) as usize] = value, // Internal RAM

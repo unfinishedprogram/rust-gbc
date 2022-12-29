@@ -7,7 +7,7 @@ pub mod values;
 
 use crate::emulator::cpu::flags::Flags;
 
-use super::memory_mapper::MemoryMapper;
+use super::memory_mapper::{Source, SourcedMemoryMapper};
 use log::warn;
 pub use state::CPUState;
 
@@ -64,7 +64,7 @@ impl CPU for EmulatorState {
 
 	fn next_byte(&mut self) -> u8 {
 		self.tick_m_cycles(1);
-		let value = self.read(self.cpu_state.registers.pc);
+		let value = self.read_from(self.cpu_state.registers.pc, Source::Cpu);
 		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(1);
 		value
 	}
@@ -74,7 +74,7 @@ impl CPU for EmulatorState {
 			ValueRefU8::Mem(addr) => {
 				let index = self.read_16(addr);
 				self.tick_m_cycles(1);
-				self.read(index)
+				self.read_from(index, Source::Cpu)
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state.registers[reg.clone()],
 			ValueRefU8::Raw(x) => *x,
@@ -87,7 +87,7 @@ impl CPU for EmulatorState {
 
 	fn read_i8(&mut self, value_ref: &ValueRefI8) -> i8 {
 		match value_ref {
-			ValueRefI8::Mem(addr) => self.read(*addr) as i8,
+			ValueRefI8::Mem(addr) => self.read_from(*addr, Source::Cpu) as i8,
 			ValueRefI8::Reg(reg) => self.cpu_state.registers[reg.clone()] as i8,
 			ValueRefI8::Raw(x) => *x,
 		}
@@ -98,7 +98,7 @@ impl CPU for EmulatorState {
 			ValueRefU8::Mem(addr) => {
 				let index = self.read_16(addr);
 				self.tick_m_cycles(1);
-				self.write(index, value);
+				self.write_from(index, value, Source::Cpu);
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state.registers[reg.clone()] = value,
 			ValueRefU8::MemOffset(offset) => {
@@ -114,7 +114,10 @@ impl CPU for EmulatorState {
 
 	fn read_16(&mut self, value_ref: &ValueRefU16) -> u16 {
 		match value_ref {
-			ValueRefU16::Mem(i) => u16::from_le_bytes([self.read(*i), self.read(i + 1)]),
+			ValueRefU16::Mem(i) => u16::from_le_bytes([
+				self.read_from(*i, Source::Cpu),
+				self.read_from(i + 1, Source::Cpu),
+			]),
 			ValueRefU16::Reg(reg) => self.cpu_state.registers.get_u16(reg.clone()),
 			ValueRefU16::Raw(x) => *x,
 		}
@@ -125,8 +128,8 @@ impl CPU for EmulatorState {
 			ValueRefU16::Mem(i) => {
 				let bytes = u16::to_le_bytes(value);
 				self.tick_m_cycles(2);
-				self.write(*i, bytes[0]);
-				self.write(*i + 1, bytes[1]);
+				self.write_from(*i, bytes[0], Source::Cpu);
+				self.write_from(*i + 1, bytes[1], Source::Cpu);
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state.registers.set_u16(reg.clone(), value),
 			ValueRefU16::Raw(_) => unreachable!(),
@@ -150,18 +153,20 @@ impl CPU for EmulatorState {
 	}
 
 	fn check_interrupt(&self, interrupt: u8) -> bool {
-		let enabled = self.read(INTERRUPT_ENABLE);
-		let requested = self.read(INTERRUPT_REQUEST);
+		let enabled = self.read_from(INTERRUPT_ENABLE, Source::Cpu);
+		let requested = self.read_from(INTERRUPT_REQUEST, Source::Cpu);
 		enabled & requested & interrupt == interrupt
 	}
 
 	fn clear_request(&mut self, interrupt: u8) {
-		let request_value = self.read(INTERRUPT_REQUEST);
-		self.write(INTERRUPT_REQUEST, request_value & !interrupt);
+		let request_value = self.read_from(INTERRUPT_REQUEST, Source::Cpu);
+		self.write_from(INTERRUPT_REQUEST, request_value & !interrupt, Source::Cpu);
 	}
 
 	fn interrupt_pending(&self) -> bool {
-		self.read(INTERRUPT_ENABLE) & self.read(INTERRUPT_REQUEST) != 0
+		self.read_from(INTERRUPT_ENABLE, Source::Cpu)
+			& self.read_from(INTERRUPT_REQUEST, Source::Cpu)
+			!= 0
 	}
 
 	fn get_interrupt(&mut self) -> Option<Instruction> {

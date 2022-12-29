@@ -3,11 +3,11 @@ use std::ops::{Index, IndexMut};
 use serde::Serialize;
 
 use crate::{
-	emulator::{memory_mapper::MemoryMapper, ppu::PPU},
+	emulator::{memory_mapper::SourcedMemoryMapper, ppu::PPU},
 	util::bits::{BIT_4, BIT_5},
 };
 
-use super::EmulatorState;
+use super::{memory_mapper::Source, EmulatorState};
 
 // Timers
 pub const DIV: u16 = 0xFF04;
@@ -139,9 +139,13 @@ impl IORegisters for EmulatorState {
 			IE => self.io_register_state[IE] = value & 0b00011111,
 			DMA => {
 				self.io_register_state[DMA] = value;
-				let real_addr = (value as u16) * 0x100;
+
+				// Indexing into HRAM should use work-ram instead.
+				let value = if value > 0xDF { value - 0x20 } else { value };
+
+				let real_addr = (value as u16) << 8;
 				for i in 0..0xA0 {
-					self.oam[i] = self.read(real_addr + i as u16);
+					self.oam[i] = self.read_from(real_addr + i as u16, Source::Raw);
 				}
 				self.dma_timer += 160;
 			}

@@ -4,12 +4,12 @@ use super::{
 };
 use crate::emulator::{
 	cpu::{registers::CPURegister16, values::ValueRefU16, CPU},
-	memory_mapper::MemoryMapper,
+	memory_mapper::SourcedMemoryMapper,
 };
 
 use crate::{arg, inst, mem}; // Macros
 
-pub fn fetch_instruction<T: CPU + MemoryMapper>(cpu: &mut T) -> Instruction {
+pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instruction {
 	let raw = cpu.next_byte();
 
 	let (x, z, y, p, q) = parse_opcode(raw);

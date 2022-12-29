@@ -7,7 +7,13 @@ pub mod sprite;
 
 use self::sprite::Sprite;
 
-use super::{flags::LCDC, lcd::LCDDisplay, memory_mapper::MemoryMapper, ppu::PPU, EmulatorState};
+use super::{
+	flags::LCDC,
+	lcd::LCDDisplay,
+	memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper},
+	ppu::PPU,
+	EmulatorState,
+};
 
 const COLORS: [Color; 4] = [
 	(0xFF, 0xFF, 0xFF),
@@ -48,10 +54,10 @@ impl RendererHelpers for EmulatorState {
 			.map(|i| {
 				let index = 0xFE00 + i * 4;
 				let bytes = (
-					self.read(index),
-					self.read(index + 1),
-					self.read(index + 2),
-					self.read(index + 3),
+					self.read_from(index, Source::Ppu),
+					self.read_from(index + 1, Source::Ppu),
+					self.read_from(index + 2, Source::Ppu),
+					self.read_from(index + 3, Source::Ppu),
 				);
 				Sprite::new(index, bytes)
 			})
