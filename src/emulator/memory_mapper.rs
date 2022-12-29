@@ -1,10 +1,4 @@
-use log::warn;
-
-use super::{
-	io_registers::IORegisters,
-	ppu::{PPUMode, PPU},
-	EmulatorState,
-};
+use super::{io_registers::IORegisters, EmulatorState};
 
 pub trait MemoryMapper {
 	fn read(&self, addr: u16) -> u8;
@@ -13,6 +7,10 @@ pub trait MemoryMapper {
 
 impl MemoryMapper for EmulatorState {
 	fn read(&self, addr: u16) -> u8 {
+		if self.dma_timer > 0 && !matches!(addr, 0xFF80..0xFFFF) {
+			return 0xFF;
+		}
+
 		match addr {
 			0x0000..0x8000 => {
 				let Some(rom) = &self.cartridge_state else { return 0 };
@@ -38,6 +36,9 @@ impl MemoryMapper for EmulatorState {
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
+		if self.dma_timer > 0 && !matches!(addr, 0xFF80..0xFFFF) {
+			return;
+		}
 		match addr {
 			0x0000..0x8000 => {
 				if let Some(rom) = &mut self.cartridge_state {

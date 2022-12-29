@@ -140,9 +140,10 @@ impl IORegisters for EmulatorState {
 			DMA => {
 				self.io_register_state[DMA] = value;
 				let real_addr = (value as u16) * 0x100;
-				for i in 0..0xA0u16 {
-					self.oam[i as usize] = self.read(real_addr + i);
+				for i in 0..0xA0 {
+					self.oam[i] = self.read(real_addr + i as u16);
 				}
+				self.dma_timer += 160;
 			}
 			_ => self.io_register_state[addr] = value,
 		}

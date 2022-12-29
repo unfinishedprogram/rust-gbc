@@ -28,6 +28,7 @@ pub struct EmulatorState {
 	pub halted: bool,
 	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
+	pub dma_timer: u64,
 	pub lcd: Option<LCD>,
 	t_states: u64,
 }
@@ -44,6 +45,7 @@ impl PPUState {
 impl Default for EmulatorState {
 	fn default() -> Self {
 		let mut emulator = Self {
+			dma_timer: 0,
 			cpu_state: CPUState::default(),
 			ppu_state: PPUState::default(),
 			io_register_state: IORegisterState::default(),
@@ -122,6 +124,9 @@ impl EmulatorState {
 	fn tick_t_states(&mut self, t_states: u64) {
 		for _ in 0..t_states {
 			self.step_ppu();
+			if self.dma_timer > 0 {
+				self.dma_timer -= 1;
+			}
 		}
 		self.update_timer(t_states);
 
