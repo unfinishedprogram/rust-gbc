@@ -62,6 +62,9 @@ impl SourcedMemoryMapper for EmulatorState {
 
 impl MemoryMapper for EmulatorState {
 	fn read(&self, addr: u16) -> u8 {
+		if self.booting && matches!(addr, 0..=0x100) {
+			return self.boot_rom[addr as usize];
+		}
 		match addr {
 			0x0000..0x8000 => {
 				let Some(rom) = &self.cartridge_state else { return 0xFF };

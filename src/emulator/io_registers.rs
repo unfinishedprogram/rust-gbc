@@ -58,6 +58,8 @@ pub const IF: u16 = 0xFF0F;
 pub const IE: u16 = 0xFFFF;
 pub const JOYP: u16 = 0xFF00;
 
+pub const DISABLE_BOOT: u16 = 0xFF50;
+
 #[derive(Clone, Serialize)]
 pub struct IORegisterState {
 	values: Vec<u8>,
@@ -114,6 +116,10 @@ impl IORegisters for EmulatorState {
 
 	fn write_io(&mut self, addr: u16, value: u8) {
 		match addr {
+			DISABLE_BOOT => {
+				self.booting = false;
+				log::error!("Disable Boot: PC{}", self.cpu_state.registers.pc);
+			}
 			DIV => {
 				self.io_register_state[DIV] = 0;
 				self.io_register_state[TIMA] = self.io_register_state[TMA];

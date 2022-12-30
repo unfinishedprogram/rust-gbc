@@ -8,7 +8,6 @@ pub mod values;
 use crate::emulator::cpu::flags::Flags;
 
 use super::memory_mapper::{Source, SourcedMemoryMapper};
-use log::warn;
 pub use state::CPUState;
 
 use super::flags::*;
@@ -205,7 +204,6 @@ impl CPU for EmulatorState {
 			}
 		} else {
 			let instruction = self.get_next_instruction_or_interrupt();
-			warn!("{instruction:?}");
 			execute_instruction(instruction, self);
 		}
 	}

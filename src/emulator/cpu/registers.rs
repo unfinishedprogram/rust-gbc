@@ -28,7 +28,7 @@ pub enum CPURegister16 {
 	PC,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Default)]
 pub struct CPURegisters {
 	pub bytes: [u8; 8],
 	pub sp: u16,
@@ -45,16 +45,6 @@ impl Index<CPURegister8> for CPURegisters {
 impl IndexMut<CPURegister8> for CPURegisters {
 	fn index_mut(&mut self, reg: CPURegister8) -> &mut Self::Output {
 		&mut self.bytes[reg as usize]
-	}
-}
-
-impl Default for CPURegisters {
-	fn default() -> Self {
-		Self {
-			bytes: [0; 8],
-			sp: 0,
-			pc: 0x0100,
-		}
 	}
 }
 

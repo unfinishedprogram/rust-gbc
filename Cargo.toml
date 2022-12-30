@@ -48,6 +48,8 @@ opt-level = 3
 [build]
 target = "wasm32-unknown-unknown"
 rustflags = '-Ctarget-feature=+atomics,+bulk-memory,+mutable-globals'
+opt-level = 3
+
 
 [build-dependencies]
 serde = { version = "1.0.150", features = ["derive"] }

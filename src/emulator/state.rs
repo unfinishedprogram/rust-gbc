@@ -1,8 +1,9 @@
+use instant::Instant;
 use serde::Serialize;
 
 use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
-	cpu::{registers::CPURegister16, values::ValueRefU16, CPUState, CPU},
+	cpu::{CPUState, CPU},
 	flags::INTERRUPT_REQUEST,
 	io_registers::IORegisterState,
 	lcd::LCD,
@@ -30,6 +31,8 @@ pub struct EmulatorState {
 	pub raw_joyp_input: u8,
 	pub dma_timer: u64,
 	pub lcd: Option<LCD>,
+	pub booting: bool,
+	pub boot_rom: &'static [u8],
 	t_states: u64,
 }
 
@@ -49,6 +52,8 @@ impl Default for EmulatorState {
 			cpu_state: CPUState::default(),
 			ppu_state: PPUState::default(),
 			io_register_state: IORegisterState::default(),
+			boot_rom: include_bytes!("../../roms/other/dmg_boot.bin"),
+			booting: true,
 			cartridge_state: None,
 			ram_bank: 0,
 			cgb: false,
@@ -65,40 +70,7 @@ impl Default for EmulatorState {
 			t_states: 0,
 		};
 
-		emulator.write_16(&ValueRefU16::Reg(CPURegister16::AF), 0x01B0);
-		emulator.write_16(&ValueRefU16::Reg(CPURegister16::BC), 0x0013);
-		emulator.write_16(&ValueRefU16::Reg(CPURegister16::DE), 0x00D8);
-		emulator.write_16(&ValueRefU16::Reg(CPURegister16::HL), 0x014D);
-
-		emulator.write_16(&ValueRefU16::Reg(CPURegister16::SP), 0xFFFE);
-		emulator.write_16(&ValueRefU16::Reg(CPURegister16::PC), 0x0100);
 		emulator.set_mode(PPUMode::OamScan);
-
-		emulator.io_register_state[0xFF04] = 0x1F;
-		emulator.write_from(0xFF10, 0x80, Source::Raw);
-		emulator.write_from(0xFF11, 0xBF, Source::Raw);
-		emulator.write_from(0xFF12, 0xF3, Source::Raw);
-		emulator.write_from(0xFF14, 0xBF, Source::Raw);
-		emulator.write_from(0xFF16, 0x3F, Source::Raw);
-		emulator.write_from(0xFF19, 0xBF, Source::Raw);
-		emulator.write_from(0xFF1A, 0x7F, Source::Raw);
-		emulator.write_from(0xFF1B, 0xFF, Source::Raw);
-		emulator.write_from(0xFF1C, 0x9F, Source::Raw);
-		emulator.write_from(0xFF1E, 0xBF, Source::Raw);
-		emulator.write_from(0xFF20, 0xFF, Source::Raw);
-		emulator.write_from(0xFF23, 0xBF, Source::Raw);
-		emulator.write_from(0xFF24, 0x77, Source::Raw);
-		emulator.write_from(0xFF25, 0xF3, Source::Raw);
-		emulator.write_from(0xFF26, 0xF1, Source::Raw);
-		emulator.write_from(0xFF40, 0x91, Source::Raw);
-		emulator.write_from(0xFF44, 0x90, Source::Raw);
-		emulator.write_from(0xFF47, 0xFC, Source::Raw);
-		emulator.write_from(0xFF48, 0xFF, Source::Raw);
-		emulator.write_from(0xFF49, 0xFF, Source::Raw);
-
-		for _ in 0..258 {
-			emulator.step_ppu();
-		}
 
 		emulator
 	}
@@ -109,6 +81,14 @@ impl EmulatorState {
 		self.t_states / 4
 	}
 
+	pub fn run_until_boot(&mut self) {
+		let start = Instant::now();
+		while self.booting {
+			self.step_cpu();
+		}
+		log::warn!("BIOS took: {:?}", Instant::now().duration_since(start))
+	}
+
 	pub fn step(&mut self) {
 		self.step_cpu();
 	}
@@ -117,20 +97,20 @@ impl EmulatorState {
 		self.lcd = Some(lcd);
 	}
 
-	pub fn tick_m_cycles(&mut self, m_cycles: u64) {
+	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
 		self.tick_t_states(m_cycles * 4);
 	}
 
-	fn tick_t_states(&mut self, t_states: u64) {
+	fn tick_t_states(&mut self, t_states: u32) {
 		for _ in 0..t_states {
 			self.step_ppu();
-			if self.dma_timer > 0 {
-				self.dma_timer -= 1;
-			}
 		}
-		self.update_timer(t_states);
 
-		self.t_states += t_states;
+		self.dma_timer = self.dma_timer.saturating_sub(t_states as u64);
+
+		self.update_timer(t_states as u64);
+
+		self.t_states += t_states as u64;
 	}
 
 	pub fn request_interrupt(&mut self, interrupt: u8) {
@@ -144,6 +124,7 @@ impl EmulatorState {
 	pub fn load_rom(&mut self, rom: &[u8]) -> Result<(), CartridgeParseError> {
 		let cartridge = Cartridge::try_from(rom)?;
 		self.cartridge_state = Some(cartridge);
+		self.run_until_boot();
 		Ok(())
 	}
 }
