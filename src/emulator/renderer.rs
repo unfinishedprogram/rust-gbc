@@ -164,14 +164,7 @@ pub struct PixelState {
 }
 
 impl Renderer for EmulatorState {
-	fn render_screen_pixel(
-		&mut self,
-		// lcd: &mut dyn LCDDisplay,
-		x: u8,
-		y: u8,
-		// scanline_state: &ScanlineState,
-		pixel_state: PixelState,
-	) {
+	fn render_screen_pixel(&mut self, x: u8, y: u8, pixel_state: PixelState) {
 		let (scx, scy) = (self.read(0xFF43), self.read(0xFF42));
 		let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
 
