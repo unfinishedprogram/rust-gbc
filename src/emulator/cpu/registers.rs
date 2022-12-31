@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use std::ops::Index;
 use std::ops::IndexMut;
 
+use serde::Deserialize;
 use serde::Serialize;
 use CPURegister16::*;
 use CPURegister8::*;
@@ -28,7 +29,7 @@ pub enum CPURegister16 {
 	PC,
 }
 
-#[derive(Debug, Clone, Serialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CPURegisters {
 	pub bytes: [u8; 8],
 	pub sp: u16,

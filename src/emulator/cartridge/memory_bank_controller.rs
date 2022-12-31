@@ -1,10 +1,10 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::emulator::{cartridge::mbc3, memory_mapper::MemoryMapper};
 
 use super::{
 	cartridge_data::CartridgeData,
-	header::{CartridgeParseError, RawCartridgeHeader},
+	header::{CartridgeInfo, CartridgeParseError, RawCartridgeHeader},
 	mbc1::MBC1State,
 	mbc2::MBC2State,
 	mbc3::MBC3State,
@@ -16,8 +16,8 @@ pub trait MemoryBankController: Default + Clone {
 	fn write(&mut self, addr: u16, value: u8);
 }
 
-#[derive(Clone, Serialize)]
-pub enum Cartridge {
+#[derive(Clone, Serialize, Deserialize)]
+pub enum CartridgeState {
 	ROM(CartridgeData),
 	MBC1(CartridgeData, MBC1State),
 	MBC2(CartridgeData, MBC2State),
@@ -30,17 +30,20 @@ pub enum Cartridge {
 	HUC1,
 }
 
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Cartridge(pub CartridgeState, pub CartridgeInfo);
+
 impl TryFrom<&[u8]> for Cartridge {
 	type Error = CartridgeParseError;
 	fn try_from(value: &[u8]) -> Result<Self, CartridgeParseError> {
 		let raw_header = RawCartridgeHeader::from(value);
 		let info = raw_header.parse()?;
-		log::error!("{info:?}");
+		log::info!("{info:?}");
 
 		let data = CartridgeData::new(value, info.rom_banks, info.ram_banks);
-		use Cartridge::*;
+		use CartridgeState::*;
 
-		match raw_header.cartridge_type {
+		let state = match raw_header.cartridge_type {
 			0x00 => Ok(ROM(data)),
 			0x01 | 0x02 | 0x03 => Ok(MBC1(data, MBC1State::default())),
 			0x05 | 0x06 => Ok(MBC2(data, MBC2State::default())),
@@ -53,15 +56,17 @@ impl TryFrom<&[u8]> for Cartridge {
 			0xFE => Ok(HUC3),
 			0xFF => Ok(HUC1),
 			_ => Err(CartridgeParseError::MBCType),
-		}
+		}?;
+
+		Ok(Cartridge(state, info))
 	}
 }
 
 impl MemoryMapper for Cartridge {
 	fn read(&self, addr: u16) -> u8 {
-		use Cartridge::*;
-
-		match self {
+		use CartridgeState::*;
+		let Cartridge(mbc, _) = self;
+		match mbc {
 			ROM(data) => match addr {
 				0..0x4000 => data.rom_banks[0][addr as usize],
 				0x4000..0x8000 => data.rom_banks[1][(addr as usize) - 0x4000],
@@ -140,9 +145,11 @@ impl MemoryMapper for Cartridge {
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
-		use Cartridge::*;
+		use CartridgeState::*;
 
-		match self {
+		let Cartridge(mbc, _) = self;
+
+		match mbc {
 			ROM(_) => {}
 			MBC1(data, state) => match addr {
 				0..0x2000 => state.set_ram_enable(value),

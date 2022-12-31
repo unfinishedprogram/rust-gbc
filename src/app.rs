@@ -4,23 +4,32 @@ pub mod drawable;
 mod file_selector;
 pub mod logger;
 pub mod managed_input;
+mod save_manager;
 mod style;
-use crate::{app::file_selector::file_selector, emulator::lcd::LCD};
+mod web_save_manager;
+use crate::{
+	app::file_selector::file_selector,
+	emulator::{lcd::LCD, EmulatorState},
+};
 
 use std::sync::Mutex;
 use wasm_bindgen::JsCast;
 use web_sys::{window, Gamepad};
 
 use components::{draw_status, Debugger};
-use egui::{CentralPanel, SidePanel, TopBottomPanel};
+use egui::{show_tooltip, CentralPanel, Id, SidePanel, TopBottomPanel};
 use lazy_static::lazy_static;
 use poll_promise::Promise;
 
 use crate::util::file_types::Entry;
 
 use self::{
-	components::log_view::draw_logs, controller::ControllerState, drawable::DrawableMut,
+	components::log_view::draw_logs,
+	controller::ControllerState,
+	drawable::DrawableMut,
 	logger::Logger,
+	save_manager::{SaveError, SaveManager, SaveState},
+	web_save_manager::WebSaveManager,
 };
 
 static LOGGER: Logger = Logger {
@@ -56,29 +65,6 @@ impl EmulatorManager {
 		let mut res = EmulatorManager::default();
 		res.debugger.emulator_state.bind_lcd(LCD::new());
 		res
-	}
-
-	pub fn save_state(&self) {
-		let serialized_str =
-			serde_json::to_string(&self.debugger.emulator_state).expect("Cant serialize");
-		let window = web_sys::window().expect("Window not found");
-		let document = window.document().expect("Document not found");
-		let body = document.body().expect("Body not found");
-		let element = document.create_element("a").expect("Can't create element");
-		element
-			.set_attribute(
-				"href",
-				&format!("data:text/plain;charset=utf-8,{serialized_str}"),
-			)
-			.unwrap();
-
-		element.set_attribute("download", "save.json").unwrap();
-		body.append_child(&element).unwrap();
-		element
-			.dispatch_event(&web_sys::Event::new("click").unwrap())
-			.unwrap();
-
-		element.remove();
 	}
 
 	fn set_input_state(&mut self, state: ControllerState) {
@@ -123,6 +109,16 @@ impl EmulatorManager {
 			promise
 		});
 	}
+
+	pub fn load_save_state(&mut self, state: SaveState) {
+		let mut state: EmulatorState = serde_json::from_str::<EmulatorState>(&state.data).unwrap();
+		state.bind_lcd(LCD::new());
+		self.debugger.emulator_state = state;
+	}
+
+	pub fn create_new_save_state(&self) -> Result<SaveState, SaveError> {
+		SaveState::try_from(&self.debugger.emulator_state)
+	}
 }
 
 impl eframe::App for EmulatorManager {
@@ -157,8 +153,28 @@ impl eframe::App for EmulatorManager {
 				}
 
 				if ui.button("Save").clicked() {
-					self.save_state()
+					if let Ok(state) = self.create_new_save_state() {
+						_ = WebSaveManager::save_save_state(state);
+					} else {
+						show_tooltip(ui.ctx(), Id::new("save_error"), |ui| {
+							ui.label("Error Saving State")
+						});
+					}
 				}
+
+				ui.menu_button("Load", |ui| {
+					if let Ok(states) = WebSaveManager::load_save_states() {
+						for state in states {
+							if ui.button(format!("{state}")).clicked() {
+								self.load_save_state(state);
+								ui.close_menu();
+								self.debugger.start();
+							}
+						}
+					} else {
+						ui.label("Error Loading Saves");
+					};
+				});
 
 				ui.checkbox(&mut self.debug, "Debug");
 			})

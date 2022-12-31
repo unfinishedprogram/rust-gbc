@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum BankingMode {
 	Ram,
 	Rtc,
@@ -12,7 +12,7 @@ impl Default for BankingMode {
 	}
 }
 
-#[derive(Clone, Default, Serialize)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct MBC3State {
 	pub banking_mode: BankingMode,
 	pub rom_bank: usize,

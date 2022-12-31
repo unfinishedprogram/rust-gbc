@@ -1,14 +1,18 @@
 // https://gbdev.io/pandocs/The_Cartridge_Header.html
 
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, Clone)]
 pub enum CartridgeParseError {
 	MBCType,
 	RomSize,
 	RamSize,
+	Title,
 }
 
 #[derive(Debug)]
-pub struct RawCartridgeHeader {
+pub struct RawCartridgeHeader<'a> {
+	pub title: &'a [u8],
 	pub cgb_flag: u8,                // 0143
 	pub license_code: u16,           // 0144-0145
 	pub sgb_flag: u8,                // 0146
@@ -21,15 +25,16 @@ pub struct RawCartridgeHeader {
 	pub global_checksum: u16,        // 014E-014F
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CartridgeInfo {
+	pub title: String,
 	pub cgb: bool,
 	pub sgb: bool,
 	pub rom_banks: u16,
 	pub ram_banks: u16,
 }
 
-impl RawCartridgeHeader {
+impl RawCartridgeHeader<'_> {
 	fn get_rom_banks(&self) -> Result<u16, CartridgeParseError> {
 		match self.rom_size {
 			0x0..0x09 => Ok(2 * (1 << self.rom_size)),
@@ -51,6 +56,9 @@ impl RawCartridgeHeader {
 
 	pub fn parse(&self) -> Result<CartridgeInfo, CartridgeParseError> {
 		Ok(CartridgeInfo {
+			title: std::str::from_utf8(self.title)
+				.or(Err(CartridgeParseError::Title))?
+				.to_owned(),
 			cgb: matches!(self.cgb_flag, 0x80 | 0xC0),
 			sgb: matches!(self.sgb_flag, 0x03),
 			rom_banks: self.get_rom_banks()?,
@@ -59,9 +67,10 @@ impl RawCartridgeHeader {
 	}
 }
 
-impl From<&[u8]> for RawCartridgeHeader {
-	fn from(rom: &[u8]) -> Self {
+impl<'a> From<&'a [u8]> for RawCartridgeHeader<'a> {
+	fn from(rom: &'a [u8]) -> Self {
 		RawCartridgeHeader {
+			title: &rom[0x0134..0x0143],
 			cgb_flag: rom[0x0143],                                             // 0143
 			license_code: ((rom[0x0144] as u16) << 8) | rom[0x0145] as u16,    // 0144-0145
 			sgb_flag: rom[0x0146],                                             // 0146

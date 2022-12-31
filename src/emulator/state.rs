@@ -1,5 +1,5 @@
 use instant::Instant;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
@@ -12,7 +12,7 @@ use super::{
 	timer::{Timer, TimerState},
 };
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct EmulatorState {
 	pub ram_bank: u8,
 	pub cgb: bool,
@@ -30,9 +30,10 @@ pub struct EmulatorState {
 	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
 	pub dma_timer: u64,
+	#[serde(skip)]
 	pub lcd: Option<LCD>,
 	pub booting: bool,
-	pub boot_rom: &'static [u8],
+	pub boot_rom: Vec<u8>,
 	t_states: u64,
 }
 
@@ -52,7 +53,7 @@ impl Default for EmulatorState {
 			cpu_state: CPUState::default(),
 			ppu_state: PPUState::default(),
 			io_register_state: IORegisterState::default(),
-			boot_rom: include_bytes!("../../roms/other/dmg_boot.bin"),
+			boot_rom: include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
 			booting: true,
 			cartridge_state: None,
 			ram_bank: 0,

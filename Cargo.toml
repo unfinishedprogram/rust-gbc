@@ -16,6 +16,7 @@ num-traits = "0.2.15"
 instant = { version = "0.1", features = ["wasm-bindgen"] }
 log = "0.4.17"
 serde = { version = "1.0.150", features = ["derive"] }
+chrono = { version = "0.4.23", features = ["serde"] }
 web-sys = { version = "0.3.60", features = [
     "Navigator",
     "Gamepad",
@@ -24,6 +25,7 @@ web-sys = { version = "0.3.60", features = [
     "HtmlElement",
     "Node",
     "Event",
+    "Storage",
 ] }
 serde_json = "1.0.89"
 wasm-bindgen = "0.2.83"
@@ -41,6 +43,9 @@ clap = { version = "4.0.29", features = ["derive"] }
 console_error_panic_hook = "0.1.6"
 tracing-wasm = "0.2"
 
+
+[env]
+RUSTFLAGS = "--cfg=web_sys_unstable_apis"
 
 [profile.test]
 opt-level = 3

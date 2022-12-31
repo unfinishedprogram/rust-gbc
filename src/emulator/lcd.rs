@@ -1,5 +1,5 @@
 use egui::{Color32, ColorImage, Image};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::app::drawable::DrawableMut;
 
@@ -8,7 +8,7 @@ pub trait LCDDisplay {
 	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8));
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct LCD {
 	buffers: Vec<ColorImage>,
 	current_buffer: usize,

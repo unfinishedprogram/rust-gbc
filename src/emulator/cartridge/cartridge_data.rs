@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct CartridgeData {
 	pub rom_banks: Vec<Vec<u8>>,
 	pub ram_banks: Vec<Vec<u8>>,

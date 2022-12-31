@@ -1,6 +1,6 @@
 type Color = (u8, u8, u8);
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::util::bits::*;
 pub mod sprite;
@@ -148,7 +148,7 @@ impl RendererHelpers for EmulatorState {
 	}
 }
 
-#[derive(Default, Clone, Serialize)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct ScanlineState {
 	pub lcdc: u8,
 	pub wn_enabled: bool,

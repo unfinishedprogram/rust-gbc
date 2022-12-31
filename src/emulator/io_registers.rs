@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
 	emulator::{memory_mapper::SourcedMemoryMapper, ppu::PPU},
@@ -60,7 +60,7 @@ pub const JOYP: u16 = 0xFF00;
 
 pub const DISABLE_BOOT: u16 = 0xFF50;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct IORegisterState {
 	values: Vec<u8>,
 }
