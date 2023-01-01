@@ -11,8 +11,9 @@ pub enum CartridgeParseError {
 }
 
 #[derive(Debug)]
-pub struct RawCartridgeHeader<'a> {
-	pub title: &'a [u8],
+pub struct RawCartridgeHeader {
+	pub src: String,
+	pub title: Vec<u8>,
 	pub cgb_flag: u8,                // 0143
 	pub license_code: u16,           // 0144-0145
 	pub sgb_flag: u8,                // 0146
@@ -27,6 +28,7 @@ pub struct RawCartridgeHeader<'a> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CartridgeInfo {
+	pub src: String,
 	pub title: String,
 	pub cgb: bool,
 	pub sgb: bool,
@@ -34,7 +36,7 @@ pub struct CartridgeInfo {
 	pub ram_banks: u16,
 }
 
-impl RawCartridgeHeader<'_> {
+impl RawCartridgeHeader {
 	fn get_rom_banks(&self) -> Result<u16, CartridgeParseError> {
 		match self.rom_size {
 			0x0..0x09 => Ok(2 * (1 << self.rom_size)),
@@ -56,7 +58,8 @@ impl RawCartridgeHeader<'_> {
 
 	pub fn parse(&self) -> Result<CartridgeInfo, CartridgeParseError> {
 		Ok(CartridgeInfo {
-			title: std::str::from_utf8(self.title)
+			src: self.src.clone(),
+			title: std::str::from_utf8(&self.title)
 				.or(Err(CartridgeParseError::Title))?
 				.to_owned(),
 			cgb: matches!(self.cgb_flag, 0x80 | 0xC0),
@@ -65,22 +68,21 @@ impl RawCartridgeHeader<'_> {
 			ram_banks: self.get_ram_banks()?,
 		})
 	}
-}
 
-impl<'a> From<&'a [u8]> for RawCartridgeHeader<'a> {
-	fn from(rom: &'a [u8]) -> Self {
+	pub fn new(rom: &[u8], src: String) -> Self {
 		RawCartridgeHeader {
-			title: &rom[0x0134..0x0143],
-			cgb_flag: rom[0x0143],                                             // 0143
-			license_code: ((rom[0x0144] as u16) << 8) | rom[0x0145] as u16,    // 0144-0145
-			sgb_flag: rom[0x0146],                                             // 0146
-			cartridge_type: rom[0x0147],                                       // 0147
-			rom_size: rom[0x0148],                                             // 0148
-			ram_size: rom[0x0149],                                             // 0149
-			old_license_code: rom[0x014B],                                     // 014B
-			mask_rom_version_number: rom[0x014C],                              // 014C
-			header_checksum: rom[0x014D],                                      // 014D
-			global_checksum: ((rom[0x014E] as u16) << 8) | rom[0x014F] as u16, // 014E-014F
+			src,
+			title: rom[0x0134..0x0143].to_vec(),
+			cgb_flag: rom[0x0143],                                          // 0143
+			license_code: ((rom[0x0144] as u16) << 8) | rom[0x0145] as u16, // 0144-0145
+			sgb_flag: rom[0x0146],                                          // 0146
+			cartridge_type: rom[0x0147],                                    // 0147
+			rom_size: rom[0x0148],                                          // 0148
+			ram_size: rom[0x0149],                                          // 0149
+			old_license_code: rom[0x014B],                                  // 014B
+			mask_rom_version_number: rom[0x014C],                           // 014C
+			header_checksum: rom[0x014D],                                   // 014D
+			global_checksum: ((rom[0x014E] as u16) << 8) | rom[0x014F] as u16,
 		}
 	}
 }

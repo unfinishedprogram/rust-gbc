@@ -17,40 +17,37 @@ pub trait MemoryBankController: Default + Clone {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub enum CartridgeState {
-	ROM(CartridgeData),
-	MBC1(CartridgeData, MBC1State),
-	MBC2(CartridgeData, MBC2State),
-	MBC3(CartridgeData, MBC3State),
-	MMM01,
-	MBC5(CartridgeData, MBC5State),
+pub enum Mbc {
+	ROM,
+	MBC1(MBC1State),
+	MBC2(MBC2State),
+	MBC3(MBC3State),
+	MBC5(MBC5State),
 	MBC6,
+	MMM01,
 	MBC7,
 	HUC3,
 	HUC1,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Cartridge(pub CartridgeState, pub CartridgeInfo);
+pub struct Cartridge(pub CartridgeData, pub Mbc, pub CartridgeInfo);
 
-impl TryFrom<&[u8]> for Cartridge {
-	type Error = CartridgeParseError;
-	fn try_from(value: &[u8]) -> Result<Self, CartridgeParseError> {
-		let raw_header = RawCartridgeHeader::from(value);
+impl Cartridge {
+	pub fn try_new(value: &[u8], src: String) -> Result<Self, CartridgeParseError> {
+		let raw_header = RawCartridgeHeader::new(value, src);
+		use Mbc::*;
 		let info = raw_header.parse()?;
-		log::info!("{info:?}");
-
 		let data = CartridgeData::new(value, info.rom_banks, info.ram_banks);
-		use CartridgeState::*;
 
-		let state = match raw_header.cartridge_type {
-			0x00 => Ok(ROM(data)),
-			0x01 | 0x02 | 0x03 => Ok(MBC1(data, MBC1State::default())),
-			0x05 | 0x06 => Ok(MBC2(data, MBC2State::default())),
-			0x08 | 0x09 => Ok(ROM(data)),
-			0x0F | 0x10 | 0x11 | 0x12 | 0x13 => Ok(MBC3(data, MBC3State::default())),
+		let mbc = match raw_header.cartridge_type {
+			0x00 => Ok(ROM),
+			0x01 | 0x02 | 0x03 => Ok(MBC1(MBC1State::default())),
+			0x05 | 0x06 => Ok(MBC2(MBC2State::default())),
+			0x08 | 0x09 => Ok(ROM),
+			0x0F | 0x10 | 0x11 | 0x12 | 0x13 => Ok(MBC3(MBC3State::default())),
 			0x0B | 0x0C | 0x0D => Ok(MMM01),
-			0x19 | 0x1A | 0x1B | 0x1C | 0x1D | 0x1E => Ok(MBC5(data, MBC5State::default())),
+			0x19 | 0x1A | 0x1B | 0x1C | 0x1D | 0x1E => Ok(MBC5(MBC5State::default())),
 			0x20 => Ok(MBC6),
 			0x22 => Ok(MBC7),
 			0xFE => Ok(HUC3),
@@ -58,21 +55,21 @@ impl TryFrom<&[u8]> for Cartridge {
 			_ => Err(CartridgeParseError::MBCType),
 		}?;
 
-		Ok(Cartridge(state, info))
+		Ok(Cartridge(data, mbc, info))
 	}
 }
 
 impl MemoryMapper for Cartridge {
 	fn read(&self, addr: u16) -> u8 {
-		use CartridgeState::*;
-		let Cartridge(mbc, _) = self;
+		use Mbc::*;
+		let Cartridge(data, mbc, info) = self;
 		match mbc {
-			ROM(data) => match addr {
+			ROM => match addr {
 				0..0x4000 => data.rom_banks[0][addr as usize],
 				0x4000..0x8000 => data.rom_banks[1][(addr as usize) - 0x4000],
 				_ => unreachable!(),
 			},
-			MBC1(data, state) => match addr {
+			MBC1(state) => match addr {
 				0..0x4000 => {
 					data.rom_banks[state.get_zero_rom_bank() as usize % data.rom_banks.len()]
 						[addr as usize]
@@ -91,7 +88,7 @@ impl MemoryMapper for Cartridge {
 
 				_ => unreachable!(),
 			},
-			MBC2(data, state) => match addr {
+			MBC2(state) => match addr {
 				0..0x4000 => data.rom_banks[0][addr as usize],
 				0x4000..0x8000 => {
 					let bank = state.rom_bank;
@@ -107,7 +104,7 @@ impl MemoryMapper for Cartridge {
 				}
 				_ => unreachable!(),
 			},
-			MBC3(data, state) => match addr {
+			MBC3(state) => match addr {
 				0..0x4000 => data.rom_banks[0][addr as usize],
 				0x4000..0x8000 => {
 					let bank = state.get_rom_bank();
@@ -122,7 +119,7 @@ impl MemoryMapper for Cartridge {
 				_ => unreachable!(),
 			},
 			MMM01 => todo!(),
-			MBC5(data, state) => match addr {
+			MBC5(state) => match addr {
 				0..0x4000 => data.rom_banks[0][addr as usize],
 				0x4000..0x8000 => {
 					let bank = state.get_rom_bank() as usize % data.rom_banks.len();
@@ -145,13 +142,13 @@ impl MemoryMapper for Cartridge {
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
-		use CartridgeState::*;
+		use Mbc::*;
 
-		let Cartridge(mbc, _) = self;
+		let Cartridge(data, mbc, info) = self;
 
 		match mbc {
-			ROM(_) => {}
-			MBC1(data, state) => match addr {
+			ROM => {}
+			MBC1(state) => match addr {
 				0..0x2000 => state.set_ram_enable(value),
 				0x2000..0x4000 => state.set_rom_bank(value),
 				0x4000..0x6000 => state.set_ram_bank(value),
@@ -165,7 +162,7 @@ impl MemoryMapper for Cartridge {
 				}
 				_ => unreachable!(),
 			},
-			MBC2(_, state) => match addr {
+			MBC2(state) => match addr {
 				0x0000..0x4000 => state.set_register(addr, value),
 				0xA000..0xC000 => {
 					let local_addr = ((addr - 0xA000) % 512) as usize;
@@ -175,7 +172,7 @@ impl MemoryMapper for Cartridge {
 				}
 				_ => {}
 			},
-			MBC3(data, state) => match addr {
+			MBC3(state) => match addr {
 				0..0x2000 => state.ram_enabled = value == 0x0A,
 				0x2000..0x4000 => state.rom_bank = value as usize,
 				0x4000..0x6000 => state.write_register(value),
@@ -188,7 +185,7 @@ impl MemoryMapper for Cartridge {
 				},
 				_ => {}
 			},
-			MBC5(data, state) => match addr {
+			MBC5(state) => match addr {
 				0..0x2000 => state.set_ram_enable(value),
 				0x2000..0x3000 => state.set_rom_bank(value),
 				0x3000..0x4000 => state.set_rom_bank_upper(value),

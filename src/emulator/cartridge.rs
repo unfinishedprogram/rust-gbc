@@ -1,4 +1,4 @@
-mod cartridge_data;
+pub mod cartridge_data;
 pub mod header;
 pub mod mbc1;
 pub mod mbc2;

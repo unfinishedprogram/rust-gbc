@@ -9,7 +9,11 @@ mod style;
 mod web_save_manager;
 use crate::{
 	app::file_selector::file_selector,
-	emulator::{lcd::LCD, EmulatorState},
+	emulator::{
+		cartridge::{cartridge_data::CartridgeData, memory_bank_controller::Cartridge},
+		lcd::LCD,
+		EmulatorState,
+	},
 };
 
 use std::sync::Mutex;
@@ -40,8 +44,13 @@ lazy_static! {
 	static ref ROMS: Entry = serde_json::from_str::<Entry>(include_str!("../roms.json")).unwrap();
 }
 
+pub enum LoadEvent {
+	RomLoadEvent(Vec<u8>, String),
+	StateLoadEvent(Vec<u8>, Box<EmulatorState>),
+}
+
 pub struct EmulatorManager {
-	loaded_file_data: Option<Promise<Vec<u8>>>,
+	loaded_file_data: Option<Promise<LoadEvent>>,
 	pub debugger: Debugger,
 	logger: &'static Logger,
 	debug: bool,
@@ -54,7 +63,7 @@ impl Default for EmulatorManager {
 		Self {
 			debug: false,
 			logger: &LOGGER,
-			loaded_file_data: None::<Promise<Vec<u8>>>,
+			loaded_file_data: None,
 			debugger: Debugger::default(),
 		}
 	}
@@ -98,11 +107,11 @@ impl EmulatorManager {
 			let (sender, promise) = Promise::new();
 
 			let request = ehttp::Request::get(url);
-
+			let url = url.to_owned();
 			ehttp::fetch(request, move |response| {
 				let result = response.and_then(parse_response);
 				if let Ok(data) = result {
-					sender.send(data)
+					sender.send(LoadEvent::RomLoadEvent(data, url))
 				}
 			});
 
@@ -111,9 +120,28 @@ impl EmulatorManager {
 	}
 
 	pub fn load_save_state(&mut self, state: SaveState) {
+		self.debugger.pause();
 		let mut state: EmulatorState = serde_json::from_str::<EmulatorState>(&state.data).unwrap();
 		state.bind_lcd(LCD::new());
-		self.debugger.emulator_state = state;
+		if state.cartridge_state.is_some() {
+			let url = &state.cartridge_state.as_ref().unwrap().2.src.clone();
+			if !state.cartridge_state.as_ref().unwrap().0.loaded {
+				self.loaded_file_data.get_or_insert_with(|| {
+					let (sender, promise) = Promise::new();
+
+					let request = ehttp::Request::get(url);
+
+					ehttp::fetch(request, move |response| {
+						let result = response.and_then(parse_response);
+						if let Ok(data) = result {
+							sender.send(LoadEvent::StateLoadEvent(data, Box::new(state)))
+						}
+					});
+
+					promise
+				});
+			}
+		}
 	}
 
 	pub fn create_new_save_state(&self) -> Result<SaveState, SaveError> {
@@ -127,12 +155,28 @@ impl eframe::App for EmulatorManager {
 		style::apply(ctx);
 		self.set_input_state(self.fetch_input_state(ctx));
 
-		if let Some(data) = &self.loaded_file_data {
-			if let Some(rom) = data.ready() {
-				if let Err(e) = self.debugger.emulator_state.load_rom(rom) {
-					log::error!("{e:?}");
+		if let Some(data) = &mut self.loaded_file_data {
+			use LoadEvent::*;
+
+			match data.ready_mut() {
+				Some(RomLoadEvent(rom, src)) => {
+					if let Err(e) = self.debugger.emulator_state.load_rom(rom, src.clone()) {
+						log::error!("{e:?}");
+					}
+					self.loaded_file_data = None;
 				}
-				self.loaded_file_data = None;
+				Some(StateLoadEvent(fetched, emu_state)) => {
+					if let Some(cart) = emu_state.cartridge_state.as_mut() {
+						let Cartridge(data, _, info) = cart;
+
+						data.rom_banks =
+							CartridgeData::create_rom_banks(info.rom_banks.into(), fetched);
+						self.debugger.emulator_state = *emu_state.clone();
+						self.debugger.start();
+					}
+					self.loaded_file_data = None;
+				}
+				None => {}
 			}
 		}
 

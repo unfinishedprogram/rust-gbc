@@ -30,7 +30,7 @@ impl TryFrom<&EmulatorState> for SaveState {
 	fn try_from(value: &EmulatorState) -> Result<Self, SaveError> {
 		let data = serde_json::to_string(value).or(Err(SaveError::Serialization))?;
 
-		let Cartridge(_, info) = &value
+		let Cartridge(_, _, info) = &value
 			.cartridge_state
 			.as_ref()
 			.ok_or(SaveError::InvalidGame)?;
