@@ -40,7 +40,7 @@ impl From<&HashSet<Key, RandomState>> for ControllerState {
 		use Key::*;
 		Self {
 			a: keys.contains(&Z),
-			b: keys.contains(&B),
+			b: keys.contains(&X),
 			select: keys.contains(&Space),
 			start: keys.contains(&Enter),
 			right: keys.contains(&ArrowRight),
