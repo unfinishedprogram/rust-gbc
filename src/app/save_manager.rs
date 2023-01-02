@@ -6,9 +6,14 @@ use crate::emulator::{cartridge::memory_bank_controller::Cartridge, EmulatorStat
 use chrono::NaiveDateTime;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SaveState {
+	pub data: String,
+	pub info: SaveStateEntry,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SaveStateEntry {
 	pub date: NaiveDateTime,
 	pub game_title: String,
-	pub data: String,
 }
 
 #[derive(Debug, Clone)]
@@ -17,11 +22,14 @@ pub enum SaveError {
 	Deserialization,
 	InvalidGame,
 	NoSource,
+	MissingIndex,
+	IndexOutOfBounds(usize),
 }
 
 pub trait SaveManager {
-	fn load_save_states() -> Result<Vec<SaveState>, SaveError>;
-	fn save_save_state(state: SaveState) -> Result<(), SaveError>;
+	fn load_save_state(slot: usize) -> Result<SaveState, SaveError>;
+	fn save_save_state(state: SaveState, slot: usize) -> Result<(), SaveError>;
+	fn get_save_states() -> Vec<Option<String>>;
 }
 
 impl TryFrom<&EmulatorState> for SaveState {
@@ -39,15 +47,19 @@ impl TryFrom<&EmulatorState> for SaveState {
 		let date = chrono::offset::Utc::now().naive_utc();
 
 		Ok(Self {
-			date,
-			game_title,
+			info: SaveStateEntry { date, game_title },
 			data,
 		})
 	}
 }
 
-impl Display for SaveState {
+impl Display for SaveStateEntry {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(f, "[{}] : {}", self.date, self.game_title)
+		write!(
+			f,
+			"[{}] : {}",
+			self.date.format("%Y-%m-%d %H:%M"),
+			self.game_title
+		)
 	}
 }

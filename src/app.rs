@@ -21,7 +21,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{window, Gamepad};
 
 use components::{draw_status, Debugger};
-use egui::{show_tooltip, CentralPanel, Id, SidePanel, TopBottomPanel};
+use egui::{CentralPanel, SidePanel, TopBottomPanel};
 use lazy_static::lazy_static;
 use poll_promise::Promise;
 
@@ -182,7 +182,7 @@ impl eframe::App for EmulatorManager {
 
 		TopBottomPanel::top("top_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
-				ui.menu_button("file", |ui| {
+				ui.menu_button("File", |ui| {
 					file_selector(ui, &ROMS, &mut |selected| {
 						self.load_cartridge_by_url(selected)
 					});
@@ -196,28 +196,39 @@ impl eframe::App for EmulatorManager {
 					self.debugger.step_once();
 				}
 
-				if ui.button("Save").clicked() {
-					if let Ok(state) = self.create_new_save_state() {
-						_ = WebSaveManager::save_save_state(state);
-					} else {
-						show_tooltip(ui.ctx(), Id::new("save_error"), |ui| {
-							ui.label("Error Saving State")
-						});
-					}
-				}
+				ui.menu_button("Save", |ui| {
+					let slots = WebSaveManager::get_save_states();
 
-				ui.menu_button("Load", |ui| {
-					if let Ok(states) = WebSaveManager::load_save_states() {
-						for state in states {
-							if ui.button(format!("{state}")).clicked() {
-								self.load_save_state(state);
-								ui.close_menu();
-								self.debugger.start();
+					for (index, save_slot) in slots.into_iter().enumerate() {
+						let slot_label = save_slot.unwrap_or("* empty *".to_owned());
+
+						if ui.button(slot_label).clicked() {
+							if let Ok(state) = self.create_new_save_state() {
+								_ = WebSaveManager::save_save_state(state, index);
 							}
 						}
-					} else {
-						ui.label("Error Loading Saves");
-					};
+					}
+				});
+
+				ui.menu_button("Load", |ui| {
+					let slots = WebSaveManager::get_save_states();
+
+					if !slots.iter().any(|item| matches!(item, Some(_))) {
+						ui.label("No Saves");
+						return;
+					}
+
+					for (slot, save_slot) in slots.iter().enumerate() {
+						if let Some(slot_label) = save_slot {
+							if ui.button(slot_label).clicked() {
+								if let Ok(state) = WebSaveManager::load_save_state(slot) {
+									self.load_save_state(state);
+									ui.close_menu();
+									self.debugger.start();
+								}
+							}
+						}
+					}
 				});
 
 				ui.checkbox(&mut self.debug, "Debug");
