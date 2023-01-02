@@ -1,39 +1,25 @@
-.ayu {
-	--bg: hsl(210, 25%, 8%);
-	--fg: #c5c5c5;
+body {
+	margin: 0px;
+	padding: 0px;
+}
 
-	--sidebar-bg: #14191f;
-	--sidebar-fg: #c8c9db;
-	--sidebar-non-existant: #5c6773;
-	--sidebar-active: #ffb454;
-	--sidebar-spacer: #2d334f;
+#screen {
+	image-rendering: pixelated;
+	width: 100%;
+	box-shadow: 0rem 0rem 1rem black;
+}
 
-	--scrollbar: var(--sidebar-fg);
+#screen_container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	width: min(100vh, 100vw);
+	height: min(100vh, 100vw);
+}
 
-	--icons: #737480;
-	--icons-hover: #b7b9cc;
-
-	--links: #0096cf;
-
-	--inline-code-color: #ffb454;
-
-	--theme-popup-bg: #14191f;
-	--theme-popup-border: #5c6773;
-	--theme-hover: #191f26;
-
-	--quote-bg: hsl(226, 15%, 17%);
-	--quote-border: hsl(226, 15%, 22%);
-
-	--table-border-color: hsl(210, 25%, 13%);
-	--table-header-bg: hsl(210, 25%, 28%);
-	--table-alternate-bg: hsl(210, 25%, 11%);
-
-	--searchbar-border-color: #848484;
-	--searchbar-bg: #424242;
-	--searchbar-fg: #fff;
-	--searchbar-shadow-color: #d4c89f;
-	--searchresults-header-fg: #666;
-	--searchresults-border-color: #888;
-	--searchresults-li-bg: #252932;
-	--search-mark-bg: #e3b171;
+main {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }

@@ -18,16 +18,14 @@ pub fn run_screenshot_test(rom: &str, expected: &str, cycles: usize) {
 		if let Some(lcd) = &state.lcd {
 			let actual = lcd.get_current_as_bytes();
 
-			if compare_lcd(&actual, expected) {
+			if compare_lcd(actual, expected) {
 				return;
 			}
 		}
 	}
+	let lcd = state.lcd.expect("No LCD Bound");
 
-	let actual = &state
-		.lcd
-		.expect("Emulator has no bound LCD")
-		.get_current_as_bytes();
+	let actual = lcd.get_current_as_bytes();
 
 	if !compare_lcd(actual, expected) {
 		panic!("Images are not identical")

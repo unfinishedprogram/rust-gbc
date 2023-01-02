@@ -4,19 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-eframe = { version = "0.19.0" }
-epaint = { version = "*", features = ["serde"] }
-egui = "0.19.0"
-egui_extras = "0.19.0"
-rfd = "0.10.0"
-ehttp = "0.2.0"
-poll-promise = "0.1"
+yew = { version = "0.20.0", features = ["csr"] }
 enum-primitive-derive = "0.2.2"
 num-traits = "0.2.15"
 instant = { version = "0.1", features = ["wasm-bindgen"] }
 log = "0.4.17"
 serde = { version = "1.0.150", features = ["derive"] }
 chrono = { version = "0.4.23", features = ["serde"] }
+gloo-net = "0.2"
+gloo-timers = "0.2.5"
+gloo-console = "0.2.3"
+wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3.60", features = [
     "Navigator",
     "Gamepad",
@@ -26,6 +24,9 @@ web-sys = { version = "0.3.60", features = [
     "Node",
     "Event",
     "Storage",
+    "ImageData",
+    "CanvasRenderingContext2d",
+    "HtmlCanvasElement",
 ] }
 serde_json = "1.0.89"
 wasm-bindgen = "0.2.83"

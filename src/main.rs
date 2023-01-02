@@ -1,36 +1,52 @@
-#![warn(clippy::all, rust_2018_idioms)]
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+use std::sync::{Arc, Mutex};
 
-pub use gbc_emu::app::EmulatorManager;
+use gbc_emu::emulator::{lcd::LCD, EmulatorState};
+use gloo_timers::callback::Interval;
+use wasm_bindgen::{Clamped, JsCast};
+use web_sys::{window, HtmlCanvasElement, ImageData};
 
-// When compiling natively:
-#[cfg(not(target_arch = "wasm32"))]
 fn main() {
-	// Log to stdout (if you run with `RUST_LOG=debug`).
-	tracing_subscriber::fmt::init();
+	let emulator = {
+		let mut state = EmulatorState::default();
+		let lcd = LCD::default();
+		state.bind_lcd(lcd);
+		state
+	};
 
-	let native_options = eframe::NativeOptions::default();
-	eframe::run_native(
-		"eframe template",
-		native_options,
-		Box::new(|cc| Box::new(EmulatorManager::new(cc))),
-	);
-}
+	let emulator = Arc::new(Mutex::new(emulator));
 
-// when compiling to web using trunk.
-#[cfg(target_arch = "wasm32")]
-fn main() {
-	// Make sure panics are logged using `console.error`.
-	console_error_panic_hook::set_once();
+	Interval::new(15, move || {
+		let canvas: HtmlCanvasElement = window()
+			.unwrap()
+			.document()
+			.unwrap()
+			.query_selector("#screen")
+			.unwrap()
+			.expect("Didn't find the map canvas.")
+			.dyn_into::<web_sys::HtmlCanvasElement>()
+			.unwrap(); // cannot be other than a canvas
 
-	// Redirect tracing to console.log and friends:
-	tracing_wasm::set_as_global_default();
+		let context = canvas
+			.get_context("2d")
+			.unwrap()
+			.unwrap()
+			.dyn_into::<web_sys::CanvasRenderingContext2d>()
+			.unwrap();
 
-	let web_options = eframe::WebOptions::default();
-	eframe::start_web(
-		"gameboy_canvas", // hardcode it
-		web_options,
-		Box::new(|cc| Box::new(EmulatorManager::new(cc))),
-	)
-	.expect("failed to start eframe");
+		if let Ok(mut state) = emulator.lock() {
+			let start = state.get_cycle();
+			while state.get_cycle() - start < (0.015 * 1_048_576.0) as u64 {
+				state.step();
+			}
+
+			let img_data = ImageData::new_with_u8_clamped_array(
+				Clamped(state.lcd.as_ref().unwrap().get_current_as_bytes()),
+				160,
+			)
+			.unwrap();
+
+			context.put_image_data(&img_data, 0.0, 0.0).unwrap();
+		}
+	})
+	.forget();
 }
