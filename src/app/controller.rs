@@ -17,7 +17,7 @@ pub struct ControllerState {
 
 impl ControllerState {
 	pub fn as_byte(&self) -> u8 {
-		0xFF ^ [
+		![
 			self.a,
 			self.b,
 			self.select,
