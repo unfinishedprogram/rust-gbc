@@ -62,7 +62,7 @@ impl Cartridge {
 impl MemoryMapper for Cartridge {
 	fn read(&self, addr: u16) -> u8 {
 		use Mbc::*;
-		let Cartridge(data, mbc, info) = self;
+		let Cartridge(data, mbc, _info) = self;
 		match mbc {
 			ROM => match addr {
 				0..0x4000 => data.rom_banks[0][addr as usize],
@@ -144,7 +144,7 @@ impl MemoryMapper for Cartridge {
 	fn write(&mut self, addr: u16, value: u8) {
 		use Mbc::*;
 
-		let Cartridge(data, mbc, info) = self;
+		let Cartridge(data, mbc, _info) = self;
 
 		match mbc {
 			ROM => {}
