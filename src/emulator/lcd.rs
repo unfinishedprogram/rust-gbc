@@ -1,7 +1,7 @@
 use egui::{Color32, ColorImage, Image};
 use serde::{Deserialize, Serialize};
 
-use crate::app::drawable::DrawableMut;
+use crate::app::drawable::Drawable;
 
 pub trait LCDDisplay {
 	fn get_size(&self) -> (u8, u8);
@@ -15,8 +15,8 @@ pub struct LCD {
 	pub scale: f32,
 }
 
-impl DrawableMut for LCD {
-	fn draw(&mut self, ui: &mut egui::Ui) {
+impl Drawable for LCD {
+	fn draw(&self, ui: &mut egui::Ui) {
 		let (x, y) = self.get_size();
 		ui.add(Image::new(
 			ui.ctx()

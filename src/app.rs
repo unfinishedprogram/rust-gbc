@@ -30,7 +30,7 @@ use crate::util::file_types::Entry;
 use self::{
 	components::log_view::draw_logs,
 	controller::ControllerState,
-	drawable::DrawableMut,
+	drawable::Drawable,
 	logger::Logger,
 	save_manager::{SaveError, SaveManager, SaveState},
 	web_save_manager::WebSaveManager,
@@ -247,7 +247,7 @@ impl eframe::App for EmulatorManager {
 		}
 
 		CentralPanel::default().show(ctx, |ui| {
-			if let Some(lcd) = self.debugger.emulator_state.lcd.as_mut() {
+			if let Some(lcd) = &self.debugger.emulator_state.lcd {
 				lcd.draw_window(ui, "LCD");
 			}
 		});
