@@ -1,3 +1,4 @@
+mod input;
 mod screen;
 mod setup_listeners;
 pub use setup_listeners::setup_listeners;
@@ -11,6 +12,8 @@ use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
 use crate::emulator::{lcd::LCD, EmulatorState};
+
+use self::input::InputState;
 
 thread_local! {
 	pub static APPLICATION: RefCell<Application> = RefCell::new(Application::default());
@@ -33,6 +36,7 @@ impl Display for RunningState {
 pub struct Application {
 	emulator_state: EmulatorState,
 	running_state: RunningState,
+	input_state: InputState,
 }
 
 impl Default for Application {
@@ -45,6 +49,7 @@ impl Default for Application {
 		};
 
 		Self {
+			input_state: InputState::new(),
 			running_state: RunningState::Paused,
 			emulator_state,
 		}
@@ -82,6 +87,8 @@ impl Application {
 	pub fn start(&mut self) {
 		self.running_state = RunningState::Playing(Interval::new(15, || {
 			APPLICATION.with_borrow_mut(|app| {
+				let controller_state = app.input_state.get_controller_state();
+				app.emulator_state.set_controller_state(&controller_state);
 				app.step_emulator(0.015);
 				app.render_screen()
 			});
