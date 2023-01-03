@@ -4,16 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-yew = { version = "0.20.0", features = ["csr"] }
 enum-primitive-derive = "0.2.2"
 num-traits = "0.2.15"
 instant = { version = "0.1", features = ["wasm-bindgen"] }
 log = "0.4.17"
 serde = { version = "1.0.150", features = ["derive"] }
 chrono = { version = "0.4.23", features = ["serde"] }
-gloo-net = "0.2"
-gloo-timers = "0.2.5"
-gloo-console = "0.2.3"
+gloo = "0.8.0"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3.60", features = [
     "Navigator",
