@@ -1,9 +1,10 @@
 mod input;
 mod screen;
 mod setup_listeners;
+mod uploader;
 pub use setup_listeners::setup_listeners;
 mod util;
-use gloo::timers::callback::Interval;
+use gloo::{console::log, file::callbacks::FileReader, timers::callback::Interval};
 use screen::get_screen_ctx;
 
 use std::{cell::RefCell, fmt::Display};
@@ -13,7 +14,7 @@ use web_sys::ImageData;
 
 use crate::emulator::{lcd::LCD, EmulatorState};
 
-use self::input::InputState;
+use self::{input::InputState, uploader::on_file_drop};
 
 thread_local! {
 	pub static APPLICATION: RefCell<Application> = RefCell::new(Application::default());
@@ -34,6 +35,8 @@ impl Display for RunningState {
 }
 
 pub struct Application {
+	// Keeps file reader state, should never be used internal only
+	_file_reader: Option<FileReader>,
 	emulator_state: EmulatorState,
 	running_state: RunningState,
 	input_state: InputState,
@@ -41,6 +44,7 @@ pub struct Application {
 
 impl Default for Application {
 	fn default() -> Self {
+		on_file_drop();
 		let emulator_state = {
 			let mut state = EmulatorState::default();
 			let lcd = LCD::default();
@@ -49,6 +53,7 @@ impl Default for Application {
 		};
 
 		Self {
+			_file_reader: None,
 			input_state: InputState::new(),
 			running_state: RunningState::Paused,
 			emulator_state,
@@ -79,7 +84,7 @@ impl Application {
 	pub fn step_emulator(&mut self, delta: f64) {
 		let start = self.emulator_state.get_cycle();
 
-		while self.emulator_state.get_cycle() - start < (delta * 1_048_576.0) as u64 {
+		while self.emulator_state.get_cycle() - start < (1.5 * delta * 1_048_576.0) as u64 {
 			self.emulator_state.step();
 		}
 	}
@@ -109,5 +114,14 @@ impl Application {
 			Playing(_) => self.stop(),
 			Paused => self.start(),
 		};
+	}
+
+	pub fn load_rom(&mut self, rom: &[u8], name: String) {
+		log!("Hello");
+		self.emulator_state = EmulatorState::default();
+		let lcd = LCD::new();
+		self.emulator_state.bind_lcd(lcd);
+
+		self.emulator_state.load_rom(rom, name).unwrap();
 	}
 }

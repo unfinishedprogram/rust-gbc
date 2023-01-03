@@ -126,7 +126,6 @@ impl EmulatorState {
 	pub fn load_rom(&mut self, rom: &[u8], src: String) -> Result<(), CartridgeParseError> {
 		let cartridge = Cartridge::try_new(rom, src)?;
 		self.cartridge_state = Some(cartridge);
-		self.run_until_boot();
 		Ok(())
 	}
 
