@@ -84,15 +84,18 @@ impl Application {
 		}
 	}
 
+	pub fn step_frame(&mut self) {
+		let controller_state = self.input_state.get_controller_state();
+		self.emulator_state.set_controller_state(&controller_state);
+		self.step_emulator(0.015);
+		self.render_screen()
+	}
+
 	pub fn start(&mut self) {
-		self.running_state = RunningState::Playing(Interval::new(15, || {
-			APPLICATION.with_borrow_mut(|app| {
-				let controller_state = app.input_state.get_controller_state();
-				app.emulator_state.set_controller_state(&controller_state);
-				app.step_emulator(0.015);
-				app.render_screen()
-			});
-		}));
+		let interval = Interval::new(15, || {
+			APPLICATION.with_borrow_mut(|app| app.step_frame());
+		});
+		self.running_state = RunningState::Playing(interval);
 	}
 
 	pub fn stop(&mut self) {
