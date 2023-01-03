@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
+	controller::ControllerState,
 	cpu::{CPUState, CPU},
 	flags::INTERRUPT_REQUEST,
 	io_registers::IORegisterState,
@@ -127,5 +128,9 @@ impl EmulatorState {
 		self.cartridge_state = Some(cartridge);
 		self.run_until_boot();
 		Ok(())
+	}
+
+	pub fn set_controller_state(&mut self, state: &ControllerState) {
+		self.raw_joyp_input = state.as_byte();
 	}
 }

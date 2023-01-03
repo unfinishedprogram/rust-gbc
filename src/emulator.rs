@@ -1,4 +1,5 @@
 pub mod cartridge;
+pub mod controller;
 pub mod cpu;
 pub mod flags;
 pub mod io_registers;
