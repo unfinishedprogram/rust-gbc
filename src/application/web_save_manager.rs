@@ -2,10 +2,7 @@ use serde::Deserialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use web_sys::{window, Storage};
 
-use crate::emulator::{
-	lcd::LCD,
-	save_state::{SaveError, SaveManager, SaveState},
-};
+use crate::emulator::save_state::{SaveError, SaveManager, SaveState};
 
 use super::APPLICATION;
 
