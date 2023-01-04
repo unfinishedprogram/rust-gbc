@@ -1,8 +1,17 @@
 providers = ["staticfile"]
 
+
+[phases.install]
+aptPkgs = ['build-essential']
+nixPkgs = ['rustup']
+cmds = ["rustup default nightly", "rustup target add wasm32-unknown-unknown"]
+
 [phases.setup]
-nixPkgs = ['trunk']
+# nixOverlays = [
+# 'https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz',
+# ]
 
 
 [phases.build]
-cmds = ['trunk build --release']
+nixPkgs = ['trunk']
+cmds = ['./build.sh']

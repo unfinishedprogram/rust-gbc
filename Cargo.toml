@@ -2,7 +2,7 @@
 name = "gbc-emu"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.68.0"
+rust-version = "1.65.0"
 
 [dependencies]
 enum-primitive-derive = "0.2.2"
