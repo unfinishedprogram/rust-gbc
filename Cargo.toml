@@ -2,6 +2,7 @@
 name = "gbc-emu"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.68.0"
 
 [dependencies]
 enum-primitive-derive = "0.2.2"
@@ -47,17 +48,8 @@ console_error_panic_hook = "0.1.6"
 tracing-wasm = "0.2"
 
 
-[env]
-RUSTFLAGS = "--cfg=web_sys_unstable_apis"
-
 [profile.test]
 opt-level = 3
-
-[build]
-target = "wasm32-unknown-unknown"
-rustflags = '-Ctarget-feature=+atomics,+bulk-memory,+mutable-globals'
-opt-level = 3
-
 
 [build-dependencies]
 serde = { version = "1.0.150", features = ["derive"] }

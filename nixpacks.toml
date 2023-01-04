@@ -1,0 +1,8 @@
+providers = ["staticfile"]
+
+[phases.setup]
+nixPkgs = ['trunk']
+
+
+[phases.build]
+cmds = ['trunk build --release']
