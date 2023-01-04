@@ -10,6 +10,7 @@ use super::{
 	lcd::LCD,
 	memory_mapper::{Source, SourcedMemoryMapper},
 	ppu::{PPUMode, PPUState, PPU},
+	save_state::SaveState,
 	timer::{Timer, TimerState},
 };
 
@@ -131,5 +132,30 @@ impl EmulatorState {
 
 	pub fn set_controller_state(&mut self, state: &ControllerState) {
 		self.raw_joyp_input = state.as_byte();
+	}
+
+	pub fn load_save_state(self, save_state: SaveState) -> Self {
+		let Some(cart) = self.cartridge_state.as_ref() else {
+			return self;
+		};
+
+		let Ok(mut new_state) = serde_json::from_str::<EmulatorState>(&save_state.data) else {
+			return self;
+		};
+
+		let Some(new_cart) = new_state.cartridge_state.as_mut() else {
+			return self;
+		};
+
+		let Cartridge(data, _, info) = cart;
+
+		if info.title != new_cart.2.title {
+			return self;
+		}
+
+		new_cart.0.rom_banks = data.rom_banks.clone();
+		new_cart.0.loaded = true;
+
+		new_state
 	}
 }
