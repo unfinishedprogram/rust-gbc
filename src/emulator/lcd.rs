@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 pub trait LCDDisplay {
 	fn get_size(&self) -> (u8, u8);
-	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8));
+	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8, u8));
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -24,13 +24,13 @@ impl LCDDisplay for LCD {
 		(160, 144)
 	}
 
-	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8)) {
+	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8, u8)) {
 		let (width, height) = self.get_size();
 		if x >= width || y >= height {
 			return;
 		}
 
-		let (r, g, b) = color;
+		let (r, g, b, a) = color;
 
 		let index: usize = y as usize * width as usize + x as usize;
 
@@ -39,7 +39,7 @@ impl LCDDisplay for LCD {
 		image[index * 4] = r;
 		image[index * 4 + 1] = g;
 		image[index * 4 + 2] = b;
-		image[index * 4 + 3] = 255;
+		image[index * 4 + 3] = a;
 	}
 }
 

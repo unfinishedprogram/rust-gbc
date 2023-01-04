@@ -32,9 +32,7 @@ impl InputState {
 	}
 
 	pub fn get_controller_state(&self) -> ControllerState {
-		if let Some(gp) = self.get_gamepad() {
-			ControllerState::from_gamepad(&gp)
-		} else {
+		let mut state = {
 			let keys = &self.inner.borrow().keys;
 			ControllerState {
 				a: keys.contains("z"),
@@ -46,7 +44,21 @@ impl InputState {
 				up: keys.contains("ArrowUp"),
 				down: keys.contains("ArrowDown"),
 			}
+		};
+
+		if let Some(dom) = window().get("controller_state") {
+			if let Some(json) = dom.as_string() {
+				if let Ok(dom_state) = serde_json::from_str::<ControllerState>(&json) {
+					state += dom_state;
+				}
+			}
 		}
+
+		if let Some(gp) = self.get_gamepad() {
+			state += ControllerState::from_gamepad(&gp)
+		}
+
+		state
 	}
 
 	pub fn new() -> Self {
@@ -64,7 +76,7 @@ impl InputState {
 			let inner = inner.clone();
 			EventListener::new(&document_element(), "keyup", move |e| {
 				let event = e.dyn_ref::<web_sys::KeyboardEvent>().unwrap();
-				inner.borrow_mut().keys.insert(event.key());
+				inner.borrow_mut().keys.remove(&event.key());
 			})
 		};
 

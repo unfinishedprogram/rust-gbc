@@ -1,0 +1,192 @@
+body {
+	margin: 0px;
+	padding: 0px;
+	background-color: black;
+	font-family: Arial, Helvetica, sans-serif;
+	color: white;
+
+}
+
+#menu {
+	position: fixed;
+	width: 250px;
+	transition: right 0.2s;
+	padding: 1rem;
+	background-color: white;
+	display: flex;
+	flex-direction: column;
+	border-radius: 1rem 0rem 0rem 1rem;
+	backdrop-filter: blur(8px);
+	background-color: #0008;
+}
+
+#toggle_menu {
+	transition: transform 0.2s;
+	width: 3rem;
+	height: 3rem;
+	padding: 0px;
+	border: none;
+	background: none;
+	margin-bottom: 1rem;
+}
+
+main {
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+
+	#toggle_menu {
+		transform: translateX(calc(-100% - 2rem));
+	}
+
+	#menu {
+		right: calc(-250px - 2rem);
+	}
+}
+
+main[data-menu-open] {
+	grid-template-columns: auto;
+
+	#toggle_menu {
+		transform: translateX(0);
+	}
+
+	#toggle_menu {
+		transform: unset;
+	}
+
+	#menu {
+		right: 0px;
+	}
+}
+
+#screen_backdrop {
+	background-color: rgb(155, 188, 15);
+}
+
+#screen {
+	image-rendering: pixelated;
+	/* box-shadow: inset 1px 1px 5px #0008; */
+	/* filter: drop-shadow(0.2px 0.2px 0.2px #0008); */
+}
+
+#gameboy>#screen {
+	margin: 50%;
+}
+
+#gb_container {
+	aspect-ratio: 106/174;
+}
+
+/* Minimum aspect ratio */
+@media (max-aspect-ratio: 106/174) {
+	#gb_container {
+		width: 100vw;
+	}
+}
+
+/* Minimum aspect ratio */
+@media (min-aspect-ratio: 106/174) {
+	#gb_container {
+		height: 100vh;
+	}
+}
+
+
+#start,
+#select {
+	color: #666;
+}
+
+#select:hover,
+#start:hover {
+	color: #888;
+}
+
+#select:active,
+#start:active {
+	color: #AAA;
+}
+
+
+*[data-pressed] {
+	color: green !important;
+}
+
+.joypad,
+.button {
+	transition: color 0.2s;
+}
+
+.joypad:hover {
+	color: #333;
+}
+
+.joypad:active {
+	color: #666;
+}
+
+.button {
+	color: red;
+}
+
+.button:hover {
+	color: #F33;
+}
+
+.button:active {
+	color: #F66;
+}
+
+
+
+#screen {
+	display: block;
+	image-rendering: pixelated;
+	/* box-shadow: inset 1px 1px 5px #0008; */
+	/* filter: drop-shadow(0.2px 0.2px 0.2px #0008); */
+	/* width: min(100vh, 100vw); */
+	/* height: min(100vh, 100vw); */
+	aspect-ratio: 160/144;
+}
+
+/* Minimum aspect ratio */
+@media (max-aspect-ratio: 160/144) {
+	#screen {
+		width: 100vw;
+	}
+}
+
+/* Minimum aspect ratio */
+@media (min-aspect-ratio: 160/144) {
+	#screen {
+		height: 100vh;
+	}
+}
+
+#rom_upload_button {
+	cursor: pointer;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	background-color: #FFF2;
+	border: 1px solid #FFF8;
+	margin: 1rem;
+	border-radius: 1rem;
+	padding: 0.25rem 1rem;
+	font-weight: bold;
+	text-align: center;
+
+	&:hover {
+		background-color: #FFF4;
+	}
+
+	img {
+		display: block;
+		background-size: cover;
+		width: 3 rem;
+		height: 3rem;
+		background-image: url("assets/icons/file_upload.svg");
+	}
+}

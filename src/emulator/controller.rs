@@ -1,6 +1,10 @@
+use std::ops::AddAssign;
+
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsCast;
 use web_sys::Gamepad;
 
+#[derive(Deserialize, Serialize)]
 pub struct ControllerState {
 	pub a: bool,
 	pub b: bool,
@@ -10,6 +14,19 @@ pub struct ControllerState {
 	pub left: bool,
 	pub up: bool,
 	pub down: bool,
+}
+
+impl AddAssign for ControllerState {
+	fn add_assign(&mut self, rhs: Self) {
+		self.a |= rhs.a;
+		self.b |= rhs.b;
+		self.select |= rhs.select;
+		self.start |= rhs.start;
+		self.right |= rhs.right;
+		self.left |= rhs.left;
+		self.up |= rhs.up;
+		self.down |= rhs.down;
+	}
 }
 
 impl ControllerState {
@@ -28,14 +45,14 @@ impl ControllerState {
 		let axis: Vec<f64> = gp.axes().iter().map(|v| v.as_f64().unwrap()).collect();
 
 		ControllerState {
-			a: buttons[0],
-			b: buttons[1],
+			a: buttons[0] || buttons[3],
+			b: buttons[2] || buttons[1],
 			select: buttons[8],
 			start: buttons[9],
-			right: axis[0] > 0.1 || *buttons.get(15).unwrap_or(&false), //up
-			left: axis[0] < -0.1 || *buttons.get(14).unwrap_or(&false), // RIGHT
-			up: axis[1] < -0.1 || *buttons.get(12).unwrap_or(&false),
-			down: axis[1] > 0.1 || *buttons.get(13).unwrap_or(&false), // LEFT
+			right: axis[0] > 0.25 || *buttons.get(15).unwrap_or(&false), //up
+			left: axis[0] < -0.25 || *buttons.get(14).unwrap_or(&false), // RIGHT
+			up: axis[1] < -0.25 || *buttons.get(12).unwrap_or(&false),
+			down: axis[1] > 0.25 || *buttons.get(13).unwrap_or(&false), // LEFT
 		}
 	}
 

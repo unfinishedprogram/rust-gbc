@@ -1,4 +1,4 @@
-type Color = (u8, u8, u8);
+type Color = (u8, u8, u8, u8);
 
 use serde::{Deserialize, Serialize};
 
@@ -15,11 +15,18 @@ use super::{
 	EmulatorState,
 };
 
+// const COLORS: [Color; 4] = [
+// 	(0xFF, 0xFF, 0xFF),
+// 	(0xAA, 0xAA, 0xAA),
+// 	(0x55, 0x55, 0x55),
+// 	(0x00, 0x00, 0x00),
+// ];
+
 const COLORS: [Color; 4] = [
-	(0xFF, 0xFF, 0xFF),
-	(0xAA, 0xAA, 0xAA),
-	(0x55, 0x55, 0x55),
-	(0x00, 0x00, 0x00),
+	(155, 188, 15, 255),
+	(139, 172, 15, 255),
+	(48, 98, 48, 255),
+	(15, 56, 15, 255),
 ];
 
 // const COLORS: [Color; 4] = [(224, 248, 208), (136, 192, 112), (52, 104, 86), (8, 24, 32)];
