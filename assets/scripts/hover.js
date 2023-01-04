@@ -1,5 +1,3 @@
-
-
 const input = {
     joyp_right: false,
     joyp_left: false,

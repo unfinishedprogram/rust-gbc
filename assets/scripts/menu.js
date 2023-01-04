@@ -1,3 +1,8 @@
+import * as wasm from "/gbc-emu.js"
+
+
+console.log(wasm);
+
 const main_element = document.querySelector("#main");
 const menu_toggle = document.querySelector("#toggle_menu");
 
@@ -16,6 +21,19 @@ const menu = {
         }
         this.open = !this.open;
     }
+}
+let save = document.createElement("button");
+save.innerText = "Save";
+save.onclick = () => wasm.save_save_state(0);
+menu.element.appendChild(save);
+
+let load = document.createElement("button");
+load.innerText = "Load";
+load.onclick = () => wasm.load_save_state(0);
+menu.element.appendChild(load);
+
+let save_states = {
+
 }
 
 menu_toggle.addEventListener("click", () => {

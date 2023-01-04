@@ -2,6 +2,7 @@ mod input;
 mod screen;
 mod setup_listeners;
 mod uploader;
+mod web_save_manager;
 pub use setup_listeners::setup_listeners;
 mod util;
 use gloo::{console::log, file::callbacks::FileReader, timers::callback::Interval};
@@ -12,7 +13,7 @@ use std::{cell::RefCell, fmt::Display};
 use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
-use crate::emulator::{lcd::LCD, EmulatorState};
+use crate::emulator::{lcd::LCD, save_state::SaveState, EmulatorState};
 
 use self::{input::InputState, uploader::setup_upload_listeners};
 
@@ -123,5 +124,10 @@ impl Application {
 		self.emulator_state.bind_lcd(lcd);
 
 		self.emulator_state.load_rom(rom, name).unwrap();
+	}
+
+	pub fn load_save_state(&mut self, save: SaveState) {
+		self.emulator_state = self.emulator_state.clone().load_save_state(save);
+		self.emulator_state.bind_lcd(LCD::new());
 	}
 }
