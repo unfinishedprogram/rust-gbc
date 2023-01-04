@@ -14,7 +14,7 @@ use web_sys::ImageData;
 
 use crate::emulator::{lcd::LCD, EmulatorState};
 
-use self::{input::InputState, uploader::on_file_drop};
+use self::{input::InputState, uploader::setup_upload_listeners};
 
 thread_local! {
 	pub static APPLICATION: RefCell<Application> = RefCell::new(Application::default());
@@ -44,7 +44,7 @@ pub struct Application {
 
 impl Default for Application {
 	fn default() -> Self {
-		on_file_drop();
+		setup_upload_listeners();
 		let emulator_state = {
 			let mut state = EmulatorState::default();
 			let lcd = LCD::default();
