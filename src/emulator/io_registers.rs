@@ -7,7 +7,7 @@ use crate::{
 	util::bits::{BIT_4, BIT_5},
 };
 
-use super::{memory_mapper::Source, EmulatorState};
+use super::{flags::INT_SERIAL, memory_mapper::Source, EmulatorState};
 
 // Timers
 pub const DIV: u16 = 0xFF04;
@@ -131,7 +131,9 @@ impl IORegisters for EmulatorState {
 			}
 			SC => {
 				if value == 0x81 {
-					self.serial_output.push(self.io_register_state[0xFF01]);
+					self.io_register_state[SC] = 0x01;
+					self.io_register_state[0xFF01] = 0xFF;
+					self.request_interrupt(INT_SERIAL);
 				}
 			}
 			LCDC => {
