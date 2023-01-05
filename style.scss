@@ -4,7 +4,20 @@ body {
 	background-color: black;
 	font-family: Arial, Helvetica, sans-serif;
 	color: white;
+}
 
+
+/* Minimum aspect ratio */
+@media (min-aspect-ratio: 160/144) {
+	#screen {
+		height: 100%;
+	}
+}
+
+@media (max-aspect-ratio: 160/144) {
+	#screen {
+		width: 100%;
+	}
 }
 
 #menu {
@@ -18,6 +31,7 @@ body {
 	border-radius: 1rem 0rem 0rem 1rem;
 	backdrop-filter: blur(8px);
 	background-color: #0008;
+	height: 100%;
 }
 
 #toggle_menu {
@@ -36,6 +50,7 @@ main {
 	height: 100vh;
 	display: flex;
 	justify-content: center;
+	align-items: center;
 
 	#toggle_menu {
 		transform: translateX(calc(-100% - 2rem));
@@ -44,15 +59,14 @@ main {
 	#menu {
 		right: calc(-250px - 2rem);
 	}
+
+	#screen {
+		aspect-ratio: 10/9;
+		image-rendering: pixelated;
+	}
 }
 
 main[data-menu-open] {
-	grid-template-columns: auto;
-
-	#toggle_menu {
-		transform: translateX(0);
-	}
-
 	#toggle_menu {
 		transform: unset;
 	}
@@ -64,12 +78,6 @@ main[data-menu-open] {
 
 #screen_backdrop {
 	background-color: rgb(155, 188, 15);
-}
-
-#screen {
-	image-rendering: pixelated;
-	/* box-shadow: inset 1px 1px 5px #0008; */
-	/* filter: drop-shadow(0.2px 0.2px 0.2px #0008); */
 }
 
 #gameboy>#screen {
@@ -138,32 +146,6 @@ main[data-menu-open] {
 
 .button:active {
 	color: #F66;
-}
-
-
-
-#screen {
-	display: block;
-	image-rendering: pixelated;
-	/* box-shadow: inset 1px 1px 5px #0008; */
-	/* filter: drop-shadow(0.2px 0.2px 0.2px #0008); */
-	/* width: min(100vh, 100vw); */
-	/* height: min(100vh, 100vw); */
-	aspect-ratio: 160/144;
-}
-
-/* Minimum aspect ratio */
-@media (max-aspect-ratio: 160/144) {
-	#screen {
-		width: 100vw;
-	}
-}
-
-/* Minimum aspect ratio */
-@media (min-aspect-ratio: 160/144) {
-	#screen {
-		height: 100vh;
-	}
 }
 
 #rom_upload_button {
