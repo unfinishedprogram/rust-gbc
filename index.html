@@ -4,10 +4,12 @@
 <head>
 	<link data-trunk rel="copy-dir" href="roms">
 	<link data-trunk rel="copy-dir" href="assets">
+	<link data-trunk rel="copy-file" href="roms.json">
 	<link data-trunk rel="scss" href="/style.scss">
 
 	<script type="module" src="assets/scripts/hover.js"></script>
 	<script type="module" src="assets/scripts/menu.js"></script>
+	<script type="module" src="assets/scripts/rom_loader.js"></script>
 
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -34,6 +36,10 @@
 			</button>
 			<div id="menu_content">
 				<button id="toggle_play">Pause</button>
+
+				<div id="roms_container">
+
+				</div>
 				<label id="rom_upload_button" for="rom_upload_input">
 					<span>
 						Upload a rom
