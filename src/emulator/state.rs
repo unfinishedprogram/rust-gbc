@@ -41,15 +41,6 @@ pub struct EmulatorState {
 	pub color_scheme_dmg: (Color, Color, Color, Color),
 }
 
-impl PPUState {
-	pub fn pause(&mut self) {
-		if !self.paused {
-			self.paused = true;
-			self.cycle += 190000 - (5080 - 6);
-		}
-	}
-}
-
 impl Default for EmulatorState {
 	fn default() -> Self {
 		let mut emulator = Self {

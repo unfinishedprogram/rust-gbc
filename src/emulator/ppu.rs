@@ -23,11 +23,11 @@ pub enum PPUMode {
 #[derive(Default, Clone, Serialize, Deserialize)]
 pub struct PPUState {
 	pub cycle: u64,
-	pub maxed: bool,
 	pub paused: bool,
 	pub window_line: u8,
 	pub current_pixel: u8,
 	pub scanline_state: ScanlineState,
+	enabled: bool,
 }
 
 pub trait PPU {
@@ -36,6 +36,8 @@ pub trait PPU {
 	fn set_ly(&mut self, value: u8);
 	fn set_mode(&mut self, mode: PPUMode);
 	fn step_ppu(&mut self);
+	fn disable_display(&mut self);
+	fn enable_display(&mut self);
 }
 
 impl PPU for EmulatorState {
@@ -57,6 +59,10 @@ impl PPU for EmulatorState {
 	fn set_ly(&mut self, value: u8) {
 		let lyc_status = self.read_from(LYC, Source::Ppu) == value;
 		self.write_from(LY, value, Source::Ppu);
+
+		if !self.ppu_state.enabled {
+			return;
+		}
 
 		if lyc_status {
 			self.io_register_state[STAT] |= STAT_LYC_EQ_LY;
@@ -91,9 +97,25 @@ impl PPU for EmulatorState {
 		self.write_from(STAT, (stat & 0b11111100) | mode as u8, Source::Ppu);
 	}
 
+	fn disable_display(&mut self) {
+		self.ppu_state.enabled = false;
+		self.ppu_state.current_pixel = 0;
+		self.set_mode(PPUMode::HBlank);
+		self.set_ly(0);
+	}
+
+	fn enable_display(&mut self) {
+		self.ppu_state.enabled = true;
+	}
+
 	fn step_ppu(&mut self) {
 		if self.ppu_state.cycle != 0 {
 			self.ppu_state.cycle -= 1;
+			return;
+		}
+
+		if !self.ppu_state.enabled {
+			self.ppu_state.cycle += 8;
 			return;
 		}
 

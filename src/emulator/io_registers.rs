@@ -7,7 +7,11 @@ use crate::{
 	util::bits::{BIT_4, BIT_5},
 };
 
-use super::{flags::INT_SERIAL, memory_mapper::Source, EmulatorState};
+use super::{
+	flags::{INT_SERIAL, LCD_DISPLAY_ENABLE},
+	memory_mapper::Source,
+	EmulatorState,
+};
 
 // Timers
 pub const DIV: u16 = 0xFF04;
@@ -64,6 +68,7 @@ pub const DISABLE_BOOT: u16 = 0xFF50;
 pub struct IORegisterState {
 	values: Vec<u8>,
 }
+
 impl Default for IORegisterState {
 	fn default() -> Self {
 		Self {
@@ -102,11 +107,11 @@ impl IORegisters for EmulatorState {
 		match addr {
 			JOYP => {
 				if self.io_register_state[JOYP] & BIT_4 == BIT_4 {
-					self.raw_joyp_input & 0b1111
+					(self.raw_joyp_input & 0b1111) | 0b11000000
 				} else if self.io_register_state[addr] & BIT_5 == BIT_5 {
-					(self.raw_joyp_input >> 4) & 0b1111
+					((self.raw_joyp_input >> 4) & 0b1111) | 0b11000000
 				} else {
-					0b1111
+					0b11001111
 				}
 			}
 			TAC => self.io_register_state[addr] | 0xF8,
@@ -137,9 +142,10 @@ impl IORegisters for EmulatorState {
 				}
 			}
 			LCDC => {
-				if value & 0b10000000 == 0 || self.io_register_state[LCDC] & 0b10000000 == 0 {
-					self.set_ly(0);
-					self.ppu_state.pause();
+				if value & LCD_DISPLAY_ENABLE == 0 {
+					self.disable_display();
+				} else {
+					self.enable_display();
 				}
 				self.io_register_state[LCDC] = value;
 			}
