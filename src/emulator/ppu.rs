@@ -132,11 +132,7 @@ impl PPU for EmulatorState {
 				self.set_mode(Draw);
 			}
 			Draw => {
-				self.render_screen_pixel(
-					self.ppu_state.current_pixel,
-					self.get_ly(),
-					self.fetch_pixel_state(),
-				);
+				self.render_screen_pixel(self.ppu_state.current_pixel, self.get_ly());
 				self.ppu_state.current_pixel += 1;
 				if self.ppu_state.current_pixel == 160 {
 					self.ppu_state.current_pixel = 0;
