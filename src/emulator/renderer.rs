@@ -1,4 +1,4 @@
-type Color = (u8, u8, u8, u8);
+pub type Color = (u8, u8, u8, u8);
 
 use serde::{Deserialize, Serialize};
 
@@ -14,22 +14,6 @@ use super::{
 	ppu::PPU,
 	EmulatorState,
 };
-
-// const COLORS: [Color; 4] = [
-// 	(0xFF, 0xFF, 0xFF),
-// 	(0xAA, 0xAA, 0xAA),
-// 	(0x55, 0x55, 0x55),
-// 	(0x00, 0x00, 0x00),
-// ];
-
-const COLORS: [Color; 4] = [
-	(155, 188, 15, 255),
-	(139, 172, 15, 255),
-	(48, 98, 48, 255),
-	(15, 56, 15, 255),
-];
-
-// const COLORS: [Color; 4] = [(224, 248, 208), (136, 192, 112), (52, 104, 86), (8, 24, 32)];
 
 pub trait Renderer {
 	fn render_screen_pixel(&mut self, x: u8, y: u8, pixel_state: PixelState);
@@ -128,7 +112,13 @@ impl RendererHelpers for EmulatorState {
 	}
 
 	fn get_color_from_pallet_index(&self, index: u8) -> Color {
-		COLORS[index as usize]
+		match index {
+			0 => self.color_scheme_dmg.0,
+			1 => self.color_scheme_dmg.1,
+			2 => self.color_scheme_dmg.2,
+			3 => self.color_scheme_dmg.3,
+			_ => unreachable!("No color over 4 possible"),
+		}
 	}
 
 	fn get_tile_pixel_pallet_index(&self, x: u8, y: u8, tile_index: u8, mode: bool) -> u8 {

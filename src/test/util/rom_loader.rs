@@ -11,6 +11,8 @@ pub fn init_emulator_with_rom(src: &str) -> EmulatorState {
 		.load_rom(&rom, src.to_owned())
 		.expect("Rom could not be loaded");
 
+	state.run_until_boot();
+
 	state.bind_lcd(lcd);
 
 	state

@@ -10,6 +10,7 @@ use super::{
 	lcd::LCD,
 	memory_mapper::{Source, SourcedMemoryMapper},
 	ppu::{PPUMode, PPUState, PPU},
+	renderer::Color,
 	save_state::SaveState,
 	timer::{Timer, TimerState},
 };
@@ -37,6 +38,7 @@ pub struct EmulatorState {
 	pub booting: bool,
 	pub boot_rom: Vec<u8>,
 	t_states: u64,
+	pub color_scheme_dmg: (Color, Color, Color, Color),
 }
 
 impl PPUState {
@@ -51,6 +53,12 @@ impl PPUState {
 impl Default for EmulatorState {
 	fn default() -> Self {
 		let mut emulator = Self {
+			color_scheme_dmg: (
+				(0xFF, 0xFF, 0xFF, 0xFF),
+				(0xAA, 0xAA, 0xAA, 0xFF),
+				(0x55, 0x55, 0x55, 0xFF),
+				(0x00, 0x00, 0x00, 0xFF),
+			),
 			dma_timer: 0,
 			cpu_state: CPUState::default(),
 			ppu_state: PPUState::default(),
@@ -72,9 +80,7 @@ impl Default for EmulatorState {
 			lcd: None,
 			t_states: 0,
 		};
-
 		emulator.set_mode(PPUMode::OamScan);
-
 		emulator
 	}
 }
