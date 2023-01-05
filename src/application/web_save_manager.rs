@@ -92,6 +92,7 @@ impl SaveManager for WebSaveManager {
 	}
 }
 
+#[allow(dead_code)]
 #[wasm_bindgen]
 pub fn load_save_state(slot: usize) {
 	if let Ok(save) = WebSaveManager::load_save_state(slot) {
@@ -101,6 +102,7 @@ pub fn load_save_state(slot: usize) {
 	}
 }
 
+#[allow(dead_code)]
 #[wasm_bindgen]
 pub fn save_save_state(slot: usize) {
 	APPLICATION.with_borrow_mut(move |app| {

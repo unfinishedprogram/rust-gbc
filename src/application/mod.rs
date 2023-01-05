@@ -5,7 +5,7 @@ mod uploader;
 mod web_save_manager;
 pub use setup_listeners::setup_listeners;
 mod util;
-use gloo::{console::log, file::callbacks::FileReader, timers::callback::Interval};
+use gloo::{file::callbacks::FileReader, timers::callback::Interval};
 use screen::get_screen_ctx;
 
 use std::{cell::RefCell, fmt::Display};
