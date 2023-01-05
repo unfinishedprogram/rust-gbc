@@ -16,7 +16,7 @@ pub trait MemoryBankController: Default + Clone {
 	fn write(&mut self, addr: u16, value: u8);
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum Mbc {
 	ROM,
 	MBC1(MBC1State),
@@ -30,7 +30,7 @@ pub enum Mbc {
 	HUC1,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Cartridge(pub CartridgeData, pub Mbc, pub CartridgeInfo);
 
 impl Cartridge {

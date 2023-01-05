@@ -118,7 +118,6 @@ impl Application {
 	}
 
 	pub fn load_rom(&mut self, rom: &[u8], name: String) {
-		log!("Hello");
 		self.emulator_state = EmulatorState::default();
 		let lcd = LCD::new();
 		self.emulator_state.bind_lcd(lcd);
