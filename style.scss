@@ -34,6 +34,11 @@ body {
 	height: 100%;
 }
 
+#menu_content {
+	overflow-y: auto;
+	margin-bottom: 2rem;
+}
+
 #toggle_menu {
 	transition: transform 0.2s;
 	width: 3rem;

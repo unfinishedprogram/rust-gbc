@@ -9,7 +9,7 @@ const input = {
     button_b: false,
 }
 
-const convert = ({
+function serializeInput({
     button_a: a,
     button_b: b,
     joyp_right: right,
@@ -18,16 +18,18 @@ const convert = ({
     joyp_up: up,
     start,
     select,
-}) => JSON.stringify({
-    a,
-    b,
-    select,
-    start,
-    right,
-    left,
-    up,
-    down,
-});
+}) {
+    return JSON.stringify({
+        a,
+        b,
+        select,
+        start,
+        right,
+        left,
+        up,
+        down,
+    });
+}
 
 
 const input_elms = {};
@@ -35,8 +37,6 @@ const input_elms = {};
 for (let key of Object.keys(input)) {
     input_elms[key] = document.getElementById(key);
 }
-
-console.log(input_elms);
 
 const handleTouch = (e) => {
     for (key in input_elms) {
@@ -53,10 +53,8 @@ const handleTouch = (e) => {
         }
     }
 
-    window.controller_state = convert(input);
+    window.controller_state = serializeInput(input);
 };
-
-
 
 document.addEventListener("touchmove", handleTouch);
 document.addEventListener("touchend", handleTouch);

@@ -10,6 +10,9 @@
 	<script type="module" src="assets/scripts/hover.js"></script>
 	<script type="module" src="assets/scripts/menu.js"></script>
 	<script type="module" src="assets/scripts/rom_loader.js"></script>
+	<script type="module" src="assets/scripts/collapsable.js"></script>
+
+	<link rel="stylesheet" href="assets/style/collapsible.css">
 
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -37,21 +40,25 @@
 			<div id="menu_content">
 				<button id="toggle_play">Pause</button>
 
-				<div id="roms_container">
-
+				<div class="collapsible">
+					<label>Load a rom</label>
+					<div class="content" id="roms_container">
+						<label id="rom_upload_button" for="rom_upload_input">
+							<span> Upload a rom </span>
+							<img src="assets/icons/file_upload.svg">
+						</label>
+						<input hidden type="file" id="rom_upload_input" name="rom">
+					</div>
 				</div>
-				<label id="rom_upload_button" for="rom_upload_input">
-					<span>
-						Upload a rom
-					</span>
-					<img src="assets/icons/file_upload.svg">
-				</label>
-				<input hidden type="file" id="rom_upload_input" name="rom">
-
+				<div class="collapsible">
+					<label>Save states</label>
+					<div class="content" id="save_states_container">
+						This is some content in save states
+					</div>
+				</div>
 			</div>
-		</div>
 
-		<!-- <div id="gb_container">
+			<!-- <div id="gb_container">
 			<svg id="gameboy" viewBox="0 0 106 174" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<image x="0" y="0" width="106" height="174" xlink:href="assets/gameboy_background.svg" />
 

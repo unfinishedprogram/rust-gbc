@@ -22,15 +22,17 @@ const menu = {
         this.open = !this.open;
     }
 }
+const menu_content = document.querySelector("#menu_content");
+
 let save = document.createElement("button");
 save.innerText = "Save";
 save.onclick = () => wasm.save_save_state(0);
-menu.element.appendChild(save);
+menu_content.appendChild(save);
 
 let load = document.createElement("button");
 load.innerText = "Load";
 load.onclick = () => wasm.load_save_state(0);
-menu.element.appendChild(load);
+menu_content.appendChild(load);
 
 let save_states = {
 
