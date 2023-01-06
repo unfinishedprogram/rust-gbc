@@ -5,7 +5,7 @@ use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
 	controller::ControllerState,
 	cpu::{CPUState, CPU},
-	flags::INTERRUPT_REQUEST,
+	flags::{INTERRUPT_REQUEST, INT_JOY_PAD},
 	io_registers::IORegisterState,
 	lcd::LCD,
 	memory_mapper::{Source, SourcedMemoryMapper},
@@ -129,6 +129,10 @@ impl EmulatorState {
 
 	pub fn set_controller_state(&mut self, state: &ControllerState) {
 		self.raw_joyp_input = state.as_byte();
+
+		if ((self.raw_joyp_input) ^ state.as_byte()) & state.as_byte() != 0 {
+			self.request_interrupt(INT_JOY_PAD);
+		}
 	}
 
 	pub fn load_save_state(self, save_state: SaveState) -> Self {
