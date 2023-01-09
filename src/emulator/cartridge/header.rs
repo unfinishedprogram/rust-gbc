@@ -2,6 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::emulator::save_state::RomSource;
+
 #[derive(Debug, Clone)]
 pub enum CartridgeParseError {
 	MBCType,
@@ -12,7 +14,7 @@ pub enum CartridgeParseError {
 
 #[derive(Debug)]
 pub struct RawCartridgeHeader {
-	pub src: String,
+	pub rom_source: Option<RomSource>,
 	pub title: Vec<u8>,
 	pub cgb_flag: u8,                // 0143
 	pub license_code: u16,           // 0144-0145
@@ -28,7 +30,7 @@ pub struct RawCartridgeHeader {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CartridgeInfo {
-	pub src: String,
+	pub rom_source: Option<RomSource>,
 	pub title: String,
 	pub cgb: bool,
 	pub sgb: bool,
@@ -58,7 +60,7 @@ impl RawCartridgeHeader {
 
 	pub fn parse(&self) -> Result<CartridgeInfo, CartridgeParseError> {
 		Ok(CartridgeInfo {
-			src: self.src.clone(),
+			rom_source: self.rom_source.clone(),
 			title: std::str::from_utf8(&self.title)
 				.or(Err(CartridgeParseError::Title))?
 				.to_owned(),
@@ -69,9 +71,9 @@ impl RawCartridgeHeader {
 		})
 	}
 
-	pub fn new(rom: &[u8], src: String) -> Self {
+	pub fn new(rom: &[u8], rom_source: Option<RomSource>) -> Self {
 		RawCartridgeHeader {
-			src,
+			rom_source,
 			title: rom[0x0134..0x0143].to_vec(),
 			cgb_flag: rom[0x0143],                                          // 0143
 			license_code: ((rom[0x0144] as u16) << 8) | rom[0x0145] as u16, // 0144-0145

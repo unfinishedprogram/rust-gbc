@@ -4,7 +4,7 @@ use web_sys::{window, Storage};
 
 use crate::emulator::save_state::{SaveError, SaveManager, SaveState};
 
-use super::APPLICATION;
+use super::{Application, APPLICATION};
 
 pub struct WebSaveManager {}
 
@@ -94,10 +94,14 @@ impl SaveManager for WebSaveManager {
 
 #[allow(dead_code)]
 #[wasm_bindgen]
-pub fn load_save_state(slot: usize) {
+pub async fn load_save_state(slot: usize) {
 	if let Ok(save) = WebSaveManager::load_save_state(slot) {
+		let rom = Application::load_rom_from_source(save.rom_source.clone())
+			.await
+			.unwrap();
 		APPLICATION.with_borrow_mut(move |app| {
-			app.load_save_state(save);
+			app.load_save_state_with_rom(&rom, save);
+			app.start();
 		});
 	}
 }

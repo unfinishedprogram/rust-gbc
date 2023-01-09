@@ -5,7 +5,9 @@ async function get_available_roms() {
     const res = await fetch("./roms.json");
     const json = await res.json();
     const dirs = json["Dir"][1];
+
     const games = dirs.filter(dir => dir["Dir"][0] == ("roms/games"))[0]["Dir"][1];
+
     console.log(games);
     return games.map(game => {
         let name = game.File[0];
@@ -22,12 +24,8 @@ function make_rom_button(rom) {
 }
 
 async function load_rom({ name, path }) {
-
     let rom_data = new Uint8Array(await (await fetch(path)).arrayBuffer());
-    console.log(rom_data);
-
-
-    wasm.load_rom(rom_data, name);
+    wasm.load_rom(rom_data, `{"LocalUrl": "${path}"}`);
 }
 
 get_available_roms().then(roms => {

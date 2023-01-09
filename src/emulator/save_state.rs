@@ -5,10 +5,17 @@ use serde::{Deserialize, Serialize};
 use crate::emulator::{cartridge::memory_bank_controller::Cartridge, EmulatorState};
 use chrono::NaiveDateTime;
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum RomSource {
+	ExternalUrl(String),
+	LocalUrl(String),
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SaveState {
 	pub data: String,
 	pub info: SaveStateEntry,
+	pub rom_source: Option<RomSource>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -48,6 +55,7 @@ impl TryFrom<&EmulatorState> for SaveState {
 		let date = chrono::offset::Utc::now().naive_utc();
 
 		Ok(Self {
+			rom_source: info.rom_source.clone(),
 			info: SaveStateEntry { date, game_title },
 			data,
 		})

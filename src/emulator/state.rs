@@ -11,7 +11,7 @@ use super::{
 	memory_mapper::{Source, SourcedMemoryMapper},
 	ppu::{PPUMode, PPUState, PPU},
 	renderer::Color,
-	save_state::SaveState,
+	save_state::{RomSource, SaveState},
 	timer::{Timer, TimerState},
 };
 
@@ -121,8 +121,12 @@ impl EmulatorState {
 		);
 	}
 
-	pub fn load_rom(&mut self, rom: &[u8], src: String) -> Result<(), CartridgeParseError> {
-		let cartridge = Cartridge::try_new(rom, src)?;
+	pub fn load_rom(
+		&mut self,
+		rom: &[u8],
+		source: Option<RomSource>,
+	) -> Result<(), CartridgeParseError> {
+		let cartridge = Cartridge::try_new(rom, source)?;
 		self.cartridge_state = Some(cartridge);
 		Ok(())
 	}

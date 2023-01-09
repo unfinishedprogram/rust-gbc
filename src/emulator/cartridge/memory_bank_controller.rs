@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::emulator::{cartridge::mbc3, memory_mapper::MemoryMapper};
+use crate::emulator::{cartridge::mbc3, memory_mapper::MemoryMapper, save_state::RomSource};
 
 use super::{
 	cartridge_data::CartridgeData,
@@ -34,8 +34,8 @@ pub enum Mbc {
 pub struct Cartridge(pub CartridgeData, pub Mbc, pub CartridgeInfo);
 
 impl Cartridge {
-	pub fn try_new(value: &[u8], src: String) -> Result<Self, CartridgeParseError> {
-		let raw_header = RawCartridgeHeader::new(value, src);
+	pub fn try_new(value: &[u8], source: Option<RomSource>) -> Result<Self, CartridgeParseError> {
+		let raw_header = RawCartridgeHeader::new(value, source);
 		use Mbc::*;
 		let info = raw_header.parse()?;
 		let data = CartridgeData::new(value, info.rom_banks, info.ram_banks);

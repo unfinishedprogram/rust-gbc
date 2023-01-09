@@ -5,7 +5,7 @@ mod uploader;
 mod web_save_manager;
 pub use setup_listeners::setup_listeners;
 mod util;
-use gloo::{file::callbacks::FileReader, timers::callback::Interval};
+use gloo::{file::callbacks::FileReader, net::http::Request, timers::callback::Interval};
 use screen::get_screen_ctx;
 
 use std::{cell::RefCell, fmt::Display};
@@ -13,7 +13,11 @@ use std::{cell::RefCell, fmt::Display};
 use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
-use crate::emulator::{lcd::LCD, save_state::SaveState, EmulatorState};
+use crate::emulator::{
+	lcd::LCD,
+	save_state::{RomSource, SaveState},
+	EmulatorState,
+};
 
 use self::{input::InputState, uploader::setup_upload_listeners};
 
@@ -117,16 +121,31 @@ impl Application {
 		};
 	}
 
-	pub fn load_rom(&mut self, rom: &[u8], name: String) {
+	pub async fn load_rom_from_source(source: Option<RomSource>) -> Option<Vec<u8>> {
+		let Some(RomSource::ExternalUrl(path) | RomSource::LocalUrl(path)) = source else {
+			return None;
+		};
+
+		let resp = Request::get(&path).send().await.unwrap();
+		let rom_data: Vec<_> = resp.binary().await.unwrap();
+		Some(rom_data)
+	}
+
+	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
 		self.emulator_state = EmulatorState::default();
 		let lcd = LCD::new();
 		self.emulator_state.bind_lcd(lcd);
-
-		self.emulator_state.load_rom(rom, name).unwrap();
+		self.emulator_state.load_rom(rom, source).unwrap();
 	}
 
-	pub fn load_save_state(&mut self, save: SaveState) {
+	pub fn load_save_state_with_rom(&mut self, rom: &[u8], save: SaveState) {
+		self.load_rom(rom, save.rom_source.clone());
 		self.emulator_state = self.emulator_state.clone().load_save_state(save);
 		self.emulator_state.bind_lcd(LCD::new());
+	}
+
+	pub async fn load_save_state(&mut self, save: SaveState) {
+		let rom = Self::load_rom_from_source(save.rom_source.clone()).await;
+		self.load_save_state_with_rom(&rom.unwrap(), save);
 	}
 }
