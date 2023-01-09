@@ -83,7 +83,6 @@ impl Application {
 		get_screen_ctx()
 			.put_image_data(&img_data, 0.0, 0.0)
 			.unwrap();
-		gloo::console::log!("Rendering");
 	}
 
 	pub fn step_emulator(&mut self, delta: f64) {
