@@ -1,120 +1,96 @@
 <!DOCTYPE html>
 <html>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <head>
-    <title>GAME BOY</title>
-    <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
-    <link data-trunk rel="rust" data-wasm-opt="3" />
-    <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
-    <base data-trunk-public-url />
-    <link data-trunk rel="copy-dir" href="roms">
+	<link data-trunk rel="copy-dir" href="roms">
+	<link data-trunk rel="copy-dir" href="assets">
+	<link data-trunk rel="copy-file" href="roms.json">
+	<link data-trunk rel="scss" href="/style.scss">
 
-    <link rel="apple-touch-icon" href="icon_ios_touch_192.png">
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="white">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#404040">
+	<script type="module" src="assets/scripts/hover.js"></script>
+	<script type="module" src="assets/scripts/menu.js"></script>
+	<script type="module" src="assets/scripts/rom_loader.js"></script>
+	<script type="module" src="assets/scripts/collapsable.js"></script>
 
-    <style>
-        html {
-            /* Remove touch delay: */
-            touch-action: manipulation;
-        }
+	<link rel="stylesheet" href="assets/style/collapsible.css">
 
-        body {
-            background: #909090;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: #404040;
-            }
-        }
-
-        /* Allow canvas to fill entire web page: */
-        html,
-        body {
-            overflow: hidden;
-            margin: 0 !important;
-            padding: 0 !important;
-            height: 100%;
-            width: 100%;
-        }
-
-        /* Position canvas in center-top: */
-        canvas {
-            margin-right: auto;
-            margin-left: auto;
-            display: block;
-            position: absolute;
-            top: 0%;
-            left: 50%;
-            transform: translate(-50%, 0%);
-        }
-
-        .centered {
-            margin-right: auto;
-            margin-left: auto;
-            display: block;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #f0f0f0;
-            font-size: 24px;
-            font-family: Ubuntu-Light, Helvetica, sans-serif;
-            text-align: center;
-        }
-
-        /* ---------------------------------------------- */
-        /* Loading animation from https://loading.io/css/ */
-        .lds-dual-ring {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-        }
-
-        .lds-dual-ring:after {
-            content: " ";
-            display: block;
-            width: 24px;
-            height: 24px;
-            margin: 0px;
-            border-radius: 50%;
-            border: 3px solid #fff;
-            border-color: #fff transparent #fff transparent;
-            animation: lds-dual-ring 1.2s linear infinite;
-        }
-
-        @keyframes lds-dual-ring {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<title>Rusty GB Emulator</title>
 </head>
 
 <body>
-    <!-- The WASM code will resize the canvas dynamically -->
-    <!-- the id is hardcoded in main.rs . so, make sure both match. -->
-    <canvas id="gameboy_canvas"></canvas>
+	<main id="main">
+		<canvas width="160" height="144" id="screen"></canvas>
 
-    <!--Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality). -->
-    <!-- Force refresh (Ctrl + F5) to load the latest files instead of cached files  -->
-    <script>
-        // We disable caching during development so that we always view the latest version.
-        if ('serviceWorker' in navigator && window.location.hash !== "#dev" && false) {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('sw.js');
-            });
-        }
-    </script>
+		<div id="menu">
+			<button id="toggle_menu">
+				<svg id="icon" width="3rem" height="3rem" viewBox="0 0 24 24" fill="none"
+					xmlns="http://www.w3.org/2000/svg">
+					<path d="M12 7L7 12L12 17 M18 7L13 12L18 17" stroke="currentColor" stroke-width="2"
+						stroke-linecap="round" stroke-linejoin="round">
+						<animate id="animate_open" attributeName="d" dur="200ms" to="M6 7L11 12L6 17M12 7L17 12L12 17"
+							fill="freeze" begin="indefinite" />
+
+						<animate id="animate_close" attributeName="d" dur="200ms" to="M12 7L7 12L12 17M18 7L13 12L18 17"
+							fill="freeze" begin="indefinite" />
+					</path>
+				</svg>
+			</button>
+			<div id="menu_content">
+				<button id="toggle_play">Pause</button>
+
+				<div class="collapsible">
+					<label>Load a rom</label>
+					<div class="content" id="roms_container">
+						<label id="rom_upload_button" for="rom_upload_input">
+							<span> Upload a rom </span>
+							<img src="assets/icons/file_upload.svg">
+						</label>
+						<input hidden type="file" id="rom_upload_input" name="rom">
+					</div>
+				</div>
+				<div class="collapsible">
+					<label>Save states</label>
+					<div class="content" id="save_states_container">
+						This is some content in save states
+					</div>
+				</div>
+			</div>
+
+			<!-- <div id="gb_container">
+			<svg id="gameboy" viewBox="0 0 106 174" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<image x="0" y="0" width="106" height="174" xlink:href="assets/gameboy_background.svg" />
+
+				<path id="joyp_right" class="joypad" fill="currentColor"
+					d="M33 121.692C33.5523 121.692 34 121.245 34 120.692V115.308C34 114.755 33.5523 114.308 33 114.308H26.1065C25.8413 114.308 25.587 114.413 25.3994 114.601L22 118L25.3994 121.399C25.587 121.587 25.8413 121.692 26.1065 121.692H33Z" />
+
+				<path id="joyp_left" class="joypad" fill="currentColor"
+					d="M11 114.308C10.4477 114.308 10 114.755 10 115.308V120.692C10 121.245 10.4477 121.692 11 121.692H17.8935C18.1587 121.692 18.413 121.587 18.6006 121.399L22 118L18.6006 114.601C18.413 114.413 18.1587 114.308 17.8935 114.308H11Z" />
+
+				<path id="joyp_down" class="joypad" fill="currentColor"
+					d="M18.3077 129C18.3077 129.552 18.7554 130 19.3077 130H24.6923C25.2446 130 25.6923 129.552 25.6923 129V122.107C25.6923 121.841 25.587 121.587 25.3994 121.399L22 118L18.6006 121.399C18.4131 121.587 18.3077 121.841 18.3077 122.107V129Z" />
+
+				<path id="joyp_up" class="joypad" fill="currentColor"
+					d="M25.6923 107C25.6923 106.448 25.2446 106 24.6923 106H19.3077C18.7554 106 18.3077 106.448 18.3077 107V113.893C18.3077 114.159 18.4131 114.413 18.6006 114.601L22 118L25.3994 114.601C25.587 114.413 25.6923 114.159 25.6923 113.893V107Z" />
+
+				<circle class="button" id="button_a" cx="76" cy="122" r="7" fill="currentColor" stroke="transparent"
+					stroke-width="8" />
+				<circle class="button" id="button_b" cx="94" cy="114" r="7" fill="currentColor" stroke="transparent"
+					stroke-width="8" />
+
+				<path id="start" stroke="currentColor" d="M53.1 145.5L61.6 141" stroke-width="4"
+					stroke-linecap="round" />
+
+				<path id="select" stroke="currentColor" d="M35 145.5L43.5 141" stroke-width="4"
+					stroke-linecap="round" />
+
+				<foreignObject id="screen_backdrop" x="23" y="22" width="60" height="54">
+					<canvas width="160" height="144" id="screen" />
+				</foreignObject>
+			</svg>
+		</div> -->
+	</main>
 </body>
 
 </html>
-
-<!-- Powered by egui: https://github.com/emilk/egui/ -->

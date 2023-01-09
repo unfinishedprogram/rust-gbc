@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 enum BankingMode {
 	Simple,
 	Complex,
@@ -12,7 +12,7 @@ impl Default for BankingMode {
 	}
 }
 
-#[derive(Clone, Default, Serialize, Deserialize)]
+#[derive(Clone, Default, Serialize, Deserialize, Debug)]
 pub struct MBC1State {
 	banking_mode: BankingMode,
 	banking_register: u8,

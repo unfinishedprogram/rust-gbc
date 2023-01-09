@@ -3,12 +3,15 @@ use serde::{Deserialize, Serialize};
 
 use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
+	controller::ControllerState,
 	cpu::{CPUState, CPU},
-	flags::INTERRUPT_REQUEST,
+	flags::{INTERRUPT_REQUEST, INT_JOY_PAD},
 	io_registers::IORegisterState,
 	lcd::LCD,
 	memory_mapper::{Source, SourcedMemoryMapper},
 	ppu::{PPUMode, PPUState, PPU},
+	renderer::Color,
+	save_state::{RomSource, SaveState},
 	timer::{Timer, TimerState},
 };
 
@@ -35,20 +38,18 @@ pub struct EmulatorState {
 	pub booting: bool,
 	pub boot_rom: Vec<u8>,
 	t_states: u64,
-}
-
-impl PPUState {
-	pub fn pause(&mut self) {
-		if !self.paused {
-			self.paused = true;
-			self.cycle += 190000 - (5080 - 6);
-		}
-	}
+	pub color_scheme_dmg: (Color, Color, Color, Color),
 }
 
 impl Default for EmulatorState {
 	fn default() -> Self {
 		let mut emulator = Self {
+			color_scheme_dmg: (
+				(0xFF, 0xFF, 0xFF, 0xFF),
+				(0xAA, 0xAA, 0xAA, 0xFF),
+				(0x55, 0x55, 0x55, 0xFF),
+				(0x00, 0x00, 0x00, 0xFF),
+			),
 			dma_timer: 0,
 			cpu_state: CPUState::default(),
 			ppu_state: PPUState::default(),
@@ -70,9 +71,7 @@ impl Default for EmulatorState {
 			lcd: None,
 			t_states: 0,
 		};
-
 		emulator.set_mode(PPUMode::OamScan);
-
 		emulator
 	}
 }
@@ -122,10 +121,46 @@ impl EmulatorState {
 		);
 	}
 
-	pub fn load_rom(&mut self, rom: &[u8], src: String) -> Result<(), CartridgeParseError> {
-		let cartridge = Cartridge::try_new(rom, src)?;
+	pub fn load_rom(
+		&mut self,
+		rom: &[u8],
+		source: Option<RomSource>,
+	) -> Result<(), CartridgeParseError> {
+		let cartridge = Cartridge::try_new(rom, source)?;
 		self.cartridge_state = Some(cartridge);
-		self.run_until_boot();
 		Ok(())
+	}
+
+	pub fn set_controller_state(&mut self, state: &ControllerState) {
+		self.raw_joyp_input = state.as_byte();
+
+		if ((self.raw_joyp_input) ^ state.as_byte()) & state.as_byte() != 0 {
+			self.request_interrupt(INT_JOY_PAD);
+		}
+	}
+
+	pub fn load_save_state(self, save_state: SaveState) -> Self {
+		let Some(cart) = self.cartridge_state.as_ref() else {
+			return self;
+		};
+
+		let Ok(mut new_state) = serde_json::from_str::<EmulatorState>(&save_state.data) else {
+			return self;
+		};
+
+		let Some(new_cart) = new_state.cartridge_state.as_mut() else {
+			return self;
+		};
+
+		let Cartridge(data, _, info) = cart;
+
+		if info.title != new_cart.2.title {
+			return self;
+		}
+
+		new_cart.0.rom_banks = data.rom_banks.clone();
+		new_cart.0.loaded = true;
+
+		new_state
 	}
 }

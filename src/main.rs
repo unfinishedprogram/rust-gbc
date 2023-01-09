@@ -1,36 +1,19 @@
-#![warn(clippy::all, rust_2018_idioms)]
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+#![feature(local_key_cell_methods)]
 
-pub use gbc_emu::app::EmulatorManager;
+use gbc_emu::application::{setup_listeners, APPLICATION};
+use wasm_bindgen::prelude::wasm_bindgen;
 
-// When compiling natively:
-#[cfg(not(target_arch = "wasm32"))]
-fn main() {
-	// Log to stdout (if you run with `RUST_LOG=debug`).
-	tracing_subscriber::fmt::init();
-
-	let native_options = eframe::NativeOptions::default();
-	eframe::run_native(
-		"eframe template",
-		native_options,
-		Box::new(|cc| Box::new(EmulatorManager::new(cc))),
-	);
+#[allow(dead_code)]
+#[wasm_bindgen]
+pub fn load_rom(rom: &[u8], source: String) {
+	let source = serde_json::from_str(&source).unwrap();
+	APPLICATION.with_borrow_mut(|app| {
+		app.load_rom(rom, Some(source));
+		app.start();
+	});
 }
 
-// when compiling to web using trunk.
-#[cfg(target_arch = "wasm32")]
 fn main() {
-	// Make sure panics are logged using `console.error`.
-	console_error_panic_hook::set_once();
-
-	// Redirect tracing to console.log and friends:
-	tracing_wasm::set_as_global_default();
-
-	let web_options = eframe::WebOptions::default();
-	eframe::start_web(
-		"gameboy_canvas", // hardcode it
-		web_options,
-		Box::new(|cc| Box::new(EmulatorManager::new(cc))),
-	)
-	.expect("failed to start eframe");
+	// APPLICATION.with_borrow_mut(|app| {});
+	setup_listeners();
 }

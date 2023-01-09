@@ -1,4 +1,4 @@
-type Color = (u8, u8, u8);
+pub type Color = (u8, u8, u8, u8);
 
 use serde::{Deserialize, Serialize};
 
@@ -15,19 +15,9 @@ use super::{
 	EmulatorState,
 };
 
-const COLORS: [Color; 4] = [
-	(0xFF, 0xFF, 0xFF),
-	(0xAA, 0xAA, 0xAA),
-	(0x55, 0x55, 0x55),
-	(0x00, 0x00, 0x00),
-];
-
-// const COLORS: [Color; 4] = [(224, 248, 208), (136, 192, 112), (52, 104, 86), (8, 24, 32)];
-
 pub trait Renderer {
-	fn render_screen_pixel(&mut self, x: u8, y: u8, pixel_state: PixelState);
+	fn render_screen_pixel(&mut self, x: u8, y: u8);
 	fn fetch_scanline_state(&mut self) -> ScanlineState;
-	fn fetch_pixel_state(&self) -> PixelState;
 }
 
 enum TileMode {
@@ -67,8 +57,7 @@ impl RendererHelpers for EmulatorState {
 
 	fn get_sprite_pixel(&self, sprite: &Sprite, x: u8, y: u8) -> u8 {
 		let x = if sprite.flip_x { x } else { 7 - x };
-
-		if self.read(LCDC) & BIT_2 == 0 {
+		if self.ppu_state.scanline_state.lcdc & BIT_2 == 0 {
 			// 8x8 Mode
 			let y = if sprite.flip_y { y } else { 7 - y };
 			self.get_tile_pixel_pallet_index(x, y, sprite.tile_index, true)
@@ -87,7 +76,7 @@ impl RendererHelpers for EmulatorState {
 	fn get_pixel(&self, tile_mode: TileMode, x: u8, y: u8) -> u8 {
 		let (x, y) = (x as u16, y as u16);
 
-		let lcdc = self.read(LCDC);
+		let lcdc = &self.ppu_state.scanline_state.lcdc;
 		let indexing_mode = lcdc & BIT_4 != 0;
 
 		let base = {
@@ -121,7 +110,13 @@ impl RendererHelpers for EmulatorState {
 	}
 
 	fn get_color_from_pallet_index(&self, index: u8) -> Color {
-		COLORS[index as usize]
+		match index {
+			0 => self.color_scheme_dmg.0,
+			1 => self.color_scheme_dmg.1,
+			2 => self.color_scheme_dmg.2,
+			3 => self.color_scheme_dmg.3,
+			_ => unreachable!("No color over 4 possible"),
+		}
 	}
 
 	fn get_tile_pixel_pallet_index(&self, x: u8, y: u8, tile_index: u8, mode: bool) -> u8 {
@@ -164,23 +159,20 @@ pub struct PixelState {
 }
 
 impl Renderer for EmulatorState {
-	fn render_screen_pixel(&mut self, x: u8, y: u8, pixel_state: PixelState) {
+	fn render_screen_pixel(&mut self, x: u8, y: u8) {
 		let (scx, scy) = (self.read(0xFF43), self.read(0xFF42));
 		let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));
 
-		let PixelState {
-			lcdc: _,
-			bg_enabled,
-			sp_enabled,
-		} = pixel_state;
-
 		let ScanlineState {
-			lcdc: _,
+			lcdc,
 			wn_enabled,
 			w_index,
 			sprite_height,
 			sprites,
 		} = &self.ppu_state.scanline_state;
+
+		let bg_enabled = lcdc & BIT_0 == BIT_0;
+		let sp_enabled = lcdc & BIT_1 == BIT_1;
 
 		let wn_in_view = x + 7 >= wx && y >= wy;
 		let wn_visible = wn_in_view && *wn_enabled;
@@ -238,18 +230,6 @@ impl Renderer for EmulatorState {
 		};
 
 		lcd.put_pixel(x, y, color);
-	}
-
-	fn fetch_pixel_state(&self) -> PixelState {
-		let lcdc = self.read(LCDC);
-		let bg_enabled = lcdc & BIT_0 == BIT_0;
-		let sp_enabled = lcdc & BIT_1 == BIT_1;
-
-		PixelState {
-			bg_enabled,
-			sp_enabled,
-			lcdc,
-		}
 	}
 
 	fn fetch_scanline_state(&mut self) -> ScanlineState {
