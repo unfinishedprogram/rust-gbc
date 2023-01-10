@@ -124,7 +124,6 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			let b_val = cpu.read_16(&b_ref);
 
 			cpu.set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
-
 			cpu.clear_flag(N);
 			cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 			cpu.write_16(&a_ref, a_val.wrapping_add(b_val));
@@ -153,19 +152,21 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		}
 
 		ALU_OP_8(op, to, from) => {
+			use ALUOperation::*;
+
 			let a_val = cpu.read_8(&to);
 			let b_val = cpu.read_8(&from);
-
 			let carry = u8::from(cpu.get_flag(C));
 
 			let result = match op {
-				ALUOperation::ADD => {
+				ADD => {
 					cpu.clear_flag(N);
-					cpu.set_flag_to(H, ((a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10) == 0x10);
+					cpu.set_flag_to(H, (a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10 == 0x10);
 					cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 					a_val.wrapping_add(b_val)
 				}
-				ALUOperation::ADC => {
+
+				ADC => {
 					let sum: u16 = a_val as u16 + b_val as u16 + carry as u16;
 					cpu.set_flag_to(
 						H,
@@ -177,14 +178,14 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 					sum as u8
 				}
 
-				ALUOperation::SUB => {
+				SUB => {
 					cpu.set_flag(N);
 					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
 					cpu.set_flag_to(C, b_val > a_val);
 					a_val.wrapping_sub(b_val)
 				}
 
-				ALUOperation::SBC => {
+				SBC => {
 					let sum: i32 = a_val as i32 - b_val as i32 - carry as i32;
 					cpu.set_flag(N);
 					cpu.set_flag_to(
@@ -194,27 +195,28 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 					cpu.set_flag_to(C, sum < 0);
 					(sum & 0xFF) as u8
 				}
-				ALUOperation::AND => {
+
+				AND => {
 					cpu.clear_flag(C);
-					cpu.set_flag(H);
 					cpu.clear_flag(N);
+					cpu.set_flag(H);
 					a_val.bitand(b_val)
 				}
-				ALUOperation::XOR => {
+				XOR => {
 					cpu.clear_flag(C);
 					cpu.clear_flag(H);
 					cpu.clear_flag(N);
 					a_val.bitxor(b_val)
 				}
-				ALUOperation::OR => {
+				OR => {
 					cpu.clear_flag(C);
 					cpu.clear_flag(H);
 					cpu.clear_flag(N);
 					a_val.bitor(b_val)
 				}
 
-				ALUOperation::CP => {
-					cpu.set_flag_to(N, true);
+				CP => {
+					cpu.set_flag(N);
 					cpu.set_flag_to(C, a_val < b_val);
 					cpu.set_flag_to(Z, a_val == b_val);
 					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
@@ -223,7 +225,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			};
 
 			match op {
-				ALUOperation::CP => {}
+				CP => {}
 				_ => {
 					cpu.write_8(&to, result);
 					cpu.set_flag_to(Z, result == 0);
