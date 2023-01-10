@@ -20,3 +20,6 @@ image = { version = "0.24.5", default-features = false, features = ["png"] }
 [lib]
 name = "gameboy"
 path = "lib.rs"
+
+[profile.dev]
+opt-level = 3

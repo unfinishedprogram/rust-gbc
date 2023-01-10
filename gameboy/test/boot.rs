@@ -20,7 +20,7 @@ lazy_static! {
 		let mut state = EmulatorState::default();
 		// Not a specific rom, just one that has a valid logo and will pass checks
 		// TODO: Make this a custom rom that minimally satisfies the boot requirements
-		let rom = read("roms/test/dmg-acid2.gb").unwrap();
+		let rom = read("../roms/test/dmg-acid2.gb").unwrap();
 		let lcd = LCD::new();
 
 		state.bind_lcd(lcd);

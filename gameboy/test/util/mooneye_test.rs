@@ -24,7 +24,7 @@ macro_rules! mooneye_tests {
 		$(
 			#[test]
 			fn $name() {
-				let rom = format!("roms/test/{}.gb", $value);
+				let rom = format!("../roms/test/{}.gb", $value);
 				run_mooneye_test(&rom);
 			}
 		)*
