@@ -1,6 +1,4 @@
-use crate::Gameboy;
-
-use super::{values::ValueRefU16, CPU};
+use super::{values::ValueRefU16, Gameboy, CPU};
 
 pub trait GBStack {
 	fn push(&mut self, value: u16);

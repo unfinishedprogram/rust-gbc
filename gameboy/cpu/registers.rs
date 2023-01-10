@@ -1,9 +1,9 @@
-use std::fmt::Debug;
-use std::ops::Index;
-use std::ops::IndexMut;
+use serde::{Deserialize, Serialize};
+use std::{
+	fmt::Debug,
+	ops::{Index, IndexMut},
+};
 
-use serde::Deserialize;
-use serde::Serialize;
 use CPURegister16::*;
 use CPURegister8::*;
 
@@ -52,10 +52,10 @@ impl IndexMut<CPURegister8> for CPURegisters {
 impl CPURegisters {
 	pub fn get_u16(&self, reg: CPURegister16) -> u16 {
 		match reg {
-			AF => self[F] as u16 | ((self[A] as u16) << 8),
-			BC => self[C] as u16 | ((self[B] as u16) << 8),
-			DE => self[E] as u16 | ((self[D] as u16) << 8),
-			HL => self[L] as u16 | ((self[H] as u16) << 8),
+			AF => u16::from_le_bytes([self[F], self[A]]),
+			BC => u16::from_le_bytes([self[C], self[B]]),
+			DE => u16::from_le_bytes([self[E], self[D]]),
+			HL => u16::from_le_bytes([self[L], self[H]]),
 			SP => self.sp,
 			PC => self.pc,
 		}
