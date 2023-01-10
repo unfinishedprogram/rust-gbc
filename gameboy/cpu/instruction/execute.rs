@@ -8,7 +8,7 @@ use crate::{
 		CPU,
 	},
 	flags::{INT_JOY_PAD, INT_LCD_STAT, INT_SERIAL, INT_TIMER, INT_V_BLANK},
-	util::bits::BIT_7,
+	util::bits::{BIT_0, BIT_7},
 	Gameboy,
 };
 
@@ -369,57 +369,32 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		ROT(operator, val_ref) => {
 			use super::RotShiftOperation::*;
 			let value = cpu.read_8(&val_ref);
-
 			let carry_bit = u8::from(cpu.get_flag(C));
+
+			let result = match operator {
+				RLC => value.rotate_left(1),
+				RRC => value.rotate_right(1),
+				RL => (value << 1) | carry_bit,
+				RR => ((value >> 1) & 0b01111111) | (carry_bit << 7),
+				SLA => value << 1,
+				SRA => (value >> 1) | (value & BIT_7),
+				SWAP => value.rotate_right(4),
+				SRL => value >> 1,
+			};
+
 			cpu.clear_flag(N);
 			cpu.clear_flag(H);
-			match operator {
-				RLC => {
-					cpu.set_flag_to(C, value & BIT_7 == BIT_7);
-					cpu.set_flag_to(Z, value == 0);
-					cpu.write_8(&val_ref, value.rotate_left(1));
-				}
-				RRC => {
-					cpu.set_flag_to(C, value & 1 == 1);
-					cpu.set_flag_to(Z, value == 0);
-					cpu.write_8(&val_ref, value.rotate_right(1));
-				}
-				RL => {
-					let result = (value << 1) | carry_bit;
-					cpu.set_flag_to(C, value & BIT_7 == BIT_7);
-					cpu.set_flag_to(Z, result == 0);
-					cpu.write_8(&val_ref, result);
-				}
-				RR => {
-					let result = ((value >> 1) & 0b01111111) | (carry_bit << 7);
-					cpu.set_flag_to(C, value & 1 != 0);
-					cpu.set_flag_to(Z, result == 0);
-					cpu.write_8(&val_ref, result);
-				}
-				SLA => {
-					let result = value << 1;
-					cpu.set_flag_to(C, value & BIT_7 == BIT_7);
-					cpu.set_flag_to(Z, result == 0);
-					cpu.write_8(&val_ref, result);
-				}
-				SRA => {
-					let result = (value >> 1) | (value & BIT_7);
-					cpu.set_flag_to(C, value & 1 == 1);
-					cpu.set_flag_to(Z, result == 0);
-					cpu.write_8(&val_ref, result);
-				}
-				SWAP => {
-					cpu.clear_flag(C);
-					cpu.set_flag_to(Z, value == 0);
-					cpu.write_8(&val_ref, value.rotate_right(4));
-				}
-				SRL => {
-					let result = value >> 1;
-					cpu.set_flag_to(C, value & 1 != 0);
-					cpu.set_flag_to(Z, result == 0);
-					cpu.write_8(&val_ref, result);
-				}
-			}
+			cpu.set_flag_to(Z, result == 0);
+			cpu.set_flag_to(
+				C,
+				match operator {
+					RLC | RL | SLA => value & BIT_7 == BIT_7,
+					SRL | RRC | RR | SRA => value & BIT_0 == BIT_0,
+					SWAP => false,
+				},
+			);
+
+			cpu.write_8(&val_ref, result);
 		}
 
 		LD_HL_SP_DD(value) => {
