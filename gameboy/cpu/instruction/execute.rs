@@ -8,6 +8,7 @@ use crate::{
 		CPU,
 	},
 	flags::{INT_JOY_PAD, INT_LCD_STAT, INT_SERIAL, INT_TIMER, INT_V_BLANK},
+	util::bits::BIT_7,
 	Gameboy,
 };
 
@@ -67,7 +68,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			let val = cpu.read_8(&ptr);
 			cpu.set_flag_to(Z, val.wrapping_add(1) == 0);
 			cpu.clear_flag(N);
-			cpu.set_flag_to(H, ((val & 0xf).wrapping_add(1) & 0x10) == 0x10);
+			cpu.set_flag_to(H, ((val & 0xF).wrapping_add(1) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_add(1));
 		}
 
@@ -81,7 +82,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			let val = cpu.read_8(&ptr);
 			cpu.set_flag_to(Z, val.wrapping_sub(1) == 0);
 			cpu.set_flag(N);
-			cpu.set_flag_to(H, ((val & 0xf).wrapping_sub(1 & 0xf) & 0x10) == 0x10);
+			cpu.set_flag_to(H, ((val & 0xF).wrapping_sub(1 & 0xF) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_sub(1));
 		}
 
@@ -95,7 +96,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				_ => {
 					cpu.set_flag(N);
 					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.set_flag_to(H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
+					cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -146,7 +147,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 			cpu.set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
 
-			cpu.set_flag_to(H, ((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10);
+			cpu.set_flag_to(H, ((a_val & 0xF).wrapping_add(ub_val & 0xF) & 0x10) == 0x10);
 
 			cpu.write_16(&a_ref, a_val.wrapping_add_signed(b_val));
 		}
@@ -160,7 +161,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			let result = match op {
 				ALUOperation::ADD => {
 					cpu.clear_flag(N);
-					cpu.set_flag_to(H, ((a_val & 0xf).wrapping_add(b_val & 0xf) & 0x10) == 0x10);
+					cpu.set_flag_to(H, ((a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10) == 0x10);
 					cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 					a_val.wrapping_add(b_val)
 				}
@@ -216,7 +217,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 					cpu.set_flag_to(N, true);
 					cpu.set_flag_to(C, a_val < b_val);
 					cpu.set_flag_to(Z, a_val == b_val);
-					cpu.set_flag_to(H, (a_val & 0xf).wrapping_sub(b_val & 0xf) & 0x10 == 0x10);
+					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
 					a_val
 				}
 			};
@@ -278,7 +279,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			cpu.clear_flag(N);
 			cpu.clear_flag(H);
 			cpu.clear_flag(Z);
-			cpu.set_flag_to(C, value & 0b10000000 == 0b10000000);
+			cpu.set_flag_to(C, value & BIT_7 == BIT_7);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_left(1));
 		}
 		RRCA => {
@@ -370,57 +371,44 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			let value = cpu.read_8(&val_ref);
 
 			let carry_bit = u8::from(cpu.get_flag(C));
-
+			cpu.clear_flag(N);
+			cpu.clear_flag(H);
 			match operator {
 				RLC => {
-					cpu.clear_flag(N);
-					cpu.clear_flag(H);
-					cpu.set_flag_to(C, value & 0b10000000 == 0b10000000);
+					cpu.set_flag_to(C, value & BIT_7 == BIT_7);
 					cpu.set_flag_to(Z, value == 0);
 					cpu.write_8(&val_ref, value.rotate_left(1));
 				}
 				RRC => {
-					cpu.clear_flag(N);
-					cpu.clear_flag(H);
 					cpu.set_flag_to(C, value & 1 == 1);
 					cpu.set_flag_to(Z, value == 0);
 					cpu.write_8(&val_ref, value.rotate_right(1));
 				}
 				RL => {
 					let result = (value << 1) | carry_bit;
-					cpu.clear_flag(N);
-					cpu.clear_flag(H);
-					cpu.set_flag_to(C, value & 0b10000000 == 0b10000000);
+					cpu.set_flag_to(C, value & BIT_7 == BIT_7);
 					cpu.set_flag_to(Z, result == 0);
 					cpu.write_8(&val_ref, result);
 				}
 				RR => {
 					let result = ((value >> 1) & 0b01111111) | (carry_bit << 7);
 					cpu.set_flag_to(C, value & 1 != 0);
-					cpu.clear_flag(N);
-					cpu.clear_flag(H);
 					cpu.set_flag_to(Z, result == 0);
 					cpu.write_8(&val_ref, result);
 				}
 				SLA => {
 					let result = value << 1;
-					cpu.clear_flag(N);
-					cpu.clear_flag(H);
-					cpu.set_flag_to(C, value & 0b10000000 == 0b10000000);
+					cpu.set_flag_to(C, value & BIT_7 == BIT_7);
 					cpu.set_flag_to(Z, result == 0);
 					cpu.write_8(&val_ref, result);
 				}
 				SRA => {
-					let result = (value >> 1) | (value & 0b10000000);
-					cpu.clear_flag(N);
-					cpu.clear_flag(H);
+					let result = (value >> 1) | (value & BIT_7);
 					cpu.set_flag_to(C, value & 1 == 1);
 					cpu.set_flag_to(Z, result == 0);
 					cpu.write_8(&val_ref, result);
 				}
 				SWAP => {
-					cpu.clear_flag(N);
-					cpu.clear_flag(H);
 					cpu.clear_flag(C);
 					cpu.set_flag_to(Z, value == 0);
 					cpu.write_8(&val_ref, value.rotate_right(4));
@@ -428,10 +416,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				SRL => {
 					let result = value >> 1;
 					cpu.set_flag_to(C, value & 1 != 0);
-					cpu.clear_flag(N);
-					cpu.clear_flag(H);
 					cpu.set_flag_to(Z, result == 0);
-
 					cpu.write_8(&val_ref, result);
 				}
 			}
@@ -453,7 +438,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 			cpu.set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
 
-			cpu.set_flag_to(H, ((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10);
+			cpu.set_flag_to(H, ((a_val & 0xF).wrapping_add(ub_val & 0xF) & 0x10) == 0x10);
 
 			cpu.write_16(&CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
 		}
@@ -481,7 +466,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				_ => {
 					cpu.set_flag(N);
 					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.set_flag_to(H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
+					cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -512,7 +497,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				_ => {
 					cpu.set_flag(N);
 					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.set_flag_to(H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
+					cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
