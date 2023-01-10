@@ -1,8 +1,11 @@
-mod state;
-
-pub use state::TimerState;
-
 use super::{flags::INT_TIMER, EmulatorState};
+use serde::{Deserialize, Serialize};
+
+#[derive(Default, Clone, Serialize, Deserialize)]
+pub struct TimerState {
+	pub timer_clock: u64,
+	pub div_clock: u8,
+}
 
 pub trait Timer {
 	fn update_timer(&mut self, cycles: u64);

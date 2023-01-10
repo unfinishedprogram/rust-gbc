@@ -3,14 +3,11 @@ use std::ops::{Index, IndexMut};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	memory_mapper::SourcedMemoryMapper,
-	ppu::PPU,
-	util::bits::{BIT_4, BIT_5},
-};
-
-use super::{
 	flags::{INT_SERIAL, LCD_DISPLAY_ENABLE},
 	memory_mapper::Source,
+	memory_mapper::SourcedMemoryMapper,
+	ppu::PPU,
+	util::bits::*,
 	EmulatorState,
 };
 

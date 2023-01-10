@@ -1,6 +1,8 @@
-use serde::{Deserialize, Serialize};
+mod renderer;
+mod sprite;
 
 use crate::{flags::STAT_H_BLANK_IE, memory_mapper::SourcedMemoryMapper};
+use serde::{Deserialize, Serialize};
 
 use super::{
 	flags::{
@@ -8,9 +10,10 @@ use super::{
 	},
 	io_registers::{LY, LYC, STAT},
 	memory_mapper::Source,
-	renderer::{Renderer, ScanlineState},
 	EmulatorState,
 };
+
+use renderer::{Renderer, ScanlineState};
 
 #[derive(Debug)]
 pub enum PPUMode {

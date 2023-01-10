@@ -2,17 +2,13 @@ pub type Color = (u8, u8, u8, u8);
 
 use serde::{Deserialize, Serialize};
 
-pub mod sprite;
-
-use crate::util::bits::*;
-
-use self::sprite::Sprite;
-
-use super::{
+use super::sprite::Sprite;
+use crate::{
 	flags::LCDC,
 	lcd::LCDDisplay,
 	memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper},
 	ppu::PPU,
+	util::bits::*,
 	EmulatorState,
 };
 
@@ -151,12 +147,6 @@ pub struct ScanlineState {
 	pub w_index: u8,
 	pub sprite_height: u8,
 	pub sprites: Vec<Sprite>,
-}
-
-pub struct PixelState {
-	pub bg_enabled: bool,
-	pub sp_enabled: bool,
-	pub lcdc: u8,
 }
 
 impl Renderer for EmulatorState {

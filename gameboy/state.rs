@@ -9,10 +9,11 @@ use super::{
 	lcd::LCD,
 	memory_mapper::{Source, SourcedMemoryMapper},
 	ppu::{PPUMode, PPUState, PPU},
-	renderer::Color,
 	save_state::{RomSource, SaveState},
 	timer::{Timer, TimerState},
 };
+
+type Color = (u8, u8, u8, u8);
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct EmulatorState {
