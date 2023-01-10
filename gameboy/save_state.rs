@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::emulator::{cartridge::memory_bank_controller::Cartridge, EmulatorState};
+use crate::{cartridge::memory_bank_controller::Cartridge, EmulatorState};
 use chrono::NaiveDateTime;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -1,4 +1,4 @@
-use crate::emulator::state::EmulatorState;
+use crate::EmulatorState;
 
 use super::{registers::CPURegister8, CPU};
 

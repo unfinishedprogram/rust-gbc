@@ -1,4 +1,4 @@
-use crate::emulator::{
+use crate::{
 	cpu::{
 		flags::{Flag, Flags},
 		gb_stack::GBStack,

@@ -13,7 +13,7 @@ use std::{cell::RefCell, fmt::Display};
 use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
-use crate::emulator::{
+use gameboy::{
 	lcd::LCD,
 	save_state::{RomSource, SaveState},
 	EmulatorState,

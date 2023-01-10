@@ -3,7 +3,8 @@ use std::ops::{Index, IndexMut};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	emulator::{memory_mapper::SourcedMemoryMapper, ppu::PPU},
+	memory_mapper::SourcedMemoryMapper,
+	ppu::PPU,
 	util::bits::{BIT_4, BIT_5},
 };
 
@@ -123,7 +124,6 @@ impl IORegisters for EmulatorState {
 		match addr {
 			DISABLE_BOOT => {
 				self.booting = false;
-				log::error!("Disable Boot: PC{}", self.cpu_state.registers.pc);
 			}
 			DIV => {
 				self.io_register_state[DIV] = 0;

@@ -2,7 +2,7 @@ use serde::Deserialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use web_sys::{window, Storage};
 
-use crate::emulator::save_state::{SaveError, SaveManager, SaveState};
+use gameboy::save_state::{SaveError, SaveManager, SaveState};
 
 use super::{Application, APPLICATION};
 
@@ -93,7 +93,7 @@ impl SaveManager for WebSaveManager {
 }
 
 #[allow(dead_code)]
-#[wasm_bindgen]
+// #[wasm_bindgen]
 pub async fn load_save_state(slot: usize) {
 	if let Ok(save) = WebSaveManager::load_save_state(slot) {
 		let rom = Application::load_rom_from_source(save.rom_source.clone())

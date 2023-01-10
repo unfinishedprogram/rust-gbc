@@ -2,8 +2,9 @@ pub type Color = (u8, u8, u8, u8);
 
 use serde::{Deserialize, Serialize};
 
-use crate::util::bits::*;
 pub mod sprite;
+
+use crate::util::bits::*;
 
 use self::sprite::Sprite;
 

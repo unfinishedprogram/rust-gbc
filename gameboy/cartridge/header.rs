@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::emulator::save_state::RomSource;
+use crate::save_state::RomSource;
 
 #[derive(Debug, Clone)]
 pub enum CartridgeParseError {

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::emulator::{flags::STAT_H_BLANK_IE, memory_mapper::SourcedMemoryMapper};
+use crate::{flags::STAT_H_BLANK_IE, memory_mapper::SourcedMemoryMapper};
 
 use super::{
 	flags::{

@@ -1,4 +1,3 @@
-use instant::Instant;
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -54,7 +53,7 @@ impl Default for EmulatorState {
 			cpu_state: CPUState::default(),
 			ppu_state: PPUState::default(),
 			io_register_state: IORegisterState::default(),
-			boot_rom: include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
+			boot_rom: include_bytes!("./dmg_boot.bin").to_vec(),
 			booting: true,
 			cartridge_state: None,
 			ram_bank: 0,
@@ -82,11 +81,9 @@ impl EmulatorState {
 	}
 
 	pub fn run_until_boot(&mut self) {
-		let start = Instant::now();
 		while self.booting {
 			self.step_cpu();
 		}
-		log::warn!("BIOS took: {:?}", Instant::now().duration_since(start))
 	}
 
 	pub fn step(&mut self) {

@@ -7,7 +7,7 @@ use gloo::{
 use wasm_bindgen::JsCast;
 use web_sys::Gamepad;
 
-use crate::emulator::controller::ControllerState;
+use gameboy::controller::ControllerState;
 
 #[derive(Default)]
 struct InputStateInner {
@@ -55,7 +55,7 @@ impl InputState {
 		}
 
 		if let Some(gp) = self.get_gamepad() {
-			state += ControllerState::from_gamepad(&gp)
+			state += gamepad_to_controller_state(&gp);
 		}
 
 		state
@@ -85,5 +85,31 @@ impl InputState {
 			_key_up: key_up,
 			inner,
 		}
+	}
+}
+
+pub fn gamepad_to_controller_state(gp: &Gamepad) -> ControllerState {
+	let buttons: Vec<bool> = gp
+		.buttons()
+		.iter()
+		.map(|button| {
+			button
+				.dyn_into::<web_sys::GamepadButton>()
+				.unwrap()
+				.pressed()
+		})
+		.collect();
+
+	let axis: Vec<f64> = gp.axes().iter().map(|v| v.as_f64().unwrap()).collect();
+
+	ControllerState {
+		a: buttons[0] || buttons[3],
+		b: buttons[2] || buttons[1],
+		select: buttons[8],
+		start: buttons[9],
+		right: axis[0] > 0.25 || *buttons.get(15).unwrap_or(&false), //up
+		left: axis[0] < -0.25 || *buttons.get(14).unwrap_or(&false), // RIGHT
+		up: axis[1] < -0.25 || *buttons.get(12).unwrap_or(&false),
+		down: axis[1] > 0.25 || *buttons.get(13).unwrap_or(&false), // LEFT
 	}
 }

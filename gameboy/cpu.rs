@@ -1,11 +1,10 @@
+use crate::cpu::flags::Flags;
 pub mod flags;
 mod gb_stack;
 pub mod instruction;
 pub mod registers;
 mod state;
 pub mod values;
-
-use crate::emulator::cpu::flags::Flags;
 
 use super::memory_mapper::{Source, SourcedMemoryMapper};
 pub use state::CPUState;

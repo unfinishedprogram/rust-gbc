@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::emulator::{cartridge::mbc3, memory_mapper::MemoryMapper, save_state::RomSource};
+use crate::{cartridge::mbc3, memory_mapper::MemoryMapper, save_state::RomSource};
 
 use super::{
 	cartridge_data::CartridgeData,
@@ -198,7 +198,7 @@ impl MemoryMapper for Cartridge {
 					let bank = state.get_ram_bank() % data.ram_banks.len() as u16;
 					data.ram_banks[bank as usize][(addr - 0xA000) as usize] = value;
 				}
-				_ => log::error!("Wrote to invalid memory, ADDR:{addr}, Value:{value}"),
+				_ => unreachable!(),
 			},
 			MMM01 => {}
 			MBC6 => {}

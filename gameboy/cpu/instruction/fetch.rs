@@ -2,7 +2,7 @@ use super::{
 	decode_tables::DT, opcode::parse_opcode, CPURegister16::*, CPURegister8::*, Condition,
 	Instruction, Instruction::*, ValueRefU8,
 };
-use crate::emulator::{
+use crate::{
 	cpu::{registers::CPURegister16, values::ValueRefU16, CPU},
 	memory_mapper::SourcedMemoryMapper,
 };

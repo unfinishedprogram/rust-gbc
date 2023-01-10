@@ -5,9 +5,7 @@ edition = "2021"
 rust-version = "1.65.0"
 
 [dependencies]
-enum-primitive-derive = "0.2.2"
-num-traits = "0.2.15"
-instant = { version = "0.1", features = ["wasm-bindgen"] }
+gameboy = { path = "gameboy" }
 log = "0.4.17"
 serde = { version = "1.0.150", features = ["derive"] }
 chrono = { version = "0.4.23", features = ["serde"] }
