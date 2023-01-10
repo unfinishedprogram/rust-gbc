@@ -1,19 +1,17 @@
-use crate::Gameboy;
+use crate::{util::bits::*, Gameboy};
 
 use super::{registers::CPURegister8, CPU};
 
-pub enum Flag {
-	Z = 0b10000000,
-	N = 0b01000000,
-	H = 0b00100000,
-	C = 0b00010000,
-}
+pub const Z: u8 = BIT_7;
+pub const N: u8 = BIT_6;
+pub const H: u8 = BIT_5;
+pub const C: u8 = BIT_4;
 
 pub trait Flags {
 	fn get_flag_byte(&self) -> u8;
 	fn set_flag_byte(&mut self, byte: u8);
 
-	fn set_flag_to(&mut self, flag: Flag, value: bool) {
+	fn set_flag_to(&mut self, flag: u8, value: bool) {
 		if value {
 			self.set_flag(flag)
 		} else {
@@ -21,15 +19,15 @@ pub trait Flags {
 		}
 	}
 
-	fn clear_flag(&mut self, flag: Flag) {
+	fn clear_flag(&mut self, flag: u8) {
 		self.set_flag_byte(self.get_flag_byte() & !(flag as u8));
 	}
 
-	fn set_flag(&mut self, flag: Flag) {
+	fn set_flag(&mut self, flag: u8) {
 		self.set_flag_byte(self.get_flag_byte() | flag as u8);
 	}
 
-	fn get_flag(&self, flag: Flag) -> bool {
+	fn get_flag(&self, flag: u8) -> bool {
 		self.get_flag_byte() & flag as u8 != 0
 	}
 }

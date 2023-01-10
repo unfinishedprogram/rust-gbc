@@ -16,7 +16,6 @@ use instruction::{execute::execute_instruction, fetch::fetch_instruction, Instru
 use registers::CPURegisters;
 use values::{ValueRefU16, ValueRefU8};
 
-use self::flags::Flag;
 use self::{instruction::condition::Condition, values::ValueRefI8};
 
 pub trait CPU {
@@ -143,10 +142,10 @@ impl CPU for Gameboy {
 
 		match condition {
 			ALWAYS => true,
-			NZ => !self.get_flag(Flag::Z),
-			Z => self.get_flag(Flag::Z),
-			NC => !self.get_flag(Flag::C),
-			C => self.get_flag(Flag::C),
+			NZ => !self.get_flag(flags::Z),
+			Z => self.get_flag(flags::Z),
+			NC => !self.get_flag(flags::C),
+			C => self.get_flag(flags::C),
 		}
 	}
 

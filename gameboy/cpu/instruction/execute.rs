@@ -1,6 +1,6 @@
 use crate::{
 	cpu::{
-		flags::{Flag, Flags},
+		flags::{Flags, C, H, N, Z},
 		gb_stack::GBStack,
 		instruction::{ALUOperation, Instruction, Instruction::*},
 		registers::{CPURegister16, CPURegister8},
@@ -65,9 +65,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		INC_8(ptr) => {
 			let val = cpu.read_8(&ptr);
-			cpu.set_flag_to(Flag::Z, val.wrapping_add(1) == 0);
-			cpu.clear_flag(Flag::N);
-			cpu.set_flag_to(Flag::H, ((val & 0xf).wrapping_add(1) & 0x10) == 0x10);
+			cpu.set_flag_to(Z, val.wrapping_add(1) == 0);
+			cpu.clear_flag(N);
+			cpu.set_flag_to(H, ((val & 0xf).wrapping_add(1) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_add(1));
 		}
 
@@ -79,9 +79,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		DEC_8(ptr) => {
 			let val = cpu.read_8(&ptr);
-			cpu.set_flag_to(Flag::Z, val.wrapping_sub(1) == 0);
-			cpu.set_flag(Flag::N);
-			cpu.set_flag_to(Flag::H, ((val & 0xf).wrapping_sub(1 & 0xf) & 0x10) == 0x10);
+			cpu.set_flag_to(Z, val.wrapping_sub(1) == 0);
+			cpu.set_flag(N);
+			cpu.set_flag_to(H, ((val & 0xf).wrapping_sub(1 & 0xf) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_sub(1));
 		}
 
@@ -93,9 +93,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			match ptr {
 				ValueRefU16::Reg(_) => {}
 				_ => {
-					cpu.set_flag(Flag::N);
-					cpu.set_flag_to(Flag::Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.set_flag_to(Flag::H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
+					cpu.set_flag(N);
+					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.set_flag_to(H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -122,21 +122,18 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			let a_val = cpu.read_16(&a_ref);
 			let b_val = cpu.read_16(&b_ref);
 
-			cpu.set_flag_to(
-				Flag::H,
-				(((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000,
-			);
+			cpu.set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
 
-			cpu.clear_flag(Flag::N);
-			cpu.set_flag_to(Flag::C, a_val.wrapping_add(b_val) < a_val);
+			cpu.clear_flag(N);
+			cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 			cpu.write_16(&a_ref, a_val.wrapping_add(b_val));
 		}
 
 		ADD_SIGNED(a_ref, b_ref) => {
 			cpu.tick_m_cycles(2);
 
-			cpu.clear_flag(Flag::Z);
-			cpu.clear_flag(Flag::N);
+			cpu.clear_flag(Z);
+			cpu.clear_flag(N);
 
 			let a_val = cpu.read_16(&a_ref);
 			let b_val = cpu.read_i8(&b_ref) as i16;
@@ -147,22 +144,18 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				b_val as u16
 			};
 
-			cpu.set_flag_to(Flag::C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
+			cpu.set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
 
-			cpu.set_flag_to(
-				Flag::H,
-				((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10,
-			);
+			cpu.set_flag_to(H, ((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10);
 
 			cpu.write_16(&a_ref, a_val.wrapping_add_signed(b_val));
 		}
 
 		ALU_OP_8(op, to, from) => {
-			use Flag::*;
 			let a_val = cpu.read_8(&to);
 			let b_val = cpu.read_8(&from);
 
-			let carry = u8::from(cpu.get_flag(Flag::C));
+			let carry = u8::from(cpu.get_flag(C));
 
 			let result = match op {
 				ALUOperation::ADD => {
@@ -257,9 +250,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			cpu.push(value)
 		}
 		RET(condition) => {
-			use super::condition::Condition::*;
-
-			if !matches!(condition, ALWAYS) {
+			if !matches!(condition, Condition::ALWAYS) {
 				cpu.tick_m_cycles(1);
 			}
 
@@ -284,18 +275,18 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		}
 		RLCA => {
 			let value = cpu.read_8(&CPURegister8::A.into());
-			cpu.clear_flag(Flag::N);
-			cpu.clear_flag(Flag::H);
-			cpu.clear_flag(Flag::Z);
-			cpu.set_flag_to(Flag::C, value & 0b10000000 == 0b10000000);
+			cpu.clear_flag(N);
+			cpu.clear_flag(H);
+			cpu.clear_flag(Z);
+			cpu.set_flag_to(C, value & 0b10000000 == 0b10000000);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_left(1));
 		}
 		RRCA => {
 			let value = cpu.read_8(&CPURegister8::A.into());
-			cpu.clear_flag(Flag::N);
-			cpu.clear_flag(Flag::H);
-			cpu.set_flag_to(Flag::C, value & 1 == 1);
-			cpu.clear_flag(Flag::Z);
+			cpu.clear_flag(N);
+			cpu.clear_flag(H);
+			cpu.set_flag_to(C, value & 1 == 1);
+			cpu.clear_flag(Z);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_right(1));
 		}
 
@@ -304,67 +295,67 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
 				cpu,
 			);
-			cpu.clear_flag(Flag::Z);
+			cpu.clear_flag(Z);
 		}
 		RRA => {
 			execute_instruction(
 				Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
 				cpu,
 			);
-			cpu.clear_flag(Flag::Z);
-			cpu.clear_flag(Flag::H);
-			cpu.clear_flag(Flag::N);
+			cpu.clear_flag(Z);
+			cpu.clear_flag(H);
+			cpu.clear_flag(N);
 		}
 		DAA => {
 			// Decimal Adjust A Register
 			let a_ref = &CPURegister8::A.into();
 			let mut a_val = cpu.read_8(a_ref);
 
-			if !cpu.get_flag(Flag::N) {
-				if cpu.get_flag(Flag::C) || a_val > 0x99 {
+			if !cpu.get_flag(N) {
+				if cpu.get_flag(C) || a_val > 0x99 {
 					a_val = a_val.wrapping_add(0x60);
-					cpu.set_flag(Flag::C);
+					cpu.set_flag(C);
 				}
-				if cpu.get_flag(Flag::H) || (a_val & 0x0f) > 0x09 {
+				if cpu.get_flag(H) || (a_val & 0x0f) > 0x09 {
 					a_val = a_val.wrapping_add(0x6);
 				}
 			} else {
-				if cpu.get_flag(Flag::C) {
+				if cpu.get_flag(C) {
 					a_val = a_val.wrapping_sub(0x60);
 				}
-				if cpu.get_flag(Flag::H) {
+				if cpu.get_flag(H) {
 					a_val = a_val.wrapping_sub(0x6);
 				}
 			}
 
-			cpu.clear_flag(Flag::H);
-			cpu.set_flag_to(Flag::Z, a_val == 0);
+			cpu.clear_flag(H);
+			cpu.set_flag_to(Z, a_val == 0);
 			cpu.write_8(a_ref, a_val);
 		}
 		CPL => {
 			// Complement A Register
 			let current = cpu.read_8(&CPURegister8::A.into());
-			cpu.set_flag(Flag::H);
-			cpu.set_flag(Flag::N);
+			cpu.set_flag(H);
+			cpu.set_flag(N);
 			cpu.write_8(&CPURegister8::A.into(), !current);
 		}
 		SCF => {
 			// Set Carry Flag
-			cpu.clear_flag(Flag::H);
-			cpu.clear_flag(Flag::N);
-			cpu.set_flag(Flag::C);
+			cpu.clear_flag(H);
+			cpu.clear_flag(N);
+			cpu.set_flag(C);
 		}
 		CCF => {
 			// Complement Carry FLag
-			cpu.clear_flag(Flag::H);
-			cpu.clear_flag(Flag::N);
-			cpu.set_flag_to(Flag::C, !cpu.get_flag(Flag::C));
+			cpu.clear_flag(H);
+			cpu.clear_flag(N);
+			cpu.set_flag_to(C, !cpu.get_flag(C));
 		}
 		BIT(bit, value) => {
 			let value = cpu.read_8(&value);
-			cpu.set_flag_to(Flag::Z, (value >> bit) & 1 == 0);
-			cpu.set_flag(Flag::H);
-			cpu.clear_flag(Flag::N);
+			cpu.set_flag_to(Z, (value >> bit) & 1 == 0);
+			cpu.set_flag(H);
+			cpu.clear_flag(N);
 		}
 		RES(bit, value) => {
 			let current = cpu.read_8(&value);
@@ -378,68 +369,68 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			use super::RotShiftOperation::*;
 			let value = cpu.read_8(&val_ref);
 
-			let carry_bit = u8::from(cpu.get_flag(Flag::C));
+			let carry_bit = u8::from(cpu.get_flag(C));
 
 			match operator {
 				RLC => {
-					cpu.clear_flag(Flag::N);
-					cpu.clear_flag(Flag::H);
-					cpu.set_flag_to(Flag::C, value & 0b10000000 == 0b10000000);
-					cpu.set_flag_to(Flag::Z, value == 0);
+					cpu.clear_flag(N);
+					cpu.clear_flag(H);
+					cpu.set_flag_to(C, value & 0b10000000 == 0b10000000);
+					cpu.set_flag_to(Z, value == 0);
 					cpu.write_8(&val_ref, value.rotate_left(1));
 				}
 				RRC => {
-					cpu.clear_flag(Flag::N);
-					cpu.clear_flag(Flag::H);
-					cpu.set_flag_to(Flag::C, value & 1 == 1);
-					cpu.set_flag_to(Flag::Z, value == 0);
+					cpu.clear_flag(N);
+					cpu.clear_flag(H);
+					cpu.set_flag_to(C, value & 1 == 1);
+					cpu.set_flag_to(Z, value == 0);
 					cpu.write_8(&val_ref, value.rotate_right(1));
 				}
 				RL => {
 					let result = (value << 1) | carry_bit;
-					cpu.clear_flag(Flag::N);
-					cpu.clear_flag(Flag::H);
-					cpu.set_flag_to(Flag::C, value & 0b10000000 == 0b10000000);
-					cpu.set_flag_to(Flag::Z, result == 0);
+					cpu.clear_flag(N);
+					cpu.clear_flag(H);
+					cpu.set_flag_to(C, value & 0b10000000 == 0b10000000);
+					cpu.set_flag_to(Z, result == 0);
 					cpu.write_8(&val_ref, result);
 				}
 				RR => {
 					let result = ((value >> 1) & 0b01111111) | (carry_bit << 7);
-					cpu.set_flag_to(Flag::C, value & 1 != 0);
-					cpu.clear_flag(Flag::N);
-					cpu.clear_flag(Flag::H);
-					cpu.set_flag_to(Flag::Z, result == 0);
+					cpu.set_flag_to(C, value & 1 != 0);
+					cpu.clear_flag(N);
+					cpu.clear_flag(H);
+					cpu.set_flag_to(Z, result == 0);
 					cpu.write_8(&val_ref, result);
 				}
 				SLA => {
 					let result = value << 1;
-					cpu.clear_flag(Flag::N);
-					cpu.clear_flag(Flag::H);
-					cpu.set_flag_to(Flag::C, value & 0b10000000 == 0b10000000);
-					cpu.set_flag_to(Flag::Z, result == 0);
+					cpu.clear_flag(N);
+					cpu.clear_flag(H);
+					cpu.set_flag_to(C, value & 0b10000000 == 0b10000000);
+					cpu.set_flag_to(Z, result == 0);
 					cpu.write_8(&val_ref, result);
 				}
 				SRA => {
 					let result = (value >> 1) | (value & 0b10000000);
-					cpu.clear_flag(Flag::N);
-					cpu.clear_flag(Flag::H);
-					cpu.set_flag_to(Flag::C, value & 1 == 1);
-					cpu.set_flag_to(Flag::Z, result == 0);
+					cpu.clear_flag(N);
+					cpu.clear_flag(H);
+					cpu.set_flag_to(C, value & 1 == 1);
+					cpu.set_flag_to(Z, result == 0);
 					cpu.write_8(&val_ref, result);
 				}
 				SWAP => {
-					cpu.clear_flag(Flag::N);
-					cpu.clear_flag(Flag::H);
-					cpu.clear_flag(Flag::C);
-					cpu.set_flag_to(Flag::Z, value == 0);
+					cpu.clear_flag(N);
+					cpu.clear_flag(H);
+					cpu.clear_flag(C);
+					cpu.set_flag_to(Z, value == 0);
 					cpu.write_8(&val_ref, value.rotate_right(4));
 				}
 				SRL => {
 					let result = value >> 1;
-					cpu.set_flag_to(Flag::C, value & 1 != 0);
-					cpu.clear_flag(Flag::N);
-					cpu.clear_flag(Flag::H);
-					cpu.set_flag_to(Flag::Z, result == 0);
+					cpu.set_flag_to(C, value & 1 != 0);
+					cpu.clear_flag(N);
+					cpu.clear_flag(H);
+					cpu.set_flag_to(Z, result == 0);
 
 					cpu.write_8(&val_ref, result);
 				}
@@ -448,8 +439,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		LD_HL_SP_DD(value) => {
 			cpu.tick_m_cycles(1);
-			cpu.clear_flag(Flag::Z);
-			cpu.clear_flag(Flag::N);
+			cpu.clear_flag(Z);
+			cpu.clear_flag(N);
 
 			let a_val = cpu.read_16(&CPURegister16::SP.into());
 			let b_val = cpu.read_i8(&value) as i16;
@@ -460,12 +451,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				b_val as u16
 			};
 
-			cpu.set_flag_to(Flag::C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
+			cpu.set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
 
-			cpu.set_flag_to(
-				Flag::H,
-				((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10,
-			);
+			cpu.set_flag_to(H, ((a_val & 0xf).wrapping_add(ub_val & 0xf) & 0x10) == 0x10);
 
 			cpu.write_16(&CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
 		}
@@ -491,9 +479,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			match ptr {
 				ValueRefU16::Reg(_) => {}
 				_ => {
-					cpu.set_flag(Flag::N);
-					cpu.set_flag_to(Flag::Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.set_flag_to(Flag::H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
+					cpu.set_flag(N);
+					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.set_flag_to(H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -522,9 +510,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			match ptr {
 				ValueRefU16::Reg(_) => {}
 				_ => {
-					cpu.set_flag(Flag::N);
-					cpu.set_flag_to(Flag::Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.set_flag_to(Flag::H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
+					cpu.set_flag(N);
+					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.set_flag_to(H, (((ptr_val & 0xf) - 1) & 0x10) == 0x10);
 				}
 			}
 
