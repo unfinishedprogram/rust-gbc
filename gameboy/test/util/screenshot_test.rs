@@ -54,7 +54,7 @@ macro_rules! screenshot_tests {
 			#[test]
 			fn $name() {
 				let rom = format!("../roms/test/{}.gb", $value);
-				let expected = format!("test/test_expected/{}.png", $value);
+				let expected = format!("test/expected/{}.png", $value);
 				run_screenshot_test(&rom, &expected, $seconds);
 			}
 		)*
