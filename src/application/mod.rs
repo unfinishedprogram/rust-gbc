@@ -13,10 +13,10 @@ use std::{cell::RefCell, fmt::Display};
 use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
-use crate::emulator::{
+use gameboy::{
 	lcd::LCD,
 	save_state::{RomSource, SaveState},
-	EmulatorState,
+	Gameboy,
 };
 
 use self::{input::InputState, uploader::setup_upload_listeners};
@@ -42,7 +42,7 @@ impl Display for RunningState {
 pub struct Application {
 	// Keeps file reader state, should never be used internal only
 	_file_reader: Option<FileReader>,
-	emulator_state: EmulatorState,
+	emulator_state: Gameboy,
 	running_state: RunningState,
 	input_state: InputState,
 }
@@ -51,7 +51,7 @@ impl Default for Application {
 	fn default() -> Self {
 		setup_upload_listeners();
 		let emulator_state = {
-			let mut state = EmulatorState::default();
+			let mut state = Gameboy::default();
 			let lcd = LCD::default();
 			state.bind_lcd(lcd);
 			state
@@ -131,7 +131,7 @@ impl Application {
 	}
 
 	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
-		self.emulator_state = EmulatorState::default();
+		self.emulator_state = Gameboy::default();
 		let lcd = LCD::new();
 		self.emulator_state.bind_lcd(lcd);
 		self.emulator_state.load_rom(rom, source).unwrap();
