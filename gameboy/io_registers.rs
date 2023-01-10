@@ -8,7 +8,7 @@ use crate::{
 	memory_mapper::SourcedMemoryMapper,
 	ppu::PPU,
 	util::bits::*,
-	EmulatorState,
+	Gameboy,
 };
 
 // Timers
@@ -100,7 +100,7 @@ pub trait IORegisters {
 	fn write_io(&mut self, addr: u16, value: u8);
 }
 
-impl IORegisters for EmulatorState {
+impl IORegisters for Gameboy {
 	fn read_io(&self, addr: u16) -> u8 {
 		match addr {
 			JOYP => {

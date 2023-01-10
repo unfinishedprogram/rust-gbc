@@ -9,7 +9,7 @@ use crate::{
 	memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper},
 	ppu::PPU,
 	util::bits::*,
-	EmulatorState,
+	Gameboy,
 };
 
 pub trait Renderer {
@@ -35,7 +35,7 @@ trait RendererHelpers {
 	fn map_pallet_color(&self, pallet_addr: u16, color_index: u8) -> u8;
 }
 
-impl RendererHelpers for EmulatorState {
+impl RendererHelpers for Gameboy {
 	fn fetch_sprites(&self) -> Vec<Sprite> {
 		(0..40)
 			.map(|i| {
@@ -149,7 +149,7 @@ pub struct ScanlineState {
 	pub sprites: Vec<Sprite>,
 }
 
-impl Renderer for EmulatorState {
+impl Renderer for Gameboy {
 	fn render_screen_pixel(&mut self, x: u8, y: u8) {
 		let (scx, scy) = (self.read(0xFF43), self.read(0xFF42));
 		let (wx, wy) = (self.read(0xFF4B), self.read(0xFF4A));

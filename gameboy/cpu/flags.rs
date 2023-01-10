@@ -1,4 +1,4 @@
-use crate::EmulatorState;
+use crate::Gameboy;
 
 use super::{registers::CPURegister8, CPU};
 
@@ -34,7 +34,7 @@ pub trait Flags {
 	}
 }
 
-impl Flags for EmulatorState {
+impl Flags for Gameboy {
 	fn get_flag_byte(&self) -> u8 {
 		self.cpu_state.registers[CPURegister8::F]
 	}

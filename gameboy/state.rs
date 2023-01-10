@@ -16,7 +16,7 @@ use super::{
 type Color = (u8, u8, u8, u8);
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct EmulatorState {
+pub struct Gameboy {
 	pub ram_bank: u8,
 	pub cgb: bool,
 	pub cpu_state: CPUState,
@@ -41,7 +41,7 @@ pub struct EmulatorState {
 	pub color_scheme_dmg: (Color, Color, Color, Color),
 }
 
-impl Default for EmulatorState {
+impl Default for Gameboy {
 	fn default() -> Self {
 		let mut emulator = Self {
 			color_scheme_dmg: (
@@ -53,6 +53,7 @@ impl Default for EmulatorState {
 			dma_timer: 0,
 			cpu_state: CPUState::default(),
 			ppu_state: PPUState::default(),
+			timer_state: TimerState::default(),
 			io_register_state: IORegisterState::default(),
 			boot_rom: include_bytes!("./dmg_boot.bin").to_vec(),
 			booting: true,
@@ -64,7 +65,6 @@ impl Default for EmulatorState {
 			oam: vec![0; 0xA0],
 			hram: vec![0; 0x80],
 			serial_output: vec![],
-			timer_state: TimerState::default(),
 			halted: false,
 			interrupt_enable_register: 0,
 			raw_joyp_input: 0,
@@ -76,7 +76,7 @@ impl Default for EmulatorState {
 	}
 }
 
-impl EmulatorState {
+impl Gameboy {
 	pub fn get_cycle(&self) -> u64 {
 		self.t_states / 4
 	}
@@ -142,7 +142,7 @@ impl EmulatorState {
 			return self;
 		};
 
-		let Ok(mut new_state) = serde_json::from_str::<EmulatorState>(&save_state.data) else {
+		let Ok(mut new_state) = serde_json::from_str::<Gameboy>(&save_state.data) else {
 			return self;
 		};
 

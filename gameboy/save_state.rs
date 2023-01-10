@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{cartridge::memory_bank_controller::Cartridge, EmulatorState};
+use crate::{cartridge::memory_bank_controller::Cartridge, Gameboy};
 use chrono::NaiveDateTime;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -40,10 +40,10 @@ pub trait SaveManager {
 	fn get_save_states() -> Vec<Option<String>>;
 }
 
-impl TryFrom<&EmulatorState> for SaveState {
+impl TryFrom<&Gameboy> for SaveState {
 	type Error = SaveError;
 
-	fn try_from(value: &EmulatorState) -> Result<Self, SaveError> {
+	fn try_from(value: &Gameboy) -> Result<Self, SaveError> {
 		let data = serde_json::to_string(value).or(Err(SaveError::Serialization))?;
 
 		let Cartridge(_, _, info) = &value

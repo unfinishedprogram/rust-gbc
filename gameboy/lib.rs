@@ -16,7 +16,7 @@ pub mod save_state;
 pub mod state;
 pub mod timer;
 pub mod util;
-pub use state::EmulatorState;
+pub use state::Gameboy;
 
 #[cfg(test)]
 pub mod test;

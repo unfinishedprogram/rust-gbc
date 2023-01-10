@@ -10,7 +10,7 @@ use super::memory_mapper::{Source, SourcedMemoryMapper};
 pub use state::CPUState;
 
 use super::flags::*;
-use super::state::EmulatorState;
+use super::state::Gameboy;
 use instruction::{execute::execute_instruction, fetch::fetch_instruction, Instruction};
 
 use registers::CPURegisters;
@@ -51,7 +51,7 @@ pub trait CPU {
 	fn step_cpu(&mut self);
 }
 
-impl CPU for EmulatorState {
+impl CPU for Gameboy {
 	fn disable_interrupts(&mut self) {
 		self.cpu_state.interrupt_enable = false;
 	}

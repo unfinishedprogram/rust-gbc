@@ -8,14 +8,14 @@ use crate::{
 		CPU,
 	},
 	flags::{INT_JOY_PAD, INT_LCD_STAT, INT_SERIAL, INT_TIMER, INT_V_BLANK},
-	EmulatorState,
+	Gameboy,
 };
 
 use std::ops::{BitAnd, BitOr, BitXor};
 
 use super::condition::Condition;
 
-pub fn execute_instruction(instruction: Instruction, state: &mut EmulatorState) {
+pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 	let cpu = state;
 
 	match instruction {

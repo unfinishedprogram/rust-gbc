@@ -1,4 +1,4 @@
-use super::{flags::INT_TIMER, EmulatorState};
+use super::{flags::INT_TIMER, Gameboy};
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Clone, Serialize, Deserialize)]
@@ -17,7 +17,7 @@ pub trait Timer {
 	const TAC: u16 = 0xFF07;
 }
 
-impl Timer for EmulatorState {
+impl Timer for Gameboy {
 	fn timer_speed(&self) -> u64 {
 		match self.io_register_state[Self::TAC] & 0b11 {
 			0 => 1024,

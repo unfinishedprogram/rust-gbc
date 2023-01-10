@@ -1,6 +1,6 @@
 use std::fs::read;
 
-use crate::{lcd::LCD, EmulatorState};
+use crate::{lcd::LCD, Gameboy};
 extern crate test;
 
 use lazy_static::lazy_static;
@@ -8,7 +8,7 @@ use test::Bencher;
 
 #[bench]
 pub fn bench_boot(b: &mut Bencher) {
-	let mut state = EmulatorState::default();
+	let mut state = Gameboy::default();
 
 	b.iter(|| {
 		state.step();
@@ -16,8 +16,8 @@ pub fn bench_boot(b: &mut Bencher) {
 }
 
 lazy_static! {
-	pub static ref BOOTED_EMULATOR: EmulatorState = {
-		let mut state = EmulatorState::default();
+	pub static ref BOOTED_EMULATOR: Gameboy = {
+		let mut state = Gameboy::default();
 		// Not a specific rom, just one that has a valid logo and will pass checks
 		// TODO: Make this a custom rom that minimally satisfies the boot requirements
 		let rom = read("../roms/test/dmg-acid2.gb").unwrap();

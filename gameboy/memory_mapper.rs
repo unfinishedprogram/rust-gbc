@@ -1,6 +1,6 @@
 use super::{
 	io_registers::{IORegisters, DMA},
-	EmulatorState,
+	Gameboy,
 };
 
 /// Allows reading and writing to memory using a 16 bit address
@@ -28,7 +28,7 @@ pub enum Source {
 	Raw,
 }
 
-impl SourcedMemoryMapper for EmulatorState {
+impl SourcedMemoryMapper for Gameboy {
 	fn read_from(&self, addr: u16, source: Source) -> u8 {
 		if matches!(source, Source::Cpu)
 			&& self.dma_timer > 0
@@ -60,7 +60,7 @@ impl SourcedMemoryMapper for EmulatorState {
 	}
 }
 
-impl MemoryMapper for EmulatorState {
+impl MemoryMapper for Gameboy {
 	fn read(&self, addr: u16) -> u8 {
 		if self.booting && matches!(addr, 0..=0x100) {
 			return self.boot_rom[addr as usize];

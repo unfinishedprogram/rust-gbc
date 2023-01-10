@@ -10,7 +10,7 @@ use super::{
 	},
 	io_registers::{LY, LYC, STAT},
 	memory_mapper::Source,
-	EmulatorState,
+	Gameboy,
 };
 
 use renderer::{Renderer, ScanlineState};
@@ -43,7 +43,7 @@ pub trait PPU {
 	fn enable_display(&mut self);
 }
 
-impl PPU for EmulatorState {
+impl PPU for Gameboy {
 	fn get_mode(&self) -> PPUMode {
 		let num = self.read_from(STAT, Source::Ppu) & 0b00000011;
 		match num {
