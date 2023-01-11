@@ -1,4 +1,5 @@
 mod renderer;
+mod renderer_old;
 mod sprite;
 
 use crate::{flags::STAT_H_BLANK_IE, memory_mapper::SourcedMemoryMapper};
@@ -13,7 +14,7 @@ use super::{
 	Gameboy,
 };
 
-use renderer::{Renderer, ScanlineState};
+use renderer_old::{Renderer, ScanlineState};
 
 #[derive(Debug)]
 pub enum PPUMode {
