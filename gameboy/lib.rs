@@ -5,6 +5,7 @@
 #![feature(async_closure)]
 
 pub mod cartridge;
+pub mod cgb;
 pub mod controller;
 pub mod cpu;
 pub mod flags;

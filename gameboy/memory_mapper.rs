@@ -1,5 +1,6 @@
 use super::{
 	io_registers::{IORegisters, DMA},
+	state::GameboyMode,
 	Gameboy,
 };
 
@@ -38,11 +39,6 @@ impl SourcedMemoryMapper for Gameboy {
 			return 0xFF;
 		}
 
-		// // Don't allow reading from memory outside of HRAM from CPU during DMA transfer
-		// if matches!(source, Source::Cpu) && self.dma_timer > 0 && !matches!(addr, 0xFF80..0xFFFF) {
-		// 	return 0xFF;
-		// }
-
 		self.read(addr)
 	}
 
@@ -62,8 +58,19 @@ impl SourcedMemoryMapper for Gameboy {
 
 impl MemoryMapper for Gameboy {
 	fn read(&self, addr: u16) -> u8 {
-		if self.booting && matches!(addr, 0..=0x100) {
-			return self.boot_rom[addr as usize];
+		if self.booting {
+			match self.mode {
+				GameboyMode::DMG => {
+					if matches!(addr, 0..=0x100) {
+						return self.boot_rom[addr as usize];
+					}
+				}
+				GameboyMode::GBC(_) => match addr {
+					0..=0x100 => return self.boot_rom[addr as usize],
+					0x0200..0x08FF => return self.boot_rom[addr as usize],
+					_ => {}
+				},
+			}
 		}
 		match addr {
 			0x0000..0x8000 => {
@@ -93,14 +100,20 @@ impl MemoryMapper for Gameboy {
 					rom.write(addr, value);
 				}
 			} // Cartridge Rom
-			0x8000..0xA000 => self.v_ram[0][(addr - 0x8000) as usize] = value, // VRAM
+			0x8000..0xA000 => {
+				let bank = self.get_vram_bank();
+				self.v_ram[bank][(addr - 0x8000) as usize] = value
+			} // VRAM
 			0xA000..0xC000 => {
 				if let Some(rom) = &mut self.cartridge_state {
 					rom.write(addr, value);
 				}
 			} // Cartage RAM
 			0xC000..0xD000 => self.w_ram[0][(addr - 0xC000) as usize] = value, // Internal RAM
-			0xD000..0xE000 => self.w_ram[1][(addr - 0xD000) as usize] = value, // Switchable RAM in CGB mode
+			0xD000..0xE000 => {
+				let bank = self.get_wram_bank();
+				self.w_ram[bank][(addr - 0xD000) as usize] = value
+			} // Switchable RAM in CGB mode
 			0xE000..0xFE00 => self.write(addr - 0xE000 + 0xC000, value),       // Mirror, should not be used
 			0xFE00..0xFEA0 => {
 				self.oam[(addr - 0xFE00) as usize] = value;

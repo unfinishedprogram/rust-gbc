@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::cgb::CGBState;
+
 use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
 	controller::ControllerState,
@@ -16,9 +18,17 @@ use super::{
 type Color = (u8, u8, u8, u8);
 
 #[derive(Clone, Serialize, Deserialize)]
+pub enum GameboyMode {
+	// Gameboy Color mode
+	GBC(CGBState),
+	// Basic monochrome mode
+	DMG,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Gameboy {
 	pub ram_bank: u8,
-	pub cgb: bool,
+	pub mode: GameboyMode,
 	pub cpu_state: CPUState,
 	pub ppu_state: PPUState,
 	pub cartridge_state: Option<Cartridge>,
@@ -59,7 +69,7 @@ impl Default for Gameboy {
 			booting: true,
 			cartridge_state: None,
 			ram_bank: 0,
-			cgb: false,
+			mode: GameboyMode::DMG,
 			v_ram: vec![vec![0; 0x2000]; 2],
 			w_ram: vec![vec![0; 0x1000]; 8],
 			oam: vec![0; 0xA0],
@@ -72,6 +82,7 @@ impl Default for Gameboy {
 			t_states: 0,
 		};
 		emulator.set_mode(PPUMode::OamScan);
+		emulator.set_gb_mode(GameboyMode::GBC(CGBState::default()));
 		emulator
 	}
 }
@@ -160,5 +171,28 @@ impl Gameboy {
 		new_cart.0.loaded = true;
 
 		new_state
+	}
+
+	fn set_gb_mode(&mut self, mode: GameboyMode) {
+		self.boot_rom = match mode {
+			GameboyMode::GBC(_) => include_bytes!("../roms/other/cgb_boot.bin").to_vec(),
+			GameboyMode::DMG => include_bytes!("../roms/other/dmg_boot.bin").to_vec(),
+		}
+		.to_vec();
+		self.mode = mode;
+	}
+
+	pub fn get_wram_bank(&self) -> usize {
+		match &self.mode {
+			GameboyMode::GBC(state) => state.get_wram_bank(),
+			GameboyMode::DMG => 1,
+		}
+	}
+
+	pub fn get_vram_bank(&self) -> usize {
+		match &self.mode {
+			GameboyMode::GBC(state) => state.get_vram_bank(),
+			GameboyMode::DMG => 0,
+		}
 	}
 }
