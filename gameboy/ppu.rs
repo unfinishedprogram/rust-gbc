@@ -91,11 +91,11 @@ impl Default for PPU {
 
 impl PPU {
 	fn request_v_blank(&mut self) {
-		self.interrupt_requests |= INT_LCD_STAT;
+		self.interrupt_requests |= INT_V_BLANK;
 	}
 
 	fn request_stat(&mut self) {
-		self.interrupt_requests |= INT_V_BLANK;
+		self.interrupt_requests |= INT_LCD_STAT;
 	}
 
 	pub fn write_lcdc(&mut self, value: u8) {

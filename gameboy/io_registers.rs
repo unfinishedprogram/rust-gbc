@@ -139,19 +139,19 @@ impl IORegisters for Gameboy {
 			STAT => self.ppu.stat,
 
 			// Gameboy Color only pallettes
-			// 0xFF68..=0xFF6B => {
-			// 	if let GameboyMode::GBC(state) = &self.mode {
-			// 		match addr {
-			// 			BGPI => state.bg_color.read_spec(),
-			// 			BGPD => state.bg_color.read_data(),
-			// 			OBPI => state.obj_color.read_spec(),
-			// 			OBPD => state.obj_color.read_data(),
-			// 			_ => unreachable!("{addr}"),
-			// 		}
-			// 	} else {
-			// 		0xFF
-			// 	}
-			// }
+			0xFF68..=0xFF6B => {
+				if let GameboyMode::GBC(state) = &self.mode {
+					match addr {
+						BGPI => state.bg_color.read_spec(),
+						BGPD => state.bg_color.read_data(),
+						OBPI => state.obj_color.read_spec(),
+						OBPD => state.obj_color.read_data(),
+						_ => unreachable!("{addr}"),
+					}
+				} else {
+					0xFF
+				}
+			}
 
 			// Timer
 			DIV => self.timer.get_div(),

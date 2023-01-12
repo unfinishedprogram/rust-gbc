@@ -74,6 +74,7 @@ impl Default for Gameboy {
 			raw_joyp_input: 0,
 			t_states: 0,
 		};
+		emulator.set_gb_mode(GameboyMode::GBC(CGBState::default()));
 		emulator.ppu.set_mode(PPUMode::OamScan);
 		emulator
 	}

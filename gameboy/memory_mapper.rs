@@ -66,8 +66,8 @@ impl MemoryMapper for Gameboy {
 					}
 				}
 				GameboyMode::GBC(_) => match addr {
-					0..=0x100 => return self.boot_rom[addr as usize],
-					0x0200..0x08FF => return self.boot_rom[addr as usize],
+					0..0x100 => return self.boot_rom[addr as usize],
+					0x200..0x900 => return self.boot_rom[addr as usize],
 					_ => {}
 				},
 			}
