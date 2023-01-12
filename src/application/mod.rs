@@ -68,17 +68,10 @@ impl Default for Application {
 
 impl Application {
 	pub fn render_screen(&mut self) {
-		let img_data = ImageData::new_with_u8_clamped_array(
-			Clamped(
-				self.emulator_state
-					.lcd
-					.as_ref()
-					.unwrap()
-					.get_current_as_bytes(),
-			),
-			160,
-		)
-		.unwrap();
+		let screen = self.emulator_state.ppu.lcd.as_mut().unwrap();
+		let img_data =
+			ImageData::new_with_u8_clamped_array(Clamped(screen.get_current_as_bytes()), 160)
+				.unwrap();
 
 		get_screen_ctx()
 			.put_image_data(&img_data, 0.0, 0.0)

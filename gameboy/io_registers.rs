@@ -3,10 +3,9 @@ use std::ops::{Index, IndexMut};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	flags::{INT_SERIAL, LCD_DISPLAY_ENABLE},
+	flags::{INTERRUPT_REQUEST, INT_SERIAL},
 	memory_mapper::Source,
 	memory_mapper::SourcedMemoryMapper,
-	ppu::PPU,
 	state::GameboyMode,
 	util::bits::*,
 	Gameboy,
@@ -125,6 +124,20 @@ pub trait IORegisters {
 impl IORegisters for Gameboy {
 	fn read_io(&self, addr: u16) -> u8 {
 		match addr {
+			// PPU
+			LCDC => self.ppu.read_lcdc(),
+
+			SCY => self.ppu.scy,
+			SCX => self.ppu.scx,
+			LYC => self.ppu.lyc,
+			BGP => self.ppu.bgp,
+			OBP0 => self.ppu.obp0,
+			OBP1 => self.ppu.obp1,
+			WY => self.ppu.wy,
+			WX => self.ppu.wx,
+			LY => self.ppu.get_ly(),
+			STAT => self.ppu.stat,
+
 			// Gameboy Color only pallettes
 			// 0xFF68..=0xFF6B => {
 			// 	if let GameboyMode::GBC(state) = &self.mode {
@@ -163,12 +176,49 @@ impl IORegisters for Gameboy {
 				}
 			}
 			TAC => self.io_register_state[addr] | 0xF8,
+
+			// Interrupt requests
+			INTERRUPT_REQUEST => {
+				self.io_register_state[INTERRUPT_REQUEST] | self.ppu.interrupt_requests
+			}
+
 			_ => self.io_register_state[addr],
 		}
 	}
 
 	fn write_io(&mut self, addr: u16, value: u8) {
 		match addr {
+			// PPU
+			LCDC => self.ppu.write_lcdc(value),
+
+			SCY => self.ppu.scy = value,
+			SCX => self.ppu.scx = value,
+			LYC => self.ppu.lyc = value,
+			BGP => self.ppu.bgp = value,
+			OBP0 => self.ppu.obp0 = value,
+			OBP1 => self.ppu.obp1 = value,
+			WY => self.ppu.wy = value,
+			WX => self.ppu.wx = value,
+			STAT => {
+				let mask = 0b00000111;
+				self.ppu.stat &= mask;
+				self.ppu.stat |= value & !mask;
+			}
+
+			// pub const STAT: u16 = 0xFF41;
+			// pub const SCY: u16 = 0xFF42;
+			// pub const SCX: u16 = 0xFF43;
+			// pub const LY: u16 = 0xFF44;
+			// pub const LYC: u16 = 0xFF45;
+			// pub const DMA: u16 = 0xFF46;
+
+			// pub const BGP: u16 = 0xFF47; // Background Pallette data non CGB mode only
+			// pub const OBP0: u16 = 0xFF48; // Object Palette 0 Data data non CGB mode only
+			// pub const OBP1: u16 = 0xFF49; // Object Palette 1 Data data non CGB mode only
+
+			// pub const WY: u16 = 0xFF4A;
+			// pub const WX: u16 = 0xFF4B;
+
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
 				if let GameboyMode::GBC(state) = &mut self.mode {
@@ -211,15 +261,12 @@ impl IORegisters for Gameboy {
 					self.request_interrupt(INT_SERIAL);
 				}
 			}
-			LCDC => {
-				if value & LCD_DISPLAY_ENABLE == 0 {
-					self.disable_display();
-				} else {
-					self.enable_display();
-				}
-				self.io_register_state[LCDC] = value;
+
+			IF => {
+				self.io_register_state[INTERRUPT_REQUEST] = value & 0b00011111;
+				self.ppu.interrupt_requests = value & 0b00011111;
 			}
-			IF => self.io_register_state[IF] = value & 0b00011111,
+
 			IE => self.io_register_state[IE] = value & 0b00011111,
 			DMA => {
 				self.io_register_state[DMA] = value;
@@ -229,10 +276,11 @@ impl IORegisters for Gameboy {
 
 				let real_addr = (value as u16) << 8;
 				for i in 0..0xA0 {
-					self.oam[i] = self.read_from(real_addr + i as u16, Source::Raw);
+					self.ppu.oam[i] = self.read_from(real_addr + i as u16, Source::Raw);
 				}
 				self.dma_timer += 160;
 			}
+
 			_ => self.io_register_state[addr] = value,
 		}
 	}

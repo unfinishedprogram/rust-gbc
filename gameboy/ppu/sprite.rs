@@ -10,7 +10,7 @@ pub struct Sprite {
 	pub flip_x: bool,
 	pub above_bg: bool,
 	pub tile_index: u8,
-	pub pallet_address: u16,
+	pub pallet_address: bool,
 	pub addr: u16,
 }
 
@@ -20,11 +20,7 @@ impl Sprite {
 		let above_bg = attributes & BIT_7 == 0;
 		let flip_y = attributes & BIT_6 != 0;
 		let flip_x = attributes & BIT_5 != 0;
-		let pallet_address = if attributes & BIT_4 != 0 {
-			0xFF49
-		} else {
-			0xFF48
-		};
+		let pallet_address = attributes & BIT_4 != 0;
 
 		Self {
 			addr,

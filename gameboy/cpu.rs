@@ -1,4 +1,8 @@
-use crate::cpu::flags::Flags;
+use crate::{
+	cpu::flags::Flags,
+	io_registers::{IE, IF},
+	memory_mapper::MemoryMapper,
+};
 pub mod flags;
 mod gb_stack;
 pub mod instruction;
@@ -150,20 +154,16 @@ impl CPU for Gameboy {
 	}
 
 	fn check_interrupt(&self, interrupt: u8) -> bool {
-		let enabled = self.read_from(INTERRUPT_ENABLE, Source::Cpu);
-		let requested = self.read_from(INTERRUPT_REQUEST, Source::Cpu);
-		enabled & requested & interrupt == interrupt
+		self.read(IE) & self.read(IF) & interrupt != 0
 	}
 
 	fn clear_request(&mut self, interrupt: u8) {
-		let request_value = self.read_from(INTERRUPT_REQUEST, Source::Cpu);
-		self.write_from(INTERRUPT_REQUEST, request_value & !interrupt, Source::Cpu);
+		let flag = self.read(IF);
+		self.write(IF, flag & !interrupt);
 	}
 
 	fn interrupt_pending(&self) -> bool {
-		self.read_from(INTERRUPT_ENABLE, Source::Cpu)
-			& self.read_from(INTERRUPT_REQUEST, Source::Cpu)
-			!= 0
+		self.read(IE) & self.read(IF) != 0
 	}
 
 	fn get_interrupt(&mut self) -> Option<Instruction> {

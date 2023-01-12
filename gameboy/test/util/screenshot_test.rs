@@ -14,7 +14,7 @@ pub fn run_screenshot_test(rom: &str, expected: &str, seconds: usize) {
 		for _ in 0..1_048_576 {
 			state.step();
 		}
-		if let Some(lcd) = &state.lcd {
+		if let Some(lcd) = &state.ppu.lcd {
 			let actual = lcd.get_current_as_bytes();
 
 			if compare_lcd(actual, expected) {
@@ -22,7 +22,7 @@ pub fn run_screenshot_test(rom: &str, expected: &str, seconds: usize) {
 			}
 		}
 	}
-	let lcd = state.lcd.expect("No LCD Bound");
+	let lcd = state.ppu.lcd.expect("No LCD Bound");
 
 	let actual = lcd.get_current_as_bytes();
 

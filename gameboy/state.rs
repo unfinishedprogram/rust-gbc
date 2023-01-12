@@ -10,7 +10,7 @@ use super::{
 	io_registers::IORegisterState,
 	lcd::LCD,
 	memory_mapper::{Source, SourcedMemoryMapper},
-	ppu::{PPUMode, PPUState, PPU},
+	ppu::{PPUMode, PPU},
 	save_state::{RomSource, SaveState},
 	timer::{Timer, TimerState},
 };
@@ -30,11 +30,9 @@ pub struct Gameboy {
 	pub ram_bank: u8,
 	pub mode: GameboyMode,
 	pub cpu_state: CPUState,
-	pub ppu_state: PPUState,
+	pub ppu: PPU,
 	pub cartridge_state: Option<Cartridge>,
-	pub v_ram: Vec<Vec<u8>>,
 	pub w_ram: Vec<Vec<u8>>,
-	pub oam: Vec<u8>,
 	pub hram: Vec<u8>,
 	pub io_register_state: IORegisterState,
 	pub serial_output: Vec<u8>,
@@ -43,8 +41,6 @@ pub struct Gameboy {
 	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
 	pub dma_timer: u64,
-	#[serde(skip)]
-	pub lcd: Option<LCD>,
 	pub booting: bool,
 	pub boot_rom: Vec<u8>,
 	t_states: u64,
@@ -62,7 +58,7 @@ impl Default for Gameboy {
 			),
 			dma_timer: 0,
 			cpu_state: CPUState::default(),
-			ppu_state: PPUState::default(),
+			ppu: PPU::default(),
 			timer_state: TimerState::default(),
 			io_register_state: IORegisterState::default(),
 			boot_rom: include_bytes!("./dmg_boot.bin").to_vec(),
@@ -70,18 +66,15 @@ impl Default for Gameboy {
 			cartridge_state: None,
 			ram_bank: 0,
 			mode: GameboyMode::DMG,
-			v_ram: vec![vec![0; 0x2000]; 2],
 			w_ram: vec![vec![0; 0x1000]; 8],
-			oam: vec![0; 0xA0],
 			hram: vec![0; 0x80],
 			serial_output: vec![],
 			halted: false,
 			interrupt_enable_register: 0,
 			raw_joyp_input: 0,
-			lcd: None,
 			t_states: 0,
 		};
-		emulator.set_mode(PPUMode::OamScan);
+		emulator.ppu.set_mode(PPUMode::OamScan);
 		emulator.set_gb_mode(GameboyMode::GBC(CGBState::default()));
 		emulator
 	}
@@ -103,7 +96,7 @@ impl Gameboy {
 	}
 
 	pub fn bind_lcd(&mut self, lcd: LCD) {
-		self.lcd = Some(lcd);
+		self.ppu.lcd = Some(lcd);
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
@@ -112,7 +105,7 @@ impl Gameboy {
 
 	fn tick_t_states(&mut self, t_states: u32) {
 		for _ in 0..t_states {
-			self.step_ppu();
+			self.ppu.step_ppu();
 		}
 
 		self.dma_timer = self.dma_timer.saturating_sub(t_states as u64);
@@ -175,24 +168,23 @@ impl Gameboy {
 
 	fn set_gb_mode(&mut self, mode: GameboyMode) {
 		self.boot_rom = match mode {
-			GameboyMode::GBC(_) => include_bytes!("../roms/other/cgb_boot.bin").to_vec(),
 			GameboyMode::DMG => include_bytes!("../roms/other/dmg_boot.bin").to_vec(),
-		}
-		.to_vec();
+			GameboyMode::GBC(_) => include_bytes!("../roms/other/cgb_boot.bin").to_vec(),
+		};
 		self.mode = mode;
 	}
 
 	pub fn get_wram_bank(&self) -> usize {
 		match &self.mode {
-			GameboyMode::GBC(state) => state.get_wram_bank(),
 			GameboyMode::DMG => 1,
+			GameboyMode::GBC(state) => state.get_wram_bank(),
 		}
 	}
 
 	pub fn get_vram_bank(&self) -> usize {
 		match &self.mode {
-			GameboyMode::GBC(state) => state.get_vram_bank(),
 			GameboyMode::DMG => 0,
+			GameboyMode::GBC(state) => state.get_vram_bank(),
 		}
 	}
 }
