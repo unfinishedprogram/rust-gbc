@@ -140,12 +140,12 @@ impl IORegisters for Gameboy {
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
-				if let GameboyMode::GBC(state) = &self.mode {
+				if let GameboyMode::GBC(_) = &self.mode {
 					match addr {
-						BGPI => state.bg_color.read_spec(),
-						BGPD => state.bg_color.read_data(),
-						OBPI => state.obj_color.read_spec(),
-						OBPD => state.obj_color.read_data(),
+						BGPI => self.ppu.bg_color.read_spec(),
+						BGPD => self.ppu.bg_color.read_data(),
+						OBPI => self.ppu.obj_color.read_spec(),
+						OBPD => self.ppu.obj_color.read_data(),
 						_ => unreachable!("{addr}"),
 					}
 				} else {
@@ -221,12 +221,12 @@ impl IORegisters for Gameboy {
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
-				if let GameboyMode::GBC(state) = &mut self.mode {
+				if let GameboyMode::GBC(_) = &mut self.mode {
 					match addr {
-						BGPI => state.bg_color.write_spec(value),
-						BGPD => state.bg_color.write_data(value),
-						OBPI => state.obj_color.write_spec(value),
-						OBPD => state.obj_color.write_data(value),
+						BGPI => self.ppu.bg_color.write_spec(value),
+						BGPD => self.ppu.bg_color.write_data(value),
+						OBPI => self.ppu.obj_color.write_spec(value),
+						OBPD => self.ppu.obj_color.write_data(value),
 						_ => unreachable!("{addr}"),
 					}
 				}

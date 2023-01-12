@@ -1,3 +1,4 @@
+mod color_ram;
 mod renderer;
 mod renderer_old;
 mod sprite;
@@ -11,7 +12,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-use self::renderer::Pixel;
+use self::{color_ram::ColorRamController, renderer::Pixel};
 
 use super::flags::{
 	INT_LCD_STAT, INT_V_BLANK, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE, STAT_V_BLANK_IE,
@@ -46,6 +47,9 @@ pub struct PPU {
 	pub wy: u8,
 	pub wx: u8,
 	pub stat: u8,
+
+	pub bg_color: ColorRamController,
+	pub obj_color: ColorRamController,
 
 	scanline_state: ScanlineState,
 	current_pixel: u8,
@@ -83,6 +87,9 @@ impl Default for PPU {
 			fifo_pixel: Default::default(),
 			fifo_bg: Default::default(),
 			fifo_obj: Default::default(),
+			bg_color: Default::default(),
+			obj_color: Default::default(),
+
 			v_ram: vec![vec![0; 0x2000]; 2],
 			oam: vec![0; 0xA0],
 		}
