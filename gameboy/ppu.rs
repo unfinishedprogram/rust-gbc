@@ -2,8 +2,6 @@ mod renderer;
 mod renderer_old;
 mod sprite;
 
-// use std::collections::VecDeque;
-
 use std::collections::VecDeque;
 
 use crate::{
@@ -13,8 +11,6 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-// use self::renderer::Pixel;
-
 use self::renderer::Pixel;
 
 use super::flags::{
@@ -23,7 +19,7 @@ use super::flags::{
 
 use renderer_old::ScanlineState;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum PPUMode {
 	HBlank = 0,
 	VBlank = 1,
@@ -34,9 +30,6 @@ pub enum PPUMode {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct PPU {
 	pub cycle: u64,
-	pub window_line: u8,
-	pub current_pixel: u8,
-	pub scanline_state: ScanlineState,
 	pub v_ram: Vec<Vec<u8>>,
 	pub oam: Vec<u8>,
 	pub interrupt_requests: u8,
@@ -54,6 +47,9 @@ pub struct PPU {
 	pub wx: u8,
 	pub stat: u8,
 
+	scanline_state: ScanlineState,
+	current_pixel: u8,
+	window_line: u8,
 	enabled: bool,
 	lcdc: u8,
 	ly: u8,
@@ -94,12 +90,12 @@ impl Default for PPU {
 }
 
 impl PPU {
-	pub fn request_interrupt(&mut self, interrupt: u8) {
-		self.interrupt_requests |= interrupt;
+	fn request_v_blank(&mut self) {
+		self.interrupt_requests |= INT_LCD_STAT;
 	}
 
-	pub fn clear_interrupt(&mut self, interrupt: u8) {
-		self.interrupt_requests = self.interrupt_requests & !interrupt;
+	fn request_stat(&mut self) {
+		self.interrupt_requests |= INT_V_BLANK;
 	}
 
 	pub fn write_lcdc(&mut self, value: u8) {
@@ -140,7 +136,7 @@ impl PPU {
 		if self.lyc == value {
 			self.stat |= STAT_LYC_EQ_LY;
 			if self.stat & STAT_LYC_EQ_LY_IE != 0 {
-				self.request_interrupt(INT_LCD_STAT);
+				self.request_stat();
 			}
 		} else {
 			self.stat &= !STAT_LYC_EQ_LY
@@ -148,24 +144,21 @@ impl PPU {
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode) {
+		self.stat = (self.stat & 0b11111100) | mode as u8;
 		// Do Interrupts
 		use PPUMode::*;
-		let interrupt_triggered = match mode {
+		if match mode {
 			HBlank => self.stat & STAT_H_BLANK_IE != 0,
 			VBlank => self.stat & STAT_V_BLANK_IE != 0,
 			OamScan => self.stat & STAT_OAM_IE != 0,
 			Draw => false,
-		};
+		} {
+			self.request_stat()
+		}
 
 		if matches!(mode, VBlank) {
-			self.request_interrupt(INT_V_BLANK);
+			self.request_v_blank();
 		}
-
-		if interrupt_triggered {
-			self.request_interrupt(INT_LCD_STAT);
-		}
-
-		self.stat = (self.stat & 0b11111100) | mode as u8;
 	}
 
 	fn disable_display(&mut self) {
@@ -200,7 +193,6 @@ impl PPU {
 				} else {
 					self.cycle += 458;
 					self.window_line = 0;
-					self.request_interrupt(INT_V_BLANK);
 
 					if let Some(lcd) = &mut self.lcd {
 						lcd.swap_buffers();
