@@ -12,7 +12,7 @@ use super::{
 	memory_mapper::{Source, SourcedMemoryMapper},
 	ppu::{PPUMode, PPU},
 	save_state::{RomSource, SaveState},
-	timer::{Timer, TimerState},
+	timer::Timer,
 };
 
 type Color = (u8, u8, u8, u8);
@@ -36,7 +36,7 @@ pub struct Gameboy {
 	pub hram: Vec<u8>,
 	pub io_register_state: IORegisterState,
 	pub serial_output: Vec<u8>,
-	pub timer_state: TimerState,
+	pub timer: Timer,
 	pub halted: bool,
 	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
@@ -59,7 +59,7 @@ impl Default for Gameboy {
 			dma_timer: 0,
 			cpu_state: CPUState::default(),
 			ppu: PPU::default(),
-			timer_state: TimerState::default(),
+			timer: Timer::default(),
 			io_register_state: IORegisterState::default(),
 			boot_rom: include_bytes!("./dmg_boot.bin").to_vec(),
 			booting: true,
@@ -75,7 +75,6 @@ impl Default for Gameboy {
 			t_states: 0,
 		};
 		emulator.ppu.set_mode(PPUMode::OamScan);
-		emulator.set_gb_mode(GameboyMode::GBC(CGBState::default()));
 		emulator
 	}
 }
@@ -110,7 +109,7 @@ impl Gameboy {
 
 		self.dma_timer = self.dma_timer.saturating_sub(t_states as u64);
 
-		self.update_timer(t_states as u64);
+		self.timer.step(t_states as u64);
 
 		self.t_states += t_states as u64;
 	}

@@ -12,10 +12,10 @@ fn handle_rom_upload(file: File) {
 
 	APPLICATION.with_borrow_mut(move |app| {
 		app._file_reader = Some(read_as_bytes(&file, move |res| {
-			log!("here");
 			APPLICATION.with_borrow_mut(move |app| {
 				app.load_rom(&res.unwrap(), None);
 				app._file_reader = None;
+				app.start()
 			})
 		}));
 	});

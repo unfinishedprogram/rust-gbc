@@ -152,6 +152,13 @@ impl IORegisters for Gameboy {
 			// 		0xFF
 			// 	}
 			// }
+
+			// Timer
+			DIV => self.timer.get_div(),
+			TAC => self.timer.get_tac(),
+			TIMA => self.timer.get_tima(),
+			TMA => self.timer.get_tma(),
+
 			SVBK => {
 				if let GameboyMode::GBC(state) = &self.mode {
 					state.get_wram_bank() as u8
@@ -175,11 +182,12 @@ impl IORegisters for Gameboy {
 					0b11001111
 				}
 			}
-			TAC => self.io_register_state[addr] | 0xF8,
 
 			// Interrupt requests
-			INTERRUPT_REQUEST => {
-				self.io_register_state[INTERRUPT_REQUEST] | self.ppu.interrupt_requests
+			IF => {
+				self.io_register_state[IF]
+					| self.ppu.interrupt_requests
+					| self.timer.interrupt_requests
 			}
 
 			_ => self.io_register_state[addr],
@@ -205,19 +213,11 @@ impl IORegisters for Gameboy {
 				self.ppu.stat |= value & !mask;
 			}
 
-			// pub const STAT: u16 = 0xFF41;
-			// pub const SCY: u16 = 0xFF42;
-			// pub const SCX: u16 = 0xFF43;
-			// pub const LY: u16 = 0xFF44;
-			// pub const LYC: u16 = 0xFF45;
-			// pub const DMA: u16 = 0xFF46;
-
-			// pub const BGP: u16 = 0xFF47; // Background Pallette data non CGB mode only
-			// pub const OBP0: u16 = 0xFF48; // Object Palette 0 Data data non CGB mode only
-			// pub const OBP1: u16 = 0xFF49; // Object Palette 1 Data data non CGB mode only
-
-			// pub const WY: u16 = 0xFF4A;
-			// pub const WX: u16 = 0xFF4B;
+			// Timer
+			DIV => self.timer.set_div(value),
+			TAC => self.timer.set_tac(value),
+			TIMA => self.timer.set_tima(value),
+			TMA => self.timer.set_tma(value),
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
@@ -245,11 +245,6 @@ impl IORegisters for Gameboy {
 			DISABLE_BOOT => {
 				self.booting = false;
 			}
-			DIV => {
-				self.io_register_state[DIV] = 0;
-				self.io_register_state[TIMA] = self.io_register_state[TMA];
-				self.timer_state.timer_clock = 0;
-			}
 			SB => self.io_register_state[0xFF01] = value,
 			JOYP => {
 				self.io_register_state[JOYP] = value & 0b00110000;
@@ -265,6 +260,7 @@ impl IORegisters for Gameboy {
 			IF => {
 				self.io_register_state[INTERRUPT_REQUEST] = value & 0b00011111;
 				self.ppu.interrupt_requests = value & 0b00011111;
+				self.timer.interrupt_requests = value & 0b00011111;
 			}
 
 			IE => self.io_register_state[IE] = value & 0b00011111,

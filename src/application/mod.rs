@@ -19,7 +19,7 @@ use gameboy::{
 	Gameboy,
 };
 
-use self::{input::InputState, uploader::setup_upload_listeners};
+use self::input::InputState;
 
 thread_local! {
 	pub static APPLICATION: RefCell<Application> = RefCell::new(Application::default());
@@ -49,7 +49,6 @@ pub struct Application {
 
 impl Default for Application {
 	fn default() -> Self {
-		setup_upload_listeners();
 		let emulator_state = {
 			let mut state = Gameboy::default();
 			let lcd = LCD::default();
