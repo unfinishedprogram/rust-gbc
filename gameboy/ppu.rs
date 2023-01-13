@@ -13,7 +13,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-use self::{color_ram::ColorRamController, renderer::Pixel};
+use self::{color_ram::ColorRamController, renderer::Pixel, sprite::Sprite};
 
 use super::flags::{
 	INT_LCD_STAT, INT_V_BLANK, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE, STAT_V_BLANK_IE,
@@ -66,6 +66,7 @@ pub struct PPU {
 	lcdc: u8,
 	ly: u8,
 
+	sprites: Vec<Sprite>,
 	current_tile: u8,
 
 	fifo_pixel: u8,
@@ -101,7 +102,7 @@ impl Default for PPU {
 			fifo_obj: Default::default(),
 			bg_color: Default::default(),
 			obj_color: Default::default(),
-
+			sprites: Default::default(),
 			v_ram: vec![vec![0; 0x2000]; 2],
 			oam: vec![0; 0xA0],
 		}

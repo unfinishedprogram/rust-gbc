@@ -1,9 +1,11 @@
+use chrono::Local;
 use serde::{Deserialize, Serialize};
 
 use crate::{lcd::LCDDisplay, util::bits::*};
 
 use super::{
-	tile_data::{TileAttributes, TileData},
+	sprite::Sprite,
+	tile_data::{self, TileAttributes, TileData},
 	FetcherMode, PPU,
 };
 
@@ -27,7 +29,7 @@ pub enum AddressingMode {
 pub trait PixelFIFO {
 	/// Fetches a row of 8 background or window pixels and queues them up to be mixed with sprite pixels
 	fn step_fifo(&mut self);
-	fn push_pixel(&mut self, pixel: Pixel);
+	fn push_pixel(&mut self);
 	fn start_scanline(&mut self);
 	fn get_tile_row(&self, tile_data: TileData, row: u8) -> Vec<Pixel>;
 	fn populate_bg_fifo(&mut self);
@@ -36,9 +38,28 @@ pub trait PixelFIFO {
 	fn get_addressing_mode(&self) -> AddressingMode;
 	fn get_tile_data(&self, tile_index: u16) -> TileData;
 	fn start_window(&mut self);
+	fn fetch_sprites(&mut self);
+	fn step_sprite_fifo(&mut self);
 }
 
 impl PixelFIFO for PPU {
+	fn fetch_sprites(&mut self) {
+		self.sprites = (0..40)
+			.map(|i| {
+				let index = i * 4;
+				let bytes = (
+					self.oam[index],
+					self.oam[index + 1],
+					self.oam[index + 2],
+					self.oam[index + 3],
+				);
+
+				Sprite::new(index as u16, bytes)
+			})
+			.filter(|sprite| sprite.is_visible())
+			.collect()
+	}
+
 	fn in_window(&self) -> bool {
 		let bg_enabled = self.lcdc & BIT_0 == BIT_0;
 		let wn_enabled = self.lcdc & BIT_5 == BIT_5 && bg_enabled;
@@ -59,6 +80,7 @@ impl PixelFIFO for PPU {
 		self.fetcher_mode = FetcherMode::Background;
 		self.fifo_bg.clear();
 		self.current_tile = self.scx >> 3;
+		self.fetch_sprites();
 
 		// Account for x-scroll of bg
 		self.populate_bg_fifo();
@@ -67,27 +89,96 @@ impl PixelFIFO for PPU {
 		}
 	}
 
+	fn step_sprite_fifo(&mut self) {
+		let double_height = self.lcdc & BIT_2 == BIT_2;
+
+		for sprite in &self.sprites {
+			if sprite.x != self.current_pixel.wrapping_add(7) {
+				continue;
+			}
+
+			if double_height {
+				if !((sprite.y > self.ly) && (sprite.y <= self.ly.wrapping_add(16))) {
+					continue;
+				}
+			} else {
+				if !((sprite.y > self.ly.wrapping_add(8)) && (sprite.y <= self.ly.wrapping_add(16)))
+				{
+					continue;
+				}
+			}
+
+			self.fifo_obj.clear();
+
+			let attributes = TileAttributes {
+				vertical_flip: !sprite.flip_y,
+				horizontal_flip: sprite.flip_x,
+				v_ram_bank: sprite.tile_vram_bank as usize,
+				bg_priority: sprite.above_bg,
+				palette_number: sprite.pallette_number as usize,
+			};
+
+			// 0x1C00
+			// 0x1800
+
+			let local_y = sprite.y.wrapping_sub(self.ly).wrapping_sub(9);
+			if double_height {
+				if local_y >= 8 {
+					let real_addr = ((sprite.tile_index | 0x01) as u16 * 16) as i32;
+
+					let data = TileData(real_addr as u16, Some(attributes));
+
+					for pix in self.get_tile_row(data, local_y - 8) {
+						self.fifo_obj.push_front(pix);
+					}
+				} else {
+					// Double height part
+					let real_addr = ((sprite.tile_index & 0xFE) as u16 * 16) as i32;
+					let data = TileData(real_addr as u16, Some(attributes));
+
+					for pix in self.get_tile_row(data, local_y) {
+						self.fifo_obj.push_front(pix);
+					}
+				}
+			} else {
+				let data = TileData(sprite.tile_index as u16 * 16, Some(attributes));
+
+				for pix in self.get_tile_row(data, local_y) {
+					self.fifo_obj.push_front(pix);
+				}
+			}
+		}
+	}
+
 	fn step_fifo(&mut self) {
 		if matches!(self.fetcher_mode, FetcherMode::Background) && self.in_window() {
 			self.start_window()
 		}
 
-		if let Some(pixel) = self.fifo_bg.pop_back() {
-			self.push_pixel(pixel);
-			self.current_pixel += 1;
-		}
+		self.step_sprite_fifo();
+
+		self.push_pixel();
 
 		if self.fifo_bg.len() <= 8 {
 			self.populate_bg_fifo();
 		}
 	}
 
-	fn push_pixel(&mut self, pixel: Pixel) {
-		let x = self.current_pixel;
-		let y = self.ly;
+	fn push_pixel(&mut self) {
+		if let Some(pixel) = self.fifo_bg.pop_back() {
+			let x = self.current_pixel;
+			let y = self.ly;
 
-		if let Some(lcd) = &mut self.lcd {
-			lcd.put_pixel(x, y, self.bg_color.get_color(pixel.palette, pixel.color))
+			if let Some(lcd) = &mut self.lcd {
+				lcd.put_pixel(x, y, self.bg_color.get_color(pixel.palette, pixel.color));
+
+				if let Some(pixel) = self.fifo_obj.pop_back() {
+					if !(pixel.color == 0) {
+						lcd.put_pixel(x, y, self.obj_color.get_color(pixel.palette, pixel.color));
+					}
+				}
+			}
+			self.current_pixel += 1;
 		}
 	}
 
@@ -105,7 +196,8 @@ impl PixelFIFO for PPU {
 	}
 
 	fn get_tile_row(&self, tile_data: TileData, row: u8) -> Vec<Pixel> {
-		debug_assert!(row < 8);
+		// debug_assert!(row < 8);
+		let row = row % 8;
 		let TileData(index, attributes) = tile_data;
 
 		let (row, horizontal_flip, background_priority, palette, bank) =

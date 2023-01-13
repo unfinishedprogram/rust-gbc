@@ -12,15 +12,20 @@ pub struct Sprite {
 	pub tile_index: u8,
 	pub pallet_address: bool,
 	pub addr: u16,
+	pub tile_vram_bank: u8,
+	pub pallette_number: u8,
 }
 
 impl Sprite {
 	pub fn new(addr: u16, bytes: (u8, u8, u8, u8)) -> Self {
 		let (y, x, tile_index, attributes) = bytes;
+
 		let above_bg = attributes & BIT_7 == 0;
 		let flip_y = attributes & BIT_6 != 0;
 		let flip_x = attributes & BIT_5 != 0;
 		let pallet_address = attributes & BIT_4 != 0;
+		let tile_vram_bank = (attributes >> 3) & 1;
+		let pallette_number = attributes & 0b111;
 
 		Self {
 			addr,
@@ -31,6 +36,8 @@ impl Sprite {
 			above_bg,
 			tile_index,
 			pallet_address,
+			tile_vram_bank,
+			pallette_number,
 		}
 	}
 
