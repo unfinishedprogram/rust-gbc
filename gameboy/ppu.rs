@@ -2,13 +2,14 @@ mod color_ram;
 mod renderer;
 mod renderer_old;
 mod sprite;
+mod tile_data;
 
 use std::collections::VecDeque;
 
 use crate::{
 	flags::{LCD_DISPLAY_ENABLE, STAT_H_BLANK_IE},
 	lcd::LCD,
-	ppu::renderer_old::Renderer,
+	ppu::{renderer::PixelFIFO, renderer_old::Renderer},
 };
 use serde::{Deserialize, Serialize};
 
@@ -17,6 +18,12 @@ use self::{color_ram::ColorRamController, renderer::Pixel};
 use super::flags::{
 	INT_LCD_STAT, INT_V_BLANK, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE, STAT_V_BLANK_IE,
 };
+
+#[derive(Clone, Serialize, Deserialize)]
+enum FetcherMode {
+	Background,
+	Window,
+}
 
 use renderer_old::ScanlineState;
 
@@ -51,12 +58,15 @@ pub struct PPU {
 	pub bg_color: ColorRamController,
 	pub obj_color: ColorRamController,
 
+	fetcher_mode: FetcherMode,
 	scanline_state: ScanlineState,
 	current_pixel: u8,
 	window_line: u8,
 	enabled: bool,
 	lcdc: u8,
 	ly: u8,
+
+	current_tile: u8,
 
 	fifo_pixel: u8,
 	fifo_bg: VecDeque<Pixel>,
@@ -69,8 +79,10 @@ impl Default for PPU {
 			cycle: 0,
 			window_line: 0,
 			current_pixel: 0,
+			fetcher_mode: FetcherMode::Background,
 			scanline_state: Default::default(),
 			interrupt_requests: 0,
+			current_tile: 0,
 			lcd: Default::default(),
 			scy: Default::default(),
 			scx: Default::default(),
@@ -221,13 +233,15 @@ impl PPU {
 			OamScan => {
 				self.scanline_state = self.fetch_scanline_state();
 				self.cycle += 12;
+				self.start_scanline();
 				self.set_mode(Draw);
 			}
 			Draw => {
-				self.render_screen_pixel(self.current_pixel, self.ly);
-				self.current_pixel += 1;
+				self.step_fifo();
+				// self.render_screen_pixel(self.current_pixel, self.ly);
 				if self.current_pixel == 160 {
 					self.current_pixel = 0;
+					self.current_tile = 0;
 					self.cycle += 204;
 					self.set_mode(HBlank);
 				} else {

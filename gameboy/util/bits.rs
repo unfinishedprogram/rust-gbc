@@ -14,3 +14,19 @@ pub fn bit(bit: u8) -> u8 {
 		_ => unreachable!(),
 	}
 }
+
+pub fn interleave(a: u8, b: u8) -> u16 {
+	let a = a as u16;
+	let b = b as u16;
+
+	let a = (a ^ (a << 4)) & 0x0f0f;
+	let b = (b ^ (b << 4)) & 0x0f0f;
+
+	let a = (a ^ (a << 2)) & 0x3333;
+	let b = (b ^ (b << 2)) & 0x3333;
+
+	let a = (a ^ (a << 1)) & 0x5555;
+	let b = (b ^ (b << 1)) & 0x5555;
+
+	b << 1 | a
+}
