@@ -9,7 +9,7 @@ use std::collections::VecDeque;
 use crate::{
 	flags::{LCD_DISPLAY_ENABLE, STAT_H_BLANK_IE},
 	lcd::LCD,
-	ppu::{renderer::PixelFIFO, renderer_old::Renderer},
+	ppu::renderer::PixelFIFO,
 };
 use serde::{Deserialize, Serialize};
 
@@ -77,7 +77,7 @@ impl Default for PPU {
 	fn default() -> Self {
 		Self {
 			cycle: 0,
-			window_line: 0,
+			window_line: 255,
 			current_pixel: 0,
 			fetcher_mode: FetcherMode::Background,
 			scanline_state: Default::default(),
@@ -211,7 +211,7 @@ impl PPU {
 					self.set_mode(OamScan);
 				} else {
 					self.cycle += 458;
-					self.window_line = 0;
+					self.window_line = 255;
 
 					if let Some(lcd) = &mut self.lcd {
 						lcd.swap_buffers();
@@ -231,7 +231,7 @@ impl PPU {
 				}
 			}
 			OamScan => {
-				self.scanline_state = self.fetch_scanline_state();
+				// self.scanline_state = self.fetch_scanline_state();
 				self.cycle += 12;
 				self.start_scanline();
 				self.set_mode(Draw);

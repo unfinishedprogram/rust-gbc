@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::util::bits::BIT_7;
 
+use super::renderer_old::Color;
+
 /// Handles reading and writing of color pallette data for CGB mode
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ColorRamController {
@@ -42,5 +44,19 @@ impl ColorRamController {
 		if self.increment {
 			self.index += 1;
 		}
+	}
+
+	pub fn get_color(&self, pallette: u8, color: u8) -> Color {
+		let index = pallette * 8 + color * 2;
+		let color = u16::from_le_bytes([self.data[index as usize], self.data[index as usize + 1]]);
+		let r = color & 0b11111;
+		let g = (color >> 5) & 0b11111;
+		let b = (color >> 10) & 0b11111;
+
+		let r = ((r << 3) | (r >> 2)) as u8;
+		let g = ((g << 3) | (g >> 2)) as u8;
+		let b = ((b << 3) | (b >> 2)) as u8;
+
+		(r, g, b, 255)
 	}
 }

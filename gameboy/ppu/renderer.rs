@@ -35,6 +35,7 @@ pub trait PixelFIFO {
 	fn get_tile_map_offset(&self) -> u16;
 	fn get_addressing_mode(&self) -> AddressingMode;
 	fn get_tile_data(&self, tile_index: u16) -> TileData;
+	fn start_window(&mut self);
 }
 
 impl PixelFIFO for PPU {
@@ -46,7 +47,16 @@ impl PixelFIFO for PPU {
 		wn_in_view && wn_enabled
 	}
 
+	fn start_window(&mut self) {
+		self.fifo_bg.clear();
+		self.fetcher_mode = FetcherMode::Window;
+		self.current_tile = 0;
+		self.window_line = self.window_line.wrapping_add(1);
+		self.populate_bg_fifo();
+	}
+
 	fn start_scanline(&mut self) {
+		self.fetcher_mode = FetcherMode::Background;
 		self.fifo_bg.clear();
 		self.current_tile = self.scx >> 3;
 
@@ -58,6 +68,10 @@ impl PixelFIFO for PPU {
 	}
 
 	fn step_fifo(&mut self) {
+		if matches!(self.fetcher_mode, FetcherMode::Background) && self.in_window() {
+			self.start_window()
+		}
+
 		if let Some(pixel) = self.fifo_bg.pop_back() {
 			self.push_pixel(pixel);
 			self.current_pixel += 1;
@@ -71,17 +85,9 @@ impl PixelFIFO for PPU {
 	fn push_pixel(&mut self, pixel: Pixel) {
 		let x = self.current_pixel;
 		let y = self.ly;
+
 		if let Some(lcd) = &mut self.lcd {
-			lcd.put_pixel(
-				x,
-				y,
-				[
-					(0xFF, 0xFF, 0xFF, 0xFF),
-					(0xAA, 0xAA, 0xAA, 0xFF),
-					(0x55, 0x55, 0x55, 0xFF),
-					(0x00, 0x00, 0x00, 0xFF),
-				][pixel.color as usize],
-			);
+			lcd.put_pixel(x, y, self.bg_color.get_color(pixel.palette, pixel.color))
 		}
 	}
 
@@ -102,13 +108,14 @@ impl PixelFIFO for PPU {
 		debug_assert!(row < 8);
 		let TileData(index, attributes) = tile_data;
 
-		let (row, horizontal_flip, background_priority, palette) =
+		let (row, horizontal_flip, background_priority, palette, bank) =
 			if let Some(attributes) = &attributes {
 				let row = if attributes.vertical_flip {
 					7 - row
 				} else {
 					row
 				};
+
 				let horizontal_flip = attributes.horizontal_flip;
 
 				(
@@ -116,13 +123,14 @@ impl PixelFIFO for PPU {
 					horizontal_flip,
 					attributes.bg_priority,
 					attributes.palette_number as u8,
+					attributes.v_ram_bank,
 				)
 			} else {
-				(row, false, false, 0)
+				(row, false, false, 0, 0)
 			};
 
-		let low = self.v_ram[0][index as usize + row as usize * 2];
-		let high = self.v_ram[0][index as usize + row as usize * 2 + 1];
+		let low = self.v_ram[bank][index as usize + row as usize * 2];
+		let high = self.v_ram[bank][index as usize + row as usize * 2 + 1];
 		let interleaved = interleave(low, high);
 
 		let pixels = (0..8).map(|index| {
@@ -143,20 +151,38 @@ impl PixelFIFO for PPU {
 	}
 
 	fn populate_bg_fifo(&mut self) {
-		// let tile_x = (self.current_pixel + self.scx) >> 3;
-		let tile_y = (self.ly + self.scy) >> 3;
+		match self.fetcher_mode {
+			FetcherMode::Background => {
+				let tile_y = (self.ly.wrapping_add(self.scy)) >> 3;
 
-		let tile_x = self.current_tile;
-		self.current_tile += 1;
+				let tile_x = self.current_tile;
+				self.current_tile = self.current_tile.wrapping_add(1);
 
-		let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
+				let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
 
-		let tile_row = (self.ly + self.scy) % 8;
+				let tile_row = (self.ly.wrapping_add(self.scy)) % 8;
 
-		let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row);
+				let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row);
 
-		for pix in pixels {
-			self.fifo_bg.push_front(pix);
+				for pix in pixels {
+					self.fifo_bg.push_front(pix);
+				}
+			}
+			FetcherMode::Window => {
+				let tile_y = self.window_line >> 3;
+				let tile_x = self.current_tile;
+				self.current_tile += 1;
+
+				let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
+
+				let tile_row = self.window_line % 8;
+
+				let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row);
+
+				for pix in pixels {
+					self.fifo_bg.push_front(pix);
+				}
+			}
 		}
 	}
 
