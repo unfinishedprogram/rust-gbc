@@ -274,38 +274,18 @@ impl PixelFIFO for PPU {
 	}
 
 	fn populate_bg_fifo(&mut self) {
-		match self.fetcher_mode {
-			FetcherMode::Background => {
-				let tile_y = (self.ly.wrapping_add(self.scy)) >> 3;
+		let tile_y = match self.fetcher_mode {
+			FetcherMode::Background => (self.ly.wrapping_add(self.scy)) >> 3,
+			FetcherMode::Window => self.window_line >> 3,
+		};
 
-				let tile_x = self.current_tile;
-				self.current_tile = self.current_tile.wrapping_add(1) % 32;
-
-				let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
-
-				let tile_row = (self.ly.wrapping_add(self.scy)) % 8;
-
-				let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row, 0);
-
-				for pix in pixels {
-					self.fifo_bg.push_back(pix);
-				}
-			}
-			FetcherMode::Window => {
-				let tile_y = self.window_line >> 3;
-				let tile_x = self.current_tile;
-				self.current_tile += 1;
-
-				let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
-
-				let tile_row = self.window_line % 8;
-
-				let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row, 0);
-
-				for pix in pixels {
-					self.fifo_bg.push_back(pix);
-				}
-			}
+		let tile_x = self.current_tile;
+		self.current_tile = self.current_tile.wrapping_add(1) % 32;
+		let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
+		let tile_row = (self.ly.wrapping_add(self.scy)) % 8;
+		let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row, 0);
+		for pix in pixels {
+			self.fifo_bg.push_back(pix);
 		}
 	}
 
