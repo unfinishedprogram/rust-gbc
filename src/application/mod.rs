@@ -45,6 +45,8 @@ pub struct Application {
 	emulator_state: Gameboy,
 	running_state: RunningState,
 	input_state: InputState,
+	frame_counts: Vec<u64>,
+	frame_times: Vec<f64>,
 }
 
 impl Default for Application {
@@ -57,6 +59,8 @@ impl Default for Application {
 		};
 
 		Self {
+			frame_counts: vec![0; 30],
+			frame_times: vec![0.0; 30],
 			_file_reader: None,
 			input_state: InputState::new(),
 			running_state: RunningState::Paused,
@@ -77,6 +81,32 @@ impl Application {
 			.unwrap();
 	}
 
+	pub fn step_fast(&mut self, delta: f64) {
+		let perf = gloo::utils::window().performance().unwrap();
+		let start_time = perf.now();
+
+		let start_frame = self.emulator_state.ppu.frame;
+
+		while perf.now() - start_time < delta {
+			for _ in 0..1024 {
+				self.emulator_state.step();
+			}
+		}
+
+		let end_frame = self.emulator_state.ppu.frame;
+		let frames = end_frame - start_frame;
+
+		self.frame_counts.remove(0);
+		self.frame_times.remove(0);
+
+		self.frame_counts.push(frames);
+		self.frame_times.push(perf.now() - start_time);
+
+		let frames: u64 = self.frame_counts.iter().sum();
+		let time: f64 = self.frame_times.iter().sum();
+		gloo::console::log!(frames as f64 / (time / 1000.0));
+	}
+
 	pub fn step_emulator(&mut self, delta: f64) {
 		let start = self.emulator_state.get_cycle();
 
@@ -88,7 +118,8 @@ impl Application {
 	pub fn step_frame(&mut self) {
 		let controller_state = self.input_state.get_controller_state();
 		self.emulator_state.set_controller_state(&controller_state);
-		self.step_emulator(0.015);
+		// self.step_emulator(0.015);
+		self.step_fast(15.0);
 		self.render_screen()
 	}
 

@@ -55,6 +55,8 @@ pub struct PPU {
 	pub bg_color: ColorRamController,
 	pub obj_color: ColorRamController,
 
+	pub frame: u64,
+
 	fetcher_mode: FetcherMode,
 	current_pixel: u8,
 	window_line: u8,
@@ -73,6 +75,7 @@ pub struct PPU {
 impl Default for PPU {
 	fn default() -> Self {
 		Self {
+			frame: 0,
 			cycle: 0,
 			window_line: 255,
 			current_pixel: 0,
@@ -210,6 +213,7 @@ impl PPU {
 					self.window_line = 255;
 
 					if let Some(lcd) = &mut self.lcd {
+						self.frame += 1;
 						lcd.swap_buffers();
 					}
 
