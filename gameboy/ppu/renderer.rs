@@ -128,7 +128,7 @@ impl PixelFIFO for PPU {
 	fn start_scanline(&mut self) {
 		self.fetcher_mode = FetcherMode::Background;
 		self.fifo_bg.clear();
-		self.current_tile = self.scx >> 3;
+		self.current_tile = self.scx / 8;
 		self.sprites = self.fetch_scanline_sprites();
 
 		// Account for x-scroll of bg
@@ -228,7 +228,6 @@ impl PixelFIFO for PPU {
 	}
 
 	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> Vec<Pixel> {
-		// debug_assert!(row < 8);
 		let row = row % 8;
 		let TileData(index, attributes) = tile_data;
 
@@ -280,7 +279,7 @@ impl PixelFIFO for PPU {
 				let tile_y = (self.ly.wrapping_add(self.scy)) >> 3;
 
 				let tile_x = self.current_tile;
-				self.current_tile = self.current_tile.wrapping_add(1);
+				self.current_tile = self.current_tile.wrapping_add(1) % 32;
 
 				let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
 
