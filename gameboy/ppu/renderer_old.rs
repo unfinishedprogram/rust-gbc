@@ -30,17 +30,16 @@ trait RendererHelpers {
 
 impl RendererHelpers for PPU {
 	fn fetch_sprites(&self) -> Vec<Sprite> {
-		(0..40)
-			.map(|i| {
-				let index = i * 4;
-				let bytes = (
-					self.oam[index],
-					self.oam[index + 1],
-					self.oam[index + 2],
-					self.oam[index + 3],
-				);
-
-				Sprite::new(index as u16, bytes)
+		self.oam
+			.chunks_exact(4)
+			.enumerate()
+			.map(|(index, bytes)| {
+				Sprite::new(
+					index as u16,
+					bytes
+						.try_into()
+						.expect("Chunks should have exactly 4 elements each"),
+				)
 			})
 			.filter(|sprite| sprite.is_visible())
 			.collect()

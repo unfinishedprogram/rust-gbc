@@ -20,6 +20,20 @@ pub struct Pixel {
 	background_priority: bool,
 }
 
+impl Pixel {
+	/// Creates a transparent pixel, with the lowest possible priority.
+	///
+	/// This is primarily for buffering the OBJ-FIFO
+	pub fn transparent() -> Self {
+		Self {
+			color: 0,
+			palette: 0,
+			sprite_priority: 40,
+			background_priority: false,
+		}
+	}
+}
+
 pub enum AddressingMode {
 	Signed,
 	Unsigned,
@@ -29,7 +43,7 @@ pub trait PixelFIFO {
 	fn step_fifo(&mut self);
 	fn push_pixel(&mut self);
 	fn start_scanline(&mut self);
-	fn get_tile_row(&self, tile_data: TileData, row: u8) -> Vec<Pixel>;
+	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> Vec<Pixel>;
 	fn populate_bg_fifo(&mut self);
 	fn in_window(&self) -> bool;
 	fn get_tile_map_offset(&self) -> u16;
@@ -38,9 +52,45 @@ pub trait PixelFIFO {
 	fn start_window(&mut self);
 	fn fetch_sprites(&mut self);
 	fn step_sprite_fifo(&mut self);
+	fn push_sprite_pixels(&mut self, pixels: Vec<Pixel>);
+	fn fetch_scanline_sprites(&self) -> Vec<&Sprite>;
 }
 
 impl PixelFIFO for PPU {
+	/// Pushes OBJ Pixels onto the fifo.
+	///
+	/// Handles mixing and priorities of sprite pixels
+	fn push_sprite_pixels(&mut self, pixels: Vec<Pixel>) {
+		// Fill fifo with transparent pixels until it has 8
+
+		while self.fifo_obj.len() < 8 {
+			self.fifo_obj.push_front(Pixel::transparent());
+		}
+
+		// Mix the new pixels with those currently in the FIFO
+		for (i, pixel) in pixels.into_iter().enumerate() {
+			let other = &mut self.fifo_obj[i];
+			if (pixel.color != 0 && pixel.sprite_priority < other.sprite_priority)
+				|| other.color == 0
+			{
+				*other = pixel;
+			}
+		}
+	}
+
+	fn fetch_scanline_sprites(&self) -> Vec<&Sprite> {
+		let double_height = if self.lcdc & BIT_2 == BIT_2 { 0 } else { 8 };
+
+		self.sprites
+			.iter()
+			.filter(|sprite| {
+				(sprite.y > self.ly.wrapping_add(double_height))
+					&& (sprite.y <= self.ly.wrapping_add(16))
+			})
+			.take(10)
+			.collect()
+	}
+
 	fn fetch_sprites(&mut self) {
 		self.sprites = self
 			.oam
@@ -92,7 +142,7 @@ impl PixelFIFO for PPU {
 		// Account for x-scroll of bg
 		self.populate_bg_fifo();
 		for _ in 0..self.scx % 8 {
-			self.fifo_bg.pop_back();
+			self.fifo_bg.pop_front();
 		}
 
 		// TODO, handle sprites within the first line, I.E. X <= 7
@@ -101,34 +151,19 @@ impl PixelFIFO for PPU {
 	fn step_sprite_fifo(&mut self) {
 		let double_height = self.lcdc & BIT_2 == BIT_2;
 
-		for sprite in &self.sprites {
+		let mut tiles: Vec<Vec<Pixel>> = vec![];
+
+		for sprite in self.fetch_scanline_sprites() {
 			if sprite.x != self.current_pixel.wrapping_add(7) {
 				continue;
 			}
-
-			if double_height {
-				if !((sprite.y > self.ly) && (sprite.y <= self.ly.wrapping_add(16))) {
-					continue;
-				}
-			} else {
-				if !((sprite.y > self.ly.wrapping_add(8)) && (sprite.y <= self.ly.wrapping_add(16)))
-				{
-					continue;
-				}
-			}
-
-			self.fifo_obj.clear();
-
 			let attributes = TileAttributes {
 				vertical_flip: !sprite.flip_y,
-				horizontal_flip: sprite.flip_x,
+				horizontal_flip: !sprite.flip_x,
 				v_ram_bank: sprite.tile_vram_bank as usize,
 				bg_priority: sprite.above_bg,
 				palette_number: sprite.pallette_number as usize,
 			};
-
-			// 0x1C00
-			// 0x1800
 
 			let local_y = sprite.y.wrapping_sub(self.ly).wrapping_sub(9);
 			if double_height {
@@ -136,26 +171,21 @@ impl PixelFIFO for PPU {
 					let real_addr = ((sprite.tile_index | 0x01) as u16 * 16) as i32;
 
 					let data = TileData(real_addr as u16, Some(attributes));
-
-					for pix in self.get_tile_row(data, local_y - 8) {
-						self.fifo_obj.push_front(pix);
-					}
+					tiles.push(self.get_tile_row(data, local_y - 8, sprite.addr as usize));
 				} else {
 					// Double height part
 					let real_addr = ((sprite.tile_index & 0xFE) as u16 * 16) as i32;
 					let data = TileData(real_addr as u16, Some(attributes));
-
-					for pix in self.get_tile_row(data, local_y) {
-						self.fifo_obj.push_front(pix);
-					}
+					tiles.push(self.get_tile_row(data, local_y, sprite.addr as usize));
 				}
 			} else {
 				let data = TileData(sprite.tile_index as u16 * 16, Some(attributes));
-
-				for pix in self.get_tile_row(data, local_y) {
-					self.fifo_obj.push_front(pix);
-				}
+				tiles.push(self.get_tile_row(data, local_y, sprite.addr as usize));
 			}
+		}
+
+		for pixels in tiles {
+			self.push_sprite_pixels(pixels);
 		}
 	}
 
@@ -175,7 +205,7 @@ impl PixelFIFO for PPU {
 
 	/// Tries to push a pixel to the LCD
 	fn push_pixel(&mut self) {
-		if let Some(pixel) = self.fifo_bg.pop_back() {
+		if let Some(pixel) = self.fifo_bg.pop_front() {
 			let x = self.current_pixel;
 			let y = self.ly;
 
@@ -205,7 +235,7 @@ impl PixelFIFO for PPU {
 		}
 	}
 
-	fn get_tile_row(&self, tile_data: TileData, row: u8) -> Vec<Pixel> {
+	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> Vec<Pixel> {
 		// debug_assert!(row < 8);
 		let row = row % 8;
 		let TileData(index, attributes) = tile_data;
@@ -240,7 +270,7 @@ impl PixelFIFO for PPU {
 			Pixel {
 				color,
 				palette,
-				sprite_priority: 0,
+				sprite_priority,
 				background_priority,
 			}
 		});
@@ -264,10 +294,10 @@ impl PixelFIFO for PPU {
 
 				let tile_row = (self.ly.wrapping_add(self.scy)) % 8;
 
-				let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row);
+				let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row, 0);
 
 				for pix in pixels {
-					self.fifo_bg.push_front(pix);
+					self.fifo_bg.push_back(pix);
 				}
 			}
 			FetcherMode::Window => {
@@ -279,10 +309,10 @@ impl PixelFIFO for PPU {
 
 				let tile_row = self.window_line % 8;
 
-				let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row);
+				let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row, 0);
 
 				for pix in pixels {
-					self.fifo_bg.push_front(pix);
+					self.fifo_bg.push_back(pix);
 				}
 			}
 		}
