@@ -145,10 +145,16 @@ impl PixelFIFO for PPU {
 
 		let mut tiles: Vec<Vec<Pixel>> = vec![];
 
+		// OBJ Enable
+		if self.lcdc & BIT_1 != BIT_1 {
+			return;
+		}
+
 		for sprite in &self.sprites {
-			if sprite.x != self.current_pixel.wrapping_add(7) {
+			if sprite.x != self.current_pixel.wrapping_add(8) {
 				continue;
 			}
+
 			let attributes = TileAttributes {
 				vertical_flip: !sprite.flip_y,
 				horizontal_flip: !sprite.flip_x,
@@ -158,22 +164,21 @@ impl PixelFIFO for PPU {
 			};
 
 			let local_y = sprite.y.wrapping_sub(self.ly).wrapping_sub(9);
-			if double_height {
-				if local_y >= 8 {
-					let real_addr = ((sprite.tile_index | 0x01) as u16 * 16) as i32;
 
-					let data = TileData(real_addr as u16, Some(attributes));
-					tiles.push(self.get_tile_row(data, local_y - 8, sprite.addr as usize));
+			let tile_addr = if double_height {
+				if sprite.flip_y ^ (local_y >= 8) {
+					sprite.tile_index | 0x01
 				} else {
-					// Double height part
-					let real_addr = ((sprite.tile_index & 0xFE) as u16 * 16) as i32;
-					let data = TileData(real_addr as u16, Some(attributes));
-					tiles.push(self.get_tile_row(data, local_y, sprite.addr as usize));
+					sprite.tile_index & 0xFE
 				}
 			} else {
-				let data = TileData(sprite.tile_index as u16 * 16, Some(attributes));
-				tiles.push(self.get_tile_row(data, local_y, sprite.addr as usize));
-			}
+				sprite.tile_index
+			} as u16 * 16;
+
+			let local_y = local_y & 7;
+
+			let data = TileData(tile_addr, Some(attributes));
+			tiles.push(self.get_tile_row(data, local_y, sprite.addr as usize));
 		}
 
 		for pixels in tiles {
@@ -197,21 +202,28 @@ impl PixelFIFO for PPU {
 
 	/// Tries to push a pixel to the LCD
 	fn push_pixel(&mut self) {
-		if let Some(pixel) = self.fifo_bg.pop_front() {
-			let x = self.current_pixel;
-			let y = self.ly;
+		let Some(bg) = self.fifo_bg.pop_front() else {return};
 
-			if let Some(lcd) = &mut self.lcd {
-				lcd.put_pixel(x, y, self.bg_color.get_color(pixel.palette, pixel.color));
+		let x = self.current_pixel;
+		let y = self.ly;
 
-				if let Some(pixel) = self.fifo_obj.pop_back() {
-					if !(pixel.color == 0) {
-						lcd.put_pixel(x, y, self.obj_color.get_color(pixel.palette, pixel.color));
-					}
-				}
+		self.current_pixel += 1;
+
+		let Some(lcd) = &mut self.lcd else {return};
+
+		if let Some(fg) = self.fifo_obj.pop_back() {
+			let bg_over = (!fg.background_priority || bg.background_priority) && bg.color != 0;
+			let bg_over = bg_over && self.lcdc & BIT_0 == BIT_0;
+			let bg_over = bg_over || fg.color == 0;
+
+			if bg_over {
+				lcd.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
+			} else {
+				lcd.put_pixel(x, y, self.obj_color.get_color(fg.palette, fg.color));
 			}
-			self.current_pixel += 1;
-		}
+		} else {
+			lcd.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
+		};
 	}
 
 	fn get_tile_map_offset(&self) -> u16 {
