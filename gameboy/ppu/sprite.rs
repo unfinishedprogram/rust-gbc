@@ -17,8 +17,8 @@ pub struct Sprite {
 }
 
 impl Sprite {
-	pub fn new(addr: u16, bytes: (u8, u8, u8, u8)) -> Self {
-		let (y, x, tile_index, attributes) = bytes;
+	pub fn new(addr: u16, bytes: [u8; 4]) -> Self {
+		let [y, x, tile_index, attributes] = bytes;
 
 		let above_bg = attributes & BIT_7 == 0;
 		let flip_y = attributes & BIT_6 != 0;

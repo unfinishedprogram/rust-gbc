@@ -1,11 +1,10 @@
-use chrono::Local;
 use serde::{Deserialize, Serialize};
 
 use crate::{lcd::LCDDisplay, util::bits::*};
 
 use super::{
 	sprite::Sprite,
-	tile_data::{self, TileAttributes, TileData},
+	tile_data::{TileAttributes, TileData},
 	FetcherMode, PPU,
 };
 
@@ -27,7 +26,6 @@ pub enum AddressingMode {
 }
 
 pub trait PixelFIFO {
-	/// Fetches a row of 8 background or window pixels and queues them up to be mixed with sprite pixels
 	fn step_fifo(&mut self);
 	fn push_pixel(&mut self);
 	fn start_scanline(&mut self);
@@ -44,22 +42,25 @@ pub trait PixelFIFO {
 
 impl PixelFIFO for PPU {
 	fn fetch_sprites(&mut self) {
-		self.sprites = (0..40)
-			.map(|i| {
-				let index = i * 4;
-				let bytes = (
-					self.oam[index],
-					self.oam[index + 1],
-					self.oam[index + 2],
-					self.oam[index + 3],
-				);
-
-				Sprite::new(index as u16, bytes)
+		self.sprites = self
+			.oam
+			.chunks_exact(4)
+			.enumerate()
+			.map(|(index, bytes)| {
+				Sprite::new(
+					index as u16,
+					bytes
+						.try_into()
+						.expect("Chunks should have exactly 4 elements each"),
+				)
 			})
 			.filter(|sprite| sprite.is_visible())
-			.collect()
+			.collect();
 	}
 
+	/// Checks if the screen pixel currently being drawn is within the window
+	///
+	/// If this is true, the window should be drawn for the remainder of the current scanline
 	fn in_window(&self) -> bool {
 		let bg_enabled = self.lcdc & BIT_0 == BIT_0;
 		let wn_enabled = self.lcdc & BIT_5 == BIT_5 && bg_enabled;
@@ -68,6 +69,8 @@ impl PixelFIFO for PPU {
 		wn_in_view && wn_enabled
 	}
 
+	/// Start drawing the window
+	/// Sets the fetcher mode to window for the remainder of the current scanline
 	fn start_window(&mut self) {
 		self.fifo_bg.clear();
 		self.fetcher_mode = FetcherMode::Window;
@@ -76,6 +79,10 @@ impl PixelFIFO for PPU {
 		self.populate_bg_fifo();
 	}
 
+	/// Initializes internal state to draw a new scanline
+	///
+	/// This is called at the start of each scanline and
+	/// resets the fetcher mode to fetch background tiles
 	fn start_scanline(&mut self) {
 		self.fetcher_mode = FetcherMode::Background;
 		self.fifo_bg.clear();
@@ -87,6 +94,8 @@ impl PixelFIFO for PPU {
 		for _ in 0..self.scx % 8 {
 			self.fifo_bg.pop_back();
 		}
+
+		// TODO, handle sprites within the first line, I.E. X <= 7
 	}
 
 	fn step_sprite_fifo(&mut self) {
@@ -164,6 +173,7 @@ impl PixelFIFO for PPU {
 		}
 	}
 
+	/// Tries to push a pixel to the LCD
 	fn push_pixel(&mut self) {
 		if let Some(pixel) = self.fifo_bg.pop_back() {
 			let x = self.current_pixel;
@@ -301,9 +311,3 @@ impl PixelFIFO for PPU {
 		TileData(index, Some(TileAttributes::new(attributes)))
 	}
 }
-
-// Get tile
-// Get tile data low
-// Get tile data high
-// Sleep
-// Push
