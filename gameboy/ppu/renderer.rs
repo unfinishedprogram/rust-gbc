@@ -8,7 +8,7 @@ use super::{
 	FetcherMode, PPU,
 };
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default, Copy)]
 pub struct Pixel {
 	/// a value between 0 and 3
 	color: u8,
@@ -43,7 +43,7 @@ pub trait PixelFIFO {
 	fn step_fifo(&mut self);
 	fn push_pixel(&mut self);
 	fn start_scanline(&mut self);
-	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> Vec<Pixel>;
+	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> [Pixel; 8];
 	fn populate_bg_fifo(&mut self);
 	fn in_window(&self) -> bool;
 	fn get_tile_map_offset(&self) -> u16;
@@ -51,7 +51,7 @@ pub trait PixelFIFO {
 	fn get_tile_data(&self, tile_index: u16) -> TileData;
 	fn start_window(&mut self);
 	fn step_sprite_fifo(&mut self);
-	fn push_sprite_pixels(&mut self, pixels: Vec<Pixel>);
+	fn push_sprite_pixels(&mut self, pixels: [Pixel; 8]);
 	fn fetch_scanline_sprites(&self) -> Vec<Sprite>;
 }
 
@@ -59,7 +59,7 @@ impl PixelFIFO for PPU {
 	/// Pushes OBJ Pixels onto the fifo.
 	///
 	/// Handles mixing and priorities of sprite pixels
-	fn push_sprite_pixels(&mut self, pixels: Vec<Pixel>) {
+	fn push_sprite_pixels(&mut self, pixels: [Pixel; 8]) {
 		// Fill fifo with transparent pixels until it has 8
 
 		while self.fifo_obj.len() < 8 {
@@ -143,7 +143,7 @@ impl PixelFIFO for PPU {
 	fn step_sprite_fifo(&mut self) {
 		let double_height = self.lcdc & BIT_2 == BIT_2;
 
-		let mut tiles: Vec<Vec<Pixel>> = vec![];
+		let mut tiles: Vec<[Pixel; 8]> = vec![];
 
 		// OBJ Enable
 		if self.lcdc & BIT_1 != BIT_1 {
@@ -239,7 +239,7 @@ impl PixelFIFO for PPU {
 		}
 	}
 
-	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> Vec<Pixel> {
+	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> [Pixel; 8] {
 		let row = row % 8;
 		let TileData(index, attributes) = tile_data;
 
@@ -268,21 +268,25 @@ impl PixelFIFO for PPU {
 		let high = self.v_ram[bank][index as usize + row as usize * 2 + 1];
 		let interleaved = interleave(low, high);
 
-		let pixels = (0..8).map(|index| {
-			let color = (interleaved >> (index * 2) & 0b11) as u8;
-			Pixel {
-				color,
-				palette,
-				sprite_priority,
-				background_priority,
-			}
-		});
+		let mut pixels: [Pixel; 8] = [Pixel {
+			color: 0,
+			palette,
+			sprite_priority,
+			background_priority,
+		}; 8];
 
+		let iter = pixels.iter_mut().enumerate();
 		if horizontal_flip {
-			pixels.collect()
+			for (i, pixel) in iter {
+				pixel.color = (interleaved >> (i * 2) & 0b11) as u8
+			}
 		} else {
-			pixels.rev().collect()
+			for (i, pixel) in iter {
+				pixel.color = (interleaved >> ((7 - i) * 2) & 0b11) as u8
+			}
 		}
+
+		pixels
 	}
 
 	fn populate_bg_fifo(&mut self) {
