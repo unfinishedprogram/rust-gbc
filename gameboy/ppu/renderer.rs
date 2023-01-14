@@ -50,10 +50,9 @@ pub trait PixelFIFO {
 	fn get_addressing_mode(&self) -> AddressingMode;
 	fn get_tile_data(&self, tile_index: u16) -> TileData;
 	fn start_window(&mut self);
-	fn fetch_sprites(&mut self);
 	fn step_sprite_fifo(&mut self);
 	fn push_sprite_pixels(&mut self, pixels: Vec<Pixel>);
-	fn fetch_scanline_sprites(&self) -> Vec<&Sprite>;
+	fn fetch_scanline_sprites(&self) -> Vec<Sprite>;
 }
 
 impl PixelFIFO for PPU {
@@ -78,22 +77,10 @@ impl PixelFIFO for PPU {
 		}
 	}
 
-	fn fetch_scanline_sprites(&self) -> Vec<&Sprite> {
+	fn fetch_scanline_sprites(&self) -> Vec<Sprite> {
 		let double_height = if self.lcdc & BIT_2 == BIT_2 { 0 } else { 8 };
 
-		self.sprites
-			.iter()
-			.filter(|sprite| {
-				(sprite.y > self.ly.wrapping_add(double_height))
-					&& (sprite.y <= self.ly.wrapping_add(16))
-			})
-			.take(10)
-			.collect()
-	}
-
-	fn fetch_sprites(&mut self) {
-		self.sprites = self
-			.oam
+		self.oam
 			.chunks_exact(4)
 			.enumerate()
 			.map(|(index, bytes)| {
@@ -105,7 +92,12 @@ impl PixelFIFO for PPU {
 				)
 			})
 			.filter(|sprite| sprite.is_visible())
-			.collect();
+			.filter(|sprite| {
+				(sprite.y > self.ly.wrapping_add(double_height))
+					&& (sprite.y <= self.ly.wrapping_add(16))
+			})
+			.take(10)
+			.collect()
 	}
 
 	/// Checks if the screen pixel currently being drawn is within the window
@@ -137,7 +129,7 @@ impl PixelFIFO for PPU {
 		self.fetcher_mode = FetcherMode::Background;
 		self.fifo_bg.clear();
 		self.current_tile = self.scx >> 3;
-		self.fetch_sprites();
+		self.sprites = self.fetch_scanline_sprites();
 
 		// Account for x-scroll of bg
 		self.populate_bg_fifo();
@@ -153,7 +145,7 @@ impl PixelFIFO for PPU {
 
 		let mut tiles: Vec<Vec<Pixel>> = vec![];
 
-		for sprite in self.fetch_scanline_sprites() {
+		for sprite in &self.sprites {
 			if sprite.x != self.current_pixel.wrapping_add(7) {
 				continue;
 			}
