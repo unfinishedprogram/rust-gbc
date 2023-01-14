@@ -278,7 +278,6 @@ impl PixelFIFO for PPU {
 			FetcherMode::Background => (self.ly.wrapping_add(self.scy)) >> 3,
 			FetcherMode::Window => self.window_line >> 3,
 		};
-
 		let tile_x = self.current_tile;
 		self.current_tile = self.current_tile.wrapping_add(1) % 32;
 		let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();

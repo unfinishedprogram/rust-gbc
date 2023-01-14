@@ -1,6 +1,5 @@
 mod color_ram;
 mod renderer;
-mod renderer_old;
 mod sprite;
 mod tile_data;
 
@@ -24,8 +23,6 @@ enum FetcherMode {
 	Background,
 	Window,
 }
-
-use renderer_old::ScanlineState;
 
 #[derive(Debug, Clone, Copy)]
 pub enum PPUMode {
@@ -59,7 +56,6 @@ pub struct PPU {
 	pub obj_color: ColorRamController,
 
 	fetcher_mode: FetcherMode,
-	scanline_state: ScanlineState,
 	current_pixel: u8,
 	window_line: u8,
 	enabled: bool,
@@ -81,7 +77,6 @@ impl Default for PPU {
 			window_line: 255,
 			current_pixel: 0,
 			fetcher_mode: FetcherMode::Background,
-			scanline_state: Default::default(),
 			interrupt_requests: 0,
 			current_tile: 0,
 			lcd: Default::default(),
