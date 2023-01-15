@@ -14,6 +14,5 @@ pub fn load_rom(rom: &[u8], source: String) {
 }
 
 fn main() {
-	// APPLICATION.with_borrow_mut(|app| {});
 	setup_listeners();
 }
