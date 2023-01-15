@@ -13,7 +13,6 @@ pub mod values;
 use super::memory_mapper::{Source, SourcedMemoryMapper};
 pub use state::CPUState;
 
-use super::flags::*;
 use super::state::Gameboy;
 use instruction::{execute::execute_instruction, fetch::fetch_instruction, Instruction};
 
@@ -77,11 +76,14 @@ impl CPU for Gameboy {
 				self.tick_m_cycles(1);
 				self.read_from(index, Source::Cpu)
 			}
-			ValueRefU8::Reg(reg) => self.cpu_state.registers[reg.clone()],
+			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg],
 			ValueRefU8::Raw(x) => *x,
-			ValueRefU8::MemOffset(offset) => {
-				let offset_value: u16 = self.read_8(offset) as u16;
-				self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw(offset_value | 0xFF00)))
+			ValueRefU8::MemOffsetRaw(offset) => self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw(
+				(*offset as u16) | 0xFF00,
+			))),
+			ValueRefU8::MemOffsetReg(reg) => {
+				let offset = self.cpu_state.registers[*reg];
+				self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw((offset as u16) | 0xFF00)))
 			}
 		}
 	}
@@ -101,13 +103,17 @@ impl CPU for Gameboy {
 				self.tick_m_cycles(1);
 				self.write_from(index, value, Source::Cpu);
 			}
-			ValueRefU8::Reg(reg) => self.cpu_state.registers[reg.clone()] = value,
-			ValueRefU8::MemOffset(offset) => {
-				let offset_value: u16 = self.read_8(offset) as u16;
+			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg] = value,
+			ValueRefU8::MemOffsetRaw(offset) => self.write_8(
+				&ValueRefU8::Mem(ValueRefU16::Raw((*offset as u16) | 0xFF00)),
+				value,
+			),
+			ValueRefU8::MemOffsetReg(reg) => {
+				let offset = self.cpu_state.registers[*reg];
 				self.write_8(
-					&ValueRefU8::Mem(ValueRefU16::Raw(offset_value | 0xFF00)),
+					&ValueRefU8::Mem(ValueRefU16::Raw((offset as u16) | 0xFF00)),
 					value,
-				)
+				);
 			}
 			ValueRefU8::Raw(_) => unreachable!(),
 		}
@@ -163,7 +169,12 @@ impl CPU for Gameboy {
 	}
 
 	fn interrupt_pending(&self) -> bool {
-		self.read(IE) & self.read(IF) != 0
+		// No interrupts can be pending if there are none enabled
+		if self.interrupt_enable_register == 0 {
+			return false;
+		};
+
+		self.interrupt_enable_register & self.read(IF) != 0
 	}
 
 	fn get_interrupt(&mut self) -> Option<Instruction> {
@@ -189,9 +200,10 @@ impl CPU for Gameboy {
 
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
 		if let Some(interrupt_instruction) = self.get_interrupt() {
-			return interrupt_instruction;
+			interrupt_instruction
+		} else {
+			self.fetch_next_instruction()
 		}
-		self.fetch_next_instruction()
 	}
 
 	fn step_cpu(&mut self) {

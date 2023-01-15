@@ -40,10 +40,6 @@ impl Sprite {
 			pallet_address,
 		}
 	}
-
-	pub fn is_visible(&self) -> bool {
-		self.x > 0 && self.y > 0 && self.x <= 168 && self.y <= 160
-	}
 }
 
 impl PartialEq for Sprite {
@@ -60,6 +56,7 @@ impl Ord for Sprite {
 		}
 	}
 }
+
 impl Eq for Sprite {}
 
 impl PartialOrd for Sprite {

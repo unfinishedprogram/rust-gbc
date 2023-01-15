@@ -69,7 +69,7 @@ pub enum Instruction {
 	LD_DEC_HL_A,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum ALUOperation {
 	ADD,
 	ADC,
@@ -81,7 +81,7 @@ pub enum ALUOperation {
 	CP,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum RotShiftOperation {
 	RLC,
 	RRC,
