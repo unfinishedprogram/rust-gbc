@@ -53,6 +53,7 @@ pub trait PixelFIFO {
 	fn step_sprite_fifo(&mut self);
 	fn push_sprite_pixels(&mut self, pixels: [Pixel; 8]);
 	fn fetch_scanline_sprites(&self) -> Vec<Sprite>;
+	fn draw_sprite(&mut self, sprite: Sprite);
 }
 
 impl PixelFIFO for PPU {
@@ -80,7 +81,8 @@ impl PixelFIFO for PPU {
 	fn fetch_scanline_sprites(&self) -> Vec<Sprite> {
 		let double_height = if self.lcdc & BIT_2 == BIT_2 { 0 } else { 8 };
 
-		self.oam
+		let mut sprites: Vec<Sprite> = self
+			.oam
 			.chunks_exact(4)
 			.enumerate()
 			.map(|(index, bytes)| {
@@ -97,7 +99,9 @@ impl PixelFIFO for PPU {
 					&& (sprite.y <= self.ly.wrapping_add(16))
 			})
 			.take(10)
-			.collect()
+			.collect();
+		sprites.sort_by(|a, b| a.x.cmp(&b.x).reverse());
+		sprites
 	}
 
 	/// Checks if the screen pixel currently being drawn is within the window
@@ -140,49 +144,44 @@ impl PixelFIFO for PPU {
 		// TODO, handle sprites within the first line, I.E. X <= 7
 	}
 
-	fn step_sprite_fifo(&mut self) {
+	fn draw_sprite(&mut self, sprite: Sprite) {
 		let double_height = self.lcdc & BIT_2 == BIT_2;
-
-		let mut tiles: Vec<[Pixel; 8]> = vec![];
-
-		// OBJ Enable
 		if self.lcdc & BIT_1 != BIT_1 {
 			return;
 		}
 
-		for sprite in &self.sprites {
-			if sprite.x != self.current_pixel.wrapping_add(8) {
-				continue;
-			}
+		let attributes = TileAttributes {
+			vertical_flip: !sprite.flip_y,
+			horizontal_flip: !sprite.flip_x,
+			v_ram_bank: sprite.tile_vram_bank as usize,
+			bg_priority: sprite.above_bg,
+			palette_number: sprite.pallette_number as usize,
+		};
 
-			let attributes = TileAttributes {
-				vertical_flip: !sprite.flip_y,
-				horizontal_flip: !sprite.flip_x,
-				v_ram_bank: sprite.tile_vram_bank as usize,
-				bg_priority: sprite.above_bg,
-				palette_number: sprite.pallette_number as usize,
-			};
+		let local_y = sprite.y.wrapping_sub(self.ly).wrapping_sub(9);
 
-			let local_y = sprite.y.wrapping_sub(self.ly).wrapping_sub(9);
-
-			let tile_addr = if double_height {
-				if sprite.flip_y ^ (local_y >= 8) {
-					sprite.tile_index | 0x01
-				} else {
-					sprite.tile_index & 0xFE
-				}
+		let tile_addr = if double_height {
+			if sprite.flip_y ^ (local_y >= 8) {
+				sprite.tile_index | 0x01
 			} else {
-				sprite.tile_index
-			} as u16 * 16;
+				sprite.tile_index & 0xFE
+			}
+		} else {
+			sprite.tile_index
+		} as u16 * 16;
 
-			let local_y = local_y & 7;
+		let local_y = local_y & 7;
 
-			let data = TileData(tile_addr, Some(attributes));
-			tiles.push(self.get_tile_row(data, local_y, sprite.addr as usize));
-		}
+		let data = TileData(tile_addr, Some(attributes));
+		self.push_sprite_pixels(self.get_tile_row(data, local_y, sprite.addr as usize));
+	}
 
-		for pixels in tiles {
-			self.push_sprite_pixels(pixels);
+	fn step_sprite_fifo(&mut self) {
+		let Some(next) = self.sprites.last() else {return};
+
+		if next.x == self.current_pixel.wrapping_add(8) {
+			let Some(sprite) = self.sprites.pop() else {return};
+			self.draw_sprite(sprite)
 		}
 	}
 

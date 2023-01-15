@@ -18,8 +18,9 @@ use super::flags::{
 	INT_LCD_STAT, INT_V_BLANK, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE, STAT_V_BLANK_IE,
 };
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 enum FetcherMode {
+	#[default]
 	Background,
 	Window,
 }
@@ -32,7 +33,7 @@ pub enum PPUMode {
 	Draw = 3,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct PPU {
 	pub cycle: u64,
 	pub v_ram: Vec<Vec<u8>>,
@@ -72,42 +73,17 @@ pub struct PPU {
 	fifo_obj: VecDeque<Pixel>,
 }
 
-impl Default for PPU {
-	fn default() -> Self {
+impl PPU {
+	pub fn new() -> Self {
 		Self {
-			frame: 0,
-			cycle: 0,
-			window_line: 255,
-			current_pixel: 0,
-			fetcher_mode: FetcherMode::Background,
-			interrupt_requests: 0,
-			current_tile: 0,
-			lcd: Default::default(),
-			scy: Default::default(),
-			scx: Default::default(),
-			lyc: Default::default(),
-			bgp: Default::default(),
-			obp0: Default::default(),
-			obp1: Default::default(),
-			wy: Default::default(),
-			wx: Default::default(),
+			window_line: 0xFF,
 			enabled: true,
-			lcdc: Default::default(),
-			stat: Default::default(),
-			ly: Default::default(),
-			fifo_pixel: Default::default(),
-			fifo_bg: Default::default(),
-			fifo_obj: Default::default(),
-			bg_color: Default::default(),
-			obj_color: Default::default(),
-			sprites: Default::default(),
 			v_ram: vec![vec![0; 0x2000]; 2],
 			oam: vec![0; 0xA0],
+			..Default::default()
 		}
 	}
-}
 
-impl PPU {
 	fn request_v_blank(&mut self) {
 		self.interrupt_requests |= INT_V_BLANK;
 	}

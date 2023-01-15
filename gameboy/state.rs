@@ -58,7 +58,7 @@ impl Default for Gameboy {
 			),
 			dma_timer: 0,
 			cpu_state: CPUState::default(),
-			ppu: PPU::default(),
+			ppu: PPU::new(),
 			timer: Timer::default(),
 			io_register_state: IORegisterState::default(),
 			boot_rom: include_bytes!("../roms/other/dmg_boot.bin").to_vec(),
