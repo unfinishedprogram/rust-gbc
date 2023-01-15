@@ -171,14 +171,15 @@ impl CPU for Gameboy {
 			return None;
 		}
 
-		for interrupt in [
-			INT_V_BLANK,
-			INT_LCD_STAT,
-			INT_TIMER,
-			INT_SERIAL,
-			INT_JOY_PAD,
-		] {
-			if self.check_interrupt(interrupt) {
+		let requests = self.interrupt_enable_register & self.read(IF);
+
+		if requests == 0 {
+			return None;
+		};
+
+		for index in 0..5 {
+			let interrupt = 1 << index;
+			if requests & interrupt != 0 {
 				self.clear_request(interrupt);
 				return Some(Instruction::INT(interrupt));
 			}
