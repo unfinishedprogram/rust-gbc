@@ -1,7 +1,10 @@
+use serde::{Deserialize, Serialize};
+
 use crate::util::bits::*;
 
 pub struct TileData(pub u16, pub Option<TileAttributes>);
 
+#[derive(Clone, Serialize, Deserialize)]
 pub struct TileAttributes {
 	pub vertical_flip: bool,
 	pub horizontal_flip: bool,

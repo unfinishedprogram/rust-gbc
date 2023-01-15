@@ -84,6 +84,15 @@ impl PixelFIFO for PPU {
 		let mut sprites: Vec<Sprite> = self
 			.oam
 			.chunks_exact(4)
+			// Filter out sprites that are invisible due to position
+			// This lets us not construct sprites that wont be drawn
+			.filter(|chunk| {
+				let x = chunk[1];
+				let y = chunk[0];
+				(x > 0 && y > 0 && x <= 168 && y <= 160)
+					&& ((y > self.ly.wrapping_add(double_height))
+						&& (y <= self.ly.wrapping_add(16)))
+			})
 			.enumerate()
 			.map(|(index, bytes)| {
 				Sprite::new(
@@ -93,13 +102,10 @@ impl PixelFIFO for PPU {
 						.expect("Chunks should have exactly 4 elements each"),
 				)
 			})
-			.filter(|sprite| sprite.is_visible())
-			.filter(|sprite| {
-				(sprite.y > self.ly.wrapping_add(double_height))
-					&& (sprite.y <= self.ly.wrapping_add(16))
-			})
 			.take(10)
 			.collect();
+
+		// Sorting by the x-position means we only need to check a single sprite at a time
 		sprites.sort_by(|a, b| a.x.cmp(&b.x).reverse());
 		sprites
 	}
@@ -161,18 +167,12 @@ impl PixelFIFO for PPU {
 			return;
 		}
 
-		let attributes = TileAttributes {
-			vertical_flip: !sprite.flip_y,
-			horizontal_flip: !sprite.flip_x,
-			v_ram_bank: sprite.tile_vram_bank as usize,
-			bg_priority: sprite.above_bg,
-			palette_number: sprite.pallette_number as usize,
-		};
+		let attributes = sprite.tile_attributes;
 
 		let local_y = sprite.y.wrapping_sub(self.ly).wrapping_sub(9);
 
 		let tile_addr = if double_height {
-			if sprite.flip_y ^ (local_y >= 8) {
+			if !attributes.vertical_flip ^ (local_y >= 8) {
 				sprite.tile_index | 0x01
 			} else {
 				sprite.tile_index & 0xFE
@@ -202,7 +202,6 @@ impl PixelFIFO for PPU {
 		}
 
 		self.step_sprite_fifo();
-
 		self.push_pixel();
 
 		if self.fifo_bg.len() <= 8 {

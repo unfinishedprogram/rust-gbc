@@ -2,18 +2,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::util::bits::*;
 use std::{cmp::PartialOrd, option::Option};
-#[derive(Clone, Eq, Serialize, Deserialize)]
+
+use super::tile_data::TileAttributes;
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Sprite {
 	pub x: u8,
 	pub y: u8,
-	pub flip_y: bool,
-	pub flip_x: bool,
-	pub above_bg: bool,
+	pub tile_attributes: TileAttributes,
 	pub tile_index: u8,
 	pub pallet_address: bool,
 	pub addr: u16,
-	pub tile_vram_bank: u8,
-	pub pallette_number: u8,
 }
 
 impl Sprite {
@@ -25,19 +23,21 @@ impl Sprite {
 		let flip_x = attributes & BIT_5 != 0;
 		let pallet_address = attributes & BIT_4 != 0;
 		let tile_vram_bank = (attributes >> 3) & 1;
-		let pallette_number = attributes & 0b111;
+		let palette_number = (attributes & 0b111) as usize;
 
 		Self {
 			addr,
 			x,
 			y,
-			flip_y,
-			flip_x,
-			above_bg,
+			tile_attributes: TileAttributes {
+				vertical_flip: !flip_y,
+				horizontal_flip: !flip_x,
+				v_ram_bank: tile_vram_bank as usize,
+				bg_priority: above_bg,
+				palette_number,
+			},
 			tile_index,
 			pallet_address,
-			tile_vram_bank,
-			pallette_number,
 		}
 	}
 
@@ -60,6 +60,7 @@ impl Ord for Sprite {
 		}
 	}
 }
+impl Eq for Sprite {}
 
 impl PartialOrd for Sprite {
 	fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
