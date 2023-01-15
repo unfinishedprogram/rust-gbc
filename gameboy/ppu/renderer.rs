@@ -141,7 +141,18 @@ impl PixelFIFO for PPU {
 			self.fifo_bg.pop_front();
 		}
 
-		// TODO, handle sprites within the first line, I.E. X <= 7
+		for i in 0..8 {
+			'_inner: loop {
+				let Some(next) = self.sprites.last() else {break '_inner};
+				if next.x <= i {
+					let Some(sprite) = self.sprites.pop() else {break '_inner};
+					self.draw_sprite(sprite)
+				} else {
+					break '_inner;
+				}
+			}
+			self.fifo_obj.pop_back();
+		}
 	}
 
 	fn draw_sprite(&mut self, sprite: Sprite) {
