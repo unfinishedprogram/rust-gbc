@@ -59,9 +59,9 @@ pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instructi
 
 		(0, 3, _, _, 0) => inst!(cpu, INC_16, (DT.rp[p])),
 		(0, 3, _, _, 1) => inst!(cpu, DEC_16, (DT.rp[p])),
-		(0, 4, _, _, _) => inst!(cpu, INC_8, (DT.r[y].clone())),
-		(0, 5, _, _, _) => inst!(cpu, DEC_8, (DT.r[y].clone())),
-		(0, 6, _, _, _) => inst!(cpu, LD_8, (DT.r[y].clone()), n),
+		(0, 4, _, _, _) => inst!(cpu, INC_8, (DT.r[y])),
+		(0, 5, _, _, _) => inst!(cpu, DEC_8, (DT.r[y])),
+		(0, 6, _, _, _) => inst!(cpu, LD_8, (DT.r[y]), n),
 
 		(0, 7, 0, _, _) => inst!(cpu, RLCA),
 		(0, 7, 1, _, _) => inst!(cpu, RRCA),
@@ -73,9 +73,9 @@ pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instructi
 		(0, 7, 7, _, _) => inst!(cpu, CCF),
 
 		(1, 6, 6, _, _) => inst!(cpu, HALT),
-		(1, _, _, _, _) => inst!(cpu, LD_8, (DT.r[y].clone()), (DT.r[z].clone())),
+		(1, _, _, _, _) => inst!(cpu, LD_8, (DT.r[y]), (DT.r[z])),
 
-		(2, _, _, _, _) => inst!(cpu, ALU_OP_8, (DT.alu[y]), A, (DT.r[z].clone())),
+		(2, _, _, _, _) => inst!(cpu, ALU_OP_8, (DT.alu[y]), A, (DT.r[z])),
 
 		(3, 0, 0, _, _) => inst!(cpu, RET, (Condition::NZ)),
 		(3, 0, 1, _, _) => inst!(cpu, RET, (Condition::Z)),
@@ -96,7 +96,7 @@ pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instructi
 
 		(3, 0, 7, _, _) => inst!(cpu, LD_HL_SP_DD, d),
 
-		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p].clone())),
+		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p])),
 
 		(3, 1, _, 0, 1) => inst!(cpu, RET, (Condition::ALWAYS)),
 		(3, 1, _, 1, 1) => inst!(cpu, RETI),
@@ -119,10 +119,10 @@ pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instructi
 			let cb_raw = cpu.next_byte();
 			let Opcode(cb_x, cb_z, cb_y, _, _) = *parse_opcode(cb_raw);
 			match cb_x {
-				0 => inst!(cpu, ROT, (DT.rot[cb_y].clone()), (DT.r[cb_z].clone())),
-				1 => inst!(cpu, BIT, (cb_y as u8), (DT.r[cb_z].clone())),
-				2 => inst!(cpu, RES, (cb_y as u8), (DT.r[cb_z].clone())),
-				3 => inst!(cpu, SET, (cb_y as u8), (DT.r[cb_z].clone())),
+				0 => inst!(cpu, ROT, (DT.rot[cb_y]), (DT.r[cb_z])),
+				1 => inst!(cpu, BIT, (cb_y as u8), (DT.r[cb_z])),
+				2 => inst!(cpu, RES, (cb_y as u8), (DT.r[cb_z])),
+				3 => inst!(cpu, SET, (cb_y as u8), (DT.r[cb_z])),
 				_ => inst!(cpu, ERROR, (cb_raw)),
 			}
 		}
