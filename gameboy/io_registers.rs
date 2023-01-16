@@ -7,7 +7,8 @@ use crate::{
 	memory_mapper::Source,
 	memory_mapper::SourcedMemoryMapper,
 	state::GameboyMode,
-	util::bits::*,
+	util::{bits::*, BigArray},
+	work_ram::BankedWorkRam,
 	Gameboy,
 };
 
@@ -91,14 +92,13 @@ pub const SVBK: u16 = 0xFF70; // WRAM bank
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct IORegisterState {
-	values: Vec<u8>,
+	#[serde(with = "BigArray")]
+	values: [u8; 0x80],
 }
 
 impl Default for IORegisterState {
 	fn default() -> Self {
-		Self {
-			values: vec![0; 0x80],
-		}
+		Self { values: [0; 0x80] }
 	}
 }
 
@@ -160,15 +160,15 @@ impl IORegisters for Gameboy {
 			TMA => self.timer.get_tma(),
 
 			SVBK => {
-				if let GameboyMode::GBC(state) = &self.mode {
-					state.get_wram_bank() as u8
+				if let GameboyMode::GBC(_) = &self.mode {
+					self.w_ram.get_bank_number()
 				} else {
 					0xFF
 				}
 			}
 			VBK => {
-				if let GameboyMode::GBC(state) = &self.mode {
-					state.get_vram_bank() as u8
+				if let GameboyMode::GBC(_) = &self.mode {
+					self.w_ram.get_bank_number()
 				} else {
 					0xFF
 				}
@@ -232,9 +232,7 @@ impl IORegisters for Gameboy {
 				}
 			}
 			SVBK => {
-				if let GameboyMode::GBC(state) = &mut self.mode {
-					state.set_wram_bank(value);
-				};
+				self.w_ram.set_bank_number(value);
 			}
 			VBK => {
 				if let GameboyMode::GBC(state) = &mut self.mode {

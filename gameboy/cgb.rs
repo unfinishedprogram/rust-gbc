@@ -18,17 +18,6 @@ impl Default for CGBState {
 }
 
 impl CGBState {
-	// Banking Handlers
-
-	pub fn set_wram_bank(&mut self, bank: u8) {
-		self.wram_bank = (bank as usize) & 3;
-		self.wram_bank = self.wram_bank.max(1);
-	}
-
-	pub fn get_wram_bank(&self) -> usize {
-		self.wram_bank
-	}
-
 	pub fn set_vram_bank(&mut self, bank: u8) {
 		self.vram_bank = if (bank) & 1 == 1 {
 			VRAMBank::Bank1

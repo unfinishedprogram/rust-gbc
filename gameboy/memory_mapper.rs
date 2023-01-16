@@ -1,4 +1,4 @@
-use crate::ppu::VRAMBank;
+use crate::{ppu::VRAMBank, work_ram::BankedWorkRam};
 
 use super::{
 	io_registers::{IORegisters, DMA},
@@ -87,14 +87,16 @@ impl MemoryMapper for Gameboy {
 				let Some(rom) = &self.cartridge_state else { return 0xFF };
 				rom.read(addr)
 			} //  Cartage RAM
-			0xC000..0xD000 => self.w_ram[0][(addr - 0xC000) as usize], // Internal RAM
-			0xD000..0xE000 => self.w_ram[self.get_wram_bank()][(addr - 0xD000) as usize], // Switchable RAM in CGB mode
-			0xE000..0xFE00 => self.read(addr - 0xE000 + 0xC000), // Mirror, should not be used
-			0xFE00..0xFEA0 => self.ppu.oam[(addr - 0xFE00) as usize], // Object Attribute Map
-			0xFEA0..0xFF00 => 0x0,                               // Unusable
-			0xFF00..0xFF80 => self.read_io(addr),                // IO Registers
-			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize], // HRAM
-			0xFFFF => self.interrupt_enable_register,            // Interrupt enable
+			0xC000..0xD000 => self.w_ram.get_bank(0)[(addr - 0xC000) as usize], // Internal RAM
+			0xD000..0xE000 => {
+				self.w_ram.get_bank(self.w_ram.get_bank_number())[(addr - 0xD000) as usize]
+			} // Switchable RAM in CGB mode
+			0xE000..0xFE00 => self.read(addr - 0xE000 + 0xC000),                // Mirror, should not be used
+			0xFE00..0xFEA0 => self.ppu.oam[(addr - 0xFE00) as usize],           // Object Attribute Map
+			0xFEA0..0xFF00 => 0x0,                                              // Unusable
+			0xFF00..0xFF80 => self.read_io(addr),                               // IO Registers
+			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize],              // HRAM
+			0xFFFF => self.interrupt_enable_register,                           // Interrupt enable
 		}
 	}
 
@@ -117,12 +119,12 @@ impl MemoryMapper for Gameboy {
 					rom.write(addr, value);
 				}
 			}
-			0xC000..0xD000 => self.w_ram[0][(addr - 0xC000) as usize] = value, // Internal RAM
+			0xC000..0xD000 => self.w_ram.get_bank_mut(0)[(addr - 0xC000) as usize] = value, // Internal RAM
 			0xD000..0xE000 => {
-				let bank = self.get_wram_bank();
-				self.w_ram[bank][(addr - 0xD000) as usize] = value
+				let bank = self.w_ram.get_bank_number();
+				self.w_ram.get_bank_mut(bank)[(addr - 0xD000) as usize] = value
 			} // Switchable RAM in CGB mode
-			0xE000..0xFE00 => self.write(addr - 0xE000 + 0xC000, value),       // Mirror, should not be used
+			0xE000..0xFE00 => self.write(addr - 0xE000 + 0xC000, value), // Mirror, should not be used
 			0xFE00..0xFEA0 => {
 				self.ppu.oam[(addr - 0xFE00) as usize] = value;
 

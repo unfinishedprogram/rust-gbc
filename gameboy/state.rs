@@ -1,6 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{cgb::CGBState, ppu::VRAMBank, util::BigArray};
+use crate::{
+	cgb::CGBState,
+	ppu::VRAMBank,
+	util::BigArray,
+	work_ram::{BankedWorkRam, WorkRam, WorkRamDataCGB, WorkRamDataDMG},
+};
 
 use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
@@ -32,7 +37,7 @@ pub struct Gameboy {
 	pub cpu_state: CPUState,
 	pub ppu: PPU,
 	pub cartridge_state: Option<Cartridge>,
-	pub w_ram: Vec<Vec<u8>>,
+	pub w_ram: WorkRam,
 
 	#[serde(with = "BigArray")]
 	pub hram: [u8; 0x80],
@@ -68,7 +73,7 @@ impl Default for Gameboy {
 			cartridge_state: None,
 			ram_bank: 0,
 			mode: GameboyMode::DMG,
-			w_ram: vec![vec![0; 0x1000]; 8],
+			w_ram: WorkRam::DMG(WorkRamDataDMG::default()),
 			hram: [0; 0x80],
 			serial_output: vec![],
 			halted: false,
@@ -173,14 +178,16 @@ impl Gameboy {
 			GameboyMode::DMG => include_bytes!("../roms/other/dmg_boot.bin").to_vec(),
 			GameboyMode::GBC(_) => include_bytes!("../roms/other/cgb_boot.bin").to_vec(),
 		};
+
+		self.w_ram = match mode {
+			GameboyMode::GBC(_) => WorkRam::CGB(WorkRamDataCGB::default()),
+			GameboyMode::DMG => WorkRam::DMG(WorkRamDataDMG::default()),
+		};
 		self.mode = mode;
 	}
 
 	pub fn get_wram_bank(&self) -> usize {
-		match &self.mode {
-			GameboyMode::DMG => 1,
-			GameboyMode::GBC(state) => state.get_wram_bank(),
-		}
+		self.w_ram.get_bank_number() as usize
 	}
 
 	pub fn get_vram_bank(&self) -> VRAMBank {
