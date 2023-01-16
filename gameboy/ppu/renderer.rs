@@ -273,8 +273,20 @@ impl PixelFIFO for PPU {
 				(row, false, false, 0, 0)
 			};
 
-		let low = self.v_ram[bank][index as usize + row as usize * 2];
-		let high = self.v_ram[bank][index as usize + row as usize * 2 + 1];
+		let (high, low) = match bank {
+			0 => {
+				let low = self.v_ram_bank_0[index as usize + row as usize * 2];
+				let high = self.v_ram_bank_0[index as usize + row as usize * 2 + 1];
+				(high, low)
+			}
+			1 => {
+				let low = self.v_ram_bank_1[index as usize + row as usize * 2];
+				let high = self.v_ram_bank_1[index as usize + row as usize * 2 + 1];
+				(high, low)
+			}
+			_ => unreachable!(),
+		};
+
 		let interleaved = interleave(low, high);
 
 		let mut pixels: [Pixel; 8] = [Pixel {
@@ -321,10 +333,10 @@ impl PixelFIFO for PPU {
 
 	fn get_tile_data(&self, tile_index: u16) -> TileData {
 		// Tile data address always comes from the first bank
-		let data_addr = self.v_ram[0][tile_index as usize];
+		let data_addr = self.v_ram_bank_0[tile_index as usize];
 
 		// Tile attributes come from second v-ram bank in CGB mode
-		let attributes = self.v_ram[1][tile_index as usize];
+		let attributes = self.v_ram_bank_1[tile_index as usize];
 
 		let index = match self.get_addressing_mode() {
 			AddressingMode::Signed => 16 * data_addr as i32,

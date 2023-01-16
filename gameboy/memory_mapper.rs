@@ -1,3 +1,5 @@
+use crate::ppu::VRAMBank;
+
 use super::{
 	io_registers::{IORegisters, DMA},
 	state::GameboyMode,
@@ -77,12 +79,15 @@ impl MemoryMapper for Gameboy {
 				let Some(rom) = &self.cartridge_state else { return 0xFF };
 				rom.read(addr)
 			} // Cartridge Rom
-			0x8000..0xA000 => self.ppu.v_ram[self.get_vram_bank()][(addr - 0x8000) as usize], //  VRAM
+			0x8000..0xA000 => match self.get_vram_bank() {
+				VRAMBank::Bank0 => self.ppu.v_ram_bank_0[(addr - 0x8000) as usize],
+				VRAMBank::Bank1 => self.ppu.v_ram_bank_1[(addr - 0x8000) as usize],
+			}, //  VRAM
 			0xA000..0xC000 => {
 				let Some(rom) = &self.cartridge_state else { return 0xFF };
 				rom.read(addr)
 			} //  Cartage RAM
-			0xC000..0xD000 => self.w_ram[0][(addr - 0xC000) as usize],                        // Internal RAM
+			0xC000..0xD000 => self.w_ram[0][(addr - 0xC000) as usize], // Internal RAM
 			0xD000..0xE000 => self.w_ram[self.get_wram_bank()][(addr - 0xD000) as usize], // Switchable RAM in CGB mode
 			0xE000..0xFE00 => self.read(addr - 0xE000 + 0xC000), // Mirror, should not be used
 			0xFE00..0xFEA0 => self.ppu.oam[(addr - 0xFE00) as usize], // Object Attribute Map
@@ -102,10 +107,10 @@ impl MemoryMapper for Gameboy {
 				}
 			}
 			// VRAM
-			0x8000..0xA000 => {
-				let bank = self.get_vram_bank();
-				self.ppu.v_ram[bank][(addr - 0x8000) as usize] = value
-			}
+			0x8000..0xA000 => match self.get_vram_bank() {
+				VRAMBank::Bank0 => self.ppu.v_ram_bank_0[(addr - 0x8000) as usize] = value,
+				VRAMBank::Bank1 => self.ppu.v_ram_bank_1[(addr - 0x8000) as usize] = value,
+			},
 			// Cartage RAM
 			0xA000..0xC000 => {
 				if let Some(rom) = &mut self.cartridge_state {

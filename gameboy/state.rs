@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::cgb::CGBState;
+use crate::{cgb::CGBState, ppu::VRAMBank};
 
 use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
@@ -181,9 +181,9 @@ impl Gameboy {
 		}
 	}
 
-	pub fn get_vram_bank(&self) -> usize {
+	pub fn get_vram_bank(&self) -> VRAMBank {
 		match &self.mode {
-			GameboyMode::DMG => 0,
+			GameboyMode::DMG => VRAMBank::Bank0,
 			GameboyMode::GBC(state) => state.get_vram_bank(),
 		}
 	}

@@ -9,7 +9,9 @@ use crate::{
 	flags::{LCD_DISPLAY_ENABLE, STAT_H_BLANK_IE},
 	lcd::LCD,
 	ppu::renderer::PixelFIFO,
+	util::BigArray,
 };
+
 use serde::{Deserialize, Serialize};
 
 use self::{color_ram::ColorRamController, renderer::Pixel, sprite::Sprite};
@@ -33,11 +35,26 @@ pub enum PPUMode {
 	Draw = 3,
 }
 
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, Copy, Default, Serialize, Deserialize)]
+pub enum VRAMBank {
+	#[default]
+	Bank0,
+	Bank1,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct PPU {
 	pub cycle: u64,
-	pub v_ram: Vec<Vec<u8>>,
-	pub oam: Vec<u8>,
+
+	#[serde(with = "BigArray")]
+	pub v_ram_bank_0: [u8; 0x2000],
+
+	/// Only in Gameboy Color mode
+	#[serde(with = "BigArray")]
+	pub v_ram_bank_1: [u8; 0x2000],
+
+	#[serde(with = "BigArray")]
+	pub oam: [u8; 0xA0],
 	pub interrupt_requests: u8,
 
 	#[serde(skip)]
@@ -78,9 +95,33 @@ impl PPU {
 		Self {
 			window_line: 0xFF,
 			enabled: true,
-			v_ram: vec![vec![0; 0x2000]; 2],
-			oam: vec![0; 0xA0],
-			..Default::default()
+			v_ram_bank_0: [0; 0x2000],
+			v_ram_bank_1: [0; 0x2000],
+			oam: [0; 0xA0],
+			cycle: 0,
+			interrupt_requests: 0,
+			lcd: None,
+			scy: 0,
+			scx: 0,
+			lyc: 0,
+			bgp: 0,
+			obp0: 0,
+			obp1: 0,
+			wy: 0,
+			wx: 0,
+			stat: 0,
+			bg_color: Default::default(),
+			obj_color: Default::default(),
+			frame: 0,
+			fetcher_mode: FetcherMode::Background,
+			current_pixel: 0,
+			lcdc: 0,
+			ly: 0,
+			sprites: vec![],
+			current_tile: 0,
+			fifo_pixel: 0,
+			fifo_bg: Default::default(),
+			fifo_obj: Default::default(),
 		}
 	}
 
