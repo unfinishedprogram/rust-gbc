@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{cgb::CGBState, ppu::VRAMBank};
+use crate::{cgb::CGBState, ppu::VRAMBank, util::BigArray};
 
 use super::{
 	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
@@ -33,7 +33,9 @@ pub struct Gameboy {
 	pub ppu: PPU,
 	pub cartridge_state: Option<Cartridge>,
 	pub w_ram: Vec<Vec<u8>>,
-	pub hram: Vec<u8>,
+
+	#[serde(with = "BigArray")]
+	pub hram: [u8; 0x80],
 	pub io_register_state: IORegisterState,
 	pub serial_output: Vec<u8>,
 	pub timer: Timer,
@@ -67,7 +69,7 @@ impl Default for Gameboy {
 			ram_bank: 0,
 			mode: GameboyMode::DMG,
 			w_ram: vec![vec![0; 0x1000]; 8],
-			hram: vec![0; 0x80],
+			hram: [0; 0x80],
 			serial_output: vec![],
 			halted: false,
 			interrupt_enable_register: 0,

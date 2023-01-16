@@ -72,4 +72,5 @@ macro_rules! big_array {
 big_array! {
 	0xA0,   // OAM Memory
 	0x2000, // Vram
+	0x80,   // Hram
 }
