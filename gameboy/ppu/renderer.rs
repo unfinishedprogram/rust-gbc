@@ -308,9 +308,7 @@ impl PixelFIFO for PPU {
 		let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
 		let tile_row = (self.ly.wrapping_add(self.scy)) % 8;
 		let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row, 0);
-		for pix in pixels {
-			self.fifo_bg.push_back(pix);
-		}
+		self.fifo_bg.extend(pixels.iter());
 	}
 
 	fn get_addressing_mode(&self) -> AddressingMode {
