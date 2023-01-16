@@ -111,9 +111,7 @@ impl Gameboy {
 	}
 
 	fn tick_t_states(&mut self, t_states: u32) {
-		for _ in 0..t_states {
-			self.ppu.step_ppu();
-		}
+		self.ppu.step_ppu_cycles(t_states as u64);
 
 		self.dma_timer = self.dma_timer.saturating_sub(t_states as u64);
 
