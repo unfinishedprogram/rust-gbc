@@ -91,7 +91,7 @@ impl CPU for Gameboy {
 	fn read_i8(&mut self, value_ref: &ValueRefI8) -> i8 {
 		match value_ref {
 			ValueRefI8::Mem(addr) => self.read_from(*addr, Source::Cpu) as i8,
-			ValueRefI8::Reg(reg) => self.cpu_state.registers[reg.clone()] as i8,
+			ValueRefI8::Reg(reg) => self.cpu_state.registers[*reg] as i8,
 			ValueRefI8::Raw(x) => *x,
 		}
 	}
@@ -125,7 +125,7 @@ impl CPU for Gameboy {
 				self.read_from(*i, Source::Cpu),
 				self.read_from(i + 1, Source::Cpu),
 			]),
-			ValueRefU16::Reg(reg) => self.cpu_state.registers.get_u16(reg.clone()),
+			ValueRefU16::Reg(reg) => self.cpu_state.registers.get_u16(*reg),
 			ValueRefU16::Raw(x) => *x,
 		}
 	}
@@ -138,7 +138,7 @@ impl CPU for Gameboy {
 				self.write_from(*i, bytes[0], Source::Cpu);
 				self.write_from(*i + 1, bytes[1], Source::Cpu);
 			}
-			ValueRefU16::Reg(reg) => self.cpu_state.registers.set_u16(reg.clone(), value),
+			ValueRefU16::Reg(reg) => self.cpu_state.registers.set_u16(*reg, value),
 			ValueRefU16::Raw(_) => unreachable!(),
 		}
 	}
