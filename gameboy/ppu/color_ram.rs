@@ -6,17 +6,17 @@ type Color = (u8, u8, u8, u8);
 /// Handles reading and writing of color pallette data for CGB mode
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ColorRamController {
-	data: Vec<u16>,
-	index: usize,
 	increment: bool,
-	colors: Vec<Color>,
+	index: usize,
+	data: [u16; 32],
+	colors: [Color; 32],
 }
 
 impl Default for ColorRamController {
 	fn default() -> Self {
 		Self {
-			data: vec![0; 32],
-			colors: vec![(0, 0, 0, 255); 32],
+			data: [0; 32],
+			colors: [(0, 0, 0, 255); 32],
 			index: 0,
 			increment: false,
 		}
