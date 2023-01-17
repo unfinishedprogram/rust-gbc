@@ -186,6 +186,12 @@ impl PPU {
 
 	pub fn set_mode(&mut self, mode: PPUMode) {
 		self.stat = (self.stat & 0b11111100) | mode as u8;
+
+		if !self.enabled {
+			// Don't trigger any interrupts if the screen is disabled
+			return;
+		}
+
 		// Do Interrupts
 		use PPUMode::*;
 		if match mode {
@@ -233,7 +239,6 @@ impl PPU {
 		}
 
 		if !self.enabled {
-			self.cycle += 8;
 			return;
 		}
 
