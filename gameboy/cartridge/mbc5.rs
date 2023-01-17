@@ -36,7 +36,7 @@ impl MBC5State {
 	}
 
 	pub fn set_rom_bank_upper(&mut self, value: u8) {
-		self.rom_bank &= 0xFF;
+		self.rom_bank &= 0x00FF;
 		self.rom_bank |= (value as u16 & 1) << 8;
 	}
 

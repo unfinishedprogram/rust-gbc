@@ -114,9 +114,18 @@ impl Gameboy {
 	}
 
 	fn tick_t_states(&mut self, t_states: u32) {
+		let current_bank = &self.get_vram_bank();
+
+		self.dma_controller.step_controller(
+			&mut self.ppu,
+			&mut self.cartridge_state,
+			&mut self.w_ram,
+			current_bank,
+		);
+
 		self.ppu.step_ppu_cycles(t_states as u64);
 
-		self.dma_timer = self.dma_timer.saturating_sub(t_states as u64);
+		self.dma_timer = self.dma_timer.saturating_sub(2 * t_states as u64);
 
 		self.timer.step(t_states as u64);
 

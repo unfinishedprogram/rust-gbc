@@ -5,26 +5,36 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Timer {
-	timer_clock: u64,
-	div_clock: u8,
+	system_clock: u16,
 
 	div: u8,
 	tima: u8,
 	tma: u8,
 	tac: u8,
 
+	pub tima_delay: u8,
+
 	pub interrupt_requests: u8,
 }
 
 impl Timer {
 	pub fn set_div(&mut self, _: u8) {
+		// Detect falling edge for timer
+		if self.timer_enabled() {
+			let bit = self.timer_speed() as u16 >> 1;
+			if (self.system_clock & bit) == bit {
+				self.increment_tima();
+			}
+		}
+
 		self.div = 0;
-		self.tima = self.tma;
-		self.div_clock = 0;
+		self.system_clock = 0;
 	}
 
 	pub fn set_tima(&mut self, value: u8) {
+		// if self.tima_delay == 0 {
 		self.tima = value;
+		// }
 	}
 
 	pub fn set_tma(&mut self, value: u8) {
@@ -62,27 +72,46 @@ impl Timer {
 		self.tac & BIT_2 == BIT_2
 	}
 
-	pub fn step(&mut self, cycles: u64) {
-		if self.timer_enabled() {
-			self.timer_clock += cycles;
-			if self.timer_clock >= self.timer_speed() {
-				let (next_tima, overflow) = self.tima.overflowing_add(1);
+	pub fn step_cycle(&mut self) {
+		let from = self.system_clock;
+		self.system_clock = self.system_clock.wrapping_add(1);
+		let to = self.system_clock;
 
-				if overflow {
-					self.tima = self.tma;
-					self.interrupt_requests |= INT_TIMER;
-				} else {
-					self.tima = next_tima;
-				}
-				self.timer_clock -= self.timer_speed();
+		// Div is the top 8 bits of the 16 bit system clock
+		self.div = (self.system_clock >> 8) as u8;
+
+		// Detect falling edge for timer
+		if self.timer_enabled() {
+			let bit = self.timer_speed() as u16;
+			let timer_increment = (from & bit) != (to & bit);
+			if timer_increment {
+				self.increment_tima();
 			}
 		}
 
-		let (timer, overflow) = self.div_clock.overflowing_add(cycles as u8);
-		self.div_clock = timer;
+		if self.tima_delay > 0 {
+			self.tima_delay -= 1;
+			if self.tima_delay == 0 {
+				self.tima = self.tma;
+				self.interrupt_requests |= INT_TIMER;
+			}
+		}
+	}
+
+	fn increment_tima(&mut self) {
+		let (next_tima, overflow) = self.tima.overflowing_add(1);
 
 		if overflow {
-			self.div = self.div.wrapping_add(1);
+			self.tima = 0;
+			self.tima_delay = 5;
+		} else {
+			self.tima = next_tima;
+		}
+	}
+
+	pub fn step(&mut self, cycles: u64) {
+		for _ in 0..cycles {
+			self.step_cycle();
 		}
 	}
 }
