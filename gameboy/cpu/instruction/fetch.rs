@@ -22,7 +22,11 @@ pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instructi
 		//(x, z, y, p, q)
 		(0, 0, 0, _, _) => inst!(cpu, NOP),
 		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp())), SP),
-		(0, 0, 2, _, _) => inst!(cpu, STOP),
+		(0, 0, 2, _, _) => {
+			// Cpu reads next byte when executing stop even though it is not used
+			cpu.next_byte();
+			inst!(cpu, STOP)
+		}
 		(0, 0, 3, _, _) => {
 			let offset = cpu.next_displacement();
 			let addr = cpu

@@ -182,6 +182,13 @@ impl IORegisters for Gameboy {
 					0xFF
 				}
 			}
+			KEY1 => {
+				if let GameboyMode::GBC(state) = &self.mode {
+					state.read_key1()
+				} else {
+					0xFF
+				}
+			}
 			JOYP => {
 				if self.io_register_state[JOYP] & BIT_4 == BIT_4 {
 					(self.raw_joyp_input & 0b1111) | 0b11000000
@@ -252,6 +259,11 @@ impl IORegisters for Gameboy {
 			VBK => {
 				if let GameboyMode::GBC(state) = &mut self.mode {
 					state.set_vram_bank(value);
+				};
+			}
+			KEY1 => {
+				if let GameboyMode::GBC(state) = &mut self.mode {
+					state.write_key1(value);
 				};
 			}
 

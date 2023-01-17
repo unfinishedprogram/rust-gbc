@@ -103,8 +103,13 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			cpu.write_16(&ptr, ptr_val.wrapping_sub(1));
 		}
 
-		STOP => println!("STOP"),
-		ERROR(_) => {}
+		STOP => match &mut cpu.mode {
+			crate::state::GameboyMode::GBC(state) => state.perform_speed_switch(),
+			_ => {}
+		},
+		ERROR(err) => {
+			panic!("{}", err)
+		}
 
 		JP(condition, location) | JR(condition, location) => {
 			if cpu.check_condition(condition) {

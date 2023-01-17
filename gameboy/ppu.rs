@@ -163,6 +163,10 @@ impl PPU {
 		self.ly
 	}
 
+	pub fn is_enabled(&self) -> bool {
+		self.enabled
+	}
+
 	pub fn set_ly(&mut self, value: u8) {
 		self.ly = value;
 
