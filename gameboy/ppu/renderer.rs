@@ -192,7 +192,9 @@ impl PixelFIFO for PPU {
 
 		if next.x == self.current_pixel.wrapping_add(8) {
 			let Some(sprite) = self.sprites.pop() else {return};
-			self.draw_sprite(sprite)
+			self.draw_sprite(sprite);
+			// Account for multiple sprites with the same X-position
+			self.step_sprite_fifo();
 		}
 	}
 
