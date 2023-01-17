@@ -88,11 +88,13 @@ pub struct PPU {
 	fifo_pixel: u8,
 	fifo_bg: VecDeque<Pixel>,
 	fifo_obj: VecDeque<Pixel>,
+	pub h_blank_hit: bool,
 }
 
 impl PPU {
 	pub fn new() -> Self {
 		Self {
+			h_blank_hit: false,
 			window_line: 0xFF,
 			enabled: true,
 			v_ram_bank_0: [0; 0x2000],
@@ -273,6 +275,7 @@ impl PPU {
 					self.current_pixel = 0;
 					self.current_tile = 0;
 					self.cycle += 204;
+					self.h_blank_hit = true;
 					self.set_mode(HBlank);
 				} else {
 					self.cycle += 1;

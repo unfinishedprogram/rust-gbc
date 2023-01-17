@@ -7,11 +7,11 @@ pub const BIT_5: u8 = 0b00100000;
 pub const BIT_6: u8 = 0b01000000;
 pub const BIT_7: u8 = 0b10000000;
 
-// Panics if bit > 7
+#[inline(always)]
 pub fn bit(bit: u8) -> u8 {
 	match bit {
 		0..8 => 1 << bit,
-		_ => unreachable!(),
+		_ => unreachable!("bit must be in the range 0..8"),
 	}
 }
 

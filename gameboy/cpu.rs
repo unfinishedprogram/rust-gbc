@@ -207,6 +207,15 @@ impl CPU for Gameboy {
 	}
 
 	fn step_cpu(&mut self) {
+		let current_bank = &self.get_vram_bank();
+
+		self.dma_controller.step_controller(
+			&mut self.ppu,
+			&mut self.cartridge_state,
+			&mut self.w_ram,
+			current_bank,
+		);
+
 		if self.halted {
 			if self.interrupt_pending() {
 				self.halted = false;

@@ -90,6 +90,12 @@ pub const OBPD: u16 = 0xFF6B;
 
 pub const SVBK: u16 = 0xFF70; // WRAM bank
 
+pub const HDMA1: u16 = 0xFF51;
+pub const HDMA2: u16 = 0xFF52;
+pub const HDMA3: u16 = 0xFF53;
+pub const HDMA4: u16 = 0xFF54;
+pub const HDMA5: u16 = 0xFF55;
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct IORegisterState {
 	#[serde(with = "BigArray")]
@@ -159,6 +165,9 @@ impl IORegisters for Gameboy {
 			TIMA => self.timer.get_tima(),
 			TMA => self.timer.get_tma(),
 
+			//HDMA
+			HDMA5 => self.dma_controller.read_length(),
+
 			SVBK => {
 				if let GameboyMode::GBC(_) = &self.mode {
 					self.w_ram.get_bank_number()
@@ -212,6 +221,12 @@ impl IORegisters for Gameboy {
 				self.ppu.stat &= mask;
 				self.ppu.stat |= value & !mask;
 			}
+
+			HDMA1 => self.dma_controller.write_source_high(value),
+			HDMA2 => self.dma_controller.write_source_low(value),
+			HDMA3 => self.dma_controller.write_destination_high(value),
+			HDMA4 => self.dma_controller.write_destination_low(value),
+			HDMA5 => self.dma_controller.write_start(value),
 
 			// Timer
 			DIV => self.timer.set_div(value),

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
 	cgb::CGBState,
+	dma_controller::DMAController,
 	ppu::VRAMBank,
 	util::BigArray,
 	work_ram::{BankedWorkRam, WorkRam, WorkRamDataCGB, WorkRamDataDMG},
@@ -50,6 +51,7 @@ pub struct Gameboy {
 	pub dma_timer: u64,
 	pub booting: bool,
 	pub boot_rom: Vec<u8>,
+	pub dma_controller: DMAController,
 	t_states: u64,
 	pub color_scheme_dmg: (Color, Color, Color, Color),
 }
@@ -57,6 +59,7 @@ pub struct Gameboy {
 impl Default for Gameboy {
 	fn default() -> Self {
 		let mut emulator = Self {
+			dma_controller: DMAController::default(),
 			color_scheme_dmg: (
 				(0xFF, 0xFF, 0xFF, 0xFF),
 				(0xAA, 0xAA, 0xAA, 0xFF),
