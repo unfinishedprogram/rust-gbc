@@ -110,8 +110,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				_ => {}
 			}
 		}
+
 		ERROR(err) => {
-			panic!("{}", err)
+			// panic!("{}", err)
 		}
 
 		JP(condition, location) | JR(condition, location) => {

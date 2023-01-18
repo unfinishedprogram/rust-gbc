@@ -228,18 +228,18 @@ impl PPU {
 		};
 
 		for _ in 0..to_step {
-			self.step_ppu()
+			self.step_ppu();
 		}
 	}
 
-	pub fn step_ppu(&mut self) {
+	pub fn step_ppu(&mut self) -> Option<PPUMode> {
 		if self.cycle != 0 {
 			self.cycle -= 1;
-			return;
+			return None;
 		}
 
 		if !self.enabled {
-			return;
+			return None;
 		}
 
 		use PPUMode::*;
@@ -249,6 +249,7 @@ impl PPU {
 				if self.get_ly() <= 143 {
 					self.cycle += 80;
 					self.set_mode(OamScan);
+					return Some(OamScan);
 				} else {
 					self.cycle += 458;
 					self.window_line = 255;
@@ -259,16 +260,19 @@ impl PPU {
 					}
 
 					self.set_mode(VBlank);
+					return Some(VBlank);
 				}
 			}
 			VBlank => {
 				if self.get_ly() < 153 {
 					self.cycle += 458;
 					self.set_ly(self.get_ly() + 1);
+					None
 				} else {
 					self.set_ly(0);
 					self.cycle += 80;
 					self.set_mode(OamScan);
+					Some(OamScan)
 				}
 			}
 			OamScan => {
@@ -276,6 +280,7 @@ impl PPU {
 				self.cycle += 12;
 				self.start_scanline();
 				self.set_mode(Draw);
+				Some(Draw)
 			}
 			Draw => {
 				self.step_fifo();
@@ -286,8 +291,10 @@ impl PPU {
 					self.cycle += 204;
 					self.h_blank_hit = true;
 					self.set_mode(HBlank);
+					Some(HBlank)
 				} else {
 					self.cycle += 1;
+					None
 				}
 			}
 		}

@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	cgb::CGBState,
-	dma_controller::DMAController,
+	cgb::{CGBState, Speed},
+	dma_controller::{DMAController, TransferMode},
 	ppu::VRAMBank,
 	util::BigArray,
 	work_ram::{BankedWorkRam, WorkRam, WorkRamDataCGB, WorkRamDataDMG},
@@ -110,20 +110,50 @@ impl Gameboy {
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
+		match &self.mode {
+			// GameboyMode::GBC(state) => {
+			// 	if matches!(state.current_speed(), Speed::Double) {
+			// 		self.tick_t_states(m_cycles * 2);
+			// 		return;
+			// 	}
+			// }
+			_ => (),
+		}
 		self.tick_t_states(m_cycles * 4);
 	}
 
 	fn tick_t_states(&mut self, t_states: u32) {
 		let current_bank = &self.get_vram_bank();
 
-		self.dma_controller.step_controller(
-			&mut self.ppu,
-			&mut self.cartridge_state,
-			&mut self.w_ram,
-			current_bank,
-		);
+		let do_dma = if let Some(transfer) = &self.dma_controller.transfer {
+			matches!(transfer.mode, TransferMode::GeneralPurpose)
+		} else {
+			false
+		};
 
-		self.ppu.step_ppu_cycles(t_states as u64);
+		if do_dma {
+			self.dma_controller.step_controller(
+				&mut self.ppu,
+				&mut self.cartridge_state,
+				&mut self.w_ram,
+				current_bank,
+			);
+		}
+
+		for _ in 0..t_states {
+			match self.ppu.step_ppu() {
+				Some(PPUMode::HBlank) => {
+					self.dma_controller.step_controller(
+						&mut self.ppu,
+						&mut self.cartridge_state,
+						&mut self.w_ram,
+						current_bank,
+					);
+				}
+				_ => {}
+			}
+		}
+		// self.ppu.step_ppu_cycles(t_states as u64);
 
 		self.dma_timer = self.dma_timer.saturating_sub(t_states as u64);
 

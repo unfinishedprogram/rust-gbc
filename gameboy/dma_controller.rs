@@ -11,7 +11,7 @@ use crate::{
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct DMAController {
 	pub transfer: Option<Transfer>,
-
+	hdma5: u8,
 	source: u16,      // HDMA1 | HDMA2
 	destination: u16, // HDMA3 | HDMA4
 }
@@ -50,10 +50,18 @@ impl DMAController {
 	}
 
 	pub fn write_start(&mut self, value: u8) {
+		if let Some(_) = &mut self.transfer {
+			if value & BIT_7 != 0 {
+				self.transfer = None;
+				self.hdma5 |= BIT_7;
+			}
+			return;
+		}
+
 		let mode = if value & BIT_7 == BIT_7 {
-			TransferMode::GeneralPurpose
-		} else {
 			TransferMode::HBlank
+		} else {
+			TransferMode::GeneralPurpose
 		};
 
 		let total_length = ((value & !BIT_7) + 1) as u16 * 0x10;
@@ -75,14 +83,58 @@ impl DMAController {
 		});
 	}
 
-	pub fn read_length(&self) -> u8 {
-		let Some(transfer) = &self.transfer else {
-            return !BIT_7
-        };
+	pub fn update_length(&mut self) {
+		if let Some(transfer) = &self.transfer {
+			let length = transfer.total_length - transfer.bytes_sent;
+			let length = (length / 0x10 - 1) as u8;
+			self.hdma5 = length;
+		}
+	}
 
-		let length = transfer.total_length - transfer.bytes_sent;
-		let length = (length / 0x10 - 1) as u8;
-		length | BIT_7
+	pub fn read_length(&self) -> u8 {
+		return self.hdma5;
+	}
+
+	pub fn step_single(
+		&mut self,
+		ppu: &mut PPU,
+		cartridge: &mut Option<Cartridge>,
+		wram: &mut impl BankedWorkRam,
+		v_ram_bank: &VRAMBank,
+	) {
+		for _ in 0..0x10 {
+			if let Some(transfer) = &mut self.transfer {
+				let vram = match v_ram_bank {
+					VRAMBank::Bank0 => &mut ppu.v_ram_bank_0,
+					VRAMBank::Bank1 => &mut ppu.v_ram_bank_1,
+				};
+
+				let i = transfer.bytes_sent;
+				let src_addr = (transfer.source + i) as usize;
+				let dest_addr = (transfer.destination + i) as usize;
+
+				match src_addr {
+					// Cartage address
+					0x0000..0x8000 | 0xA000..0xC000 => {
+						if let Some(cartridge) = cartridge {
+							vram[dest_addr] = cartridge.read(src_addr as u16)
+						}
+					}
+					0xC000..0xD000 => vram[dest_addr] = wram.get_bank(0)[src_addr - 0xC000],
+					0xD000..0xE000 => {
+						vram[dest_addr] = wram.get_bank(wram.get_bank_number())[src_addr - 0xD000]
+					}
+					_ => unreachable!("DMA outside range"),
+				}
+
+				transfer.bytes_sent += 1;
+				if transfer.bytes_sent == transfer.total_length {
+					self.transfer = None;
+					return;
+				}
+			}
+		}
+		self.update_length();
 	}
 
 	pub fn step_controller(
@@ -92,49 +144,19 @@ impl DMAController {
 		wram: &mut impl BankedWorkRam,
 		v_ram_bank: &VRAMBank,
 	) {
-		if let Some(transfer) = &mut self.transfer {
-			let vram = match v_ram_bank {
-				VRAMBank::Bank0 => &mut ppu.v_ram_bank_0,
-				VRAMBank::Bank1 => &mut ppu.v_ram_bank_1,
-			};
+		let Some(transfer) = &self.transfer else { return };
 
-			for i in 0..transfer.total_length {
-				let src_addr = transfer.source + i;
-				let dest_addr = (transfer.destination + i) & 0b0001_1111_1111_1111;
-				match src_addr {
-					// Cartage address
-					0x0000..0x8000 | 0xA000..0xC000 => {
-						if let Some(cartridge) = cartridge {
-							vram[dest_addr as usize] = cartridge.read(src_addr)
-						}
-					}
-
-					0xC000..0xD000 => {
-						vram[dest_addr as usize] = wram.get_bank(0)[(src_addr - 0xC000) as usize]
-					}
-
-					0xD000..0xE000 => {
-						vram[dest_addr as usize] =
-							wram.get_bank(wram.get_bank_number())[(src_addr - 0xD000) as usize]
-					}
-					_ => unreachable!("DMA outside range"),
+		match transfer.mode {
+			TransferMode::GeneralPurpose => {
+				while self.transfer.is_some() {
+					self.step_single(ppu, cartridge, wram, v_ram_bank)
 				}
+				self.hdma5 = 0xFF;
 			}
-		}
-
-		self.transfer = None;
-	}
-
-	pub fn step(&mut self) {
-		let transfer_done = if let Some(transfer) = &mut self.transfer {
-			transfer.bytes_sent += 1;
-			transfer.bytes_sent >= transfer.total_length
-		} else {
-			true
-		};
-
-		if transfer_done {
-			self.transfer = None;
+			TransferMode::HBlank => {
+				self.step_single(ppu, cartridge, wram, v_ram_bank);
+				self.hdma5 |= BIT_7;
+			}
 		}
 	}
 }
