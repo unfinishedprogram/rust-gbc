@@ -63,9 +63,9 @@ impl CPU for Gameboy {
 	}
 
 	fn next_byte(&mut self) -> u8 {
-		self.tick_m_cycles(1);
 		let value = self.read_from(self.cpu_state.registers.pc, Source::Cpu);
 		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(1);
+		self.tick_m_cycles(1);
 		value
 	}
 

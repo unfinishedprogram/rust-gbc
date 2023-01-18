@@ -16,6 +16,7 @@ use web_sys::ImageData;
 use gameboy::{
 	lcd::LCD,
 	save_state::{RomSource, SaveState},
+	state::GameboyMode,
 	Gameboy,
 };
 
@@ -104,7 +105,15 @@ impl Application {
 
 		let frames: u64 = self.frame_counts.iter().sum();
 		let time: f64 = self.frame_times.iter().sum();
+
+		let state_text = if let GameboyMode::GBC(state) = &self.emulator_state.mode {
+			format!("{:?}", state.current_speed())
+		} else {
+			"".to_owned()
+		};
+
 		gloo::console::log!(frames as f64 / (time / 1000.0));
+		gloo::console::log!(state_text);
 	}
 
 	pub fn step_emulator(&mut self, delta: f64) {

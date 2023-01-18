@@ -14,5 +14,7 @@ pub fn load_rom(rom: &[u8], source: String) {
 }
 
 fn main() {
+	console_error_panic_hook::set_once();
+	tracing_wasm::set_as_global_default();
 	setup_listeners();
 }

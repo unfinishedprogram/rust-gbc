@@ -103,10 +103,13 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			cpu.write_16(&ptr, ptr_val.wrapping_sub(1));
 		}
 
-		STOP => match &mut cpu.mode {
-			crate::state::GameboyMode::GBC(state) => state.perform_speed_switch(),
-			_ => {}
-		},
+		STOP => {
+			cpu.cpu_state.registers.pc = cpu.cpu_state.registers.pc.wrapping_add(1);
+			match &mut cpu.mode {
+				crate::state::GameboyMode::GBC(state) => state.perform_speed_switch(),
+				_ => {}
+			}
+		}
 		ERROR(err) => {
 			panic!("{}", err)
 		}
@@ -135,8 +138,6 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		}
 
 		ADD_SIGNED(a_ref, b_ref) => {
-			cpu.tick_m_cycles(2);
-
 			cpu.clear_flag(Z);
 			cpu.clear_flag(N);
 
@@ -154,6 +155,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			cpu.set_flag_to(H, ((a_val & 0xF).wrapping_add(ub_val & 0xF) & 0x10) == 0x10);
 
 			cpu.write_16(&a_ref, a_val.wrapping_add_signed(b_val));
+			cpu.tick_m_cycles(2);
 		}
 
 		ALU_OP_8(op, to, from) => {

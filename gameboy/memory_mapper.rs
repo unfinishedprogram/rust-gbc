@@ -35,7 +35,7 @@ impl SourcedMemoryMapper for Gameboy {
 	fn read_from(&self, addr: u16, source: Source) -> u8 {
 		if matches!(source, Source::Cpu)
 			&& self.dma_timer > 0
-			&& !matches!(addr, 0xFF80..0xFFFF)
+			&& !matches!(addr, 0xFF80..0xFFFE)
 			&& addr != DMA
 		{
 			return 0xFF;
@@ -48,7 +48,7 @@ impl SourcedMemoryMapper for Gameboy {
 		// Don't allow reading from memory outside of HRAM from CPU during DMA transfer
 		if matches!(source, Source::Cpu)
 			&& self.dma_timer > 0
-			&& !matches!(addr, 0xFF80..0xFFFF)
+			&& !matches!(addr, 0xFF80..0xFFFE)
 			&& addr != DMA
 		{
 			return;
