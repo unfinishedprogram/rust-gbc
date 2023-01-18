@@ -250,7 +250,6 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			}
 		}
 		POP(value_ref) => {
-			cpu.tick_m_cycles(2);
 			let val = cpu.pop();
 			cpu.write_16(&value_ref.into(), val);
 		}
@@ -265,8 +264,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			}
 
 			if matches!(condition, Condition::ALWAYS) || cpu.check_condition(condition) {
-				cpu.tick_m_cycles(3);
 				let ptr = cpu.pop();
+				cpu.tick_m_cycles(1);
+
 				cpu.write_16(&CPURegister16::PC.into(), ptr);
 			}
 		}

@@ -63,18 +63,18 @@ impl CPU for Gameboy {
 	}
 
 	fn next_byte(&mut self) -> u8 {
-		let value = self.read_from(self.cpu_state.registers.pc, Source::Cpu);
+		let value = self.read_8(&ValueRefU8::Mem(self.cpu_state.registers.pc.into()));
 		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(1);
-		self.tick_m_cycles(1);
 		value
 	}
 
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
-				let index = self.read_16(addr);
 				self.tick_m_cycles(1);
-				self.read_from(index, Source::Cpu)
+				let index = self.read_16(addr);
+				let value = self.read_from(index, Source::Cpu);
+				value
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg],
 			ValueRefU8::Raw(x) => *x,
@@ -99,8 +99,8 @@ impl CPU for Gameboy {
 	fn write_8(&mut self, value_ref: &ValueRefU8, value: u8) {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
-				let index = self.read_16(addr);
 				self.tick_m_cycles(1);
+				let index = self.read_16(addr);
 				self.write_from(index, value, Source::Cpu);
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state.registers[*reg] = value,
@@ -121,10 +121,13 @@ impl CPU for Gameboy {
 
 	fn read_16(&mut self, value_ref: &ValueRefU16) -> u16 {
 		match value_ref {
-			ValueRefU16::Mem(i) => u16::from_le_bytes([
-				self.read_from(*i, Source::Cpu),
-				self.read_from(i + 1, Source::Cpu),
-			]),
+			ValueRefU16::Mem(i) => {
+				self.tick_m_cycles(1);
+				let lower = self.read_from(*i, Source::Cpu);
+				self.tick_m_cycles(1);
+				let upper = self.read_from(i + 1, Source::Cpu);
+				u16::from_le_bytes([lower, upper])
+			}
 			ValueRefU16::Reg(reg) => self.cpu_state.registers.get_u16(*reg),
 			ValueRefU16::Raw(x) => *x,
 		}
@@ -134,8 +137,9 @@ impl CPU for Gameboy {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				let bytes = u16::to_le_bytes(value);
-				self.tick_m_cycles(2);
+				self.tick_m_cycles(1);
 				self.write_from(*i, bytes[0], Source::Cpu);
+				self.tick_m_cycles(1);
 				self.write_from(*i + 1, bytes[1], Source::Cpu);
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state.registers.set_u16(*reg, value),

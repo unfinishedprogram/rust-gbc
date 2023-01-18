@@ -302,7 +302,7 @@ impl IORegisters for Gameboy {
 
 				// DMA takes 160 m-cycles,
 				// There are 4 t-cycles per m-cycle and timer is in t-cycles
-				self.dma_timer = 160 * 4;
+				self.dma_timer = 162 * 4;
 			}
 
 			_ => self.io_register_state[addr] = value,
