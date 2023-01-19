@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	cgb::{CGBState, Speed},
+	cgb::CGBState,
 	dma_controller::{DMAController, TransferMode},
 	ppu::VRAMBank,
 	util::BigArray,
@@ -71,7 +71,7 @@ impl Default for Gameboy {
 			ppu: PPU::new(),
 			timer: Timer::default(),
 			io_register_state: IORegisterState::default(),
-			boot_rom: include_bytes!("../roms/other/dmg_boot.bin").to_vec(),
+			boot_rom: include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
 			booting: true,
 			cartridge_state: None,
 			ram_bank: 0,
@@ -215,8 +215,8 @@ impl Gameboy {
 
 	fn set_gb_mode(&mut self, mode: GameboyMode) {
 		self.boot_rom = match mode {
-			GameboyMode::DMG => include_bytes!("../roms/other/dmg_boot.bin").to_vec(),
-			GameboyMode::GBC(_) => include_bytes!("../roms/other/cgb_boot.bin").to_vec(),
+			GameboyMode::DMG => include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
+			GameboyMode::GBC(_) => include_bytes!("../../roms/other/cgb_boot.bin").to_vec(),
 		};
 
 		self.w_ram = match mode {

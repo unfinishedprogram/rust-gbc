@@ -111,9 +111,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			}
 		}
 
-		ERROR(err) => {
-			// panic!("{}", err)
-		}
+		ERROR(_) => {}
 
 		JP(condition, location) | JR(condition, location) => {
 			if cpu.check_condition(condition) {
