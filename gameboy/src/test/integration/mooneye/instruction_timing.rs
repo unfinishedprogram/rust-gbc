@@ -34,4 +34,6 @@ mooneye_tests! {
 	reti_intr_timing:"mooneye/acceptance/timing/reti_intr_timing",
 	reti_timing:"mooneye/acceptance/timing/reti_timing",
 	rst_timing:"mooneye/acceptance/timing/rst_timing",
+	bits_reg_f:"mooneye/acceptance/bits/reg_f",
+	bits_mem_oam:"mooneye/acceptance/bits/mem_oam",
 }
