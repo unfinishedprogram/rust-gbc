@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	cgb::CGBState,
+	cgb::{CGBState, Speed},
 	dma_controller::{DMAController, TransferMode},
 	ppu::VRAMBank,
 	util::BigArray,
@@ -29,6 +29,15 @@ pub enum GameboyMode {
 	GBC(CGBState),
 	// Basic monochrome mode
 	DMG,
+}
+
+impl GameboyMode {
+	pub fn get_speed(&self) -> Speed {
+		match self {
+			GameboyMode::GBC(state) => state.current_speed(),
+			GameboyMode::DMG => Speed::Normal,
+		}
+	}
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -110,16 +119,11 @@ impl Gameboy {
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
-		match &self.mode {
-			// GameboyMode::GBC(state) => {
-			// 	if matches!(state.current_speed(), Speed::Double) {
-			// 		self.tick_t_states(m_cycles * 2);
-			// 		return;
-			// 	}
-			// }
-			_ => (),
+		match self.mode.get_speed() {
+			Speed::Normal => self.tick_t_states(m_cycles * 4),
+			Speed::Double => self.tick_t_states(m_cycles * 2),
 		}
-		self.tick_t_states(m_cycles * 4);
+		self.dma_timer = self.dma_timer.saturating_sub(m_cycles as u64 * 4);
 	}
 
 	fn tick_t_states(&mut self, t_states: u32) {
@@ -153,11 +157,8 @@ impl Gameboy {
 				_ => {}
 			}
 		}
-		// self.ppu.step_ppu_cycles(t_states as u64);
 
-		self.dma_timer = self.dma_timer.saturating_sub(t_states as u64);
-
-		self.timer.step(t_states as u64);
+		self.timer.step(t_states as u64, self.mode.get_speed());
 
 		self.t_states += t_states as u64;
 	}

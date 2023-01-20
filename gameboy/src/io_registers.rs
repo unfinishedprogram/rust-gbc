@@ -166,7 +166,7 @@ impl IORegisters for Gameboy {
 			TMA => self.timer.get_tma(),
 
 			//HDMA
-			HDMA5 => self.dma_controller.read_length(),
+			HDMA5 => self.dma_controller.read_hdma5(),
 
 			SVBK => {
 				if let GameboyMode::GBC(_) = &self.mode {
@@ -233,7 +233,7 @@ impl IORegisters for Gameboy {
 			HDMA2 => self.dma_controller.write_source_low(value),
 			HDMA3 => self.dma_controller.write_destination_high(value),
 			HDMA4 => self.dma_controller.write_destination_low(value),
-			HDMA5 => self.dma_controller.write_start(value),
+			HDMA5 => self.dma_controller.write_hdma5(value),
 
 			// Timer
 			DIV => self.timer.set_div(value),

@@ -1,3 +1,5 @@
+use std::assert_matches::debug_assert_matches;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -11,9 +13,9 @@ use crate::{
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct DMAController {
 	pub transfer: Option<Transfer>,
-	hdma5: u8,
 	source: u16,      // HDMA1 | HDMA2
 	destination: u16, // HDMA3 | HDMA4
+	hdma5: u8,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,8 +29,20 @@ pub struct Transfer {
 	pub mode: TransferMode,
 	pub source: u16,
 	pub destination: u16,
-	pub total_length: u16,
-	pub bytes_sent: u16,
+	// Length measured in chunks of 16 bytes
+	pub total_chunks: u16,
+	// Transfer is always done in increments of 16 bytes
+	pub chunks_sent: u16,
+}
+
+impl Transfer {
+	pub fn chunks_remaining(&self) -> u16 {
+		self.total_chunks - self.chunks_sent
+	}
+
+	pub fn complete(&self) -> bool {
+		self.chunks_remaining() == 0
+	}
 }
 
 impl DMAController {
@@ -49,92 +63,86 @@ impl DMAController {
 		self.destination |= value as u16;
 	}
 
-	pub fn write_start(&mut self, value: u8) {
-		if let Some(_) = &mut self.transfer {
-			if value & BIT_7 != 0 {
-				self.transfer = None;
-				self.hdma5 |= BIT_7;
-			}
-			return;
-		}
-
-		let mode = if value & BIT_7 == BIT_7 {
-			TransferMode::HBlank
-		} else {
-			TransferMode::GeneralPurpose
+	fn new_transfer(&self, byte: u8) -> Transfer {
+		let mode = match byte & BIT_7 == BIT_7 {
+			true => TransferMode::HBlank,
+			false => TransferMode::GeneralPurpose,
 		};
 
-		let total_length = ((value & !BIT_7) + 1) as u16 * 0x10;
+		let total_chunks = ((byte & !BIT_7) + 1) as u16;
 
 		let source = self.source & 0xFFF0;
 		let destination = self.destination & 0x1FF0;
 
-		if !matches!(source, (0x0000..0x7FF0) | (0xA000..0xDFF0)) {
-			panic!("{:x}", source)
-		}
-		// debug_assert!(matches!(destination, 0x8000..0x9FF0));
+		debug_assert_matches!(source, (0x0000..0x7FF0) | (0xA000..0xDFF0));
+		// debug_assert_matches!(destination, 0x0..8176);
 
-		self.transfer = Some(Transfer {
+		Transfer {
 			mode,
 			source,
 			destination,
-			total_length,
-			bytes_sent: 0,
-		});
-	}
-
-	pub fn update_length(&mut self) {
-		if let Some(transfer) = &self.transfer {
-			let length = transfer.total_length - transfer.bytes_sent;
-			let length = (length / 0x10 - 1) as u8;
-			self.hdma5 = length;
+			total_chunks,
+			chunks_sent: 0,
 		}
 	}
 
-	pub fn read_length(&self) -> u8 {
+	pub fn write_hdma5(&mut self, value: u8) {
+		match &mut self.transfer {
+			Some(transfer) => {
+				// Writing zero to bit 7 when a HDMA transfer is active terminates it
+				if value & BIT_7 == 0 {
+					self.hdma5 = (transfer.chunks_remaining()) as u8;
+					self.hdma5 |= BIT_7;
+					self.transfer = None;
+				}
+			}
+
+			None => self.transfer = Some(self.new_transfer(value)),
+		}
+	}
+
+	pub fn read_hdma5(&self) -> u8 {
 		return self.hdma5;
 	}
 
-	pub fn step_single(
+	pub fn transfer_next_chunk(
 		&mut self,
 		ppu: &mut PPU,
 		cartridge: &mut Option<Cartridge>,
 		wram: &mut impl BankedWorkRam,
 		v_ram_bank: &VRAMBank,
 	) {
-		for _ in 0..0x10 {
-			if let Some(transfer) = &mut self.transfer {
-				let vram = match v_ram_bank {
-					VRAMBank::Bank0 => &mut ppu.v_ram_bank_0,
-					VRAMBank::Bank1 => &mut ppu.v_ram_bank_1,
-				};
+		let Some(transfer) = &mut self.transfer else { return };
+		if transfer.complete() {
+			panic!("Transfer is already complete")
+		}
 
-				let i = transfer.bytes_sent;
-				let src_addr = (transfer.source + i) as usize;
-				let dest_addr = (transfer.destination + i) as usize;
+		let vram = match v_ram_bank {
+			VRAMBank::Bank0 => &mut ppu.v_ram_bank_0,
+			VRAMBank::Bank1 => &mut ppu.v_ram_bank_1,
+		};
 
-				match src_addr {
-					// Cartage address
-					0x0000..0x8000 | 0xA000..0xC000 => {
-						if let Some(cartridge) = cartridge {
-							vram[dest_addr] = cartridge.read(src_addr as u16)
-						}
+		let byte_offset = transfer.chunks_sent * 16;
+
+		for i in 0..16 {
+			let src_addr = (transfer.source + byte_offset + i) as usize;
+			let dest_addr = (transfer.destination + byte_offset + i) as usize;
+			match src_addr {
+				// Cartage address
+				0x0000..0x8000 | 0xA000..0xC000 => {
+					if let Some(cartridge) = cartridge {
+						vram[dest_addr] = cartridge.read(src_addr as u16)
 					}
-					0xC000..0xD000 => vram[dest_addr] = wram.get_bank(0)[src_addr - 0xC000],
-					0xD000..0xE000 => {
-						vram[dest_addr] = wram.get_bank(wram.get_bank_number())[src_addr - 0xD000]
-					}
-					_ => unreachable!("DMA outside range"),
 				}
-
-				transfer.bytes_sent += 1;
-				if transfer.bytes_sent == transfer.total_length {
-					self.transfer = None;
-					return;
+				0xC000..0xD000 => vram[dest_addr] = wram.get_bank(0)[src_addr - 0xC000],
+				0xD000..0xE000 => {
+					vram[dest_addr] = wram.get_bank(wram.get_bank_number())[src_addr - 0xD000]
 				}
+				_ => unreachable!("DMA outside range"),
 			}
 		}
-		self.update_length();
+
+		transfer.chunks_sent += 1;
 	}
 
 	pub fn step_controller(
@@ -144,18 +152,29 @@ impl DMAController {
 		wram: &mut impl BankedWorkRam,
 		v_ram_bank: &VRAMBank,
 	) {
-		let Some(transfer) = &self.transfer else { return };
+		let (length, mode) = {
+			let Some(transfer) = &self.transfer else { return };
+			(transfer.total_chunks, &transfer.mode)
+		};
 
-		match transfer.mode {
+		match mode {
 			TransferMode::GeneralPurpose => {
-				while self.transfer.is_some() {
-					self.step_single(ppu, cartridge, wram, v_ram_bank)
+				for _ in 0..length {
+					self.transfer_next_chunk(ppu, cartridge, wram, v_ram_bank)
 				}
-				self.hdma5 = 0xFF;
 			}
 			TransferMode::HBlank => {
-				self.step_single(ppu, cartridge, wram, v_ram_bank);
-				self.hdma5 |= BIT_7;
+				self.transfer_next_chunk(ppu, cartridge, wram, v_ram_bank);
+			}
+		}
+
+		if let Some(transfer) = &mut self.transfer {
+			self.hdma5 = transfer.chunks_remaining() as u8;
+
+			if transfer.complete() {
+				// When the transfer is done, HDMA5 should read 0xFF
+				self.hdma5 = 0xFF;
+				self.transfer = None;
 			}
 		}
 	}

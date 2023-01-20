@@ -1,4 +1,4 @@
-use crate::util::bits::BIT_2;
+use crate::{cgb::Speed, util::bits::BIT_2};
 
 use super::flags::INT_TIMER;
 use serde::{Deserialize, Serialize};
@@ -72,9 +72,11 @@ impl Timer {
 		self.tac & BIT_2 == BIT_2
 	}
 
-	pub fn step_cycle(&mut self) {
+	pub fn step_cycle(&mut self, speed: Speed) {
 		let from = self.system_clock;
+
 		self.system_clock = self.system_clock.wrapping_add(1);
+
 		let to = self.system_clock;
 
 		// Div is the top 8 bits of the 16 bit system clock
@@ -82,7 +84,12 @@ impl Timer {
 
 		// Detect falling edge for timer
 		if self.timer_enabled() {
-			let bit = self.timer_speed() as u16;
+			// let bit = self.timer_speed() as u16;
+			let bit = match speed {
+				Speed::Normal => self.timer_speed() as u16,
+				Speed::Double => (self.timer_speed() as u16) << 1,
+			};
+
 			let timer_increment = (from & bit) != (to & bit);
 			if timer_increment {
 				self.increment_tima();
@@ -109,9 +116,9 @@ impl Timer {
 		}
 	}
 
-	pub fn step(&mut self, cycles: u64) {
+	pub fn step(&mut self, cycles: u64, speed: Speed) {
 		for _ in 0..cycles {
-			self.step_cycle();
+			self.step_cycle(speed);
 		}
 	}
 }
