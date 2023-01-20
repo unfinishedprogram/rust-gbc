@@ -5,6 +5,8 @@ pub mod boot;
 pub mod instruction_timing;
 pub mod memory_bank_controllers;
 pub mod oam_dma;
+
+pub mod ppu;
 pub mod timer;
 
 mooneye_tests! {
