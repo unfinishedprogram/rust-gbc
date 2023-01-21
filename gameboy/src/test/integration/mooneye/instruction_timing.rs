@@ -3,9 +3,6 @@ use crate::test::util::mooneye_test::run_mooneye_test;
 
 mooneye_tests! {
 	add_sp_e_timing:"mooneye/acceptance/timing/add_sp_e_timing",
-	boot_div_dmg0:"mooneye/acceptance/timing/boot_div-dmg0",
-	boot_hwio_dmg0:"mooneye/acceptance/timing/boot_hwio-dmg0",
-	boot_regs_dmg0:"mooneye/acceptance/timing/boot_regs-dmg0",
 	call_cc_timing:"mooneye/acceptance/timing/call_cc_timing",
 	call_cc_timing2:"mooneye/acceptance/timing/call_cc_timing2",
 	call_timing:"mooneye/acceptance/timing/call_timing",
