@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
 	cgb::{CGBState, Speed},
 	dma_controller::{DMAController, TransferMode},
+	oam_dma::OamDmaState,
 	ppu::VRAMBank,
 	util::BigArray,
 	work_ram::{BankedWorkRam, WorkRam, WorkRamDataCGB, WorkRamDataDMG},
@@ -57,11 +58,12 @@ pub struct Gameboy {
 	pub halted: bool,
 	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
-	pub dma_timer: u64,
 	pub booting: bool,
 	pub boot_rom: Vec<u8>,
 	pub dma_controller: DMAController,
+	pub oam_dma: OamDmaState,
 	t_states: u64,
+	pub next_interrupt: Option<u8>,
 	pub color_scheme_dmg: (Color, Color, Color, Color),
 }
 
@@ -75,7 +77,7 @@ impl Default for Gameboy {
 				(0x55, 0x55, 0x55, 0xFF),
 				(0x00, 0x00, 0x00, 0xFF),
 			),
-			dma_timer: 0,
+			oam_dma: Default::default(),
 			cpu_state: CPUState::default(),
 			ppu: PPU::new(),
 			timer: Timer::default(),
@@ -92,6 +94,7 @@ impl Default for Gameboy {
 			interrupt_enable_register: 0,
 			raw_joyp_input: 0,
 			t_states: 0,
+			next_interrupt: None,
 		};
 		emulator.set_gb_mode(GameboyMode::GBC(CGBState::default()));
 		emulator.ppu.set_mode(PPUMode::OamScan);
@@ -119,11 +122,11 @@ impl Gameboy {
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
+		self.oam_dma.step(m_cycles, &mut self.ppu);
 		match self.mode.get_speed() {
 			Speed::Normal => self.tick_t_states(m_cycles * 4),
 			Speed::Double => self.tick_t_states(m_cycles * 2),
 		}
-		self.dma_timer = self.dma_timer.saturating_sub(m_cycles as u64 * 4);
 	}
 
 	fn tick_t_states(&mut self, t_states: u32) {

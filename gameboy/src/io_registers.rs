@@ -295,14 +295,14 @@ impl IORegisters for Gameboy {
 				// Indexing into HRAM should use work-ram instead.
 				let value = if value > 0xDF { value - 0x20 } else { value };
 
+				let mut oam_data = vec![0; 0xA0];
 				let real_addr = (value as u16) << 8;
+
 				for i in 0..0xA0 {
-					self.ppu.oam[i] = self.read_from(real_addr + i as u16, Source::Raw);
+					oam_data[i] = self.read_from(real_addr + i as u16, Source::Raw);
 				}
 
-				// DMA takes 160 m-cycles,
-				// There are 4 t-cycles per m-cycle and timer is in t-cycles
-				self.dma_timer = 162 * 4;
+				self.oam_dma.start_oam_dma(oam_data);
 			}
 
 			_ => self.io_register_state[addr] = value,

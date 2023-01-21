@@ -34,7 +34,7 @@ pub enum Source {
 impl SourcedMemoryMapper for Gameboy {
 	fn read_from(&self, addr: u16, source: Source) -> u8 {
 		if matches!(source, Source::Cpu)
-			&& self.dma_timer > 0
+			&& !self.oam_dma.oam_is_accessible()
 			&& !matches!(addr, 0xFF80..0xFFFE)
 			&& addr != DMA
 		{
@@ -47,7 +47,7 @@ impl SourcedMemoryMapper for Gameboy {
 	fn write_from(&mut self, addr: u16, value: u8, source: Source) {
 		// Don't allow reading from memory outside of HRAM from CPU during DMA transfer
 		if matches!(source, Source::Cpu)
-			&& self.dma_timer > 0
+			&& !self.oam_dma.oam_is_accessible()
 			&& !matches!(addr, 0xFF80..0xFFFE)
 			&& addr != DMA
 		{
@@ -127,14 +127,6 @@ impl MemoryMapper for Gameboy {
 			0xE000..0xFE00 => self.write(addr - 0xE000 + 0xC000, value), // Mirror, should not be used
 			0xFE00..0xFEA0 => {
 				self.ppu.oam[(addr - 0xFE00) as usize] = value;
-
-				// if matches!(self.get_mode(), PPUMode::VBlank | PPUMode::HBlank) {
-				// warn!("OAM Write {addr:X}:{value:X}");
-				// self.oam[(addr - 0xFE00) as usize] = value;
-				// } else {
-				// warn!("BLOCKED OAM Write {addr:X}:{value:X}");
-				// self.oam[(addr - 0xFE00) as usize] = value;
-				// }
 			} // Object Attribute Map
 			0xFEA0..0xFF00 => {}
 

@@ -240,11 +240,11 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		}
 		HALT => cpu.halted = true,
 		CALL(condition, location) => {
+			let loc_value = cpu.read_16(&location);
 			if cpu.check_condition(condition) {
 				cpu.tick_m_cycles(1);
 				let current_pc = cpu.read_16(&CPURegister16::PC.into());
 				cpu.push(current_pc);
-				let loc_value = cpu.read_16(&location);
 				cpu.write_16(&CPURegister16::PC.into(), loc_value);
 			}
 		}
