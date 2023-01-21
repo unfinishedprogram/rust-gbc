@@ -48,7 +48,7 @@ pub trait CPU {
 	fn check_condition(&self, condition: Condition) -> bool;
 	fn check_interrupt(&self, interrupt: u8) -> bool;
 	fn clear_request(&mut self, interrupt: u8);
-	fn get_interrupt(&mut self) -> Option<Instruction>;
+	fn fetch_next_interrupt(&mut self) -> Option<u8>;
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction;
 	fn step_cpu(&mut self);
 }
@@ -138,9 +138,9 @@ impl CPU for Gameboy {
 			ValueRefU16::Mem(i) => {
 				let bytes = u16::to_le_bytes(value);
 				self.tick_m_cycles(1);
-				self.write_from(*i, bytes[0], Source::Cpu);
-				self.tick_m_cycles(1);
 				self.write_from(*i + 1, bytes[1], Source::Cpu);
+				self.tick_m_cycles(1);
+				self.write_from(*i, bytes[0], Source::Cpu);
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state.registers.set_u16(*reg, value),
 			ValueRefU16::Raw(_) => unreachable!(),
@@ -181,7 +181,7 @@ impl CPU for Gameboy {
 		self.interrupt_enable_register & self.read(IF) != 0
 	}
 
-	fn get_interrupt(&mut self) -> Option<Instruction> {
+	fn fetch_next_interrupt(&mut self) -> Option<u8> {
 		if !self.cpu_state.interrupt_enable {
 			return None;
 		}
@@ -196,15 +196,15 @@ impl CPU for Gameboy {
 			let interrupt = 1 << index;
 			if requests & interrupt != 0 {
 				self.clear_request(interrupt);
-				return Some(Instruction::INT(interrupt));
+				return Some(interrupt);
 			}
 		}
 		None
 	}
 
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
-		if let Some(interrupt_instruction) = self.get_interrupt() {
-			interrupt_instruction
+		if let Some(int) = self.fetch_next_interrupt() {
+			Instruction::INT(int)
 		} else {
 			self.fetch_next_instruction()
 		}
