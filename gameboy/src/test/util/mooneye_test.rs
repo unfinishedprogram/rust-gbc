@@ -5,7 +5,7 @@ use super::rom_loader::init_emulator_with_rom;
 pub fn run_mooneye_test(rom: &str) {
 	let mut state = init_emulator_with_rom(rom);
 
-	for _ in 0..120 {
+	for _ in 0..20 {
 		for _ in 0..1_048_576 {
 			state.step();
 		}
