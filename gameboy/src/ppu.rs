@@ -251,7 +251,7 @@ impl PPU {
 					self.set_mode(OamScan);
 					return Some(OamScan);
 				} else {
-					self.cycle += 458;
+					self.cycle += 456;
 					self.window_line = 255;
 
 					if let Some(lcd) = &mut self.lcd {
