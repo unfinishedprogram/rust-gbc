@@ -65,6 +65,8 @@ pub struct Gameboy {
 	t_states: u64,
 	pub next_interrupt: Option<u8>,
 	pub color_scheme_dmg: (Color, Color, Color, Color),
+
+	pub speed_switch_delay: u32,
 }
 
 impl Default for Gameboy {
@@ -94,6 +96,7 @@ impl Default for Gameboy {
 			interrupt_enable_register: 0,
 			raw_joyp_input: 0,
 			t_states: 0,
+			speed_switch_delay: 0,
 			next_interrupt: None,
 		};
 		emulator.set_gb_mode(GameboyMode::GBC(CGBState::default()));
@@ -126,6 +129,9 @@ impl Gameboy {
 		match self.mode.get_speed() {
 			Speed::Normal => self.tick_t_states(m_cycles * 4),
 			Speed::Double => self.tick_t_states(m_cycles * 2),
+		}
+		if self.speed_switch_delay == 0 {
+			self.timer.step(m_cycles as u64, self.mode.get_speed());
 		}
 	}
 
@@ -160,8 +166,6 @@ impl Gameboy {
 				_ => {}
 			}
 		}
-
-		self.timer.step(t_states as u64, self.mode.get_speed());
 
 		self.t_states += t_states as u64;
 	}

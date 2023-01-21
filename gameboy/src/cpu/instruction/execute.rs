@@ -106,7 +106,10 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		STOP => {
 			cpu.cpu_state.registers.pc = cpu.cpu_state.registers.pc.wrapping_add(1);
 			match &mut cpu.mode {
-				crate::state::GameboyMode::GBC(state) => state.perform_speed_switch(),
+				crate::state::GameboyMode::GBC(state) => {
+					cpu.speed_switch_delay = 2050;
+					state.perform_speed_switch();
+				}
 				_ => {}
 			}
 		}

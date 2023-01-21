@@ -87,7 +87,7 @@ impl Timer {
 			// let bit = self.timer_speed() as u16;
 			let bit = match speed {
 				Speed::Normal => self.timer_speed() as u16,
-				Speed::Double => (self.timer_speed() as u16) << 1,
+				Speed::Double => (self.timer_speed() as u16) << 2,
 			};
 
 			let timer_increment = (from & bit) != (to & bit);
@@ -117,6 +117,11 @@ impl Timer {
 	}
 
 	pub fn step(&mut self, cycles: u64, speed: Speed) {
+		let cycles = match speed {
+			Speed::Normal => cycles * 4,
+			Speed::Double => cycles * 8,
+		};
+
 		for _ in 0..cycles {
 			self.step_cycle(speed);
 		}

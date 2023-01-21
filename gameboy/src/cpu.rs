@@ -211,6 +211,12 @@ impl CPU for Gameboy {
 	}
 
 	fn step_cpu(&mut self) {
+		if self.speed_switch_delay > 0 {
+			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
+			self.tick_m_cycles(1);
+			return;
+		}
+
 		if self.halted {
 			if self.interrupt_pending() {
 				self.halted = false;
