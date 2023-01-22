@@ -18,14 +18,26 @@ pub const INT_TIMER: u8 = BIT_2;
 pub const INT_SERIAL: u8 = BIT_3;
 pub const INT_JOY_PAD: u8 = BIT_4;
 
-// Stat Flag
-pub const STAT_LYC_EQ_LY: u8 = BIT_2;
-pub const STAT_H_BLANK_IE: u8 = BIT_3;
-pub const STAT_V_BLANK_IE: u8 = BIT_4;
-pub const STAT_OAM_IE: u8 = BIT_5;
-pub const STAT_LYC_EQ_LY_IE: u8 = BIT_6;
-
 bitflags! {
+	#[derive(Serialize, Deserialize)]
+	pub struct STATFlags:u8 {
+		const READ_ONLY = 0b111;
+
+		const H_BLANK = 0;
+		const V_BLANK = 1;
+		const OAM_SCAN = 2;
+		const DRAW = 3;
+
+		const PPU_MODE = BIT_0 | BIT_1;
+
+		const LYC_EQ_LY = BIT_2;
+		const H_BLANK_IE = BIT_3;
+		const V_BLANK_IE = BIT_4;
+		const OAM_IE = BIT_5;
+		const LYC_EQ_LY_IE = BIT_6;
+
+	}
+
 	#[derive(Serialize, Deserialize)]
 	pub struct LCDFlags: u8 {
 		const BG_DISPLAY = BIT_0;

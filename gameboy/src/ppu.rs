@@ -6,7 +6,7 @@ mod tile_data;
 use std::collections::VecDeque;
 
 use crate::{
-	flags::{LCDFlags, STAT_H_BLANK_IE},
+	flags::{LCDFlags, STATFlags},
 	lcd::LCD,
 	ppu::renderer::PixelFIFO,
 	util::BigArray,
@@ -16,9 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use self::{color_ram::ColorRamController, renderer::Pixel, sprite::Sprite};
 
-use super::flags::{
-	INT_LCD_STAT, INT_V_BLANK, STAT_LYC_EQ_LY, STAT_LYC_EQ_LY_IE, STAT_OAM_IE, STAT_V_BLANK_IE,
-};
+use super::flags::{INT_LCD_STAT, INT_V_BLANK};
 
 #[derive(Clone, Serialize, Deserialize, Default)]
 enum FetcherMode {
@@ -68,7 +66,7 @@ pub struct PPU {
 	pub obp1: u8,
 	pub wy: u8,
 	pub wx: u8,
-	pub stat: u8,
+	pub stat: STATFlags,
 
 	pub bg_color: ColorRamController,
 	pub obj_color: ColorRamController,
@@ -107,7 +105,7 @@ impl PPU {
 			obp1: 0,
 			wy: 0,
 			wx: 0,
-			stat: 0,
+			stat: STATFlags::empty(),
 			bg_color: Default::default(),
 			obj_color: Default::default(),
 			frame: 0,
@@ -147,20 +145,18 @@ impl PPU {
 
 	pub fn update_lyc(&mut self) {
 		if self.is_enabled() {
-			if self.ly == self.lyc {
-				self.stat |= STAT_LYC_EQ_LY;
-				if self.stat & STAT_LYC_EQ_LY_IE != 0 {
-					self.request_stat();
-				}
-			} else {
-				self.stat &= !STAT_LYC_EQ_LY
+			self.stat.set(STATFlags::LYC_EQ_LY, self.ly == self.lyc);
+
+			if self.ly == self.lyc && self.stat.contains(STATFlags::LYC_EQ_LY_IE) {
+				self.request_stat();
 			}
 		}
 	}
 
 	pub fn get_mode(&self) -> PPUMode {
-		let stat = self.stat & 0b00000011;
-		match stat {
+		let stat = self.stat & STATFlags::PPU_MODE;
+
+		match stat.bits() {
 			0 => PPUMode::HBlank,
 			1 => PPUMode::VBlank,
 			2 => PPUMode::OamScan,
@@ -183,10 +179,11 @@ impl PPU {
 	}
 
 	pub fn write_stat(&mut self, value: u8) {
-		let mask = 0b00000111;
-		let value = value & !mask;
+		let mut value = STATFlags::from_bits_truncate(value) & !STATFlags::READ_ONLY;
 
-		self.stat &= mask;
+		self.stat.remove(!STATFlags::READ_ONLY);
+		let mask = 0b00000111;
+
 		self.stat |= value;
 	}
 
@@ -196,7 +193,8 @@ impl PPU {
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode) {
-		self.stat = (self.stat & 0b11111100) | mode as u8;
+		self.stat.remove(STATFlags::PPU_MODE);
+		self.stat.insert(STATFlags::from_bits_truncate(mode as u8));
 
 		if !self.is_enabled() {
 			// Don't trigger any interrupts if the screen is disabled
@@ -206,9 +204,9 @@ impl PPU {
 		// Do Interrupts
 		use PPUMode::*;
 		if match mode {
-			HBlank => self.stat & STAT_H_BLANK_IE != 0,
-			VBlank => self.stat & STAT_V_BLANK_IE != 0,
-			OamScan => self.stat & STAT_OAM_IE != 0,
+			HBlank => self.stat.contains(STATFlags::H_BLANK_IE),
+			VBlank => self.stat.contains(STATFlags::V_BLANK_IE),
+			OamScan => self.stat.contains(STATFlags::OAM_IE),
 			Draw => false,
 		} {
 			self.request_stat()
