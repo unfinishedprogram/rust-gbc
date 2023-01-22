@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{lcd::LCDDisplay, util::bits::*};
+use crate::{flags::LCDFlags, lcd::LCDDisplay, util::bits::*};
 
 use super::{
 	sprite::Sprite,
@@ -79,7 +79,11 @@ impl PixelFIFO for PPU {
 	}
 
 	fn fetch_scanline_sprites(&self) -> Vec<Sprite> {
-		let double_height = if self.lcdc & BIT_2 == BIT_2 { 0 } else { 8 };
+		let height = if self.lcdc.contains(LCDFlags::OBJ_SIZE) {
+			0
+		} else {
+			8
+		};
 
 		let mut sprites: Vec<Sprite> = self
 			.oam
@@ -90,8 +94,7 @@ impl PixelFIFO for PPU {
 				let x = chunk[1];
 				let y = chunk[0];
 				(x > 0 && y > 0 && x <= 168 && y <= 160)
-					&& ((y > self.ly.wrapping_add(double_height))
-						&& (y <= self.ly.wrapping_add(16)))
+					&& ((y > self.ly.wrapping_add(height)) && (y <= self.ly.wrapping_add(16)))
 			})
 			.enumerate()
 			.map(|(index, bytes)| {
@@ -114,8 +117,9 @@ impl PixelFIFO for PPU {
 	///
 	/// If this is true, the window should be drawn for the remainder of the current scanline
 	fn in_window(&self) -> bool {
-		let bg_enabled = self.lcdc & BIT_0 == BIT_0;
-		let wn_enabled = self.lcdc & BIT_5 == BIT_5 && bg_enabled;
+		let wn_enabled = self
+			.lcdc
+			.contains(LCDFlags::BG_DISPLAY | LCDFlags::WINDOW_DISPLAY_ENABLE);
 		let wn_in_view = self.current_pixel + 7 >= self.wx && self.ly >= self.wy;
 
 		wn_in_view && wn_enabled
@@ -162,8 +166,9 @@ impl PixelFIFO for PPU {
 	}
 
 	fn draw_sprite(&mut self, sprite: Sprite) {
-		let double_height = self.lcdc & BIT_2 == BIT_2;
-		if self.lcdc & BIT_1 != BIT_1 {
+		let double_height = self.lcdc.contains(LCDFlags::OBJ_SIZE);
+
+		if !self.lcdc.contains(LCDFlags::OBJ_DISPLAY_ENABLE) {
 			return;
 		}
 
@@ -224,7 +229,7 @@ impl PixelFIFO for PPU {
 
 		if let Some(fg) = self.fifo_obj.pop_back() {
 			let bg_over = (!fg.background_priority || bg.background_priority) && bg.color != 0;
-			let bg_over = bg_over && self.lcdc & BIT_0 == BIT_0;
+			let bg_over = bg_over && self.lcdc.contains(LCDFlags::BG_DISPLAY);
 			let bg_over = bg_over || fg.color == 0;
 
 			if bg_over {
@@ -238,12 +243,10 @@ impl PixelFIFO for PPU {
 	}
 
 	fn get_tile_map_offset(&self) -> u16 {
-		if self.lcdc
-			& match self.fetcher_mode {
-				FetcherMode::Window => BIT_6,
-				FetcherMode::Background => BIT_3,
-			} != 0
-		{
+		if self.lcdc.contains(match self.fetcher_mode {
+			FetcherMode::Window => LCDFlags::WINDOW_TILE_MAP_DISPLAY_SELECT,
+			FetcherMode::Background => LCDFlags::BG_TILE_MAP_DISPLAY_SELECT,
+		}) {
 			0x1C00
 		} else {
 			0x1800
@@ -326,7 +329,7 @@ impl PixelFIFO for PPU {
 	}
 
 	fn get_addressing_mode(&self) -> AddressingMode {
-		if self.lcdc & BIT_4 != 0 {
+		if self.lcdc.contains(LCDFlags::BG_AND_WINDOW_TILE_DATA_SELECT) {
 			AddressingMode::Signed
 		} else {
 			AddressingMode::Unsigned

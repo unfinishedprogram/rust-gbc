@@ -6,7 +6,7 @@ mod tile_data;
 use std::collections::VecDeque;
 
 use crate::{
-	flags::{LCD_DISPLAY_ENABLE, STAT_H_BLANK_IE},
+	flags::{LCDFlags, STAT_H_BLANK_IE},
 	lcd::LCD,
 	ppu::renderer::PixelFIFO,
 	util::BigArray,
@@ -78,8 +78,7 @@ pub struct PPU {
 	fetcher_mode: FetcherMode,
 	current_pixel: u8,
 	window_line: u8,
-	enabled: bool,
-	lcdc: u8,
+	lcdc: LCDFlags,
 	ly: u8,
 
 	sprites: Vec<Sprite>,
@@ -94,7 +93,6 @@ impl PPU {
 	pub fn new() -> Self {
 		Self {
 			window_line: 0xFF,
-			enabled: true,
 			v_ram_bank_0: [0; 0x2000],
 			v_ram_bank_1: [0; 0x2000],
 			oam: [0; 0xA0],
@@ -115,7 +113,7 @@ impl PPU {
 			frame: 0,
 			fetcher_mode: FetcherMode::Background,
 			current_pixel: 0,
-			lcdc: 0,
+			lcdc: LCDFlags::empty(),
 			ly: 0,
 			sprites: vec![],
 			current_tile: 0,
@@ -134,21 +132,21 @@ impl PPU {
 	}
 
 	pub fn write_lcdc(&mut self, value: u8) {
-		if value & LCD_DISPLAY_ENABLE == 0 {
+		let value = LCDFlags::from_bits_truncate(value);
+
+		if value.contains(LCDFlags::DISPLAY_ENABLE) {
 			self.disable_display();
-		} else {
-			self.enable_display();
 		}
 		self.lcdc = value;
 		self.update_lyc()
 	}
 
 	pub fn read_lcdc(&self) -> u8 {
-		self.lcdc
+		self.lcdc.bits()
 	}
 
 	pub fn update_lyc(&mut self) {
-		if self.enabled {
+		if self.is_enabled() {
 			if self.ly == self.lyc {
 				self.stat |= STAT_LYC_EQ_LY;
 				if self.stat & STAT_LYC_EQ_LY_IE != 0 {
@@ -176,7 +174,7 @@ impl PPU {
 	}
 
 	pub fn is_enabled(&self) -> bool {
-		self.enabled
+		self.lcdc.contains(LCDFlags::DISPLAY_ENABLE)
 	}
 
 	pub fn set_lyc(&mut self, lyc: u8) {
@@ -200,7 +198,7 @@ impl PPU {
 	pub fn set_mode(&mut self, mode: PPUMode) {
 		self.stat = (self.stat & 0b11111100) | mode as u8;
 
-		if !self.enabled {
+		if !self.is_enabled() {
 			// Don't trigger any interrupts if the screen is disabled
 			return;
 		}
@@ -222,14 +220,9 @@ impl PPU {
 	}
 
 	fn disable_display(&mut self) {
-		self.enabled = false;
 		self.set_ly(0);
 		self.current_pixel = 0;
 		self.set_mode(PPUMode::HBlank);
-	}
-
-	fn enable_display(&mut self) {
-		self.enabled = true;
 	}
 
 	pub fn step_ppu_cycles(&mut self, cycles: u64) {
@@ -246,7 +239,7 @@ impl PPU {
 	}
 
 	pub fn step_ppu(&mut self) -> Option<PPUMode> {
-		if !self.enabled {
+		if !self.is_enabled() {
 			return None;
 		}
 

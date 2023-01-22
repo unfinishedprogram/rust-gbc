@@ -1,3 +1,6 @@
+use bitflags::bitflags;
+use serde::{Deserialize, Serialize};
+
 use crate::util::bits::*;
 
 // Memory addresses of flag registers
@@ -22,15 +25,19 @@ pub const STAT_V_BLANK_IE: u8 = BIT_4;
 pub const STAT_OAM_IE: u8 = BIT_5;
 pub const STAT_LYC_EQ_LY_IE: u8 = BIT_6;
 
-// LCD Flags
-pub const LCD_BG_DISPLAY: u8 = BIT_0;
-pub const LCD_OBJ_DISPLAY_ENABLE: u8 = BIT_1;
-pub const LCD_OBJ_SIZE: u8 = BIT_2;
-pub const LCD_BG_TILE_MAP_DISPLAY_SELECT: u8 = BIT_3;
-pub const LCD_BG_AND_WINDOW_TILE_DATA_SELECT: u8 = BIT_4;
-pub const LCD_WINDOW_DISPLAY_ENABLE: u8 = BIT_5;
-pub const LCD_WINDOW_TILE_MAP_DISPLAY_SELECT: u8 = BIT_6;
-pub const LCD_DISPLAY_ENABLE: u8 = BIT_7;
+bitflags! {
+	#[derive(Serialize, Deserialize)]
+	pub struct LCDFlags: u8 {
+		const BG_DISPLAY = BIT_0;
+		const OBJ_DISPLAY_ENABLE = BIT_1;
+		const OBJ_SIZE = BIT_2;
+		const BG_TILE_MAP_DISPLAY_SELECT = BIT_3;
+		const BG_AND_WINDOW_TILE_DATA_SELECT = BIT_4;
+		const WINDOW_DISPLAY_ENABLE = BIT_5;
+		const WINDOW_TILE_MAP_DISPLAY_SELECT = BIT_6;
+		const DISPLAY_ENABLE = BIT_7;
+	}
+}
 
 // JoyPad Flags
 pub const JOYP_RIGHT_OR_A: u8 = BIT_0;
