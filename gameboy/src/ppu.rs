@@ -179,11 +179,8 @@ impl PPU {
 	}
 
 	pub fn write_stat(&mut self, value: u8) {
-		let mut value = STATFlags::from_bits_truncate(value) & !STATFlags::READ_ONLY;
-
+		let value = STATFlags::from_bits_truncate(value) & !STATFlags::READ_ONLY;
 		self.stat.remove(!STATFlags::READ_ONLY);
-		let mask = 0b00000111;
-
 		self.stat |= value;
 	}
 
@@ -251,7 +248,7 @@ impl PPU {
 			HBlank => {
 				self.set_ly(self.get_ly() + 1);
 				if self.get_ly() < 144 {
-					self.cycle += 80;
+					self.cycle += 81;
 					self.set_mode(OamScan);
 					return Some(OamScan);
 				} else {

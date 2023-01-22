@@ -1,4 +1,7 @@
-use crate::{ppu::VRAMBank, work_ram::BankedWorkRam};
+use crate::{
+	ppu::{PPUMode, VRAMBank},
+	work_ram::BankedWorkRam,
+};
 
 use super::{
 	io_registers::{IORegisters, DMA},
@@ -92,7 +95,13 @@ impl MemoryMapper for Gameboy {
 				self.w_ram.get_bank(self.w_ram.get_bank_number())[(addr - 0xD000) as usize]
 			} // Switchable RAM in CGB mode
 			0xE000..0xFE00 => self.read(addr - 0xE000 + 0xC000),                // Mirror, should not be used
-			0xFE00..0xFEA0 => self.ppu.oam[(addr - 0xFE00) as usize],           // Object Attribute Map
+			0xFE00..0xFEA0 => {
+				if !matches!(self.ppu.get_mode(), PPUMode::Draw | PPUMode::OamScan) {
+					self.ppu.oam[(addr - 0xFE00) as usize]
+				} else {
+					return 0xFF;
+				}
+			} // Object Attribute Map
 			0xFEA0..0xFF00 => 0x0,                                              // Unusable
 			0xFF00..0xFF80 => self.read_io(addr),                               // IO Registers
 			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize],              // HRAM
@@ -126,6 +135,9 @@ impl MemoryMapper for Gameboy {
 			} // Switchable RAM in CGB mode
 			0xE000..0xFE00 => self.write(addr - 0xE000 + 0xC000, value), // Mirror, should not be used
 			0xFE00..0xFEA0 => {
+				if matches!(self.ppu.get_mode(), PPUMode::Draw | PPUMode::OamScan) {
+					return;
+				}
 				self.ppu.oam[(addr - 0xFE00) as usize] = value;
 			} // Object Attribute Map
 			0xFEA0..0xFF00 => {}
