@@ -217,18 +217,13 @@ impl IORegisters for Gameboy {
 
 			SCY => self.ppu.scy = value,
 			SCX => self.ppu.scx = value,
-			LYC => self.ppu.lyc = value,
+			LYC => self.ppu.set_lyc(value),
 			BGP => self.ppu.bgp = value,
 			OBP0 => self.ppu.obp0 = value,
 			OBP1 => self.ppu.obp1 = value,
 			WY => self.ppu.wy = value,
 			WX => self.ppu.wx = value,
-			STAT => {
-				let mask = 0b00000111;
-				self.ppu.stat &= mask;
-				self.ppu.stat |= value & !mask;
-			}
-
+			STAT => self.ppu.write_stat(value),
 			HDMA1 => self.dma_controller.write_source_high(value),
 			HDMA2 => self.dma_controller.write_source_low(value),
 			HDMA3 => self.dma_controller.write_destination_high(value),

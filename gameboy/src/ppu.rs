@@ -88,13 +88,11 @@ pub struct PPU {
 	fifo_pixel: u8,
 	fifo_bg: VecDeque<Pixel>,
 	fifo_obj: VecDeque<Pixel>,
-	pub h_blank_hit: bool,
 }
 
 impl PPU {
 	pub fn new() -> Self {
 		Self {
-			h_blank_hit: false,
 			window_line: 0xFF,
 			enabled: true,
 			v_ram_bank_0: [0; 0x2000],
@@ -142,10 +140,24 @@ impl PPU {
 			self.enable_display();
 		}
 		self.lcdc = value;
+		self.update_lyc()
 	}
 
 	pub fn read_lcdc(&self) -> u8 {
 		self.lcdc
+	}
+
+	pub fn update_lyc(&mut self) {
+		if self.enabled {
+			if self.ly == self.lyc {
+				self.stat |= STAT_LYC_EQ_LY;
+				if self.stat & STAT_LYC_EQ_LY_IE != 0 {
+					self.request_stat();
+				}
+			} else {
+				self.stat &= !STAT_LYC_EQ_LY
+			}
+		}
 	}
 
 	pub fn get_mode(&self) -> PPUMode {
@@ -167,21 +179,22 @@ impl PPU {
 		self.enabled
 	}
 
+	pub fn set_lyc(&mut self, lyc: u8) {
+		self.lyc = lyc;
+		self.update_lyc();
+	}
+
+	pub fn write_stat(&mut self, value: u8) {
+		let mask = 0b00000111;
+		let value = value & !mask;
+
+		self.stat &= mask;
+		self.stat |= value;
+	}
+
 	pub fn set_ly(&mut self, value: u8) {
 		self.ly = value;
-
-		if !self.enabled {
-			return;
-		}
-
-		if self.lyc == value {
-			self.stat |= STAT_LYC_EQ_LY;
-			if self.stat & STAT_LYC_EQ_LY_IE != 0 {
-				self.request_stat();
-			}
-		} else {
-			self.stat &= !STAT_LYC_EQ_LY
-		}
+		self.update_lyc();
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode) {
@@ -210,9 +223,9 @@ impl PPU {
 
 	fn disable_display(&mut self) {
 		self.enabled = false;
+		self.set_ly(0);
 		self.current_pixel = 0;
 		self.set_mode(PPUMode::HBlank);
-		self.set_ly(0);
 	}
 
 	fn enable_display(&mut self) {
@@ -233,12 +246,12 @@ impl PPU {
 	}
 
 	pub fn step_ppu(&mut self) -> Option<PPUMode> {
-		if self.cycle != 0 {
-			self.cycle -= 1;
+		if !self.enabled {
 			return None;
 		}
 
-		if !self.enabled {
+		if self.cycle != 0 {
+			self.cycle -= 1;
 			return None;
 		}
 
@@ -246,7 +259,7 @@ impl PPU {
 		match self.get_mode() {
 			HBlank => {
 				self.set_ly(self.get_ly() + 1);
-				if self.get_ly() <= 143 {
+				if self.get_ly() < 144 {
 					self.cycle += 80;
 					self.set_mode(OamScan);
 					return Some(OamScan);
@@ -276,7 +289,6 @@ impl PPU {
 				}
 			}
 			OamScan => {
-				// self.scanline_state = self.fetch_scanline_state();
 				self.cycle += 12;
 				self.start_scanline();
 				self.set_mode(Draw);
@@ -284,16 +296,13 @@ impl PPU {
 			}
 			Draw => {
 				self.step_fifo();
-				// self.render_screen_pixel(self.current_pixel, self.ly);
 				if self.current_pixel == 160 {
 					self.current_pixel = 0;
 					self.current_tile = 0;
 					self.cycle += 204;
-					self.h_blank_hit = true;
 					self.set_mode(HBlank);
 					Some(HBlank)
 				} else {
-					self.cycle += 1;
 					None
 				}
 			}
