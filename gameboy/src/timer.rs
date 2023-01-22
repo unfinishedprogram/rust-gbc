@@ -87,7 +87,7 @@ impl Timer {
 			// let bit = self.timer_speed() as u16;
 			let bit = match speed {
 				Speed::Normal => self.timer_speed() as u16,
-				Speed::Double => (self.timer_speed() as u16) << 2,
+				Speed::Double => (self.timer_speed() as u16) << 1,
 			};
 
 			let timer_increment = (from & bit) != (to & bit);

@@ -204,8 +204,9 @@ impl IORegisters for Gameboy {
 				self.io_register_state[IF]
 					| self.ppu.interrupt_requests
 					| self.timer.interrupt_requests
+					| 0xE0
 			}
-
+			IE => self.io_register_state[IE] | 0xE0,
 			_ => self.io_register_state[addr],
 		}
 	}
