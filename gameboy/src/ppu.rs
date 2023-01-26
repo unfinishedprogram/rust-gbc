@@ -145,9 +145,11 @@ impl PPU {
 
 	pub fn update_lyc(&mut self) {
 		if self.is_enabled() {
+			let last = self.stat.contains(STATFlags::LYC_EQ_LY);
+
 			self.stat.set(STATFlags::LYC_EQ_LY, self.ly == self.lyc);
 
-			if self.ly == self.lyc && self.stat.contains(STATFlags::LYC_EQ_LY_IE) {
+			if self.ly == self.lyc && !last && self.stat.contains(STATFlags::LYC_EQ_LY_IE) {
 				self.request_stat();
 			}
 		}
