@@ -265,11 +265,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				cpu.tick_m_cycles(1);
 			}
 
-			if matches!(condition, Condition::ALWAYS) || cpu.check_condition(condition) {
-				let ptr = cpu.pop();
+			if cpu.check_condition(condition) {
+				cpu.cpu_state.registers.pc = cpu.pop();
 				cpu.tick_m_cycles(1);
-
-				cpu.write_16(&CPURegister16::PC.into(), ptr);
 			}
 		}
 		RST(addr) => {

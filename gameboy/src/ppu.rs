@@ -132,7 +132,7 @@ impl PPU {
 	pub fn write_lcdc(&mut self, value: u8) {
 		let value = LCDFlags::from_bits_truncate(value);
 
-		if value.contains(LCDFlags::DISPLAY_ENABLE) {
+		if !value.contains(LCDFlags::DISPLAY_ENABLE) {
 			self.disable_display();
 		}
 		self.lcdc = value;

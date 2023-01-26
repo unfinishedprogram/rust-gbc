@@ -23,11 +23,6 @@ bitflags! {
 	pub struct STATFlags:u8 {
 		const READ_ONLY = 0b111;
 
-		const H_BLANK = 0;
-		const V_BLANK = 1;
-		const OAM_SCAN = 2;
-		const DRAW = 3;
-
 		const PPU_MODE = BIT_0 | BIT_1;
 
 		const LYC_EQ_LY = BIT_2;

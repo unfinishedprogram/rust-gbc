@@ -30,11 +30,7 @@ pub trait CPU {
 		self.next_byte() as i8
 	}
 
-	fn next_chomp(&mut self) -> u16 {
-		let big = self.next_byte();
-		let small = self.next_byte();
-		u16::from_le_bytes([big, small])
-	}
+	fn next_chomp(&mut self) -> u16;
 
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8;
 	fn read_i8(&mut self, value_ref: &ValueRefI8) -> i8;
@@ -66,6 +62,16 @@ impl CPU for Gameboy {
 		let value = self.read_8(&ValueRefU8::Mem(self.cpu_state.registers.pc.into()));
 		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(1);
 		value
+	}
+
+	fn next_chomp(&mut self) -> u16 {
+		let pc = self.cpu_state.registers.pc;
+		let high = self.read_8(&ValueRefU8::Mem(pc.into()));
+		let low = self.read_8(&ValueRefU8::Mem((pc.wrapping_add(1)).into()));
+
+		self.cpu_state.registers.pc = self.cpu_state.registers.pc.wrapping_add(2);
+
+		u16::from_le_bytes([high, low])
 	}
 
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
@@ -123,9 +129,9 @@ impl CPU for Gameboy {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				self.tick_m_cycles(1);
-				let lower = self.read_from(*i, Source::Cpu);
-				self.tick_m_cycles(1);
 				let upper = self.read_from(i + 1, Source::Cpu);
+				self.tick_m_cycles(1);
+				let lower = self.read_from(*i, Source::Cpu);
 				u16::from_le_bytes([lower, upper])
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state.registers.get_u16(*reg),

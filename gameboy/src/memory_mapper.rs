@@ -1,13 +1,10 @@
 use crate::{
+	io_registers::DMA,
 	ppu::{PPUMode, VRAMBank},
 	work_ram::BankedWorkRam,
 };
 
-use super::{
-	io_registers::{IORegisters, DMA},
-	state::GameboyMode,
-	Gameboy,
-};
+use super::{io_registers::IORegisters, state::GameboyMode, Gameboy};
 
 /// Allows reading and writing to memory using a 16 bit address
 pub trait MemoryMapper {
@@ -38,7 +35,7 @@ impl SourcedMemoryMapper for Gameboy {
 	fn read_from(&self, addr: u16, source: Source) -> u8 {
 		if matches!(source, Source::Cpu)
 			&& !self.oam_dma.oam_is_accessible()
-			&& !matches!(addr, 0xFF80..0xFFFE)
+			&& !matches!(addr, 0xFF80..0xFFFF)
 			&& addr != DMA
 		{
 			return 0xFF;
@@ -51,7 +48,7 @@ impl SourcedMemoryMapper for Gameboy {
 		// Don't allow reading from memory outside of HRAM from CPU during DMA transfer
 		if matches!(source, Source::Cpu)
 			&& !self.oam_dma.oam_is_accessible()
-			&& !matches!(addr, 0xFF80..0xFFFE)
+			&& !matches!(addr, 0xFF80..0xFFFF)
 			&& addr != DMA
 		{
 			return;
