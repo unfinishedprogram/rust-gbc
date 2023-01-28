@@ -1,5 +1,6 @@
 use crate::{
 	cpu::flags::Flags,
+	dma_controller::TransferMode,
 	io_registers::{IE, IF},
 	memory_mapper::MemoryMapper,
 };
@@ -217,6 +218,13 @@ impl CPU for Gameboy {
 	}
 
 	fn step_cpu(&mut self) {
+		if let Some(transfer) = &self.dma_controller.transfer {
+			if matches!(transfer.mode, TransferMode::GeneralPurpose) {
+				self.tick_m_cycles(2);
+				return;
+			}
+		}
+
 		if self.speed_switch_delay > 0 {
 			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
 			self.tick_m_cycles(1);

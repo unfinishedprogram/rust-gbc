@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
 	cgb::{CGBState, Speed},
-	dma_controller::{DMAController, TransferMode},
+	dma_controller::{DMAController, TransferRequest},
+	memory_mapper::MemoryMapper,
 	oam_dma::OamDmaState,
 	ppu::VRAMBank,
 	util::BigArray,
@@ -125,49 +126,47 @@ impl Gameboy {
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
-		self.oam_dma.step(m_cycles, &mut self.ppu);
-		match self.mode.get_speed() {
-			Speed::Normal => self.tick_t_states(m_cycles * 4),
-			Speed::Double => self.tick_t_states(m_cycles * 2),
-		}
-		if self.speed_switch_delay == 0 {
-			self.timer.step(m_cycles as u64, self.mode.get_speed());
+		for _ in 0..m_cycles {
+			self.oam_dma.step(1, &mut self.ppu);
+
+			let new_ppu_mode: Option<PPUMode> = match self.mode.get_speed() {
+				Speed::Normal => self.tick_t_states(4),
+				Speed::Double => self.tick_t_states(2),
+			};
+
+			if let Some(request) = self
+				.dma_controller
+				.step(matches!(new_ppu_mode, Some(PPUMode::HBlank)))
+			{
+				self.handle_transfer(request)
+			}
+
+			if self.speed_switch_delay == 0 {
+				self.timer.step(1, self.mode.get_speed());
+			}
 		}
 	}
 
-	fn tick_t_states(&mut self, t_states: u32) {
-		let current_bank = &self.get_vram_bank();
-
-		let do_dma = if let Some(transfer) = &self.dma_controller.transfer {
-			matches!(transfer.mode, TransferMode::GeneralPurpose)
-		} else {
-			false
-		};
-
-		if do_dma {
-			self.dma_controller.step_controller(
-				&mut self.ppu,
-				&mut self.cartridge_state,
-				&mut self.w_ram,
-				current_bank,
-			);
+	fn handle_transfer(&mut self, request: TransferRequest) {
+		let TransferRequest { from, to, bytes } = request;
+		for i in 0..bytes {
+			let value = self.read(from + i);
+			self.write(to + i, value);
 		}
+	}
+
+	fn tick_t_states(&mut self, t_states: u32) -> Option<PPUMode> {
+		let mut new_mode: Option<PPUMode> = None;
 
 		for _ in 0..t_states {
-			match self.ppu.step_ppu() {
-				Some(PPUMode::HBlank) => {
-					self.dma_controller.step_controller(
-						&mut self.ppu,
-						&mut self.cartridge_state,
-						&mut self.w_ram,
-						current_bank,
-					);
-				}
-				_ => {}
-			}
+			let mode = self.ppu.step_ppu();
+			if let Some(mode) = mode {
+				new_mode = Some(mode);
+			};
 		}
 
 		self.t_states += t_states as u64;
+		new_mode
 	}
 
 	pub fn request_interrupt(&mut self, interrupt: u8) {

@@ -17,4 +17,8 @@ fn main() {
 	console_error_panic_hook::set_once();
 	tracing_wasm::set_as_global_default();
 	setup_listeners();
+	// APPLICATION.with_borrow_mut(|app| {
+	// 	app.load_rom(include_bytes!("../roms/games/dmg-acid2.gb"), None);
+	// 	app.start();
+	// });
 }
