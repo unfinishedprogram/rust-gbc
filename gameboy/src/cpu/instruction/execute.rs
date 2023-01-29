@@ -12,9 +12,9 @@ use crate::{
 	Gameboy,
 };
 
-use std::ops::{BitAnd, BitOr, BitXor};
+use super::super::condition::Condition;
 
-use super::condition::Condition;
+use std::ops::{BitAnd, BitOr, BitXor};
 
 pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 	let cpu = state;

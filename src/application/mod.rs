@@ -165,7 +165,7 @@ impl Application {
 		self.emulator_state = Gameboy::default();
 		let lcd = LCD::new();
 		self.emulator_state.bind_lcd(lcd);
-		self.emulator_state.load_rom(rom, source).unwrap();
+		self.emulator_state.load_rom(rom, source);
 	}
 
 	pub fn load_save_state_with_rom(&mut self, rom: &[u8], save: SaveState) {

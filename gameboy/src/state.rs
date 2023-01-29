@@ -11,7 +11,7 @@ use crate::{
 };
 
 use super::{
-	cartridge::{header::CartridgeParseError, memory_bank_controller::Cartridge},
+	cartridge::memory_bank_controller::Cartridge,
 	controller::ControllerState,
 	cpu::{CPUState, CPU},
 	flags::{INTERRUPT_REQUEST, INT_JOY_PAD},
@@ -178,14 +178,10 @@ impl Gameboy {
 		);
 	}
 
-	pub fn load_rom(
-		&mut self,
-		rom: &[u8],
-		source: Option<RomSource>,
-	) -> Result<(), CartridgeParseError> {
-		let cartridge = Cartridge::try_new(rom, source)?;
-		self.cartridge_state = Some(cartridge);
-		Ok(())
+	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
+		if let Ok(cart) = Cartridge::try_new(rom, source) {
+			self.cartridge_state = Some(cart);
+		}
 	}
 
 	pub fn set_controller_state(&mut self, state: &ControllerState) {

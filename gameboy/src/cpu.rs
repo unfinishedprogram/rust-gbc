@@ -1,14 +1,17 @@
 use crate::{
-	cpu::flags::Flags,
 	io_registers::{IE, IF},
 	memory_mapper::MemoryMapper,
 };
+
+use self::flags::Flags;
+
+mod condition;
 pub mod flags;
 mod gb_stack;
 pub mod instruction;
 pub mod registers;
 mod state;
-pub mod values;
+mod values;
 
 use super::memory_mapper::{Source, SourcedMemoryMapper};
 pub use state::CPUState;
@@ -19,7 +22,7 @@ use instruction::{execute::execute_instruction, fetch::fetch_instruction, Instru
 use registers::CPURegisters;
 use values::{ValueRefU16, ValueRefU8};
 
-use self::{instruction::condition::Condition, values::ValueRefI8};
+use self::{condition::Condition, values::ValueRefI8};
 
 pub trait CPU {
 	fn disable_interrupts(&mut self);
