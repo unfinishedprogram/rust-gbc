@@ -11,7 +11,7 @@ pub const LCDC: u16 = 0xFF40;
 pub const STAT: u16 = 0xFF41;
 pub const TIMER: u16 = 0xFF07;
 
-// Interrupt flag masks, Same for INTERRUPT_ENABLE andINTERRUPT_REQUEST
+// Interrupt flag masks, Same for INTERRUPT_ENABLE and INTERRUPT_REQUEST
 pub const INT_V_BLANK: u8 = BIT_0;
 pub const INT_LCD_STAT: u8 = BIT_1;
 pub const INT_TIMER: u8 = BIT_2;

@@ -112,8 +112,7 @@ impl Application {
 			"".to_owned()
 		};
 
-		gloo::console::log!(frames as f64 / (time / 1000.0));
-		gloo::console::log!(state_text);
+		// gloo::console::log!(frames as f64 / (time / 1000.0));
 	}
 
 	pub fn step_emulator(&mut self, delta: f64) {
@@ -127,8 +126,8 @@ impl Application {
 	pub fn step_frame(&mut self) {
 		let controller_state = self.input_state.get_controller_state();
 		self.emulator_state.set_controller_state(&controller_state);
-		self.step_emulator(0.015);
-		// self.step_fast(15.0);
+		// self.step_emulator(0.015);
+		self.step_fast(15.0);
 		self.render_screen()
 	}
 

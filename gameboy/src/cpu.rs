@@ -1,6 +1,5 @@
 use crate::{
 	cpu::flags::Flags,
-	dma_controller::TransferMode,
 	io_registers::{IE, IF},
 	memory_mapper::MemoryMapper,
 };
@@ -52,11 +51,11 @@ pub trait CPU {
 
 impl CPU for Gameboy {
 	fn disable_interrupts(&mut self) {
-		self.cpu_state.interrupt_enable = false;
+		self.cpu_state.ime = false;
 	}
 
 	fn enable_interrupts(&mut self) {
-		self.cpu_state.interrupt_enable = true;
+		self.cpu_state.ie_next = true;
 	}
 
 	fn next_byte(&mut self) -> u8 {
@@ -189,7 +188,7 @@ impl CPU for Gameboy {
 	}
 
 	fn fetch_next_interrupt(&mut self) -> Option<u8> {
-		if !self.cpu_state.interrupt_enable {
+		if !self.cpu_state.ime {
 			return None;
 		}
 
@@ -218,11 +217,9 @@ impl CPU for Gameboy {
 	}
 
 	fn step_cpu(&mut self) {
-		if let Some(transfer) = &self.dma_controller.transfer {
-			if matches!(transfer.mode, TransferMode::GeneralPurpose) {
-				self.tick_m_cycles(2);
-				return;
-			}
+		if self.dma_controller.gdma_active() {
+			self.tick_m_cycles(1);
+			return;
 		}
 
 		if self.speed_switch_delay > 0 {
@@ -240,6 +237,11 @@ impl CPU for Gameboy {
 		} else {
 			let instruction = self.get_next_instruction_or_interrupt();
 			execute_instruction(instruction, self);
+		}
+
+		if self.cpu_state.ie_next {
+			self.cpu_state.ime = true;
+			self.cpu_state.ie_next = false;
 		}
 	}
 }

@@ -35,6 +35,7 @@ wasm-bindgen = "0.2.83"
 lazy_static = "1.4.0"
 tracing-wasm = "0.2.1"
 console_error_panic_hook = "0.1.7"
+wasm-logger = "0.2.0"
 
 [profile.test]
 opt-level = 3

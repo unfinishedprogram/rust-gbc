@@ -129,10 +129,12 @@ impl Gameboy {
 		for _ in 0..m_cycles {
 			self.oam_dma.step(1, &mut self.ppu);
 
-			let new_ppu_mode: Option<PPUMode> = match self.mode.get_speed() {
-				Speed::Normal => self.tick_t_states(4),
-				Speed::Double => self.tick_t_states(2),
+			let t_states = match self.mode.get_speed() {
+				Speed::Normal => 4,
+				Speed::Double => 2,
 			};
+
+			let new_ppu_mode: Option<PPUMode> = self.tick_t_states(t_states);
 
 			if let Some(request) = self
 				.dma_controller
@@ -150,8 +152,7 @@ impl Gameboy {
 	fn handle_transfer(&mut self, request: TransferRequest) {
 		let TransferRequest { from, to, bytes } = request;
 		for i in 0..bytes {
-			let value = self.read(from + i);
-			self.write(to + i, value);
+			self.write(to + i, self.read(from + i));
 		}
 	}
 

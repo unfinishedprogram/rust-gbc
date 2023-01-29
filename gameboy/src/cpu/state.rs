@@ -7,7 +7,6 @@ use super::CPURegisters;
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct CPUState {
 	pub registers: CPURegisters,
-	pub interrupt_enable: bool,
-	ie_next: bool,
-	ie_next_next: bool,
+	pub ime: bool,
+	pub ie_next: bool,
 }
