@@ -1,5 +1,4 @@
-use super::registers::CPURegister16;
-use super::registers::CPURegister8;
+use super::registers::{CPURegister16, CPURegister8};
 use std::fmt;
 
 impl From<CPURegister16> for ValueRefU16 {
@@ -28,9 +27,10 @@ impl From<u8> for ValueRefU8 {
 
 impl From<i8> for ValueRefI8 {
 	fn from(value: i8) -> Self {
-		Self::Raw(value)
+		Self(value)
 	}
 }
+
 impl From<u16> for ValueRefU16 {
 	fn from(value: u16) -> Self {
 		Self::Raw(value)
@@ -41,9 +41,9 @@ impl From<u16> for ValueRefU16 {
 pub enum ValueRefU8 {
 	Reg(CPURegister8),
 	Mem(ValueRefU16),
+	Raw(u8),
 	MemOffsetRaw(u8),
 	MemOffsetReg(CPURegister8),
-	Raw(u8),
 }
 
 #[derive(Clone, Copy)]
@@ -54,11 +54,7 @@ pub enum ValueRefU16 {
 }
 
 #[derive(Clone, Copy)]
-pub enum ValueRefI8 {
-	Reg(CPURegister8),
-	Mem(u16),
-	Raw(i8),
-}
+pub struct ValueRefI8(pub i8);
 
 impl fmt::Debug for ValueRefU16 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -84,16 +80,11 @@ impl fmt::Debug for ValueRefU8 {
 
 impl fmt::Debug for ValueRefI8 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		match self {
-			ValueRefI8::Raw(x) => {
-				if *x >= 0 {
-					write!(f, "${x:02X}")
-				} else {
-					write!(f, "-${:02X}", x.unsigned_abs())
-				}
-			}
-			ValueRefI8::Mem(x) => write!(f, "[{x:?}]"),
-			ValueRefI8::Reg(x) => write!(f, "{x:?}"),
+		let x = self.0;
+		if x >= 0 {
+			write!(f, "${x:02X}")
+		} else {
+			write!(f, "-${:02X}", x.unsigned_abs())
 		}
 	}
 }

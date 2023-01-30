@@ -22,7 +22,7 @@ use instruction::{execute::execute_instruction, fetch::fetch_instruction, Instru
 use registers::CPURegisters;
 use values::{ValueRefU16, ValueRefU8};
 
-use self::{condition::Condition, values::ValueRefI8};
+use self::condition::Condition;
 
 pub trait CPU {
 	fn disable_interrupts(&mut self);
@@ -36,7 +36,6 @@ pub trait CPU {
 	fn next_chomp(&mut self) -> u16;
 
 	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8;
-	fn read_i8(&mut self, value_ref: &ValueRefI8) -> i8;
 	fn write_8(&mut self, value_ref: &ValueRefU8, value: u8);
 	fn read_16(&mut self, value_ref: &ValueRefU16) -> u16;
 	fn write_16(&mut self, value_ref: &ValueRefU16, value: u16);
@@ -94,14 +93,6 @@ impl CPU for Gameboy {
 				let offset = self.cpu_state.registers[*reg];
 				self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw((offset as u16) | 0xFF00)))
 			}
-		}
-	}
-
-	fn read_i8(&mut self, value_ref: &ValueRefI8) -> i8 {
-		match value_ref {
-			ValueRefI8::Mem(addr) => self.read_from(*addr, Source::Cpu) as i8,
-			ValueRefI8::Reg(reg) => self.cpu_state.registers[*reg] as i8,
-			ValueRefI8::Raw(x) => *x,
 		}
 	}
 

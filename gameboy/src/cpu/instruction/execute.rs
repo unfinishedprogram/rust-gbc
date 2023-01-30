@@ -4,7 +4,7 @@ use crate::{
 		gb_stack::GBStack,
 		instruction::{ALUOperation, Instruction, Instruction::*},
 		registers::{CPURegister16, CPURegister8},
-		values::ValueRefU16,
+		values::{ValueRefI8, ValueRefU16},
 		CPU,
 	},
 	flags::{INT_JOY_PAD, INT_LCD_STAT, INT_SERIAL, INT_TIMER, INT_V_BLANK},
@@ -139,12 +139,12 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			cpu.write_16(&a_ref, a_val.wrapping_add(b_val));
 		}
 
-		ADD_SIGNED(a_ref, b_ref) => {
+		ADD_SIGNED(a_ref, ValueRefI8(b_ref)) => {
 			cpu.clear_flag(Z);
 			cpu.clear_flag(N);
 
 			let a_val = cpu.read_16(&a_ref);
-			let b_val = cpu.read_i8(&b_ref) as i16;
+			let b_val = b_ref as i16;
 
 			let ub_val = if b_val < 0 {
 				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
@@ -406,13 +406,13 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			cpu.write_8(&val_ref, result);
 		}
 
-		LD_HL_SP_DD(value) => {
+		LD_HL_SP_DD(ValueRefI8(value)) => {
 			cpu.tick_m_cycles(1);
 			cpu.clear_flag(Z);
 			cpu.clear_flag(N);
 
 			let a_val = cpu.read_16(&CPURegister16::SP.into());
-			let b_val = cpu.read_i8(&value) as i16;
+			let b_val = value as i16;
 
 			let ub_val = if b_val < 0 {
 				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
