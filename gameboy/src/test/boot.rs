@@ -24,7 +24,7 @@ lazy_static! {
 		let lcd = LCD::new();
 
 		state.bind_lcd(lcd);
-		state.load_rom(&rom, None).unwrap();
+		state.load_rom(&rom, None);
 
 		state.run_until_boot();
 		state
