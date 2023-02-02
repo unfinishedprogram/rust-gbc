@@ -7,7 +7,7 @@ use self::flags::Flags;
 
 mod condition;
 pub mod flags;
-mod gb_stack;
+mod cpu_stack;
 pub mod instruction;
 pub mod registers;
 mod state;
@@ -24,7 +24,7 @@ use values::{ValueRefU16, ValueRefU8};
 
 use self::condition::Condition;
 
-pub trait CPU<M: MemoryMapper + SourcedMemoryMapper> {
+pub trait CPU<M: SourcedMemoryMapper> {
 	fn disable_interrupts(&mut self) {
 		self.cpu_state_mut().ime = false;
 	}
@@ -139,20 +139,47 @@ pub trait CPU<M: MemoryMapper + SourcedMemoryMapper> {
 		}
 	}
 
-	fn fetch_next_instruction(&mut self) -> Instruction;
+	fn fetch_next_instruction(&mut self) -> Instruction where Self:Sized {
+		fetch_instruction(self)
+	}
+
+	fn get_next_instruction_or_interrupt(&mut self) -> Instruction where Self:Sized {
+		if let Some(int) = self.fetch_next_interrupt() {
+			Instruction::INT(int)
+		} else {
+			self.fetch_next_instruction()
+		}
+	}
+
 	fn interrupt_pending(&self) -> bool;
 
 	fn check_interrupt(&self, interrupt: u8) -> bool;
 	fn clear_request(&mut self, interrupt: u8);
 	fn fetch_next_interrupt(&mut self) -> Option<u8>;
-	fn get_next_instruction_or_interrupt(&mut self) -> Instruction;
-	fn step_cpu(&mut self);
 
+	fn step_cpu(&mut self) where Self:Sized {
+		if self.cpu_state().halted {
+			if self.interrupt_pending() {
+				self.cpu_state_mut().halted = false;
+			} else {
+				self.tick_m_cycles(1);
+			}
+		} else {
+			let instruction = self.get_next_instruction_or_interrupt();
+			execute_instruction(self, instruction);
+		}
+
+		if self.cpu_state().ie_next {
+			self.cpu_state_mut().ime = true;
+			self.cpu_state_mut().ie_next = false;
+		}
+	}
+
+	fn exec_stop(&mut self) {}
 	fn cpu_state(&self) -> &CPUState;
 	fn cpu_state_mut(&mut self) -> &mut CPUState;
 	fn get_memory_mapper(&mut self) -> &mut M;
 	fn tick_m_cycles(&mut self, m_cycles: u32);
-
 }
 
 
@@ -173,10 +200,6 @@ impl CPU<Gameboy> for Gameboy {
 		Gameboy::tick_m_cycles(self, m_cycles)
 	}
 
-	fn fetch_next_instruction(&mut self) -> Instruction {
-		fetch_instruction(self)
-	}
-
 	fn check_interrupt(&self, interrupt: u8) -> bool {
 		self.read(IE) & self.read(IF) & interrupt != 0
 	}
@@ -184,6 +207,16 @@ impl CPU<Gameboy> for Gameboy {
 	fn clear_request(&mut self, interrupt: u8) {
 		let flag = self.read(IF);
 		self.write(IF, flag & !interrupt);
+	}
+
+	fn exec_stop(&mut self) {
+		match &mut self.mode {
+			crate::state::GameboyMode::GBC(state) => {
+				self.speed_switch_delay = 2050;
+				state.perform_speed_switch();
+			}
+			_ => {}
+		}
 	}
 
 	fn interrupt_pending(&self) -> bool {
@@ -214,42 +247,5 @@ impl CPU<Gameboy> for Gameboy {
 			}
 		}
 		None
-	}
-
-	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
-		if let Some(int) = self.fetch_next_interrupt() {
-			Instruction::INT(int)
-		} else {
-			self.fetch_next_instruction()
-		}
-	}
-
-	fn step_cpu(&mut self) {
-		if self.dma_controller.gdma_active() {
-			self.tick_m_cycles(1);
-			return;
-		}
-
-		if self.speed_switch_delay > 0 {
-			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
-			self.tick_m_cycles(1);
-			return;
-		}
-
-		if self.halted {
-			if self.interrupt_pending() {
-				self.halted = false;
-			} else {
-				self.tick_m_cycles(1);
-			}
-		} else {
-			let instruction = self.get_next_instruction_or_interrupt();
-			execute_instruction(instruction, self);
-		}
-
-		if self.cpu_state.ie_next {
-			self.cpu_state.ime = true;
-			self.cpu_state.ie_next = false;
-		}
 	}
 }

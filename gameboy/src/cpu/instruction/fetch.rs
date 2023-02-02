@@ -9,12 +9,12 @@ use super::{
 };
 use crate::{
 	cpu::{registers::CPURegister16, values::ValueRefU16, CPU},
-	memory_mapper::{MemoryMapper, SourcedMemoryMapper},
+	memory_mapper::SourcedMemoryMapper,
 };
 
 use crate::{arg, inst, mem}; // Macros
 
-pub fn fetch_instruction<T: MemoryMapper + SourcedMemoryMapper>(
+pub fn fetch_instruction<T: SourcedMemoryMapper>(
 	cpu: &mut impl CPU<T>,
 ) -> Instruction {
 	let raw = cpu.next_byte();

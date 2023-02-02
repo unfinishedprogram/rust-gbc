@@ -1,7 +1,7 @@
 use crate::{
 	cpu::{
 		flags::{Flags, C, H, N, Z},
-		gb_stack::GBStack,
+		cpu_stack::CPUStack,
 		instruction::{ALUOperation, Instruction, Instruction::*},
 		registers::{CPURegister16, CPURegister8},
 		values::{ValueRefI8, ValueRefU16},
@@ -9,16 +9,17 @@ use crate::{
 	},
 	flags::{INT_JOY_PAD, INT_LCD_STAT, INT_SERIAL, INT_TIMER, INT_V_BLANK},
 	util::bits::{BIT_0, BIT_7},
-	Gameboy,
+	 memory_mapper::SourcedMemoryMapper,
 };
 
 use super::super::condition::Condition;
 
 use std::ops::{BitAnd, BitOr, BitXor};
 
-pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
+pub fn execute_instruction<T: SourcedMemoryMapper>(
+	state: &mut impl CPU<T>, instruction: Instruction,
+) {
 	let cpu = state;
-
 	match instruction {
 		NOP => {}
 		INT(interrupt) => {
@@ -40,8 +41,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		}
 
 		COMPOSE(a, b) => {
-			execute_instruction(*a, cpu);
-			execute_instruction(*b, cpu);
+			execute_instruction(cpu, *a);
+			execute_instruction(cpu, *b);
 		}
 
 		LDH(to, from) => {
@@ -104,14 +105,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		}
 
 		STOP => {
-			cpu.cpu_state.registers.pc = cpu.cpu_state.registers.pc.wrapping_add(1);
-			match &mut cpu.mode {
-				crate::state::GameboyMode::GBC(state) => {
-					cpu.speed_switch_delay = 2050;
-					state.perform_speed_switch();
-				}
-				_ => {}
-			}
+			let new_pc = cpu.cpu_state().registers.pc.wrapping_add(1);
+			cpu.cpu_state_mut().registers.pc = new_pc;
+			cpu.exec_stop();
 		}
 
 		ERROR(_) => {}
@@ -241,7 +237,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				}
 			}
 		}
-		HALT => cpu.halted = true,
+		HALT => cpu.cpu_state_mut().halted = true,
 		CALL(condition, location) => {
 			let loc_value = cpu.read_16(&location);
 			if cpu.check_condition(condition) {
@@ -266,7 +262,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			}
 
 			if cpu.check_condition(condition) {
-				cpu.cpu_state.registers.pc = cpu.pop();
+				cpu.cpu_state_mut().registers.pc = cpu.pop();
 				cpu.tick_m_cycles(1);
 			}
 		}
@@ -302,15 +298,15 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		RLA => {
 			execute_instruction(
-				Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
 				cpu,
+				Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
 			);
 			cpu.cpu_state_mut().clear_flag(Z);
 		}
 		RRA => {
 			execute_instruction(
-				Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
 				cpu,
+				Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
 			);
 			cpu.cpu_state_mut().clear_flag(Z);
 			cpu.cpu_state_mut().clear_flag(H);
@@ -430,8 +426,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		LD_A_INC_HL => {
 			execute_instruction(
-				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
+				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 			);
 			let ptr = &CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
@@ -440,8 +436,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		LD_A_DEC_HL => {
 			execute_instruction(
-				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 				cpu,
+				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 			);
 			let ptr = &CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
@@ -460,8 +456,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		LD_INC_HL_A => {
 			execute_instruction(
-				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,
+				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 			);
 			let ptr = &CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
@@ -470,8 +466,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		LD_DEC_HL_A => {
 			execute_instruction(
-				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 				cpu,
+				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 			);
 
 			let ptr = &CPURegister16::HL.into();
@@ -490,8 +486,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		}
 
 		RETI => {
-			execute_instruction(RET(Condition::ALWAYS), cpu);
-			execute_instruction(EI, cpu);
+			execute_instruction(cpu, RET(Condition::ALWAYS));
+			execute_instruction(cpu, EI);
 		}
 	}
 }

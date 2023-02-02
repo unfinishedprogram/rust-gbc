@@ -56,7 +56,6 @@ pub struct Gameboy {
 	pub io_register_state: IORegisterState,
 	pub serial_output: Vec<u8>,
 	pub timer: Timer,
-	pub halted: bool,
 	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
 	pub booting: bool,
@@ -93,7 +92,6 @@ impl Default for Gameboy {
 			w_ram: WorkRam::DMG(WorkRamDataDMG::default()),
 			hram: [0; 0x80],
 			serial_output: vec![],
-			halted: false,
 			interrupt_enable_register: 0,
 			raw_joyp_input: 0,
 			t_states: 0,
@@ -118,6 +116,16 @@ impl Gameboy {
 	}
 
 	pub fn step(&mut self) {
+		if self.dma_controller.gdma_active() {
+			self.tick_m_cycles(1);
+			return;
+		}
+
+		if self.speed_switch_delay > 0 {
+			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
+			self.tick_m_cycles(1);
+			return;
+		}
 		self.step_cpu();
 	}
 
