@@ -64,7 +64,7 @@ impl Debug for Transfer {
 			source,
 			destination,
 			total_chunks,
-			chunks_remaining,
+			chunks_remaining:_,
 		} = &self;
 
 		write!(

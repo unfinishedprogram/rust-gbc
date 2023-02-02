@@ -9,17 +9,18 @@ use super::{
 };
 use crate::{
 	cpu::{registers::CPURegister16, values::ValueRefU16, CPU},
-	memory_mapper::SourcedMemoryMapper,
+	memory_mapper::{MemoryMapper, SourcedMemoryMapper},
 };
 
 use crate::{arg, inst, mem}; // Macros
 
-pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instruction {
+pub fn fetch_instruction<T: MemoryMapper + SourcedMemoryMapper>(
+	cpu: &mut impl CPU<T>,
+) -> Instruction {
 	let raw = cpu.next_byte();
 
 	let Opcode(x, z, y, p, q) = *parse_opcode(raw);
 	match (x, z, y, p, q) {
-		//(x, z, y, p, q)
 		(0, 0, 0, _, _) => inst!(cpu, NOP),
 		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp())), SP),
 		(0, 0, 2, _, _) => {

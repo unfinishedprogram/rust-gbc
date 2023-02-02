@@ -66,9 +66,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		INC_8(ptr) => {
 			let val = cpu.read_8(&ptr);
-			cpu.set_flag_to(Z, val.wrapping_add(1) == 0);
-			cpu.clear_flag(N);
-			cpu.set_flag_to(H, ((val & 0xF).wrapping_add(1) & 0x10) == 0x10);
+			cpu.cpu_state_mut().set_flag_to(Z, val.wrapping_add(1) == 0);
+			cpu.cpu_state_mut().clear_flag(N);
+			cpu.cpu_state_mut().set_flag_to(H, ((val & 0xF).wrapping_add(1) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_add(1));
 		}
 
@@ -80,9 +80,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		DEC_8(ptr) => {
 			let val = cpu.read_8(&ptr);
-			cpu.set_flag_to(Z, val.wrapping_sub(1) == 0);
-			cpu.set_flag(N);
-			cpu.set_flag_to(H, ((val & 0xF).wrapping_sub(1 & 0xF) & 0x10) == 0x10);
+			cpu.cpu_state_mut().set_flag_to(Z, val.wrapping_sub(1) == 0);
+			cpu.cpu_state_mut().set_flag(N);
+			cpu.cpu_state_mut().set_flag_to(H, ((val & 0xF).wrapping_sub(1 & 0xF) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_sub(1));
 		}
 
@@ -94,9 +94,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			match ptr {
 				ValueRefU16::Reg(_) => {}
 				_ => {
-					cpu.set_flag(N);
-					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
+					cpu.cpu_state_mut().set_flag(N);
+					cpu.cpu_state_mut().set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.cpu_state_mut().set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -133,15 +133,15 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			let a_val = cpu.read_16(&a_ref);
 			let b_val = cpu.read_16(&b_ref);
 
-			cpu.set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
-			cpu.clear_flag(N);
-			cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
+			cpu.cpu_state_mut().set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
+			cpu.cpu_state_mut().clear_flag(N);
+			cpu.cpu_state_mut().set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 			cpu.write_16(&a_ref, a_val.wrapping_add(b_val));
 		}
 
 		ADD_SIGNED(a_ref, ValueRefI8(b_ref)) => {
-			cpu.clear_flag(Z);
-			cpu.clear_flag(N);
+			cpu.cpu_state_mut().clear_flag(Z);
+			cpu.cpu_state_mut().clear_flag(N);
 
 			let a_val = cpu.read_16(&a_ref);
 			let b_val = b_ref as i16;
@@ -152,9 +152,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				b_val as u16
 			};
 
-			cpu.set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
+			cpu.cpu_state_mut().set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
 
-			cpu.set_flag_to(H, ((a_val & 0xF).wrapping_add(ub_val & 0xF) & 0x10) == 0x10);
+			cpu.cpu_state_mut().set_flag_to(H, ((a_val & 0xF).wrapping_add(ub_val & 0xF) & 0x10) == 0x10);
 
 			cpu.write_16(&a_ref, a_val.wrapping_add_signed(b_val));
 			cpu.tick_m_cycles(2);
@@ -165,70 +165,70 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 			let a_val = cpu.read_8(&to);
 			let b_val = cpu.read_8(&from);
-			let carry = u8::from(cpu.get_flag(C));
+			let carry = u8::from(cpu.cpu_state().get_flag(C));
 
 			let result = match op {
 				ADD => {
-					cpu.clear_flag(N);
-					cpu.set_flag_to(H, (a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10 == 0x10);
-					cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
+					cpu.cpu_state_mut().clear_flag(N);
+					cpu.cpu_state_mut().set_flag_to(H, (a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10 == 0x10);
+					cpu.cpu_state_mut().set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 					a_val.wrapping_add(b_val)
 				}
 
 				ADC => {
 					let sum: u16 = a_val as u16 + b_val as u16 + carry as u16;
-					cpu.set_flag_to(
+					cpu.cpu_state_mut().set_flag_to(
 						H,
 						(a_val & 0xF).wrapping_add(b_val & 0xF).wrapping_add(carry) > 0xF,
 					);
-					cpu.set_flag_to(C, sum > 0xFF);
-					cpu.clear_flag(N);
+					cpu.cpu_state_mut().set_flag_to(C, sum > 0xFF);
+					cpu.cpu_state_mut().clear_flag(N);
 
 					sum as u8
 				}
 
 				SUB => {
-					cpu.set_flag(N);
-					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
-					cpu.set_flag_to(C, b_val > a_val);
+					cpu.cpu_state_mut().set_flag(N);
+					cpu.cpu_state_mut().set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
+					cpu.cpu_state_mut().set_flag_to(C, b_val > a_val);
 					a_val.wrapping_sub(b_val)
 				}
 
 				SBC => {
 					let sum: i32 = a_val as i32 - b_val as i32 - carry as i32;
-					cpu.set_flag(N);
-					cpu.set_flag_to(
+					cpu.cpu_state_mut().set_flag(N);
+					cpu.cpu_state_mut().set_flag_to(
 						H,
 						(a_val & 0xF) as i32 - (b_val & 0xF) as i32 - (carry as i32) < 0,
 					);
-					cpu.set_flag_to(C, sum < 0);
+					cpu.cpu_state_mut().set_flag_to(C, sum < 0);
 					(sum & 0xFF) as u8
 				}
 
 				AND => {
-					cpu.clear_flag(C);
-					cpu.clear_flag(N);
-					cpu.set_flag(H);
+					cpu.cpu_state_mut().clear_flag(C);
+					cpu.cpu_state_mut().clear_flag(N);
+					cpu.cpu_state_mut().set_flag(H);
 					a_val.bitand(b_val)
 				}
 				XOR => {
-					cpu.clear_flag(C);
-					cpu.clear_flag(H);
-					cpu.clear_flag(N);
+					cpu.cpu_state_mut().clear_flag(C);
+					cpu.cpu_state_mut().clear_flag(H);
+					cpu.cpu_state_mut().clear_flag(N);
 					a_val.bitxor(b_val)
 				}
 				OR => {
-					cpu.clear_flag(C);
-					cpu.clear_flag(H);
-					cpu.clear_flag(N);
+					cpu.cpu_state_mut().clear_flag(C);
+					cpu.cpu_state_mut().clear_flag(H);
+					cpu.cpu_state_mut().clear_flag(N);
 					a_val.bitor(b_val)
 				}
 
 				CP => {
-					cpu.set_flag(N);
-					cpu.set_flag_to(C, a_val < b_val);
-					cpu.set_flag_to(Z, a_val == b_val);
-					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
+					cpu.cpu_state_mut().set_flag(N);
+					cpu.cpu_state_mut().set_flag_to(C, a_val < b_val);
+					cpu.cpu_state_mut().set_flag_to(Z, a_val == b_val);
+					cpu.cpu_state_mut().set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
 					a_val
 				}
 			};
@@ -237,7 +237,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				CP => {}
 				_ => {
 					cpu.write_8(&to, result);
-					cpu.set_flag_to(Z, result == 0);
+					cpu.cpu_state_mut().set_flag_to(Z, result == 0);
 				}
 			}
 		}
@@ -285,18 +285,18 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		}
 		RLCA => {
 			let value = cpu.read_8(&CPURegister8::A.into());
-			cpu.clear_flag(N);
-			cpu.clear_flag(H);
-			cpu.clear_flag(Z);
-			cpu.set_flag_to(C, value & BIT_7 == BIT_7);
+			cpu.cpu_state_mut().clear_flag(N);
+			cpu.cpu_state_mut().clear_flag(H);
+			cpu.cpu_state_mut().clear_flag(Z);
+			cpu.cpu_state_mut().set_flag_to(C, value & BIT_7 == BIT_7);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_left(1));
 		}
 		RRCA => {
 			let value = cpu.read_8(&CPURegister8::A.into());
-			cpu.clear_flag(N);
-			cpu.clear_flag(H);
-			cpu.set_flag_to(C, value & 1 == 1);
-			cpu.clear_flag(Z);
+			cpu.cpu_state_mut().clear_flag(N);
+			cpu.cpu_state_mut().clear_flag(H);
+			cpu.cpu_state_mut().set_flag_to(C, value & 1 == 1);
+			cpu.cpu_state_mut().clear_flag(Z);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_right(1));
 		}
 
@@ -305,67 +305,68 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
 				cpu,
 			);
-			cpu.clear_flag(Z);
+			cpu.cpu_state_mut().clear_flag(Z);
 		}
 		RRA => {
 			execute_instruction(
 				Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
 				cpu,
 			);
-			cpu.clear_flag(Z);
-			cpu.clear_flag(H);
-			cpu.clear_flag(N);
+			cpu.cpu_state_mut().clear_flag(Z);
+			cpu.cpu_state_mut().clear_flag(H);
+			cpu.cpu_state_mut().clear_flag(N);
 		}
 		DAA => {
 			// Decimal Adjust A Register
 			let a_ref = &CPURegister8::A.into();
 			let mut a_val = cpu.read_8(a_ref);
 
-			if !cpu.get_flag(N) {
-				if cpu.get_flag(C) || a_val > 0x99 {
+			if !cpu.cpu_state().get_flag(N) {
+				if cpu.cpu_state().get_flag(C) || a_val > 0x99 {
 					a_val = a_val.wrapping_add(0x60);
-					cpu.set_flag(C);
+					cpu.cpu_state_mut().set_flag(C);
 				}
-				if cpu.get_flag(H) || (a_val & 0x0f) > 0x09 {
+				if cpu.cpu_state().get_flag(H) || (a_val & 0x0f) > 0x09 {
 					a_val = a_val.wrapping_add(0x6);
 				}
 			} else {
-				if cpu.get_flag(C) {
+				if cpu.cpu_state().get_flag(C) {
 					a_val = a_val.wrapping_sub(0x60);
 				}
-				if cpu.get_flag(H) {
+				if cpu.cpu_state().get_flag(H) {
 					a_val = a_val.wrapping_sub(0x6);
 				}
 			}
 
-			cpu.clear_flag(H);
-			cpu.set_flag_to(Z, a_val == 0);
+			cpu.cpu_state_mut().clear_flag(H);
+			cpu.cpu_state_mut().set_flag_to(Z, a_val == 0);
 			cpu.write_8(a_ref, a_val);
 		}
 		CPL => {
 			// Complement A Register
 			let current = cpu.read_8(&CPURegister8::A.into());
-			cpu.set_flag(H);
-			cpu.set_flag(N);
+			cpu.cpu_state_mut().set_flag(H);
+			cpu.cpu_state_mut().set_flag(N);
 			cpu.write_8(&CPURegister8::A.into(), !current);
 		}
 		SCF => {
 			// Set Carry Flag
-			cpu.clear_flag(H);
-			cpu.clear_flag(N);
-			cpu.set_flag(C);
+			cpu.cpu_state_mut().clear_flag(H);
+			cpu.cpu_state_mut().clear_flag(N);
+			cpu.cpu_state_mut().set_flag(C);
 		}
 		CCF => {
 			// Complement Carry FLag
-			cpu.clear_flag(H);
-			cpu.clear_flag(N);
-			cpu.set_flag_to(C, !cpu.get_flag(C));
+			cpu.cpu_state_mut().clear_flag(H);
+			cpu.cpu_state_mut().clear_flag(N);
+			let f = cpu.cpu_state().get_flag(C);
+			cpu.cpu_state_mut().set_flag_to(C, !f);
 		}
 		BIT(bit, value) => {
 			let value = cpu.read_8(&value);
-			cpu.set_flag_to(Z, (value >> bit) & 1 == 0);
-			cpu.set_flag(H);
-			cpu.clear_flag(N);
+			cpu.cpu_state_mut().set_flag_to(Z, (value >> bit) & 1 == 0);
+			cpu.cpu_state_mut().set_flag(H);
+			cpu.cpu_state_mut().clear_flag(N);
 		}
 		RES(bit, value) => {
 			let current = cpu.read_8(&value);
@@ -378,7 +379,7 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 		ROT(operator, val_ref) => {
 			use super::RotShiftOperation::*;
 			let value = cpu.read_8(&val_ref);
-			let carry_bit = u8::from(cpu.get_flag(C));
+			let carry_bit = u8::from(cpu.cpu_state().get_flag(C));
 
 			let result = match operator {
 				RLC => value.rotate_left(1),
@@ -391,10 +392,10 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				SRL => value >> 1,
 			};
 
-			cpu.clear_flag(N);
-			cpu.clear_flag(H);
-			cpu.set_flag_to(Z, result == 0);
-			cpu.set_flag_to(
+			cpu.cpu_state_mut().clear_flag(N);
+			cpu.cpu_state_mut().clear_flag(H);
+			cpu.cpu_state_mut().set_flag_to(Z, result == 0);
+			cpu.cpu_state_mut().set_flag_to(
 				C,
 				match operator {
 					RLC | RL | SLA => value & BIT_7 == BIT_7,
@@ -408,8 +409,8 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 
 		LD_HL_SP_DD(ValueRefI8(value)) => {
 			cpu.tick_m_cycles(1);
-			cpu.clear_flag(Z);
-			cpu.clear_flag(N);
+			cpu.cpu_state_mut().clear_flag(Z);
+			cpu.cpu_state_mut().clear_flag(N);
 
 			let a_val = cpu.read_16(&CPURegister16::SP.into());
 			let b_val = value as i16;
@@ -420,9 +421,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 				b_val as u16
 			};
 
-			cpu.set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
+			cpu.cpu_state_mut().set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
 
-			cpu.set_flag_to(H, ((a_val & 0xF).wrapping_add(ub_val & 0xF) & 0x10) == 0x10);
+			cpu.cpu_state_mut().set_flag_to(H, ((a_val & 0xF).wrapping_add(ub_val & 0xF) & 0x10) == 0x10);
 
 			cpu.write_16(&CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
 		}
@@ -448,9 +449,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			match ptr {
 				ValueRefU16::Reg(_) => {}
 				_ => {
-					cpu.set_flag(N);
-					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
+					cpu.cpu_state_mut().set_flag(N);
+					cpu.cpu_state_mut().set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.cpu_state_mut().set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -479,9 +480,9 @@ pub fn execute_instruction(instruction: Instruction, state: &mut Gameboy) {
 			match ptr {
 				ValueRefU16::Reg(_) => {}
 				_ => {
-					cpu.set_flag(N);
-					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
+					cpu.cpu_state_mut().set_flag(N);
+					cpu.cpu_state_mut().set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.cpu_state_mut().set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 

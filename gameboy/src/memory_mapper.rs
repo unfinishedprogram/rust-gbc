@@ -14,7 +14,7 @@ pub trait MemoryMapper {
 
 /// Similar to `MemoryMapper` but allows specifying a source,
 /// This is needed for accurate emulation,
-pub trait SourcedMemoryMapper {
+pub trait SourcedMemoryMapper:MemoryMapper {
 	fn read_from(&self, addr: u16, source: Source) -> u8;
 	fn write_from(&mut self, addr: u16, value: u8, source: Source);
 }

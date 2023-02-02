@@ -1,4 +1,4 @@
-use crate::{util::bits::*, Gameboy};
+use crate::util::bits::*;
 
 pub const Z: u8 = BIT_7;
 pub const N: u8 = BIT_6;
@@ -27,17 +27,5 @@ pub trait Flags {
 
 	fn get_flag(&self, flag: u8) -> bool {
 		self.get_flag_byte() & flag as u8 != 0
-	}
-}
-
-impl Flags for Gameboy {
-	fn get_flag_byte(&self) -> &u8 {
-		// Flag Byte
-		&self.cpu_state.registers.bytes[5]
-	}
-
-	fn get_flag_byte_mut(&mut self) -> &mut u8 {
-		// Flag Byte
-		&mut self.cpu_state.registers.bytes[5]
 	}
 }

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::CPURegisters;
+use super::{CPURegisters, flags::Flags};
 
 // TODO: Accurate interrupt handling
 
@@ -9,4 +9,14 @@ pub struct CPUState {
 	pub registers: CPURegisters,
 	pub ime: bool,
 	pub ie_next: bool,
+}
+
+impl Flags for CPUState {
+    fn get_flag_byte_mut(&mut self) -> &mut u8 {
+		&mut self.registers.bytes[5]
+    }
+
+    fn get_flag_byte(&self) -> &u8 {
+		&self.registers.bytes[5]
+    }
 }
