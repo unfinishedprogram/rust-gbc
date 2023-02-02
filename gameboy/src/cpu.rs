@@ -1,7 +1,4 @@
-use crate::{
-	io_registers::{IE, IF},
-	memory_mapper::MemoryMapper,
-};
+use crate::io_registers::{IE, IF};
 
 use self::flags::Flags;
 
@@ -58,7 +55,7 @@ pub trait CPU<M: SourcedMemoryMapper> {
 			ValueRefU8::Mem(addr) => {
 				self.tick_m_cycles(1);
 				let index = self.read_16(addr);
-				let value = self.get_memory_mapper().read_from(index, Source::Cpu);
+				let value = self.get_memory_mapper_mut().read_from(index, Source::Cpu);
 				value
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state().registers[*reg],
@@ -78,7 +75,7 @@ pub trait CPU<M: SourcedMemoryMapper> {
 			ValueRefU8::Mem(addr) => {
 				self.tick_m_cycles(1);
 				let index = self.read_16(addr);
-				self.get_memory_mapper()
+				self.get_memory_mapper_mut()
 					.write_from(index, value, Source::Cpu);
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state_mut().registers[*reg] = value,
@@ -101,9 +98,9 @@ pub trait CPU<M: SourcedMemoryMapper> {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				self.tick_m_cycles(1);
-				let upper = self.get_memory_mapper().read_from(i + 1, Source::Cpu);
+				let upper = self.get_memory_mapper_mut().read_from(i + 1, Source::Cpu);
 				self.tick_m_cycles(1);
-				let lower = self.get_memory_mapper().read_from(*i, Source::Cpu);
+				let lower = self.get_memory_mapper_mut().read_from(*i, Source::Cpu);
 				u16::from_le_bytes([lower, upper])
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state().registers.get_u16(*reg),
@@ -116,10 +113,10 @@ pub trait CPU<M: SourcedMemoryMapper> {
 			ValueRefU16::Mem(i) => {
 				let bytes = u16::to_le_bytes(value);
 				self.tick_m_cycles(1);
-				self.get_memory_mapper()
+				self.get_memory_mapper_mut()
 					.write_from(*i + 1, bytes[1], Source::Cpu);
 				self.tick_m_cycles(1);
-				self.get_memory_mapper()
+				self.get_memory_mapper_mut()
 					.write_from(*i, bytes[0], Source::Cpu);
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state_mut().registers.set_u16(*reg, value),
@@ -151,11 +148,45 @@ pub trait CPU<M: SourcedMemoryMapper> {
 		}
 	}
 
-	fn interrupt_pending(&self) -> bool;
+	fn interrupt_pending(&self) -> bool {
+		// No interrupts can be pending if there are none enabled
+		if self.cpu_state().ie_register == 0 {
+			return false;
+		};
 
-	fn check_interrupt(&self, interrupt: u8) -> bool;
-	fn clear_request(&mut self, interrupt: u8);
-	fn fetch_next_interrupt(&mut self) -> Option<u8>;
+		self.cpu_state().ie_register & self.get_memory_mapper().read(IF) != 0
+	}
+
+	fn check_interrupt(&self, interrupt: u8) -> bool {
+		self.get_memory_mapper().read(IE) & self.get_memory_mapper().read(IF) & interrupt != 0
+	}
+
+	fn clear_request(&mut self, interrupt: u8) {
+		let flag = self.get_memory_mapper().read(IF);
+		self.get_memory_mapper_mut().write(IF, flag & !interrupt);
+	}
+
+	
+	fn fetch_next_interrupt(&mut self) -> Option<u8> {
+		if !self.cpu_state().ime {
+			return None;
+		}
+
+		let requests = self.cpu_state_mut().ie_register & self.get_memory_mapper().read(IF);
+
+		if requests == 0 {
+			return None;
+		};
+
+		for index in 0..5 {
+			let interrupt = 1 << index;
+			if requests & interrupt != 0 {
+				self.clear_request(interrupt);
+				return Some(interrupt);
+			}
+		}
+		None
+	}
 
 	fn step_cpu(&mut self) where Self:Sized {
 		if self.cpu_state().halted {
@@ -176,16 +207,21 @@ pub trait CPU<M: SourcedMemoryMapper> {
 	}
 
 	fn exec_stop(&mut self) {}
+	fn tick_m_cycles(&mut self, _m_cycles: u32) {}
 	fn cpu_state(&self) -> &CPUState;
 	fn cpu_state_mut(&mut self) -> &mut CPUState;
-	fn get_memory_mapper(&mut self) -> &mut M;
-	fn tick_m_cycles(&mut self, m_cycles: u32);
+	fn get_memory_mapper_mut(&mut self) -> &mut M;
+	fn get_memory_mapper(&self) -> &M;
 }
 
 
 impl CPU<Gameboy> for Gameboy {
-	fn get_memory_mapper(&mut self) -> &mut Gameboy {
-		return self;
+	fn get_memory_mapper_mut(&mut self) -> &mut Gameboy {
+		self
+	}
+
+	fn get_memory_mapper(&self) -> & Gameboy {
+		self
 	}
 
 	fn cpu_state(&self) -> &CPUState {
@@ -200,15 +236,6 @@ impl CPU<Gameboy> for Gameboy {
 		Gameboy::tick_m_cycles(self, m_cycles)
 	}
 
-	fn check_interrupt(&self, interrupt: u8) -> bool {
-		self.read(IE) & self.read(IF) & interrupt != 0
-	}
-
-	fn clear_request(&mut self, interrupt: u8) {
-		let flag = self.read(IF);
-		self.write(IF, flag & !interrupt);
-	}
-
 	fn exec_stop(&mut self) {
 		match &mut self.mode {
 			crate::state::GameboyMode::GBC(state) => {
@@ -217,35 +244,5 @@ impl CPU<Gameboy> for Gameboy {
 			}
 			_ => {}
 		}
-	}
-
-	fn interrupt_pending(&self) -> bool {
-		// No interrupts can be pending if there are none enabled
-		if self.interrupt_enable_register == 0 {
-			return false;
-		};
-
-		self.interrupt_enable_register & self.read(IF) != 0
-	}
-
-	fn fetch_next_interrupt(&mut self) -> Option<u8> {
-		if !self.cpu_state.ime {
-			return None;
-		}
-
-		let requests = self.interrupt_enable_register & self.read(IF);
-
-		if requests == 0 {
-			return None;
-		};
-
-		for index in 0..5 {
-			let interrupt = 1 << index;
-			if requests & interrupt != 0 {
-				self.clear_request(interrupt);
-				return Some(interrupt);
-			}
-		}
-		None
 	}
 }

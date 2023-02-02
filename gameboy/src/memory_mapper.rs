@@ -102,7 +102,7 @@ impl MemoryMapper for Gameboy {
 			0xFEA0..0xFF00 => 0x0,                                              // Unusable
 			0xFF00..0xFF80 => self.read_io(addr),                               // IO Registers
 			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize],              // HRAM
-			0xFFFF => self.interrupt_enable_register,                           // Interrupt enable
+			0xFFFF => self.cpu_state.ie_register,                           // Interrupt enable
 		}
 	}
 
@@ -141,7 +141,7 @@ impl MemoryMapper for Gameboy {
 
 			0xFF00..0xFF80 => self.write_io(addr, value), // IO Registers
 			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize] = value, // HRAM
-			0xFFFF => self.interrupt_enable_register = value & 0b00011111, // Interrupt enable
+			0xFFFF => self.cpu_state.ie_register = value & 0b00011111, // Interrupt enable
 		}
 	}
 }

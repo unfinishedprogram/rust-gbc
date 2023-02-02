@@ -9,6 +9,7 @@ pub struct CPUState {
 	pub registers: CPURegisters,
 	pub halted:bool,
 	pub ime: bool,
+	pub ie_register: u8,
 	pub ie_next: bool,
 }
 
