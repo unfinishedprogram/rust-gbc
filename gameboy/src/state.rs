@@ -88,7 +88,7 @@ impl Default for Gameboy {
 			cartridge_state: None,
 			ram_bank: 0,
 			mode: GameboyMode::DMG,
-			w_ram: WorkRam::DMG(WorkRamDataDMG::default()),
+			w_ram: WorkRam::DMG(Box::<WorkRamDataDMG>::default()),
 			hram: [0; 0x80],
 			serial_output: vec![],
 			raw_joyp_input: 0,
@@ -230,8 +230,8 @@ impl Gameboy {
 		};
 
 		self.w_ram = match mode {
-			GameboyMode::GBC(_) => WorkRam::CGB(WorkRamDataCGB::default()),
-			GameboyMode::DMG => WorkRam::DMG(WorkRamDataDMG::default()),
+			GameboyMode::GBC(_) => WorkRam::CGB(Box::<WorkRamDataCGB>::default()),
+			GameboyMode::DMG => WorkRam::DMG(Box::<WorkRamDataDMG>::default()),
 		};
 		self.mode = mode;
 	}

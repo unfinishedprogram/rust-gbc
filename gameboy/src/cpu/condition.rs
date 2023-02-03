@@ -6,7 +6,7 @@ pub enum Condition {
 	Z,
 	NC,
 	C,
-	ALWAYS,
+	Always,
 }
 
 impl Debug for Condition {
@@ -16,7 +16,7 @@ impl Debug for Condition {
 			Self::Z => write!(f, "z"),
 			Self::NC => write!(f, "nc"),
 			Self::C => write!(f, "c"),
-			Self::ALWAYS => write!(f, ""),
+			Self::Always => write!(f, ""),
 		}
 	}
 }

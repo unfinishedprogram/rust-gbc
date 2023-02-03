@@ -14,7 +14,7 @@ pub trait MemoryMapper {
 
 /// Similar to `MemoryMapper` but allows specifying a source,
 /// This is needed for accurate emulation,
-pub trait SourcedMemoryMapper:MemoryMapper {
+pub trait SourcedMemoryMapper: MemoryMapper {
 	fn read_from(&self, addr: u16, source: Source) -> u8;
 	fn write_from(&mut self, addr: u16, value: u8, source: Source);
 }
@@ -96,13 +96,13 @@ impl MemoryMapper for Gameboy {
 				if !matches!(self.ppu.get_mode(), PPUMode::Draw | PPUMode::OamScan) {
 					self.ppu.oam[(addr - 0xFE00) as usize]
 				} else {
-					return 0xFF;
+					0xFF
 				}
 			} // Object Attribute Map
 			0xFEA0..0xFF00 => 0x0,                                              // Unusable
 			0xFF00..0xFF80 => self.read_io(addr),                               // IO Registers
 			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize],              // HRAM
-			0xFFFF => self.cpu_state.ie_register,                           // Interrupt enable
+			0xFFFF => self.cpu_state.ie_register,                               // Interrupt enable
 		}
 	}
 

@@ -173,7 +173,7 @@ impl DMAController {
 		if let Some(transfer) = &self.transfer {
 			transfer.chunks_remaining.wrapping_sub(1)
 		} else {
-			return self.hdma5;
+			self.hdma5
 		}
 	}
 

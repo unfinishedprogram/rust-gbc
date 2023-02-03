@@ -270,7 +270,7 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			cpu.push(value)
 		}
 		RET(condition) => {
-			if matches!(condition, Condition::ALWAYS) {
+			if matches!(condition, Condition::Always) {
 				if cpu.check_condition(condition) {
 					cpu.cpu_state_mut().registers.pc = cpu.pop();
 					cpu.tick_m_cycles(1);
@@ -508,7 +508,7 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 
 		RETI => {
 			execute_instruction(cpu, EI);
-			execute_instruction(cpu, RET(Condition::ALWAYS));
+			execute_instruction(cpu, RET(Condition::Always));
 		}
 	}
 }

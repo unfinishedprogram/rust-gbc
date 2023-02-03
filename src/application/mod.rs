@@ -103,10 +103,10 @@ impl Application {
 		self.frame_counts.push(frames);
 		self.frame_times.push(perf.now() - start_time);
 
-		let frames: u64 = self.frame_counts.iter().sum();
-		let time: f64 = self.frame_times.iter().sum();
+		let _frames: u64 = self.frame_counts.iter().sum();
+		let _time: f64 = self.frame_times.iter().sum();
 
-		let state_text = if let GameboyMode::GBC(state) = &self.emulator_state.mode {
+		let _state_text = if let GameboyMode::GBC(state) = &self.emulator_state.mode {
 			format!("{:?}", state.current_speed())
 		} else {
 			"".to_owned()

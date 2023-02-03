@@ -18,14 +18,14 @@ pub trait Flags {
 	}
 
 	fn clear_flag(&mut self, flag: u8) {
-		*self.get_flag_byte_mut() &= !(flag as u8);
+		*self.get_flag_byte_mut() &= !flag;
 	}
 
 	fn set_flag(&mut self, flag: u8) {
-		*self.get_flag_byte_mut() |= flag as u8;
+		*self.get_flag_byte_mut() |= flag;
 	}
 
 	fn get_flag(&self, flag: u8) -> bool {
-		self.get_flag_byte() & flag as u8 != 0
+		self.get_flag_byte() & flag != 0
 	}
 }

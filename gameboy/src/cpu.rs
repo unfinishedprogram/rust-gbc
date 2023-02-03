@@ -129,7 +129,7 @@ pub trait CPU<M: SourcedMemoryMapper> {
 		use Condition::*;
 
 		match condition {
-			ALWAYS => true,
+			Always => true,
 			NZ => !self.cpu_state().get_flag(flags::Z),
 			Z => self.cpu_state().get_flag(flags::Z),
 			NC => !self.cpu_state().get_flag(flags::C),
@@ -243,12 +243,9 @@ impl CPU<Gameboy> for Gameboy {
 	}
 
 	fn exec_stop(&mut self) {
-		match &mut self.mode {
-			crate::state::GameboyMode::GBC(state) => {
-				self.speed_switch_delay = 2050;
-				state.perform_speed_switch();
-			}
-			_ => {}
+		if let crate::state::GameboyMode::GBC(state) = &mut self.mode {
+			self.speed_switch_delay = 2050;
+			state.perform_speed_switch();
 		}
 	}
 }
