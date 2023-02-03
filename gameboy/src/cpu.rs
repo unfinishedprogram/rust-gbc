@@ -99,10 +99,10 @@ pub trait CPU<M: SourcedMemoryMapper> {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				self.tick_m_cycles(1);
-				let upper = self.get_memory_mapper_mut().read_from(i + 1, Source::Cpu);
+				let lsb = self.get_memory_mapper_mut().read_from(*i, Source::Cpu);
 				self.tick_m_cycles(1);
-				let lower = self.get_memory_mapper_mut().read_from(*i, Source::Cpu);
-				u16::from_le_bytes([lower, upper])
+				let msb = self.get_memory_mapper_mut().read_from(i + 1, Source::Cpu);
+				u16::from_le_bytes([lsb, msb])
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state().registers.get_u16(*reg),
 			ValueRefU16::Raw(x) => *x,

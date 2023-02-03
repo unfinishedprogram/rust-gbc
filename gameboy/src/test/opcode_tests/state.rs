@@ -12,7 +12,7 @@ pub struct TestState {
 	pub f: u8,
 	pub h: u8,
 	pub l: u8,
-	// pub ime: u8,
+	pub ime: u8,
 	pub ram: Vec<(u16, u8)>,
 	// pub ei: u8,
 }

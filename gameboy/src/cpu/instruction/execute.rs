@@ -24,20 +24,22 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 	match instruction {
 		NOP => {}
 		INT(interrupt) => {
-			cpu.tick_m_cycles(3);
+			cpu.tick_m_cycles(2);
 
-			cpu.disable_interrupts();
 			let location = match interrupt {
-				_ if interrupt == INT_V_BLANK => 0x40,
-				_ if interrupt == INT_LCD_STAT => 0x48,
-				_ if interrupt == INT_TIMER => 0x50,
-				_ if interrupt == INT_SERIAL => 0x58,
-				_ if interrupt == INT_JOY_PAD => 0x60,
+				INT_V_BLANK => 0x40,
+				INT_LCD_STAT => 0x48,
+				INT_TIMER => 0x50,
+				INT_SERIAL => 0x58,
+				INT_JOY_PAD => 0x60,
 				_ => unreachable!(),
 			};
+
 			let current_pc = cpu.read_16(&CPURegister16::PC.into());
 			cpu.push(current_pc);
 			cpu.write_16(&CPURegister16::PC.into(), location);
+			cpu.tick_m_cycles(1);
+
 			cpu.disable_interrupts();
 		}
 
@@ -117,12 +119,11 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 
 		JP(condition, location) | JR(condition, location) => {
 			if cpu.check_condition(condition) {
+				let loc_val = cpu.read_16(&location);
+				cpu.write_16(&CPURegister16::PC.into(), loc_val);
 				if !matches!(location, ValueRefU16::Reg(CPURegister16::HL)) {
 					cpu.tick_m_cycles(1);
 				}
-
-				let loc_val = cpu.read_16(&location);
-				cpu.write_16(&CPURegister16::PC.into(), loc_val);
 			}
 		}
 
@@ -251,9 +252,12 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			let loc_value = cpu.read_16(&location);
 			if cpu.check_condition(condition) {
 				cpu.tick_m_cycles(1);
-				let current_pc = cpu.read_16(&CPURegister16::PC.into());
+				let current_pc = cpu.cpu_state().registers.pc;
+				// let current_pc = cpu.read_16(&CPURegister16::PC.into());
 				cpu.push(current_pc);
-				cpu.write_16(&CPURegister16::PC.into(), loc_value);
+				cpu.cpu_state_mut().registers.pc = loc_value;
+
+				// cpu.write_16(&CPURegister16::PC.into(), loc_value);
 			}
 		}
 		POP(value_ref) => {
@@ -266,13 +270,18 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			cpu.push(value)
 		}
 		RET(condition) => {
-			if !matches!(condition, Condition::ALWAYS) {
+			if matches!(condition, Condition::ALWAYS) {
+				if cpu.check_condition(condition) {
+					cpu.cpu_state_mut().registers.pc = cpu.pop();
+					cpu.tick_m_cycles(1);
+				}
+			} else {
+				// Check condition
 				cpu.tick_m_cycles(1);
-			}
-
-			if cpu.check_condition(condition) {
-				cpu.cpu_state_mut().registers.pc = cpu.pop();
-				cpu.tick_m_cycles(1);
+				if cpu.check_condition(condition) {
+					cpu.cpu_state_mut().registers.pc = cpu.pop();
+					cpu.tick_m_cycles(1);
+				}
 			}
 		}
 		RST(addr) => {
@@ -300,8 +309,8 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			let value = cpu.read_8(&CPURegister8::A.into());
 			cpu.cpu_state_mut().clear_flag(N);
 			cpu.cpu_state_mut().clear_flag(H);
-			cpu.cpu_state_mut().set_flag_to(C, value & 1 == 1);
 			cpu.cpu_state_mut().clear_flag(Z);
+			cpu.cpu_state_mut().set_flag_to(C, value & BIT_0 == BIT_0);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_right(1));
 		}
 
@@ -498,8 +507,8 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 		}
 
 		RETI => {
-			execute_instruction(cpu, RET(Condition::ALWAYS));
 			execute_instruction(cpu, EI);
+			execute_instruction(cpu, RET(Condition::ALWAYS));
 		}
 	}
 }
