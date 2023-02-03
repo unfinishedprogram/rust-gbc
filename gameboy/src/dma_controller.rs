@@ -187,13 +187,14 @@ impl DMAController {
 		let from = transfer.source;
 		let to = transfer.destination;
 
-		transfer.source += 16;
-		transfer.destination += 16;
+		self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
 		transfer.chunks_remaining -= 1;
 
-		self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
 		if transfer.complete() {
 			self.transfer = None;
+		} else {
+			transfer.source += 16;
+			transfer.destination += 16;
 		}
 
 		Some(TransferRequest {
