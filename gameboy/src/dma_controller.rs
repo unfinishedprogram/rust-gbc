@@ -64,7 +64,7 @@ impl Debug for Transfer {
 			source,
 			destination,
 			total_chunks,
-			chunks_remaining:_,
+			chunks_remaining: _,
 		} = &self;
 
 		write!(
@@ -114,7 +114,7 @@ impl DMAController {
 			false => TransferMode::GeneralPurpose,
 		};
 		debug!("New Transfer: {mode:?}",);
-		let total_chunks = ((byte + 1) & !BIT_7) as u16;
+		let total_chunks = (byte & !BIT_7) as u16 + 1;
 
 		let source = source & 0xFFF0;
 		let destination = (destination & 0xFFF0) | 0x8000;
@@ -171,7 +171,7 @@ impl DMAController {
 
 	pub fn read_hdma5(&self) -> u8 {
 		if let Some(transfer) = &self.transfer {
-			transfer.chunks_remaining - 1
+			transfer.chunks_remaining.wrapping_sub(1)
 		} else {
 			return self.hdma5;
 		}

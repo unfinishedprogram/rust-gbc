@@ -3,8 +3,8 @@ use crate::io_registers::{IE, IF};
 use self::flags::Flags;
 
 mod condition;
-pub mod flags;
 mod cpu_stack;
+pub mod flags;
 pub mod instruction;
 pub mod registers;
 mod state;
@@ -23,6 +23,7 @@ use self::condition::Condition;
 
 pub trait CPU<M: SourcedMemoryMapper> {
 	fn disable_interrupts(&mut self) {
+		self.cpu_state_mut().ie_next = false;
 		self.cpu_state_mut().ime = false;
 	}
 
@@ -136,11 +137,17 @@ pub trait CPU<M: SourcedMemoryMapper> {
 		}
 	}
 
-	fn fetch_next_instruction(&mut self) -> Instruction where Self:Sized {
+	fn fetch_next_instruction(&mut self) -> Instruction
+	where
+		Self: Sized,
+	{
 		fetch_instruction(self)
 	}
 
-	fn get_next_instruction_or_interrupt(&mut self) -> Instruction where Self:Sized {
+	fn get_next_instruction_or_interrupt(&mut self) -> Instruction
+	where
+		Self: Sized,
+	{
 		if let Some(int) = self.fetch_next_interrupt() {
 			Instruction::INT(int)
 		} else {
@@ -166,7 +173,6 @@ pub trait CPU<M: SourcedMemoryMapper> {
 		self.get_memory_mapper_mut().write(IF, flag & !interrupt);
 	}
 
-	
 	fn fetch_next_interrupt(&mut self) -> Option<u8> {
 		if !self.cpu_state().ime {
 			return None;
@@ -188,7 +194,10 @@ pub trait CPU<M: SourcedMemoryMapper> {
 		None
 	}
 
-	fn step_cpu(&mut self) where Self:Sized {
+	fn step_cpu(&mut self)
+	where
+		Self: Sized,
+	{
 		if self.cpu_state().halted {
 			if self.interrupt_pending() {
 				self.cpu_state_mut().halted = false;
@@ -199,28 +208,24 @@ pub trait CPU<M: SourcedMemoryMapper> {
 			let instruction = self.get_next_instruction_or_interrupt();
 			execute_instruction(self, instruction);
 		}
-
-		if self.cpu_state().ie_next {
-			self.cpu_state_mut().ime = true;
-			self.cpu_state_mut().ie_next = false;
-		}
 	}
 
 	fn exec_stop(&mut self) {}
-	fn tick_m_cycles(&mut self, _m_cycles: u32) {}
+	fn tick_m_cycles(&mut self, _m_cycles: u32) {
+		self.cpu_state_mut().ime = self.cpu_state().ie_next;
+	}
 	fn cpu_state(&self) -> &CPUState;
 	fn cpu_state_mut(&mut self) -> &mut CPUState;
 	fn get_memory_mapper_mut(&mut self) -> &mut M;
 	fn get_memory_mapper(&self) -> &M;
 }
 
-
 impl CPU<Gameboy> for Gameboy {
 	fn get_memory_mapper_mut(&mut self) -> &mut Gameboy {
 		self
 	}
 
-	fn get_memory_mapper(&self) -> & Gameboy {
+	fn get_memory_mapper(&self) -> &Gameboy {
 		self
 	}
 
@@ -233,6 +238,7 @@ impl CPU<Gameboy> for Gameboy {
 	}
 
 	fn tick_m_cycles(&mut self, m_cycles: u32) {
+		self.cpu_state_mut().ime = self.cpu_state().ie_next;
 		Gameboy::tick_m_cycles(self, m_cycles)
 	}
 

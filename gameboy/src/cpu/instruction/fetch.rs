@@ -25,9 +25,6 @@ pub fn fetch_instruction<T: SourcedMemoryMapper>(
 		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp())), SP),
 		(0, 0, 2, _, _) => {
 			// Cpu reads next byte when executing stop even though it is not used
-			if cpu.next_byte() != 0 {
-				log::warn!("Stop instruction executed without following NOP");
-			}
 			inst!(cpu, STOP)
 		}
 		(0, 0, 3, _, _) => {

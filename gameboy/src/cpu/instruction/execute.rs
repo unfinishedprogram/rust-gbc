@@ -1,15 +1,15 @@
 use crate::{
 	cpu::{
-		flags::{Flags, C, H, N, Z},
 		cpu_stack::CPUStack,
+		flags::{Flags, C, H, N, Z},
 		instruction::{ALUOperation, Instruction, Instruction::*},
 		registers::{CPURegister16, CPURegister8},
 		values::{ValueRefI8, ValueRefU16},
 		CPU,
 	},
 	flags::{INT_JOY_PAD, INT_LCD_STAT, INT_SERIAL, INT_TIMER, INT_V_BLANK},
+	memory_mapper::SourcedMemoryMapper,
 	util::bits::{BIT_0, BIT_7},
-	 memory_mapper::SourcedMemoryMapper,
 };
 
 use super::super::condition::Condition;
@@ -17,7 +17,8 @@ use super::super::condition::Condition;
 use std::ops::{BitAnd, BitOr, BitXor};
 
 pub fn execute_instruction<T: SourcedMemoryMapper>(
-	state: &mut impl CPU<T>, instruction: Instruction,
+	state: &mut impl CPU<T>,
+	instruction: Instruction,
 ) {
 	let cpu = state;
 	match instruction {
@@ -69,7 +70,8 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			let val = cpu.read_8(&ptr);
 			cpu.cpu_state_mut().set_flag_to(Z, val.wrapping_add(1) == 0);
 			cpu.cpu_state_mut().clear_flag(N);
-			cpu.cpu_state_mut().set_flag_to(H, ((val & 0xF).wrapping_add(1) & 0x10) == 0x10);
+			cpu.cpu_state_mut()
+				.set_flag_to(H, ((val & 0xF).wrapping_add(1) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_add(1));
 		}
 
@@ -83,7 +85,8 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			let val = cpu.read_8(&ptr);
 			cpu.cpu_state_mut().set_flag_to(Z, val.wrapping_sub(1) == 0);
 			cpu.cpu_state_mut().set_flag(N);
-			cpu.cpu_state_mut().set_flag_to(H, ((val & 0xF).wrapping_sub(1 & 0xF) & 0x10) == 0x10);
+			cpu.cpu_state_mut()
+				.set_flag_to(H, ((val & 0xF).wrapping_sub(1 & 0xF) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_sub(1));
 		}
 
@@ -96,8 +99,10 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 				ValueRefU16::Reg(_) => {}
 				_ => {
 					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut().set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.cpu_state_mut().set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
+					cpu.cpu_state_mut()
+						.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.cpu_state_mut()
+						.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -105,8 +110,6 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 		}
 
 		STOP => {
-			let new_pc = cpu.cpu_state().registers.pc.wrapping_add(1);
-			cpu.cpu_state_mut().registers.pc = new_pc;
 			cpu.exec_stop();
 		}
 
@@ -129,9 +132,11 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			let a_val = cpu.read_16(&a_ref);
 			let b_val = cpu.read_16(&b_ref);
 
-			cpu.cpu_state_mut().set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
+			cpu.cpu_state_mut()
+				.set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
 			cpu.cpu_state_mut().clear_flag(N);
-			cpu.cpu_state_mut().set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
+			cpu.cpu_state_mut()
+				.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 			cpu.write_16(&a_ref, a_val.wrapping_add(b_val));
 		}
 
@@ -142,18 +147,18 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			let a_val = cpu.read_16(&a_ref);
 			let b_val = b_ref as i16;
 
-			let ub_val = if b_val < 0 {
-				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
-			} else {
-				b_val as u16
-			};
+			let (_, carry) = ((a_val & 0xFF) as u8).overflowing_add(((b_ref as u16) & 0xFF) as u8);
 
-			cpu.cpu_state_mut().set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
+			cpu.cpu_state_mut().set_flag_to(C, carry);
 
-			cpu.cpu_state_mut().set_flag_to(H, ((a_val & 0xF).wrapping_add(ub_val & 0xF) & 0x10) == 0x10);
+			cpu.cpu_state_mut().set_flag_to(
+				H,
+				((a_val & 0xF).wrapping_add((b_ref as u16) & 0xF) & 0x10) == 0x10,
+			);
 
 			cpu.write_16(&a_ref, a_val.wrapping_add_signed(b_val));
-			cpu.tick_m_cycles(2);
+			cpu.tick_m_cycles(1);
+			cpu.tick_m_cycles(1);
 		}
 
 		ALU_OP_8(op, to, from) => {
@@ -166,8 +171,10 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			let result = match op {
 				ADD => {
 					cpu.cpu_state_mut().clear_flag(N);
-					cpu.cpu_state_mut().set_flag_to(H, (a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10 == 0x10);
-					cpu.cpu_state_mut().set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
+					cpu.cpu_state_mut()
+						.set_flag_to(H, (a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10 == 0x10);
+					cpu.cpu_state_mut()
+						.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 					a_val.wrapping_add(b_val)
 				}
 
@@ -185,7 +192,8 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 
 				SUB => {
 					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut().set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
+					cpu.cpu_state_mut()
+						.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
 					cpu.cpu_state_mut().set_flag_to(C, b_val > a_val);
 					a_val.wrapping_sub(b_val)
 				}
@@ -224,7 +232,8 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 					cpu.cpu_state_mut().set_flag(N);
 					cpu.cpu_state_mut().set_flag_to(C, a_val < b_val);
 					cpu.cpu_state_mut().set_flag_to(Z, a_val == b_val);
-					cpu.cpu_state_mut().set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
+					cpu.cpu_state_mut()
+						.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
 					a_val
 				}
 			};
@@ -403,23 +412,22 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			cpu.write_8(&val_ref, result);
 		}
 
-		LD_HL_SP_DD(ValueRefI8(value)) => {
+		LD_HL_SP_DD(ValueRefI8(b_ref)) => {
 			cpu.tick_m_cycles(1);
 			cpu.cpu_state_mut().clear_flag(Z);
 			cpu.cpu_state_mut().clear_flag(N);
 
 			let a_val = cpu.read_16(&CPURegister16::SP.into());
-			let b_val = value as i16;
+			let b_val = b_ref as i16;
 
-			let ub_val = if b_val < 0 {
-				((b_val as u16) ^ 0xFFFF).wrapping_sub(1)
-			} else {
-				b_val as u16
-			};
+			let (_, carry) = ((a_val & 0xFF) as u8).overflowing_add(((b_ref as u16) & 0xFF) as u8);
 
-			cpu.cpu_state_mut().set_flag_to(C, (a_val << 8).wrapping_add(ub_val << 8) < a_val << 8);
+			cpu.cpu_state_mut().set_flag_to(C, carry);
 
-			cpu.cpu_state_mut().set_flag_to(H, ((a_val & 0xF).wrapping_add(ub_val & 0xF) & 0x10) == 0x10);
+			cpu.cpu_state_mut().set_flag_to(
+				H,
+				((a_val & 0xF).wrapping_add((b_ref as u16) & 0xF) & 0x10) == 0x10,
+			);
 
 			cpu.write_16(&CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
 		}
@@ -446,8 +454,10 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 				ValueRefU16::Reg(_) => {}
 				_ => {
 					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut().set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.cpu_state_mut().set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
+					cpu.cpu_state_mut()
+						.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.cpu_state_mut()
+						.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -477,8 +487,10 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 				ValueRefU16::Reg(_) => {}
 				_ => {
 					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut().set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.cpu_state_mut().set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
+					cpu.cpu_state_mut()
+						.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.cpu_state_mut()
+						.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
