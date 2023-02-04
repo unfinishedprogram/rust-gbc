@@ -43,7 +43,6 @@ pub fn run_opcode_tests() {
 			}
 		}
 		opcodes_ran += 1;
-		// println!("{opcodes_ran}/500");
 	}
 	// panic!(
 	// 	"Ran:{individual_ran:}, Passed:{individual_passed:}, {}%",
