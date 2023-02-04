@@ -17,13 +17,7 @@ pub struct GambatteTest {
 
 impl GambatteTest {
 	pub fn new(path: String) -> Self {
-		let pat = if path.contains("cgb04c_out") {
-			"cgb04c_out"
-		} else {
-			"_out"
-		};
-
-		let expected_out: Vec<&str> = path.split(pat).collect();
+		let expected_out: Vec<&str> = path.split("_out").collect();
 		let expected_out = expected_out
 			.last()
 			.unwrap()
@@ -36,12 +30,11 @@ impl GambatteTest {
 	}
 }
 
-#[test_resources("../roms/test/gambatte/*/*_out*.gbc")]
+#[test_resources("../roms/test/gambatte/*/*cgb04c_out*.gbc")]
 fn exec_test(resource: &str) {
 	let test = GambatteTest::new(resource.to_string());
 	let output = get_test_output(&test);
 
-	// println!("OUT:{output:}\nEXP:{}", &test.expected_out);
 	assert_eq!(&output[0..test.expected_out.len()], &test.expected_out);
 }
 
