@@ -176,8 +176,8 @@ impl DMAController {
 		let from = transfer.source;
 		let to = transfer.destination;
 
-		self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
 		transfer.chunks_remaining -= 1;
+		self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
 
 		if transfer.complete() {
 			self.transfer = None;
