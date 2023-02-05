@@ -114,11 +114,6 @@ impl Gameboy {
 	}
 
 	pub fn step(&mut self) {
-		if self.dma_controller.gdma_active() {
-			self.tick_m_cycles(1);
-			return;
-		}
-
 		if self.speed_switch_delay > 0 {
 			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
 			self.tick_m_cycles(1);
@@ -142,11 +137,10 @@ impl Gameboy {
 
 			let new_ppu_mode: Option<PPUMode> = self.tick_t_states(t_states);
 
-			if let Some(request) = self
-				.dma_controller
-				.step(matches!(new_ppu_mode, Some(PPUMode::HBlank)))
-			{
-				self.handle_transfer(request)
+			if matches!(new_ppu_mode, Some(PPUMode::HBlank)) {
+				if let Some(request) = self.dma_controller.step() {
+					self.handle_transfer(request)
+				}
 			}
 
 			if self.speed_switch_delay == 0 {
@@ -155,7 +149,7 @@ impl Gameboy {
 		}
 	}
 
-	fn handle_transfer(&mut self, request: TransferRequest) {
+	pub fn handle_transfer(&mut self, request: TransferRequest) {
 		log::info!("[{:X}]:{request:?}", self.get_cycle());
 		let TransferRequest { from, to, bytes } = request;
 		for i in 0..bytes {

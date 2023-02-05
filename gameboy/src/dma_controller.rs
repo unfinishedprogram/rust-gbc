@@ -1,6 +1,5 @@
 use std::fmt::Debug;
 
-use log::debug;
 use serde::{Deserialize, Serialize};
 
 use crate::util::bits::BIT_7;
@@ -22,56 +21,27 @@ impl Debug for TransferRequest {
 	}
 }
 
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct DMAController {
-	pub transfer: Option<Transfer>,
 	source: u16,      // HDMA1 | HDMA2
 	destination: u16, // HDMA3 | HDMA4
 	hdma5: u8,
+}
+
+impl Default for DMAController {
+	fn default() -> Self {
+		Self {
+			source: 0,
+			destination: 0,
+			hdma5: 0xFF,
+		}
+	}
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TransferMode {
 	GeneralPurpose,
 	HBlank,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Transfer {
-	pub mode: TransferMode,
-	pub source: u16,
-	pub destination: u16,
-	// Length measured in chunks of 16 bytes
-	pub total_chunks: u16,
-	// Transfer is always done in increments of 16 bytes
-	pub chunks_remaining: u8,
-}
-
-impl Transfer {
-	pub fn chunks_remaining(&self) -> u16 {
-		self.chunks_remaining as u16
-	}
-
-	pub fn complete(&self) -> bool {
-		self.chunks_remaining() == 0
-	}
-}
-
-impl Debug for Transfer {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		let Transfer {
-			mode,
-			source,
-			destination,
-			total_chunks,
-			chunks_remaining: _,
-		} = &self;
-
-		write!(
-			f,
-			"Mode:{mode:?}\n [{source:X}] -> [{destination:X}]\n Chunks:{total_chunks}"
-		)
-	}
 }
 
 impl DMAController {
@@ -92,115 +62,57 @@ impl DMAController {
 		self.destination |= value as u16;
 	}
 
-	pub fn gdma_active(&self) -> bool {
-		if let Some(transfer) = &self.transfer {
-			matches!(transfer.mode, TransferMode::GeneralPurpose)
-		} else {
-			false
-		}
-	}
-
-	pub fn dma_is_active(&self) -> bool {
-		self.hdma5 & BIT_7 == 0
-	}
-
-	pub fn is_hdma_active(&self) -> bool {
-		self.hdma5 & 0x80 == 0
-	}
-
-	fn new_transfer(source: u16, destination: u16, byte: u8) -> Transfer {
-		let mode = match byte & BIT_7 == BIT_7 {
-			true => TransferMode::HBlank,
-			false => TransferMode::GeneralPurpose,
-		};
-		debug!("New Transfer: {mode:?}",);
-		let total_chunks = (byte & !BIT_7) as u16 + 1;
-
-		let source = source & 0xFFF0;
-		let destination = (destination & 0xFFF0) | 0x8000;
-
-		Transfer {
-			mode,
-			source,
-			destination,
-			total_chunks,
-			chunks_remaining: total_chunks as u8,
-		}
-	}
-
-	pub fn write_hdma5(&mut self, value: u8) {
-		log::info!("Wrote to HDMA");
-		match &mut self.transfer {
-			Some(transfer) => {
-				log::info!("Write to HDMA5 During transfer");
-				debug_assert!(matches!(transfer.mode, TransferMode::HBlank));
-
-				// Writing zero to bit 7 when a HDMA transfer is active terminates it
-				if value & BIT_7 == 0 {
-					self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
-					self.hdma5 |= BIT_7;
-					self.transfer = None;
-				} else {
-					self.hdma5 = value;
-					transfer.chunks_remaining = (self.hdma5 & !BIT_7) + 1;
-				}
-			}
-
-			None => {
-				self.transfer = Some(DMAController::new_transfer(
-					self.source,
-					self.destination,
-					value,
-				))
-			}
-		}
-		log::debug!("{:b}", value);
-		log::debug!("{:?}", self.transfer);
-	}
-
 	pub fn read_hdma5(&self) -> u8 {
-		if let Some(transfer) = &self.transfer {
-			transfer.chunks_remaining.wrapping_sub(1)
-		} else {
-			self.hdma5
-		}
+		self.hdma5
 	}
 
-	pub fn get_next_transfer(&mut self) -> Option<TransferRequest> {
-		let Some(transfer) = &mut self.transfer else { return None };
+	pub fn get_source(&self) -> u16 {
+		self.source & 0xFFF0
+	}
 
-		if transfer.complete() {
-			panic!("Transfer is already complete")
-		}
+	pub fn get_destination(&self) -> u16 {
+		(self.destination & 0xFFF0) | 0x8000
+	}
 
-		let from = transfer.source;
-		let to = transfer.destination;
+	pub fn write_hdma5(&mut self, value: u8) -> Option<TransferRequest> {
+		log::info!("Wrote to HDMA");
 
-		transfer.chunks_remaining -= 1;
-		self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
-
-		if transfer.complete() {
-			self.transfer = None;
+		// GDMA Transfer
+		if value & BIT_7 == 0 {
+			// HDMA Active
+			if self.hdma5 & BIT_7 == 0 {
+				self.hdma5 |= 0x80;
+				log::info!("transfer canceled");
+			} else {
+				let bytes = (((value & 0x7F) as u16) + 1) * 0x10;
+				self.hdma5 = 0xFF;
+				return Some(TransferRequest {
+					from: self.get_source(),
+					to: self.get_destination(),
+					bytes,
+				});
+			}
 		} else {
-			transfer.source += 16;
-			transfer.destination += 16;
+			self.hdma5 = value & 0x7F;
 		}
-
-		Some(TransferRequest {
-			from,
-			to,
-			bytes: 16,
-		})
+		None
 	}
 
 	// Each step  might return a transfer, this transfer must be performed by the caller
-	pub fn step(&mut self, h_blank: bool) -> Option<TransferRequest> {
-		let Some(transfer) = &self.transfer else { return None };
+	pub fn step(&mut self) -> Option<TransferRequest> {
+		if self.hdma5 & BIT_7 == 0 {
+			let request = TransferRequest {
+				from: self.get_source(),
+				to: self.get_destination(),
+				bytes: 0x10,
+			};
 
-		match transfer.mode {
-			TransferMode::GeneralPurpose => self.get_next_transfer(),
-			TransferMode::HBlank if h_blank => self.get_next_transfer(),
-			_ => None,
+			self.source += 0x10;
+			self.destination += 0x10;
+			self.hdma5 = self.hdma5.wrapping_sub(1);
+			Some(request)
+		} else {
+			None
 		}
 	}
 }

@@ -229,7 +229,11 @@ impl IORegisters for Gameboy {
 			HDMA2 => self.dma_controller.write_source_low(value),
 			HDMA3 => self.dma_controller.write_destination_high(value),
 			HDMA4 => self.dma_controller.write_destination_low(value),
-			HDMA5 => self.dma_controller.write_hdma5(value),
+			HDMA5 => {
+				if let Some(request) = self.dma_controller.write_hdma5(value) {
+					self.handle_transfer(request)
+				}
+			}
 
 			// Timer
 			DIV => self.timer.set_div(value),
