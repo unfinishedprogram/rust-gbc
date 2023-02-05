@@ -14,19 +14,15 @@ use crate::{
 
 use crate::{arg, inst, mem}; // Macros
 
-pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instruction {
+pub fn fetch_instruction<T: SourcedMemoryMapper>(cpu: &mut impl CPU<T>) -> Instruction {
 	let raw = cpu.next_byte();
 
 	let Opcode(x, z, y, p, q) = *parse_opcode(raw);
 	match (x, z, y, p, q) {
-		//(x, z, y, p, q)
 		(0, 0, 0, _, _) => inst!(cpu, NOP),
 		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp())), SP),
 		(0, 0, 2, _, _) => {
 			// Cpu reads next byte when executing stop even though it is not used
-			if cpu.next_byte() != 0 {
-				log::warn!("Stop instruction executed without following NOP");
-			}
 			inst!(cpu, STOP)
 		}
 		(0, 0, 3, _, _) => {
@@ -35,7 +31,7 @@ pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instructi
 				.read_16(&CPURegister16::PC.into())
 				.wrapping_add_signed(offset as i16);
 
-			inst!(cpu, JR, (Condition::ALWAYS), (ValueRefU16::Raw(addr)))
+			inst!(cpu, JR, (Condition::Always), (ValueRefU16::Raw(addr)))
 		}
 		(0, 0, _, _, _) => {
 			let offset = cpu.next_displacement();
@@ -104,9 +100,9 @@ pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instructi
 
 		(3, 1, _, _, 0) => inst!(cpu, POP, (DT.rp2[p])),
 
-		(3, 1, _, 0, 1) => inst!(cpu, RET, (Condition::ALWAYS)),
+		(3, 1, _, 0, 1) => inst!(cpu, RET, (Condition::Always)),
 		(3, 1, _, 1, 1) => inst!(cpu, RETI),
-		(3, 1, _, 2, 1) => inst!(cpu, JP, (Condition::ALWAYS), HL),
+		(3, 1, _, 2, 1) => inst!(cpu, JP, (Condition::Always), HL),
 		(3, 1, _, 3, 1) => inst!(cpu, LD_16, SP, HL),
 
 		(3, 2, 4, _, _) => {
@@ -119,7 +115,7 @@ pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instructi
 
 		(3, 2, c, _, _) => inst!(cpu, JP, (DT.cc[c]), nn),
 
-		(3, 3, 0, _, _) => inst!(cpu, JP, (Condition::ALWAYS), nn),
+		(3, 3, 0, _, _) => inst!(cpu, JP, (Condition::Always), nn),
 
 		(3, 3, 1, _, _) => {
 			let cb_raw = cpu.next_byte();
@@ -146,7 +142,7 @@ pub fn fetch_instruction<T: CPU + SourcedMemoryMapper>(cpu: &mut T) -> Instructi
 		(3, 5, _, 2, 0) => inst!(cpu, PUSH, (CPURegister16::HL)),
 		(3, 5, _, 3, 0) => inst!(cpu, PUSH, (CPURegister16::AF)),
 
-		(3, 5, _, 0, 1) => inst!(cpu, CALL, (Condition::ALWAYS), nn),
+		(3, 5, _, 0, 1) => inst!(cpu, CALL, (Condition::Always), nn),
 
 		(3, 6, _, _, _) => inst!(cpu, ALU_OP_8, (DT.alu[y]), A, n),
 		(3, 7, _, _, _) => inst!(cpu, RST, ((y as u16) * 8)),

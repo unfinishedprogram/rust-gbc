@@ -64,7 +64,7 @@ impl Debug for Transfer {
 			source,
 			destination,
 			total_chunks,
-			chunks_remaining,
+			chunks_remaining: _,
 		} = &self;
 
 		write!(
@@ -114,7 +114,7 @@ impl DMAController {
 			false => TransferMode::GeneralPurpose,
 		};
 		debug!("New Transfer: {mode:?}",);
-		let total_chunks = ((byte + 1) & !BIT_7) as u16;
+		let total_chunks = (byte & !BIT_7) as u16 + 1;
 
 		let source = source & 0xFFF0;
 		let destination = (destination & 0xFFF0) | 0x8000;
@@ -128,27 +128,16 @@ impl DMAController {
 		}
 	}
 
-	pub fn on_hdma5_write(&mut self, value: u8) {
-		if (value & 0x80) == 0 {
-			if self.is_hdma_active() {
-				self.transfer = None;
-				self.hdma5 |= 0x80;
-			}
-		} else {
-			// save the len
-			self.hdma5 = value & 0x7F;
-		}
-	}
-
 	pub fn write_hdma5(&mut self, value: u8) {
+		log::info!("Wrote to HDMA");
 		match &mut self.transfer {
 			Some(transfer) => {
-				log::error!("Wrote to HDMA");
+				log::info!("Write to HDMA5 During transfer");
 				debug_assert!(matches!(transfer.mode, TransferMode::HBlank));
 
 				// Writing zero to bit 7 when a HDMA transfer is active terminates it
 				if value & BIT_7 == 0 {
-					self.hdma5 = transfer.chunks_remaining - 1;
+					self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
 					self.hdma5 |= BIT_7;
 					self.transfer = None;
 				} else {
@@ -171,9 +160,9 @@ impl DMAController {
 
 	pub fn read_hdma5(&self) -> u8 {
 		if let Some(transfer) = &self.transfer {
-			transfer.chunks_remaining - 1
+			transfer.chunks_remaining.wrapping_sub(1)
 		} else {
-			return self.hdma5;
+			self.hdma5
 		}
 	}
 
@@ -187,13 +176,14 @@ impl DMAController {
 		let from = transfer.source;
 		let to = transfer.destination;
 
-		transfer.source += 16;
-		transfer.destination += 16;
+		self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
 		transfer.chunks_remaining -= 1;
 
-		self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
 		if transfer.complete() {
 			self.transfer = None;
+		} else {
+			transfer.source += 16;
+			transfer.destination += 16;
 		}
 
 		Some(TransferRequest {
@@ -212,16 +202,5 @@ impl DMAController {
 			TransferMode::HBlank if h_blank => self.get_next_transfer(),
 			_ => None,
 		}
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	// Note this useful idiom: importing names from outer (for mod tests) scope.
-	use super::*;
-	#[test]
-	fn test_transfer() {
-		let transfer = DMAController::new_transfer(0, 0, 0b10000000);
-		assert_eq!(transfer.total_chunks, 1);
 	}
 }

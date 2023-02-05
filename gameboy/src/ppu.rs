@@ -252,7 +252,7 @@ impl PPU {
 				if self.get_ly() < 144 {
 					self.cycle += 81;
 					self.set_mode(OamScan);
-					return Some(OamScan);
+					Some(OamScan)
 				} else {
 					self.cycle += 456;
 					self.window_line = 255;
@@ -263,7 +263,7 @@ impl PPU {
 					}
 
 					self.set_mode(VBlank);
-					return Some(VBlank);
+					Some(VBlank)
 				}
 			}
 			VBlank => {
@@ -297,5 +297,11 @@ impl PPU {
 				}
 			}
 		}
+	}
+}
+
+impl Default for PPU {
+	fn default() -> Self {
+		Self::new()
 	}
 }

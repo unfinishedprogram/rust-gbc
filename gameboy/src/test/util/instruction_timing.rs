@@ -1,4 +1,4 @@
-use crate::{cpu::flags::Flags, test::boot::BOOTED_EMULATOR};
+use crate::{cpu::{flags::Flags, CPU}, test::boot::BOOTED_EMULATOR};
 
 /// Instrs will be loaded as if the first instructions in the rom
 pub fn expect_instr_timing(name: &str, instrs: &[u8], steps: usize, expected: u64, flag: u8) {
@@ -16,8 +16,8 @@ pub fn get_cycles_taken(instrs: &[u8], steps: usize, flag: u8) -> u64 {
 	let start_cycle = state.get_cycle();
 
 	// Clear all the flags
-	state.clear_flag(0xFF);
-	state.set_flag(flag);
+	state.cpu_state_mut().clear_flag(0xFF);
+	state.cpu_state_mut().set_flag(flag);
 
 	if let Some(cart) = &mut state.cartridge_state {
 		for (i, instr) in instrs.iter().enumerate() {

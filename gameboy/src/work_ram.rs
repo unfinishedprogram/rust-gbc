@@ -4,8 +4,8 @@ use crate::util::BigArray;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum WorkRam {
-	CGB(WorkRamDataCGB),
-	DMG(WorkRamDataDMG),
+	CGB(Box<WorkRamDataCGB>),
+	DMG(Box<WorkRamDataDMG>),
 }
 
 pub trait BankedWorkRam {

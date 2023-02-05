@@ -294,9 +294,9 @@ impl IORegisters for Gameboy {
 				let mut oam_data = vec![0; 0xA0];
 				let real_addr = (value as u16) << 8;
 
-				for i in 0..0xA0 {
+				(0..0xA0).for_each(|i| {
 					oam_data[i] = self.read_from(real_addr + i as u16, Source::Raw);
-				}
+				});
 
 				self.oam_dma.start_oam_dma(oam_data);
 			}

@@ -56,8 +56,6 @@ pub struct Gameboy {
 	pub io_register_state: IORegisterState,
 	pub serial_output: Vec<u8>,
 	pub timer: Timer,
-	pub halted: bool,
-	pub interrupt_enable_register: u8,
 	pub raw_joyp_input: u8,
 	pub booting: bool,
 	pub boot_rom: Vec<u8>,
@@ -90,11 +88,9 @@ impl Default for Gameboy {
 			cartridge_state: None,
 			ram_bank: 0,
 			mode: GameboyMode::DMG,
-			w_ram: WorkRam::DMG(WorkRamDataDMG::default()),
+			w_ram: WorkRam::DMG(Box::<WorkRamDataDMG>::default()),
 			hram: [0; 0x80],
 			serial_output: vec![],
-			halted: false,
-			interrupt_enable_register: 0,
 			raw_joyp_input: 0,
 			t_states: 0,
 			speed_switch_delay: 0,
@@ -118,6 +114,16 @@ impl Gameboy {
 	}
 
 	pub fn step(&mut self) {
+		if self.dma_controller.gdma_active() {
+			self.tick_m_cycles(1);
+			return;
+		}
+
+		if self.speed_switch_delay > 0 {
+			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
+			self.tick_m_cycles(1);
+			return;
+		}
 		self.step_cpu();
 	}
 
@@ -150,6 +156,7 @@ impl Gameboy {
 	}
 
 	fn handle_transfer(&mut self, request: TransferRequest) {
+		log::info!("[{:X}]:{request:?}", self.get_cycle());
 		let TransferRequest { from, to, bytes } = request;
 		for i in 0..bytes {
 			self.write(to + i, self.read(from + i));
@@ -224,8 +231,8 @@ impl Gameboy {
 		};
 
 		self.w_ram = match mode {
-			GameboyMode::GBC(_) => WorkRam::CGB(WorkRamDataCGB::default()),
-			GameboyMode::DMG => WorkRam::DMG(WorkRamDataDMG::default()),
+			GameboyMode::GBC(_) => WorkRam::CGB(Box::<WorkRamDataCGB>::default()),
+			GameboyMode::DMG => WorkRam::DMG(Box::<WorkRamDataDMG>::default()),
 		};
 		self.mode = mode;
 	}
