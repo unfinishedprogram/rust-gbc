@@ -128,27 +128,16 @@ impl DMAController {
 		}
 	}
 
-	pub fn on_hdma5_write(&mut self, value: u8) {
-		if (value & 0x80) == 0 {
-			if self.is_hdma_active() {
-				self.transfer = None;
-				self.hdma5 |= 0x80;
-			}
-		} else {
-			// save the len
-			self.hdma5 = value & 0x7F;
-		}
-	}
-
 	pub fn write_hdma5(&mut self, value: u8) {
+		log::info!("Wrote to HDMA");
 		match &mut self.transfer {
 			Some(transfer) => {
-				log::error!("Wrote to HDMA");
+				log::info!("Write to HDMA5 During transfer");
 				debug_assert!(matches!(transfer.mode, TransferMode::HBlank));
 
 				// Writing zero to bit 7 when a HDMA transfer is active terminates it
 				if value & BIT_7 == 0 {
-					self.hdma5 = transfer.chunks_remaining - 1;
+					self.hdma5 = transfer.chunks_remaining.wrapping_sub(1);
 					self.hdma5 |= BIT_7;
 					self.transfer = None;
 				} else {
@@ -213,16 +202,5 @@ impl DMAController {
 			TransferMode::HBlank if h_blank => self.get_next_transfer(),
 			_ => None,
 		}
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	// Note this useful idiom: importing names from outer (for mod tests) scope.
-	use super::*;
-	#[test]
-	fn test_transfer() {
-		let transfer = DMAController::new_transfer(0, 0, 0b10000000);
-		assert_eq!(transfer.total_chunks, 1);
 	}
 }

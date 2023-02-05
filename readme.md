@@ -32,3 +32,7 @@
 | ✅   | roms/09-op r,r.gb             |
 | ✅   | roms/10-bit ops.gb            |
 | ✅   | roms/11-op a,(hl).gb          |
+
+
+### 02/04/2023 
+  test result: FAILED. 1171 passed; 1757 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.42s

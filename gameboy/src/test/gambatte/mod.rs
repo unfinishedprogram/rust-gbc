@@ -30,7 +30,7 @@ impl GambatteTest {
 	}
 }
 
-#[test_resources("../roms/test/gambatte/*/*cgb04c_out*.gbc")]
+#[test_resources("src/test/roms/gambatte/*/*cgb04c_out*.gbc")]
 fn exec_test(resource: &str) {
 	let test = GambatteTest::new(resource.to_string());
 	let output = get_test_output(&test);
@@ -40,9 +40,8 @@ fn exec_test(resource: &str) {
 
 fn get_test_output(test: &GambatteTest) -> String {
 	let mut state = init_emulator_with_rom(&test.path);
-	let start_frame = state.ppu.lcd.as_ref().unwrap().frame;
 
-	for _ in 0..100000 {
+	for _ in 0..1053360 / 4 {
 		state.step();
 	}
 
@@ -52,8 +51,9 @@ fn get_test_output(test: &GambatteTest) -> String {
 
 fn screen_pixels(screen: &[u8]) -> Vec<Vec<bool>> {
 	let mut pixels = vec![vec![false; 160]; 144];
-	for y in 0..144 {
-		for x in 0..160 {
+
+	for (y, pixel_row) in pixels.iter_mut().enumerate() {
+		for (x, pixel) in pixel_row.iter_mut().enumerate() {
 			let index = (x + y * 160) * 4;
 
 			let [r, g, b, a] = [
@@ -63,31 +63,29 @@ fn screen_pixels(screen: &[u8]) -> Vec<Vec<bool>> {
 				screen[index + 3],
 			];
 
-			let pix = match (r, g, b, a) {
+			*pixel = match (r, g, b, a) {
 				(0, 0, 0, 255) => true,
 				(255, 255, 255, 255) => false,
 				_ => unreachable!("Must be all black and white"),
 			};
-			pixels[y][x] = pix;
 		}
 	}
 	pixels
 }
 
-fn pixels_to_tiles(pixels: &Vec<Vec<bool>>) -> Vec<Vec<u64>> {
+fn pixels_to_tiles(pixels: &[Vec<bool>]) -> Vec<Vec<u64>> {
 	let mut tiles = vec![vec![0; 20]; 16];
 	for y in 0..16 {
 		for x in 0..20 {
 			let mut tile = [0; 8];
-			let mut v = 0;
 			for l in 0..8 {
 				let mut row: Vec<bool> = pixels[(y * 8) + l][(x * 8)..(x * 8 + 8)].to_vec();
 				row.reverse();
-				for i in 0..8 {
+				(0..8).for_each(|i| {
 					if row[i] {
 						tile[l] |= bit(i as u8)
 					}
-				}
+				});
 			}
 			tiles[y][x] = u64::from_be_bytes(tile);
 		}

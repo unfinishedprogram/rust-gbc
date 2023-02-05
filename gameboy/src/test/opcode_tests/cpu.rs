@@ -1,7 +1,6 @@
 use super::{memory_mapper::FlatMemory, state::TestState};
 use crate::cpu::registers::CPURegister8::*;
 use crate::cpu::{CPUState, CPU};
-use crate::memory_mapper::MemoryMapper;
 
 #[derive(Default)]
 pub struct MockCpu {
@@ -47,7 +46,7 @@ impl From<TestState> for MockCpu {
 		res.cpu_state.registers[H] = state.h;
 		res.cpu_state.registers[L] = state.l;
 
-		res.memory.data = state.ram.clone();
+		res.memory.data = state.ram;
 		res
 	}
 }

@@ -156,6 +156,7 @@ impl Gameboy {
 	}
 
 	fn handle_transfer(&mut self, request: TransferRequest) {
+		log::info!("[{:X}]:{request:?}", self.get_cycle());
 		let TransferRequest { from, to, bytes } = request;
 		for i in 0..bytes {
 			self.write(to + i, self.read(from + i));
