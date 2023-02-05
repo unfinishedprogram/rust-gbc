@@ -178,20 +178,22 @@ pub trait CPU<M: SourcedMemoryMapper> {
 			return None;
 		}
 
-		let requests = self.cpu_state_mut().ie_register & self.get_memory_mapper().read(IF);
+		let ie = self.cpu_state().ie_register;
+
+		if ie == 0 {
+			return None;
+		};
+
+		let requests = ie & self.get_memory_mapper().read(IF);
 
 		if requests == 0 {
 			return None;
 		};
 
-		for index in 0..5 {
-			let interrupt = 1 << index;
-			if requests & interrupt != 0 {
-				self.clear_request(interrupt);
-				return Some(interrupt);
-			}
-		}
-		None
+		// Gets the rightmost set bit
+		let index = requests & (!requests + 1);
+		self.clear_request(index);
+		Some(index)
 	}
 
 	fn step_cpu(&mut self)
