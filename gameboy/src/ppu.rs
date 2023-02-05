@@ -223,8 +223,10 @@ impl PPU {
 	}
 
 	pub fn step_ppu_cycles(&mut self, cycles: u64) {
-		let to_step = if self.cycle < cycles {
-			cycles - self.cycle
+		let to_step = if self.cycle <= cycles {
+			let res = cycles - self.cycle;
+			self.cycle = 0;
+			res
 		} else {
 			self.cycle -= cycles;
 			0
@@ -250,7 +252,7 @@ impl PPU {
 			HBlank => {
 				self.set_ly(self.get_ly() + 1);
 				if self.get_ly() < 144 {
-					self.cycle += 81;
+					self.cycle += 80;
 					self.set_mode(OamScan);
 					Some(OamScan)
 				} else {
