@@ -223,17 +223,12 @@ impl PPU {
 	}
 
 	pub fn step_ppu_cycles(&mut self, cycles: u64) {
-		let to_step = if self.cycle <= cycles {
-			let res = cycles - self.cycle;
-			self.cycle = 0;
-			res
+		if self.cycle > cycles {
+			self.cycle -= cycles
 		} else {
-			self.cycle -= cycles;
-			0
-		};
-
-		for _ in 0..to_step {
-			self.step_ppu();
+			for _ in 0..cycles {
+				self.step_ppu();
+			}
 		}
 	}
 
