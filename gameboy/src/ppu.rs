@@ -265,7 +265,7 @@ impl PPU {
 			}
 			VBlank => {
 				if self.get_ly() < 153 {
-					self.cycle += 458;
+					self.cycle += 456;
 					self.set_ly(self.get_ly() + 1);
 					None
 				} else {
