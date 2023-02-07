@@ -116,11 +116,10 @@ impl BankedWorkRam for WorkRamDataDMG {
 	}
 
 	fn get_bank_mut(&mut self, bank: u8) -> &mut [u8; 0x1000] {
-		let bank = bank & 1;
-		if bank == 0 {
-			&mut self.bank_0
-		} else {
+		if bank & 1 == 1 {
 			&mut self.bank_1
+		} else {
+			&mut self.bank_0
 		}
 	}
 }
