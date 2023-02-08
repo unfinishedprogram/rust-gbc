@@ -4,7 +4,7 @@ mod setup_listeners;
 mod uploader;
 mod web_save_manager;
 pub use setup_listeners::setup_listeners;
-mod util;
+mod events;
 use gloo::{file::callbacks::FileReader, net::http::Request, timers::callback::Interval};
 use screen::get_screen_ctx;
 
@@ -103,8 +103,8 @@ impl Application {
 		self.frame_counts.push(frames);
 		self.frame_times.push(perf.now() - start_time);
 
-		let _frames: u64 = self.frame_counts.iter().sum();
-		let _time: f64 = self.frame_times.iter().sum();
+		let frames: u64 = self.frame_counts.iter().sum();
+		let time: f64 = self.frame_times.iter().sum();
 
 		let _state_text = if let GameboyMode::GBC(state) = &self.emulator_state.mode {
 			format!("{:?}", state.current_speed())
@@ -112,7 +112,7 @@ impl Application {
 			"".to_owned()
 		};
 
-		// gloo::console::log!(frames as f64 / (time / 1000.0));
+		gloo::console::log!(frames as f64 / (time / 1000.0));
 	}
 
 	pub fn step_emulator(&mut self, delta: f64) {

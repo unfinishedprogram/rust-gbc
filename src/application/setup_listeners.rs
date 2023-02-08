@@ -1,7 +1,7 @@
 use gloo::console::log;
 use gloo::utils::document;
 
-use super::{uploader::setup_upload_listeners, util::events::add_click_listener, APPLICATION};
+use super::{events::add_click_listener, uploader::setup_upload_listeners, APPLICATION};
 
 pub fn setup_listeners() {
 	setup_upload_listeners();
