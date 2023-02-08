@@ -7,7 +7,6 @@
 pub mod cartridge;
 pub mod cgb;
 pub mod controller;
-pub mod cpu;
 pub mod dma_controller;
 pub mod flags;
 pub mod io_registers;

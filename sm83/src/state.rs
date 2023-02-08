@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{flags::Flags, CPURegisters};
+use crate::cpu::flags::Flags;
 
-// TODO: Accurate interrupt handling
+use super::registers::CPURegisters;
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct CPUState {

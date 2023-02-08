@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use std::{
 	fmt::Debug,
 	ops::{Index, IndexMut},

@@ -11,13 +11,6 @@ pub const LCDC: u16 = 0xFF40;
 pub const STAT: u16 = 0xFF41;
 pub const TIMER: u16 = 0xFF07;
 
-// Interrupt flag masks, Same for INTERRUPT_ENABLE and INTERRUPT_REQUEST
-pub const INT_V_BLANK: u8 = BIT_0;
-pub const INT_LCD_STAT: u8 = BIT_1;
-pub const INT_TIMER: u8 = BIT_2;
-pub const INT_SERIAL: u8 = BIT_3;
-pub const INT_JOY_PAD: u8 = BIT_4;
-
 bitflags! {
 	#[derive(Serialize, Deserialize)]
 	pub struct STATFlags:u8 {

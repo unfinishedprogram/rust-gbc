@@ -1,4 +1,6 @@
-use crate::{cpu::{flags::Flags, CPU}, test::boot::BOOTED_EMULATOR};
+use sm83::{Flags, SM83};
+
+use crate::test::boot::BOOTED_EMULATOR;
 
 /// Instrs will be loaded as if the first instructions in the rom
 pub fn expect_instr_timing(name: &str, instrs: &[u8], steps: usize, expected: u64, flag: u8) {

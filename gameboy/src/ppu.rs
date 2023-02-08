@@ -13,10 +13,9 @@ use crate::{
 };
 
 use serde::{Deserialize, Serialize};
+use sm83::flags::interrupt::{LCD_STAT, V_BLANK};
 
 use self::{color_ram::ColorRamController, renderer::Pixel, sprite::Sprite};
-
-use super::flags::{INT_LCD_STAT, INT_V_BLANK};
 
 #[derive(Clone, Serialize, Deserialize, Default)]
 enum FetcherMode {
@@ -122,11 +121,11 @@ impl PPU {
 	}
 
 	fn request_v_blank(&mut self) {
-		self.interrupt_requests |= INT_V_BLANK;
+		self.interrupt_requests |= V_BLANK;
 	}
 
 	fn request_stat(&mut self) {
-		self.interrupt_requests |= INT_LCD_STAT;
+		self.interrupt_requests |= LCD_STAT;
 	}
 
 	pub fn write_lcdc(&mut self, value: u8) {

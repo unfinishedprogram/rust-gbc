@@ -713,6 +713,10 @@ dependencies = [
 [[package]]
 name = "sm83"
 version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "serde",
+]
 
 [[package]]
 name = "syn"

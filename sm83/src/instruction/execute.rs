@@ -1,25 +1,22 @@
 use crate::{
-	cpu::{
-		cpu_stack::CPUStack,
-		flags::{Flags, C, H, N, Z},
-		instruction::{ALUOperation, Instruction, Instruction::*},
-		registers::{CPURegister16, CPURegister8},
-		values::{ValueRefI8, ValueRefU16},
-		CPU,
-	},
-	flags::{INT_JOY_PAD, INT_LCD_STAT, INT_SERIAL, INT_TIMER, INT_V_BLANK},
+	bits::*,
+	flags::{cpu::*, interrupt::*, Flags},
+	instruction::ALUOperation,
 	memory_mapper::SourcedMemoryMapper,
-	util::bits::{BIT_0, BIT_7},
+	registers::{CPURegister16, CPURegister8},
+	stack::CPUStack,
+	values::{ValueRefI8, ValueRefU16},
+	SM83,
 };
 
-use super::super::condition::Condition;
+use super::{
+	Condition,
+	Instruction::{self, *},
+};
 
 use std::ops::{BitAnd, BitOr, BitXor};
 
-pub fn execute_instruction<T: SourcedMemoryMapper>(
-	state: &mut impl CPU<T>,
-	instruction: Instruction,
-) {
+pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: Instruction) {
 	let cpu = state;
 	match instruction {
 		NOP => {}
@@ -27,11 +24,11 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 			cpu.tick_m_cycles(2);
 
 			let location = match interrupt {
-				INT_V_BLANK => 0x40,
-				INT_LCD_STAT => 0x48,
-				INT_TIMER => 0x50,
-				INT_SERIAL => 0x58,
-				INT_JOY_PAD => 0x60,
+				V_BLANK => 0x40,
+				LCD_STAT => 0x48,
+				TIMER => 0x50,
+				SERIAL => 0x58,
+				JOY_PAD => 0x60,
 				_ => unreachable!(),
 			};
 
@@ -44,8 +41,8 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 		}
 
 		COMPOSE(a, b) => {
-			execute_instruction(cpu, *a);
-			execute_instruction(cpu, *b);
+			execute(cpu, *a);
+			execute(cpu, *b);
 		}
 
 		LDH(to, from) => {
@@ -315,14 +312,14 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 		}
 
 		RLA => {
-			execute_instruction(
+			execute(
 				cpu,
 				Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
 			);
 			cpu.cpu_state_mut().clear_flag(Z);
 		}
 		RRA => {
-			execute_instruction(
+			execute(
 				cpu,
 				Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
 			);
@@ -442,7 +439,7 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 		}
 
 		LD_A_INC_HL => {
-			execute_instruction(
+			execute(
 				cpu,
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 			);
@@ -452,7 +449,7 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 		}
 
 		LD_A_DEC_HL => {
-			execute_instruction(
+			execute(
 				cpu,
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 			);
@@ -474,7 +471,7 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 		}
 
 		LD_INC_HL_A => {
-			execute_instruction(
+			execute(
 				cpu,
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 			);
@@ -484,7 +481,7 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 		}
 
 		LD_DEC_HL_A => {
-			execute_instruction(
+			execute(
 				cpu,
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 			);
@@ -507,8 +504,8 @@ pub fn execute_instruction<T: SourcedMemoryMapper>(
 		}
 
 		RETI => {
-			execute_instruction(cpu, EI);
-			execute_instruction(cpu, RET(Condition::Always));
+			execute(cpu, EI);
+			execute(cpu, RET(Condition::Always));
 		}
 	}
 }

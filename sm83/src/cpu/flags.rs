@@ -1,9 +1,20 @@
-use crate::util::bits::*;
+pub mod cpu {
+	pub const Z: u8 = 0b10000000;
+	pub const N: u8 = 0b01000000;
+	pub const H: u8 = 0b00100000;
+	pub const C: u8 = 0b00010000;
+}
 
-pub const Z: u8 = BIT_7;
-pub const N: u8 = BIT_6;
-pub const H: u8 = BIT_5;
-pub const C: u8 = BIT_4;
+// Interrupt Flag Bits
+pub mod interrupt {
+	use crate::bits::*;
+
+	pub const V_BLANK: u8 = BIT_0;
+	pub const LCD_STAT: u8 = BIT_1;
+	pub const TIMER: u8 = BIT_2;
+	pub const SERIAL: u8 = BIT_3;
+	pub const JOY_PAD: u8 = BIT_4;
+}
 
 pub trait Flags {
 	fn get_flag_byte_mut(&mut self) -> &mut u8;

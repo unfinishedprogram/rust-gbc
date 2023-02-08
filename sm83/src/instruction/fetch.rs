@@ -7,14 +7,13 @@ use super::{
 	Instruction::*,
 	ValueRefU8,
 };
+
 use crate::{
-	cpu::{registers::CPURegister16, values::ValueRefU16, CPU},
-	memory_mapper::SourcedMemoryMapper,
-};
+	arg, inst, mem, memory_mapper::SourcedMemoryMapper, registers::CPURegister16,
+	values::ValueRefU16, SM83,
+}; // Macros
 
-use crate::{arg, inst, mem}; // Macros
-
-pub fn fetch_instruction<T: SourcedMemoryMapper>(cpu: &mut impl CPU<T>) -> Instruction {
+pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 	let raw = cpu.next_byte();
 
 	let Opcode(x, z, y, p, q) = *parse_opcode(raw);

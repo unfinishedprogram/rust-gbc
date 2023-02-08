@@ -1,4 +1,4 @@
-use crate::memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper};
+use sm83::memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper};
 
 #[derive(Default)]
 pub struct FlatMemory {

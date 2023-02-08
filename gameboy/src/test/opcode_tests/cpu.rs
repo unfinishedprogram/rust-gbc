@@ -1,6 +1,5 @@
 use super::{memory_mapper::FlatMemory, state::TestState};
-use crate::cpu::registers::CPURegister8::*;
-use crate::cpu::{CPUState, CPU};
+use sm83::{registers::CPURegister8::*, CPUState, SM83};
 
 #[derive(Default)]
 pub struct MockCpu {
@@ -8,7 +7,7 @@ pub struct MockCpu {
 	pub cpu_state: CPUState,
 }
 
-impl CPU<FlatMemory> for MockCpu {
+impl SM83<FlatMemory> for MockCpu {
 	fn cpu_state(&self) -> &CPUState {
 		&self.cpu_state
 	}

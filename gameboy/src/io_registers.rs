@@ -1,11 +1,13 @@
 use std::ops::{Index, IndexMut};
 
 use serde::{Deserialize, Serialize};
+use sm83::{
+	flags::interrupt,
+	memory_mapper::{Source, SourcedMemoryMapper},
+};
 
 use crate::{
-	flags::{INTERRUPT_REQUEST, INT_SERIAL},
-	memory_mapper::Source,
-	memory_mapper::SourcedMemoryMapper,
+	flags::INTERRUPT_REQUEST,
 	state::GameboyMode,
 	util::{bits::*, BigArray},
 	work_ram::BankedWorkRam,
@@ -278,7 +280,7 @@ impl IORegisters for Gameboy {
 				if value == 0x81 {
 					self.io_register_state[SC] = 0x01;
 					self.io_register_state[SB] = 0xFF;
-					self.request_interrupt(INT_SERIAL);
+					self.request_interrupt(interrupt::SERIAL);
 				}
 			}
 

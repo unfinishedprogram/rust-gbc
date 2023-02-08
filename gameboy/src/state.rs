@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use crate::{
 	cgb::{CGBState, Speed},
 	dma_controller::{DMAController, TransferRequest},
-	memory_mapper::MemoryMapper,
 	oam_dma::OamDmaState,
 	ppu::VRAMBank,
 	util::BigArray,
@@ -13,14 +12,17 @@ use crate::{
 use super::{
 	cartridge::memory_bank_controller::Cartridge,
 	controller::ControllerState,
-	cpu::{CPUState, CPU},
-	flags::{INTERRUPT_REQUEST, INT_JOY_PAD},
+	flags::INTERRUPT_REQUEST,
 	io_registers::IORegisterState,
 	lcd::LCD,
-	memory_mapper::{Source, SourcedMemoryMapper},
 	ppu::{PPUMode, PPU},
 	save_state::{RomSource, SaveState},
 	timer::Timer,
+};
+
+use sm83::{
+	memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper},
+	CPUState, SM83,
 };
 
 type Color = (u8, u8, u8, u8);
@@ -189,7 +191,7 @@ impl Gameboy {
 		self.raw_joyp_input = state.as_byte();
 
 		if ((self.raw_joyp_input) ^ state.as_byte()) & state.as_byte() != 0 {
-			self.request_interrupt(INT_JOY_PAD);
+			self.request_interrupt(0b10000);
 		}
 	}
 
@@ -239,6 +241,36 @@ impl Gameboy {
 		match &self.mode {
 			GameboyMode::DMG => VRAMBank::Bank0,
 			GameboyMode::GBC(state) => state.get_vram_bank(),
+		}
+	}
+}
+
+impl SM83<Gameboy> for Gameboy {
+	fn get_memory_mapper_mut(&mut self) -> &mut Gameboy {
+		self
+	}
+
+	fn get_memory_mapper(&self) -> &Gameboy {
+		self
+	}
+
+	fn cpu_state(&self) -> &CPUState {
+		&self.cpu_state
+	}
+
+	fn cpu_state_mut(&mut self) -> &mut CPUState {
+		&mut self.cpu_state
+	}
+
+	fn tick_m_cycles(&mut self, m_cycles: u32) {
+		self.cpu_state_mut().ime = self.cpu_state().ie_next;
+		Gameboy::tick_m_cycles(self, m_cycles)
+	}
+
+	fn exec_stop(&mut self) {
+		if let crate::state::GameboyMode::GBC(state) = &mut self.mode {
+			self.speed_switch_delay = 2050;
+			state.perform_speed_switch();
 		}
 	}
 }

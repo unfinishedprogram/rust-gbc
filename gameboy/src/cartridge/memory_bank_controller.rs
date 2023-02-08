@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use sm83::memory_mapper::MemoryMapper;
 
-use crate::{cartridge::mbc3, memory_mapper::MemoryMapper, save_state::RomSource};
+use crate::{cartridge::mbc3, save_state::RomSource};
 
 use super::{
 	cartridge_data::CartridgeData,

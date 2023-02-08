@@ -1,4 +1,4 @@
-use crate::cpu::flags::{C, Z};
+use sm83::flags::cpu::{C, Z};
 
 use super::util::instruction_timing::expect_instr_timing;
 

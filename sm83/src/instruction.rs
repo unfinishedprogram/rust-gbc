@@ -2,13 +2,15 @@
 // https://gb-archive.github.io/salvage/decoding_gbz80_opcodes/Decoding%20Gamboy%20Z80%20Opcodes.html
 
 mod decode_tables;
-pub(crate) mod execute;
-pub(crate) mod fetch;
+mod execute;
+mod fetch;
+pub use execute::execute;
+pub use fetch::fetch;
 
 #[macro_use]
 pub mod mac_instruction;
 pub mod opcode;
-use super::condition::Condition;
+use super::Condition;
 use core::fmt::Debug;
 
 use super::{

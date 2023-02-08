@@ -221,33 +221,3 @@ pub trait CPU<M: SourcedMemoryMapper> {
 	fn get_memory_mapper_mut(&mut self) -> &mut M;
 	fn get_memory_mapper(&self) -> &M;
 }
-
-impl CPU<Gameboy> for Gameboy {
-	fn get_memory_mapper_mut(&mut self) -> &mut Gameboy {
-		self
-	}
-
-	fn get_memory_mapper(&self) -> &Gameboy {
-		self
-	}
-
-	fn cpu_state(&self) -> &CPUState {
-		&self.cpu_state
-	}
-
-	fn cpu_state_mut(&mut self) -> &mut CPUState {
-		&mut self.cpu_state
-	}
-
-	fn tick_m_cycles(&mut self, m_cycles: u32) {
-		self.cpu_state_mut().ime = self.cpu_state().ie_next;
-		Gameboy::tick_m_cycles(self, m_cycles)
-	}
-
-	fn exec_stop(&mut self) {
-		if let crate::state::GameboyMode::GBC(state) = &mut self.mode {
-			self.speed_switch_delay = 2050;
-			state.perform_speed_switch();
-		}
-	}
-}

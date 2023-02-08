@@ -1,5 +1,6 @@
-use super::registers::{CPURegister16, CPURegister8};
 use std::fmt;
+
+use crate::registers::{CPURegister16, CPURegister8};
 
 impl From<CPURegister16> for ValueRefU16 {
 	fn from(value: CPURegister16) -> Self {
@@ -58,22 +59,24 @@ pub struct ValueRefI8(pub i8);
 
 impl fmt::Debug for ValueRefU16 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		use ValueRefU16::*;
 		match self {
-			ValueRefU16::Raw(x) => write!(f, "${x:04X}"),
-			ValueRefU16::Mem(x) => write!(f, "[${x:04X}]"),
-			ValueRefU16::Reg(x) => write!(f, "{x:?}"),
+			Raw(x) => write!(f, "${x:04X}"),
+			Mem(x) => write!(f, "[${x:04X}]"),
+			Reg(x) => write!(f, "{x:?}"),
 		}
 	}
 }
 
 impl fmt::Debug for ValueRefU8 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		use ValueRefU8::*;
 		match self {
-			ValueRefU8::Raw(x) => write!(f, "${x:02X}"),
-			ValueRefU8::Mem(x) => write!(f, "[{x:?}]"),
-			ValueRefU8::Reg(x) => write!(f, "{x:?}"),
-			ValueRefU8::MemOffsetRaw(offset) => write!(f, "[${:04X}]", (*offset as u16) + 0xFF00),
-			ValueRefU8::MemOffsetReg(reg) => write!(f, "[{reg:?}]"),
+			Raw(x) => write!(f, "${x:02X}"),
+			Mem(x) => write!(f, "[{x:?}]"),
+			Reg(x) => write!(f, "{x:?}"),
+			MemOffsetRaw(offset) => write!(f, "[${:04X}]", (*offset as u16) + 0xFF00),
+			MemOffsetReg(reg) => write!(f, "[{reg:?}]"),
 		}
 	}
 }
