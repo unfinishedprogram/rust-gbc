@@ -34,12 +34,13 @@ pub enum GameboyMode {
 	// Basic monochrome mode
 	DMG,
 }
+const DMG_SPEED: Speed = Speed::Normal;
 
 impl GameboyMode {
-	pub fn get_speed(&self) -> Speed {
+	pub fn get_speed(&self) -> &Speed {
 		match self {
 			GameboyMode::GBC(state) => state.current_speed(),
-			GameboyMode::DMG => Speed::Normal,
+			GameboyMode::DMG => &DMG_SPEED,
 		}
 	}
 }
@@ -263,7 +264,7 @@ impl SM83<Gameboy> for Gameboy {
 	}
 
 	fn tick_m_cycles(&mut self, m_cycles: u32) {
-		self.cpu_state_mut().ime = self.cpu_state().ie_next;
+		self.cpu_state.ime = self.cpu_state.ie_next;
 		Gameboy::tick_m_cycles(self, m_cycles)
 	}
 
