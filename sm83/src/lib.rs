@@ -1,6 +1,6 @@
 mod bits;
 mod cpu;
-mod instruction;
+pub mod instruction;
 pub mod memory_mapper;
 pub mod registers;
 mod stack;
@@ -19,6 +19,9 @@ pub use cpu::condition;
 
 const IE: u16 = 0xFFFF;
 const IF: u16 = 0xFF0F;
+
+#[cfg(test)]
+mod test;
 
 pub trait SM83<M: SourcedMemoryMapper> {
 	fn disable_interrupts(&mut self) {

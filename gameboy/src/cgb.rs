@@ -13,7 +13,7 @@ pub struct CGBState {
 	prepare_speed_switch: bool,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Default, Debug)]
+#[derive(Clone, Serialize, Deserialize, Default, Debug)]
 pub enum Speed {
 	#[default]
 	Normal,
@@ -71,11 +71,11 @@ impl CGBState {
 
 	pub fn perform_speed_switch(&mut self) {
 		if self.prepare_speed_switch {
-			self.speed = !self.speed;
+			self.speed = !self.speed.clone();
 		}
 	}
 
-	pub fn current_speed(&self) -> Speed {
-		self.speed
+	pub fn current_speed(&self) -> &Speed {
+		&self.speed
 	}
 }

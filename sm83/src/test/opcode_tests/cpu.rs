@@ -1,5 +1,5 @@
 use super::{memory_mapper::FlatMemory, state::TestState};
-use sm83::{registers::CPURegister8::*, CPUState, SM83};
+use crate::{registers::CPURegister8::*, CPUState, SM83};
 
 #[derive(Default)]
 pub struct MockCpu {

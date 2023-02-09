@@ -12,15 +12,15 @@ pub struct Timer {
 	tma: u8,
 	tac: u8,
 
+	enabled: bool,
 	pub tima_delay: u8,
-
 	pub interrupt_requests: u8,
 }
 
 impl Timer {
 	pub fn set_div(&mut self, _: u8) {
 		// Detect falling edge for timer
-		if self.timer_enabled() {
+		if self.enabled {
 			let bit = self.timer_speed() as u16 >> 1;
 			if (self.system_clock & bit) == bit {
 				self.increment_tima();
@@ -32,9 +32,7 @@ impl Timer {
 	}
 
 	pub fn set_tima(&mut self, value: u8) {
-		// if self.tima_delay == 0 {
 		self.tima = value;
-		// }
 	}
 
 	pub fn set_tma(&mut self, value: u8) {
@@ -43,6 +41,7 @@ impl Timer {
 
 	pub fn set_tac(&mut self, value: u8) {
 		self.tac = value;
+		self.enabled = self.tac & BIT_2 == BIT_2
 	}
 
 	pub fn get_div(&self) -> u8 {
@@ -68,23 +67,16 @@ impl Timer {
 		}
 	}
 
-	fn timer_enabled(&self) -> bool {
-		self.tac & BIT_2 == BIT_2
-	}
-
-	pub fn step_cycle(&mut self, speed: Speed) {
+	pub fn step_cycle(&mut self, speed: &Speed) {
 		let from = self.system_clock;
-
 		self.system_clock = self.system_clock.wrapping_add(1);
-
 		let to = self.system_clock;
 
 		// Div is the top 8 bits of the 16 bit system clock
 		self.div = (self.system_clock >> 8) as u8;
 
 		// Detect falling edge for timer
-		if self.timer_enabled() {
-			// let bit = self.timer_speed() as u16;
+		if self.enabled {
 			let bit = match speed {
 				Speed::Normal => self.timer_speed() as u16,
 				Speed::Double => (self.timer_speed() as u16) << 1,
@@ -106,18 +98,14 @@ impl Timer {
 	}
 
 	fn increment_tima(&mut self) {
-		let (next_tima, overflow) = self.tima.overflowing_add(1);
-
-		if overflow {
-			self.tima = 0;
+		self.tima = self.tima.wrapping_add(1);
+		if self.tima == 0 {
 			self.tima_delay = 5;
-		} else {
-			self.tima = next_tima;
 		}
 	}
 
-	pub fn step(&mut self, cycles: u64, speed: Speed) {
-		let cycles = match speed {
+	pub fn step(&mut self, cycles: u64, speed: &Speed) {
+		let cycles = match *speed {
 			Speed::Normal => cycles * 4,
 			Speed::Double => cycles * 8,
 		};
