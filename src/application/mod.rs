@@ -48,6 +48,7 @@ pub struct Application {
 	input_state: InputState,
 	frame_counts: Vec<u64>,
 	frame_times: Vec<f64>,
+	speed_multiplier: f64,
 }
 
 impl Default for Application {
@@ -66,6 +67,7 @@ impl Default for Application {
 			input_state: InputState::new(),
 			running_state: RunningState::Paused,
 			emulator_state,
+			speed_multiplier: 1.0,
 		}
 	}
 }
@@ -126,8 +128,7 @@ impl Application {
 	pub fn step_frame(&mut self) {
 		let controller_state = self.input_state.get_controller_state();
 		self.emulator_state.set_controller_state(&controller_state);
-		// self.step_emulator(0.015);
-		self.step_fast(15.0);
+		self.step_emulator(0.015 * self.speed_multiplier);
 		self.render_screen()
 	}
 
@@ -177,5 +178,9 @@ impl Application {
 	pub async fn load_save_state(&mut self, save: SaveState) {
 		let rom = Self::load_rom_from_source(save.rom_source.clone()).await;
 		self.load_save_state_with_rom(&rom.unwrap(), save);
+	}
+
+	pub fn set_speed(&mut self, multiplier: f64) {
+		self.speed_multiplier = multiplier;
 	}
 }

@@ -13,6 +13,15 @@ pub fn load_rom(rom: &[u8], source: String) {
 	});
 }
 
+#[allow(dead_code)]
+#[wasm_bindgen]
+pub fn set_speed(multiplier: f64) {
+	APPLICATION.with_borrow_mut(|app| {
+		app.set_speed(multiplier);
+		app.start();
+	});
+}
+
 fn main() {
 	wasm_logger::init(wasm_logger::Config::default());
 	console_error_panic_hook::set_once();
