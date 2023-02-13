@@ -72,7 +72,8 @@ impl Default for Application {
 
 impl Application {
 	pub fn render_screen(&mut self) {
-		let screen = self.emulator_state.ppu.lcd.as_mut().unwrap();
+		let screen = self.emulator_state.ppu.lcd.as_ref().unwrap();
+
 		let img_data =
 			ImageData::new_with_u8_clamped_array(Clamped(screen.get_current_as_bytes()), 160)
 				.unwrap();

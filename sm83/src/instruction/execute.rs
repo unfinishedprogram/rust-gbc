@@ -108,13 +108,21 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.write_16(&ptr, ptr_val.wrapping_sub(1));
 		}
 
-		STOP => {
-			cpu.exec_stop();
-		}
-
+		STOP => cpu.exec_stop(),
 		ERROR(_) => {}
 
-		JP(condition, location) | JR(condition, location) => {
+		JR(condition, ValueRefI8(offset)) => {
+			if cpu.check_condition(condition) {
+				let addr = cpu
+					.read_16(&CPURegister16::PC.into())
+					.wrapping_add_signed(offset as i16);
+
+				cpu.write_16(&CPURegister16::PC.into(), addr);
+				cpu.tick_m_cycles(1);
+			}
+		}
+
+		JP(condition, location) => {
 			if cpu.check_condition(condition) {
 				let loc_val = cpu.read_16(&location);
 				cpu.write_16(&CPURegister16::PC.into(), loc_val);

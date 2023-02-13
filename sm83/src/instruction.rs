@@ -4,6 +4,7 @@
 mod decode_tables;
 mod execute;
 mod fetch;
+mod fetcher;
 pub use execute::execute;
 pub use fetch::fetch;
 
@@ -31,7 +32,7 @@ pub enum Instruction {
 	INC_16(ValueRefU16),
 	DEC_8(ValueRefU8),
 	DEC_16(ValueRefU16),
-	JR(Condition, ValueRefU16),
+	JR(Condition, ValueRefI8),
 	ADD_16(ValueRefU16, ValueRefU16),
 	ADD_SIGNED(ValueRefU16, ValueRefI8),
 	ALU_OP_8(ALUOperation, ValueRefU8, ValueRefU8),

@@ -18,28 +18,12 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 
 	let Opcode(x, z, y, p, q) = *parse_opcode(raw);
 	match (x, z, y, p, q) {
-		(0, 0, 0, _, _) => inst!(cpu, NOP),
+		(0, 0, 0, _, _) => NOP,
 		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp())), SP),
-		(0, 0, 2, _, _) => {
-			// Cpu reads next byte when executing stop even though it is not used
-			inst!(cpu, STOP)
-		}
-		(0, 0, 3, _, _) => {
-			let offset = cpu.next_displacement();
-			let addr = cpu
-				.read_16(&CPURegister16::PC.into())
-				.wrapping_add_signed(offset as i16);
+		(0, 0, 2, _, _) => STOP,
 
-			inst!(cpu, JR, (Condition::Always), (ValueRefU16::Raw(addr)))
-		}
-		(0, 0, _, _, _) => {
-			let offset = cpu.next_displacement();
-			let addr = cpu
-				.read_16(&CPURegister16::PC.into())
-				.wrapping_add_signed(offset as i16);
-
-			inst!(cpu, JR, (DT.cc[(y - 4)]), (ValueRefU16::Raw(addr)))
-		}
+		(0, 0, 3, _, _) => inst!(cpu, JR, (Condition::Always), d),
+		(0, 0, _, _, _) => inst!(cpu, JR, (DT.cc[(y - 4)]), d),
 
 		(0, 1, _, _, 0) => inst!(cpu, LD_16, (DT.rp[p]), nn),
 

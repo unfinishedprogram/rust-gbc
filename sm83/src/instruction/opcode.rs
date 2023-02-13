@@ -19,6 +19,7 @@ lazy_static! {
 	pub static ref OPCODE_INDEX: Vec<Opcode> = (0..256usize).map(|i| i.into()).collect();
 }
 
+#[inline(always)]
 pub fn parse_opcode(raw: u8) -> &'static Opcode {
 	&OPCODE_INDEX[raw as usize]
 }
