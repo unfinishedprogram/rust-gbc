@@ -4,7 +4,6 @@
 mod decode_tables;
 mod execute;
 mod fetch;
-mod fetcher;
 pub use execute::execute;
 pub use fetch::fetch;
 
