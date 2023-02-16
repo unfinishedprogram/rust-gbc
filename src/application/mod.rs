@@ -165,7 +165,7 @@ impl Application {
 
 	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
 		self.emulator_state = Gameboy::default();
-		let lcd = LCD::new();
+		let lcd = LCD::default();
 		self.emulator_state.bind_lcd(lcd);
 		self.emulator_state.load_rom(rom, source);
 	}
@@ -173,7 +173,7 @@ impl Application {
 	pub fn load_save_state_with_rom(&mut self, rom: &[u8], save: SaveState) {
 		self.load_rom(rom, save.rom_source.clone());
 		self.emulator_state = self.emulator_state.clone().load_save_state(save);
-		self.emulator_state.bind_lcd(LCD::new());
+		self.emulator_state.bind_lcd(LCD::default());
 	}
 
 	pub async fn load_save_state(&mut self, save: SaveState) {

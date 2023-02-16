@@ -44,16 +44,6 @@ impl LCDDisplay for LCD {
 }
 
 impl LCD {
-	pub fn new() -> Self {
-		let buffers = vec![vec![100; 160 * 144 * 4], vec![255; 160 * 144 * 4]];
-		Self {
-			frame: 0,
-			scale: 3.0,
-			current_buffer: 0,
-			buffers,
-		}
-	}
-
 	pub fn swap_buffers(&mut self) {
 		self.frame += 1;
 		self.current_buffer ^= 1;
@@ -66,6 +56,12 @@ impl LCD {
 
 impl Default for LCD {
 	fn default() -> Self {
-		Self::new()
+		let buffers = vec![vec![100; 160 * 144 * 4], vec![255; 160 * 144 * 4]];
+		Self {
+			frame: 0,
+			scale: 3.0,
+			current_buffer: 0,
+			buffers,
+		}
 	}
 }
