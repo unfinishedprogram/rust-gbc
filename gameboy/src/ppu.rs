@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 
 use crate::{
 	flags::{LCDFlags, STATFlags},
-	lcd::LCD,
+	lcd::GameboyLCD,
 	ppu::renderer::PixelFIFO,
 	util::BigArray,
 };
@@ -55,7 +55,7 @@ pub struct PPU {
 	pub interrupt_requests: u8,
 
 	#[serde(skip)]
-	pub lcd: Option<LCD>,
+	pub lcd: Option<GameboyLCD>,
 
 	pub scy: u8,
 	pub scx: u8,

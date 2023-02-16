@@ -8,20 +8,20 @@ pub trait LCDDisplay {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct LCD {
+pub struct GameboyLCD {
 	buffers: Vec<Vec<u8>>,
 	current_buffer: usize,
 	pub frame: u64,
 	pub scale: f32,
 }
 
-impl PartialEq for LCD {
+impl PartialEq for GameboyLCD {
 	fn eq(&self, other: &Self) -> bool {
 		self.frame == other.frame
 	}
 }
 
-impl LCDDisplay for LCD {
+impl LCDDisplay for GameboyLCD {
 	fn get_size(&self) -> (u8, u8) {
 		(160, 144)
 	}
@@ -45,7 +45,7 @@ impl LCDDisplay for LCD {
 	}
 }
 
-impl LCD {
+impl GameboyLCD {
 	pub fn swap_buffers(&mut self) {
 		self.frame += 1;
 		self.current_buffer ^= 1;
@@ -56,7 +56,7 @@ impl LCD {
 	}
 }
 
-impl Default for LCD {
+impl Default for GameboyLCD {
 	fn default() -> Self {
 		let buffers = vec![vec![100; 160 * 144 * 4], vec![255; 160 * 144 * 4]];
 		Self {

@@ -1,6 +1,6 @@
 use std::fs::read;
 
-use crate::{lcd::LCD, Gameboy};
+use crate::{lcd::GameboyLCD, Gameboy};
 extern crate test;
 
 use lazy_static::lazy_static;
@@ -21,7 +21,7 @@ lazy_static! {
 		// Not a specific rom, just one that has a valid logo and will pass checks
 		// TODO: Make this a custom rom that minimally satisfies the boot requirements
 		let rom = read("../roms/test/dmg-acid2.gb").unwrap();
-		let lcd = LCD::default();
+		let lcd = GameboyLCD::default();
 
 		state.bind_lcd(lcd);
 		state.load_rom(&rom, None);

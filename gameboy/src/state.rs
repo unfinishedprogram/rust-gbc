@@ -15,7 +15,7 @@ use super::{
 	controller::ControllerState,
 	flags::INTERRUPT_REQUEST,
 	io_registers::IORegisterState,
-	lcd::LCD,
+	lcd::GameboyLCD,
 	ppu::{PPUMode, PPU},
 	save_state::{RomSource, SaveState},
 	timer::Timer,
@@ -124,7 +124,7 @@ impl Gameboy {
 		self.step_cpu();
 	}
 
-	pub fn bind_lcd(&mut self, lcd: LCD) {
+	pub fn bind_lcd(&mut self, lcd: GameboyLCD) {
 		self.ppu.lcd = Some(lcd);
 	}
 
