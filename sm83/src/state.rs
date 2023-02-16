@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::cpu::flags::Flags;
 
-use super::registers::CPURegisters;
+use super::registers::{CPURegister8, CPURegisters};
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct CPUState {
@@ -15,10 +15,10 @@ pub struct CPUState {
 
 impl Flags for CPUState {
 	fn get_flag_byte_mut(&mut self) -> &mut u8 {
-		&mut self.registers.bytes[5]
+		&mut self.registers[CPURegister8::F]
 	}
 
 	fn get_flag_byte(&self) -> &u8 {
-		&self.registers.bytes[5]
+		&self.registers[CPURegister8::F]
 	}
 }
