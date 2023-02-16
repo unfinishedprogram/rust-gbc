@@ -14,7 +14,6 @@ pub struct Timer {
 
 	enabled: bool,
 	pub tima_delay: u8,
-	pub interrupt_requests: u8,
 }
 
 impl Timer {
@@ -67,7 +66,7 @@ impl Timer {
 		}
 	}
 
-	pub fn step_cycle(&mut self, speed: &Speed) {
+	pub fn step_cycle(&mut self, speed: &Speed, interrupt_request: &mut u8) {
 		let from = self.system_clock;
 		self.system_clock = self.system_clock.wrapping_add(1);
 		let to = self.system_clock;
@@ -92,7 +91,7 @@ impl Timer {
 			self.tima_delay -= 1;
 			if self.tima_delay == 0 {
 				self.tima = self.tma;
-				self.interrupt_requests |= TIMER;
+				*interrupt_request |= TIMER;
 			}
 		}
 	}
@@ -104,14 +103,14 @@ impl Timer {
 		}
 	}
 
-	pub fn step(&mut self, cycles: u64, speed: &Speed) {
+	pub fn step(&mut self, cycles: u64, speed: &Speed, interrupt_request: &mut u8) {
 		let cycles = match *speed {
 			Speed::Normal => cycles * 4,
 			Speed::Double => cycles * 8,
 		};
 
 		for _ in 0..cycles {
-			self.step_cycle(speed);
+			self.step_cycle(speed, interrupt_request);
 		}
 	}
 }

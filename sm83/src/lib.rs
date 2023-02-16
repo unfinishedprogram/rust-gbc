@@ -17,16 +17,12 @@ pub use cpu::flags::{self, Flags};
 
 pub use cpu::condition;
 
-const IE: u16 = 0xFFFF;
-const IF: u16 = 0xFF0F;
-
 #[cfg(test)]
 mod test;
 
 pub trait SM83<M: SourcedMemoryMapper> {
 	fn disable_interrupts(&mut self) {
 		self.cpu_state_mut().ie_next = false;
-		self.cpu_state_mut().ime = false;
 	}
 
 	fn enable_interrupts(&mut self) {
@@ -150,52 +146,11 @@ pub trait SM83<M: SourcedMemoryMapper> {
 	where
 		Self: Sized,
 	{
-		if let Some(int) = self.fetch_next_interrupt() {
+		if let Some(int) = self.cpu_state_mut().fetch_next_interrupt() {
 			Instruction::INT(int)
 		} else {
 			self.fetch_next_instruction()
 		}
-	}
-
-	fn interrupt_pending(&self) -> bool {
-		// No interrupts can be pending if there are none enabled
-		if self.cpu_state().ie_register == 0 {
-			return false;
-		};
-
-		self.cpu_state().ie_register & self.get_memory_mapper().read(IF) != 0
-	}
-
-	fn check_interrupt(&self, interrupt: u8) -> bool {
-		self.get_memory_mapper().read(IE) & self.get_memory_mapper().read(IF) & interrupt != 0
-	}
-
-	fn clear_request(&mut self, interrupt: u8) {
-		let flag = self.get_memory_mapper().read(IF);
-		self.get_memory_mapper_mut().write(IF, flag & !interrupt);
-	}
-
-	fn fetch_next_interrupt(&mut self) -> Option<u8> {
-		if !self.cpu_state().ime {
-			return None;
-		}
-
-		let ie = self.cpu_state().ie_register;
-
-		if ie == 0 {
-			return None;
-		};
-
-		let requests = ie & self.get_memory_mapper().read(IF);
-
-		if requests == 0 {
-			return None;
-		};
-
-		// Gets the rightmost set bit
-		let index = requests & (!requests + 1);
-		self.clear_request(index);
-		Some(index)
 	}
 
 	fn step_cpu(&mut self)
@@ -203,7 +158,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 		Self: Sized,
 	{
 		if self.cpu_state().halted {
-			if self.interrupt_pending() {
+			if self.cpu_state().interrupt_pending() {
 				self.cpu_state_mut().halted = false;
 			} else {
 				self.tick_m_cycles(1);
@@ -216,7 +171,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 
 	fn exec_stop(&mut self) {}
 	fn tick_m_cycles(&mut self, _m_cycles: u32) {
-		self.cpu_state_mut().ime = self.cpu_state().ie_next;
+		self.cpu_state_mut().interrupt_master_enable = self.cpu_state().ie_next;
 	}
 	fn cpu_state(&self) -> &CPUState;
 	fn cpu_state_mut(&mut self) -> &mut CPUState;

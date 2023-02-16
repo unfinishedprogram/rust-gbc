@@ -8,8 +8,9 @@ use super::registers::{CPURegister8, CPURegisters};
 pub struct CPUState {
 	pub registers: CPURegisters,
 	pub halted: bool,
-	pub ime: bool,
-	pub ie_register: u8,
+	pub interrupt_master_enable: bool,
+	pub interrupt_enable: u8,
+	pub interrupt_request: u8,
 	pub ie_next: bool,
 }
 
@@ -20,5 +21,40 @@ impl Flags for CPUState {
 
 	fn get_flag_byte(&self) -> &u8 {
 		&self.registers[CPURegister8::F]
+	}
+}
+
+impl CPUState {
+	fn clear_interrupt_request(&mut self, interrupt: u8) {
+		self.interrupt_request &= !interrupt;
+	}
+
+	pub fn interrupt_pending(&self) -> bool {
+		if self.interrupt_request == 0 {
+			return false;
+		};
+
+		self.interrupt_request & self.interrupt_enable != 0
+	}
+
+	pub fn fetch_next_interrupt(&mut self) -> Option<u8> {
+		if !self.interrupt_master_enable {
+			return None;
+		}
+
+		if self.interrupt_enable == 0 {
+			return None;
+		};
+
+		let requests = self.interrupt_enable & self.interrupt_request;
+
+		if requests == 0 {
+			return None;
+		};
+
+		// Gets the rightmost set bit
+		let index = requests & (!requests + 1);
+		self.clear_interrupt_request(index);
+		Some(index)
 	}
 }

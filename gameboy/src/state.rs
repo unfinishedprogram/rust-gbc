@@ -13,7 +13,6 @@ use crate::{
 use super::{
 	cartridge::memory_bank_controller::Cartridge,
 	controller::ControllerState,
-	flags::INTERRUPT_REQUEST,
 	io_registers::IORegisterState,
 	lcd::GameboyLCD,
 	ppu::{PPUMode, PPU},
@@ -21,10 +20,7 @@ use super::{
 	timer::Timer,
 };
 
-use sm83::{
-	memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper},
-	CPUState, SM83,
-};
+use sm83::{memory_mapper::MemoryMapper, CPUState, SM83};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum GameboyMode {
@@ -70,6 +66,8 @@ pub struct Gameboy {
 
 impl Default for Gameboy {
 	fn default() -> Self {
+		let mut cpu_state = CPUState::default();
+
 		let mut emulator = Self {
 			dma_controller: DMAController::default(),
 			color_scheme_dmg: (
@@ -96,7 +94,9 @@ impl Default for Gameboy {
 			speed_switch_delay: 0,
 		};
 		emulator.set_gb_mode(GameboyMode::GBC(CGBState::default()));
-		emulator.ppu.set_mode(PPUMode::OamScan);
+		emulator
+			.ppu
+			.set_mode(PPUMode::OamScan, &mut cpu_state.interrupt_request);
 		emulator
 	}
 }
@@ -143,7 +143,11 @@ impl Gameboy {
 			}
 
 			if self.speed_switch_delay == 0 {
-				self.timer.step(1, self.mode.get_speed());
+				self.timer.step(
+					1,
+					self.mode.get_speed(),
+					&mut self.cpu_state.interrupt_request,
+				);
 			}
 		}
 	}
@@ -160,7 +164,7 @@ impl Gameboy {
 		let mut new_mode: Option<PPUMode> = None;
 
 		for _ in 0..t_states {
-			let mode = self.ppu.step_ppu();
+			let mode = self.ppu.step_ppu(&mut self.cpu_state.interrupt_request);
 			if let Some(mode) = mode {
 				new_mode = Some(mode);
 			};
@@ -171,11 +175,7 @@ impl Gameboy {
 	}
 
 	pub fn request_interrupt(&mut self, interrupt: u8) {
-		self.write_from(
-			INTERRUPT_REQUEST,
-			self.read_from(INTERRUPT_REQUEST, Source::Raw) | interrupt,
-			Source::Raw,
-		);
+		self.cpu_state.interrupt_request |= interrupt;
 	}
 
 	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
@@ -260,7 +260,7 @@ impl SM83<Gameboy> for Gameboy {
 	}
 
 	fn tick_m_cycles(&mut self, m_cycles: u32) {
-		self.cpu_state.ime = self.cpu_state.ie_next;
+		self.cpu_state.interrupt_master_enable = self.cpu_state.ie_next;
 		Gameboy::tick_m_cycles(self, m_cycles)
 	}
 

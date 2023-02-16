@@ -7,7 +7,6 @@ use sm83::{
 };
 
 use crate::{
-	flags::INTERRUPT_REQUEST,
 	state::GameboyMode,
 	util::{bits::*, BigArray},
 	work_ram::BankedWorkRam,
@@ -134,7 +133,6 @@ impl IORegisters for Gameboy {
 		match addr {
 			// PPU
 			LCDC => self.ppu.read_lcdc(),
-
 			SCY => self.ppu.scy,
 			SCX => self.ppu.scx,
 			LYC => self.ppu.lyc,
@@ -203,12 +201,14 @@ impl IORegisters for Gameboy {
 
 			// Interrupt requests
 			IF => {
-				self.io_register_state[IF]
-					| self.ppu.interrupt_requests
-					| self.timer.interrupt_requests
-					| 0xE0
+				self.cpu_state.interrupt_request | 0xE0
+
+				// self.io_register_state[IF]
+				// 	| self.ppu.interrupt_requests
+				// 	| self.timer.interrupt_requests
+				// 	| 0xE0
 			}
-			IE => self.io_register_state[IE] | 0xE0,
+			IE => self.cpu_state.interrupt_enable | 0xE0,
 			_ => self.io_register_state[addr],
 		}
 	}
@@ -216,11 +216,15 @@ impl IORegisters for Gameboy {
 	fn write_io(&mut self, addr: u16, value: u8) {
 		match addr {
 			// PPU
-			LCDC => self.ppu.write_lcdc(value),
+			LCDC => self
+				.ppu
+				.write_lcdc(value, &mut self.cpu_state.interrupt_request),
 
 			SCY => self.ppu.scy = value,
 			SCX => self.ppu.scx = value,
-			LYC => self.ppu.set_lyc(value),
+			LYC => self
+				.ppu
+				.set_lyc(value, &mut self.cpu_state.interrupt_request),
 			BGP => self.ppu.bgp = value,
 			OBP0 => self.ppu.obp0 = value,
 			OBP1 => self.ppu.obp1 = value,
@@ -285,12 +289,14 @@ impl IORegisters for Gameboy {
 			}
 
 			IF => {
-				self.io_register_state[INTERRUPT_REQUEST] = value & 0b00011111;
-				self.ppu.interrupt_requests = value & 0b00011111;
-				self.timer.interrupt_requests = value & 0b00011111;
+				self.cpu_state.interrupt_request = value & 0b00011111;
+
+				// self.io_register_state[INTERRUPT_REQUEST] = value & 0b00011111;
+				// self.ppu.interrupt_requests = value & 0b00011111;
+				// self.timer.interrupt_requests = value & 0b00011111;
 			}
 
-			IE => self.io_register_state[IE] = value & 0b00011111,
+			IE => self.cpu_state.interrupt_enable = value & 0b00011111,
 			DMA => {
 				self.io_register_state[DMA] = value;
 

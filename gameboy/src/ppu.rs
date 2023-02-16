@@ -52,7 +52,6 @@ pub struct PPU {
 
 	#[serde(with = "BigArray")]
 	pub oam: [u8; 0xA0],
-	pub interrupt_requests: u8,
 
 	#[serde(skip)]
 	pub lcd: Option<GameboyLCD>,
@@ -87,36 +86,28 @@ pub struct PPU {
 }
 
 impl PPU {
-	fn request_v_blank(&mut self) {
-		self.interrupt_requests |= V_BLANK;
-	}
-
-	fn request_stat(&mut self) {
-		self.interrupt_requests |= LCD_STAT;
-	}
-
-	pub fn write_lcdc(&mut self, value: u8) {
+	pub fn write_lcdc(&mut self, value: u8, interrupt_register: &mut u8) {
 		let value = LCDFlags::from_bits_truncate(value);
 
 		if !value.contains(LCDFlags::DISPLAY_ENABLE) {
-			self.disable_display();
+			self.disable_display(interrupt_register);
 		}
 		self.lcdc = value;
-		self.update_lyc()
+		self.update_lyc(interrupt_register)
 	}
 
 	pub fn read_lcdc(&self) -> u8 {
 		self.lcdc.bits()
 	}
 
-	pub fn update_lyc(&mut self) {
+	pub fn update_lyc(&mut self, interrupt_register: &mut u8) {
 		if self.is_enabled() {
 			let last = self.stat.contains(STATFlags::LYC_EQ_LY);
 
 			self.stat.set(STATFlags::LYC_EQ_LY, self.ly == self.lyc);
 
 			if self.ly == self.lyc && !last && self.stat.contains(STATFlags::LYC_EQ_LY_IE) {
-				self.request_stat();
+				*interrupt_register |= LCD_STAT;
 			}
 		}
 	}
@@ -141,9 +132,9 @@ impl PPU {
 		self.lcdc.contains(LCDFlags::DISPLAY_ENABLE)
 	}
 
-	pub fn set_lyc(&mut self, lyc: u8) {
+	pub fn set_lyc(&mut self, lyc: u8, interrupt_register: &mut u8) {
 		self.lyc = lyc;
-		self.update_lyc();
+		self.update_lyc(interrupt_register);
 	}
 
 	pub fn write_stat(&mut self, value: u8) {
@@ -152,12 +143,12 @@ impl PPU {
 		self.stat |= value;
 	}
 
-	pub fn set_ly(&mut self, value: u8) {
+	pub fn set_ly(&mut self, value: u8, interrupt_register: &mut u8) {
 		self.ly = value;
-		self.update_lyc();
+		self.update_lyc(interrupt_register);
 	}
 
-	pub fn set_mode(&mut self, mode: PPUMode) {
+	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) {
 		self.stat.remove(STATFlags::PPU_MODE);
 		self.stat.insert(STATFlags::from_bits_truncate(mode as u8));
 
@@ -174,31 +165,31 @@ impl PPU {
 			OamScan => self.stat.contains(STATFlags::OAM_IE),
 			Draw => false,
 		} {
-			self.request_stat()
+			*interrupt_register |= LCD_STAT;
 		}
 
 		if matches!(mode, VBlank) {
-			self.request_v_blank();
+			*interrupt_register |= V_BLANK;
 		}
 	}
 
-	fn disable_display(&mut self) {
-		self.set_ly(0);
+	fn disable_display(&mut self, interrupt_register: &mut u8) {
+		self.set_ly(0, interrupt_register);
 		self.current_pixel = 0;
-		self.set_mode(PPUMode::HBlank);
+		self.set_mode(PPUMode::HBlank, interrupt_register);
 	}
 
-	pub fn step_ppu_cycles(&mut self, cycles: u64) {
-		if self.cycle > cycles {
-			self.cycle -= cycles
-		} else {
-			for _ in 0..cycles {
-				self.step_ppu();
-			}
-		}
-	}
+	// pub fn step_ppu_cycles(&mut self, cycles: u64) {
+	// 	if self.cycle > cycles {
+	// 		self.cycle -= cycles
+	// 	} else {
+	// 		for _ in 0..cycles {
+	// 			self.step_ppu();
+	// 		}
+	// 	}
+	// }
 
-	pub fn step_ppu(&mut self) -> Option<PPUMode> {
+	pub fn step_ppu(&mut self, interrupt_register: &mut u8) -> Option<PPUMode> {
 		if !self.is_enabled() {
 			return None;
 		}
@@ -211,10 +202,10 @@ impl PPU {
 		use PPUMode::*;
 		match self.get_mode() {
 			HBlank => {
-				self.set_ly(self.get_ly() + 1);
+				self.set_ly(self.get_ly() + 1, interrupt_register);
 				if self.get_ly() < 144 {
 					self.cycle += 80;
-					self.set_mode(OamScan);
+					self.set_mode(OamScan, interrupt_register);
 					Some(OamScan)
 				} else {
 					self.cycle += 456;
@@ -225,26 +216,26 @@ impl PPU {
 						lcd.swap_buffers();
 					}
 
-					self.set_mode(VBlank);
+					self.set_mode(VBlank, interrupt_register);
 					Some(VBlank)
 				}
 			}
 			VBlank => {
 				if self.get_ly() < 153 {
 					self.cycle += 456;
-					self.set_ly(self.get_ly() + 1);
+					self.set_ly(self.get_ly() + 1, interrupt_register);
 					None
 				} else {
-					self.set_ly(0);
+					self.set_ly(0, interrupt_register);
 					self.cycle += 80;
-					self.set_mode(OamScan);
+					self.set_mode(OamScan, interrupt_register);
 					Some(OamScan)
 				}
 			}
 			OamScan => {
 				self.cycle += 12;
 				self.start_scanline();
-				self.set_mode(Draw);
+				self.set_mode(Draw, interrupt_register);
 				Some(Draw)
 			}
 			Draw => {
@@ -253,7 +244,7 @@ impl PPU {
 					self.current_pixel = 0;
 					self.current_tile = 0;
 					self.cycle += 204;
-					self.set_mode(HBlank);
+					self.set_mode(HBlank, interrupt_register);
 					Some(HBlank)
 				} else {
 					None
@@ -271,7 +262,6 @@ impl Default for PPU {
 			v_ram_bank_1: [0; 0x2000],
 			oam: [0; 0xA0],
 			cycle: 0,
-			interrupt_requests: 0,
 			lcd: None,
 			scy: 0,
 			scx: 0,

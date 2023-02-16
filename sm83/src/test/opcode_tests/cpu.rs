@@ -28,8 +28,8 @@ impl SM83<FlatMemory> for MockCpu {
 impl From<TestState> for MockCpu {
 	fn from(state: TestState) -> Self {
 		let mut res = Self::default();
-		res.cpu_state.ime = state.ime == 1;
-		res.cpu_state.ie_next = res.cpu_state.ime;
+		res.cpu_state.interrupt_master_enable = state.ime == 1;
+		res.cpu_state.ie_next = res.cpu_state.interrupt_master_enable;
 
 		res.cpu_state.registers.pc = state.pc;
 		res.cpu_state.registers.sp = state.sp;
@@ -66,7 +66,11 @@ impl From<MockCpu> for TestState {
 			f: state.cpu_state.registers[F],
 			h: state.cpu_state.registers[H],
 			l: state.cpu_state.registers[L],
-			ime: if state.cpu_state.ime { 1 } else { 0 },
+			ime: if state.cpu_state.interrupt_master_enable {
+				1
+			} else {
+				0
+			},
 			// ei: state.cpu_state.ie_register,
 			ram,
 		}
