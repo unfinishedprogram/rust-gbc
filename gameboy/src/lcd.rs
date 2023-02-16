@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+pub type Color = (u8, u8, u8, u8);
+
 pub trait LCDDisplay {
 	fn get_size(&self) -> (u8, u8);
-	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8, u8));
+	fn put_pixel(&mut self, x: u8, y: u8, color: Color);
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -24,7 +26,7 @@ impl LCDDisplay for LCD {
 		(160, 144)
 	}
 
-	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8, u8)) {
+	fn put_pixel(&mut self, x: u8, y: u8, color: Color) {
 		let (width, height) = self.get_size();
 		if x >= width || y >= height {
 			return;

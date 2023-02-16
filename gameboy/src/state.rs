@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
 	cgb::{CGBState, Speed},
 	dma_controller::{DMAController, TransferRequest},
+	lcd::Color,
 	oam_dma::OamDmaState,
 	ppu::VRAMBank,
 	util::BigArray,
@@ -24,8 +25,6 @@ use sm83::{
 	memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper},
 	CPUState, SM83,
 };
-
-type Color = (u8, u8, u8, u8);
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum GameboyMode {
