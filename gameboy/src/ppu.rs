@@ -87,39 +87,6 @@ pub struct PPU {
 }
 
 impl PPU {
-	pub fn new() -> Self {
-		Self {
-			window_line: 0xFF,
-			v_ram_bank_0: [0; 0x2000],
-			v_ram_bank_1: [0; 0x2000],
-			oam: [0; 0xA0],
-			cycle: 0,
-			interrupt_requests: 0,
-			lcd: None,
-			scy: 0,
-			scx: 0,
-			lyc: 0,
-			bgp: 0,
-			obp0: 0,
-			obp1: 0,
-			wy: 0,
-			wx: 0,
-			stat: STATFlags::empty(),
-			bg_color: Default::default(),
-			obj_color: Default::default(),
-			frame: 0,
-			fetcher_mode: FetcherMode::Background,
-			current_pixel: 0,
-			lcdc: LCDFlags::empty(),
-			ly: 0,
-			sprites: vec![],
-			current_tile: 0,
-			fifo_pixel: 0,
-			fifo_bg: Default::default(),
-			fifo_obj: Default::default(),
-		}
-	}
-
 	fn request_v_blank(&mut self) {
 		self.interrupt_requests |= V_BLANK;
 	}
@@ -298,6 +265,35 @@ impl PPU {
 
 impl Default for PPU {
 	fn default() -> Self {
-		Self::new()
+		Self {
+			window_line: 0xFF,
+			v_ram_bank_0: [0; 0x2000],
+			v_ram_bank_1: [0; 0x2000],
+			oam: [0; 0xA0],
+			cycle: 0,
+			interrupt_requests: 0,
+			lcd: None,
+			scy: 0,
+			scx: 0,
+			lyc: 0,
+			bgp: 0,
+			obp0: 0,
+			obp1: 0,
+			wy: 0,
+			wx: 0,
+			stat: STATFlags::empty(),
+			bg_color: Default::default(),
+			obj_color: Default::default(),
+			frame: 0,
+			fetcher_mode: FetcherMode::Background,
+			current_pixel: 0,
+			lcdc: LCDFlags::empty(),
+			ly: 0,
+			sprites: vec![],
+			current_tile: 0,
+			fifo_pixel: 0,
+			fifo_bg: Default::default(),
+			fifo_obj: Default::default(),
+		}
 	}
 }
