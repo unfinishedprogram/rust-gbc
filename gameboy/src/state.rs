@@ -64,9 +64,7 @@ pub struct Gameboy {
 	pub dma_controller: DMAController,
 	pub oam_dma: OamDmaState,
 	t_states: u64,
-	pub next_interrupt: Option<u8>,
 	pub color_scheme_dmg: (Color, Color, Color, Color),
-
 	pub speed_switch_delay: u32,
 }
 
@@ -96,7 +94,6 @@ impl Default for Gameboy {
 			raw_joyp_input: 0,
 			t_states: 0,
 			speed_switch_delay: 0,
-			next_interrupt: None,
 		};
 		emulator.set_gb_mode(GameboyMode::GBC(CGBState::default()));
 		emulator.ppu.set_mode(PPUMode::OamScan);
