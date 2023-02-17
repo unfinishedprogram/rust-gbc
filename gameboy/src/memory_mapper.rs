@@ -8,30 +8,36 @@ use crate::{
 	Gameboy,
 };
 
+fn is_accessible(gb: &Gameboy, addr: u16, source: Source) -> bool {
+	match (
+		gb.oam_dma.oam_is_accessible(),
+		gb.ppu.get_mode(),
+		addr,
+		source,
+	) {
+		(_, _, _, Source::Raw) => true,
+		(_, _, DMA, _) => true,
+		(_, _, 0xFF80..0xFFFE, Source::Cpu) => true,
+		(false, _, _, Source::Cpu) => false,
+		(_, PPUMode::Draw | PPUMode::OamScan, 0xFE00..0xFE9F, Source::Cpu) => false,
+		(_, PPUMode::Draw, 0x8000..0xA000, Source::Cpu) => false,
+		(_, _, _, _) => true,
+	}
+}
+
 impl SourcedMemoryMapper for Gameboy {
 	fn read_from(&self, addr: u16, source: Source) -> u8 {
-		if matches!(source, Source::Cpu)
-			&& !self.oam_dma.oam_is_accessible()
-			&& !matches!(addr, 0xFF80..0xFFFF)
-			&& addr != DMA
-		{
-			return 0xFF;
+		if is_accessible(self, addr, source) {
+			self.read(addr)
+		} else {
+			0xFF
 		}
-
-		self.read(addr)
 	}
 
 	fn write_from(&mut self, addr: u16, value: u8, source: Source) {
-		// Don't allow reading from memory outside of HRAM from CPU during DMA transfer
-		if matches!(source, Source::Cpu)
-			&& !self.oam_dma.oam_is_accessible()
-			&& !matches!(addr, 0xFF80..0xFFFF)
-			&& addr != DMA
-		{
-			return;
-		}
-
-		self.write(addr, value)
+		if is_accessible(self, addr, source) {
+			self.write(addr, value);
+		};
 	}
 }
 
@@ -69,14 +75,8 @@ impl MemoryMapper for Gameboy {
 				self.w_ram.get_bank(self.w_ram.get_bank_number())[(addr - 0xD000) as usize]
 			} // Switchable RAM in CGB mode
 			0xE000..0xFE00 => self.read(addr - 0xE000 + 0xC000),                // Mirror, should not be used
-			0xFE00..0xFEA0 => {
-				if !matches!(self.ppu.get_mode(), PPUMode::Draw | PPUMode::OamScan) {
-					self.ppu.oam[(addr - 0xFE00) as usize]
-				} else {
-					0xFF
-				}
-			} // Object Attribute Map
-			0xFEA0..0xFF00 => 0x0,                                              // Unusable
+			0xFE00..0xFEA0 => self.ppu.oam[(addr - 0xFE00) as usize],           // Object Attribute Map
+			0xFEA0..0xFF00 => 0xFF,                                             // Unusable
 			0xFF00..0xFF80 => self.read_io(addr),                               // IO Registers
 			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize],              // HRAM
 			0xFFFF => self.cpu_state.interrupt_enable,                          // Interrupt enable
@@ -109,9 +109,6 @@ impl MemoryMapper for Gameboy {
 			} // Switchable RAM in CGB mode
 			0xE000..0xFE00 => self.write(addr - 0xE000 + 0xC000, value), // Mirror, should not be used
 			0xFE00..0xFEA0 => {
-				if matches!(self.ppu.get_mode(), PPUMode::Draw | PPUMode::OamScan) {
-					return;
-				}
 				self.ppu.oam[(addr - 0xFE00) as usize] = value;
 			} // Object Attribute Map
 			0xFEA0..0xFF00 => {}

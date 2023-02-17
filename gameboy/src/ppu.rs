@@ -179,16 +179,6 @@ impl PPU {
 		self.set_mode(PPUMode::HBlank, interrupt_register);
 	}
 
-	// pub fn step_ppu_cycles(&mut self, cycles: u64) {
-	// 	if self.cycle > cycles {
-	// 		self.cycle -= cycles
-	// 	} else {
-	// 		for _ in 0..cycles {
-	// 			self.step_ppu();
-	// 		}
-	// 	}
-	// }
-
 	pub fn step_ppu(&mut self, interrupt_register: &mut u8) -> Option<PPUMode> {
 		if !self.is_enabled() {
 			return None;
