@@ -20,7 +20,6 @@ use super::{
 
 #[allow(non_camel_case_types)]
 pub enum Instruction {
-	COMPOSE(Box<Instruction>, Box<Instruction>),
 	NOP,
 	STOP,
 	ERROR(u8),
@@ -173,7 +172,6 @@ impl Debug for Instruction {
 			Self::LD_DEC_HL_A => write!(f, "ld [hl-], a"),
 			Self::LD_INC_HL_A => write!(f, "ld [hl+], a"),
 			Self::LD_HL_SP_DD(arg0) => write!(f, "ld hl, sp + {arg0:?}"),
-			Self::COMPOSE(a, b) => write!(f, "{a:?} COMP {b:?}"),
 			Self::RETI => write!(f, "reti"),
 		}
 	}

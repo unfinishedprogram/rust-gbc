@@ -40,11 +40,6 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.disable_interrupts();
 		}
 
-		COMPOSE(a, b) => {
-			execute(cpu, *a);
-			execute(cpu, *b);
-		}
-
 		LDH(to, from) => {
 			let val = cpu.read_8(&from);
 			cpu.write_8(&to, val);
