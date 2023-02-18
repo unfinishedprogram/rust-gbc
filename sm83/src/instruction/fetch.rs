@@ -108,7 +108,7 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 				1 => inst!(cpu, BIT, (cb_y as u8), (DT.r[cb_z])),
 				2 => inst!(cpu, RES, (cb_y as u8), (DT.r[cb_z])),
 				3 => inst!(cpu, SET, (cb_y as u8), (DT.r[cb_z])),
-				_ => inst!(cpu, ERROR, (cb_raw)),
+				_ => unreachable!(),
 			}
 		}
 

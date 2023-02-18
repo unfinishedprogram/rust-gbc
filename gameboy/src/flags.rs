@@ -12,7 +12,7 @@ pub const STAT: u16 = 0xFF41;
 pub const TIMER: u16 = 0xFF07;
 
 bitflags! {
-	#[derive(Serialize, Deserialize)]
+	#[derive(Serialize, Deserialize, Default)]
 	pub struct STATFlags:u8 {
 		const READ_ONLY = 0b111;
 

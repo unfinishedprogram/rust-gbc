@@ -133,16 +133,16 @@ impl IORegisters for Gameboy {
 		match addr {
 			// PPU
 			LCDC => self.ppu.read_lcdc(),
-			SCY => self.ppu.scy,
-			SCX => self.ppu.scx,
-			LYC => self.ppu.lyc,
-			BGP => self.ppu.bgp,
-			OBP0 => self.ppu.obp0,
-			OBP1 => self.ppu.obp1,
-			WY => self.ppu.wy,
-			WX => self.ppu.wx,
+			SCY => self.ppu.registers.scy,
+			SCX => self.ppu.registers.scx,
+			LYC => self.ppu.registers.lyc,
+			BGP => self.ppu.registers.bgp,
+			OBP0 => self.ppu.registers.obp0,
+			OBP1 => self.ppu.registers.obp1,
+			WY => self.ppu.registers.wy,
+			WX => self.ppu.registers.wx,
 			LY => self.ppu.get_ly(),
-			STAT => self.ppu.stat.bits(),
+			STAT => self.ppu.registers.stat.bits(),
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
@@ -220,16 +220,16 @@ impl IORegisters for Gameboy {
 				.ppu
 				.write_lcdc(value, &mut self.cpu_state.interrupt_request),
 
-			SCY => self.ppu.scy = value,
-			SCX => self.ppu.scx = value,
+			SCY => self.ppu.registers.scy = value,
+			SCX => self.ppu.registers.scx = value,
 			LYC => self
 				.ppu
 				.set_lyc(value, &mut self.cpu_state.interrupt_request),
-			BGP => self.ppu.bgp = value,
-			OBP0 => self.ppu.obp0 = value,
-			OBP1 => self.ppu.obp1 = value,
-			WY => self.ppu.wy = value,
-			WX => self.ppu.wx = value,
+			BGP => self.ppu.registers.bgp = value,
+			OBP0 => self.ppu.registers.obp0 = value,
+			OBP1 => self.ppu.registers.obp1 = value,
+			WY => self.ppu.registers.wy = value,
+			WX => self.ppu.registers.wx = value,
 			STAT => self.ppu.write_stat(value),
 			HDMA1 => self.dma_controller.write_source_high(value),
 			HDMA2 => self.dma_controller.write_source_low(value),

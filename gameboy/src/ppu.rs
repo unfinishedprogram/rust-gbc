@@ -38,6 +38,19 @@ pub enum VRAMBank {
 	Bank0,
 	Bank1,
 }
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+pub struct Registers {
+	pub scy: u8,
+	pub scx: u8,
+	pub lyc: u8,
+	pub bgp: u8,
+	pub obp0: u8,
+	pub obp1: u8,
+	pub wy: u8,
+	pub wx: u8,
+	pub ly: u8,
+	pub stat: STATFlags,
+}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct PPU {
@@ -56,15 +69,7 @@ pub struct PPU {
 	#[serde(skip)]
 	pub lcd: Option<GameboyLCD>,
 
-	pub scy: u8,
-	pub scx: u8,
-	pub lyc: u8,
-	pub bgp: u8,
-	pub obp0: u8,
-	pub obp1: u8,
-	pub wy: u8,
-	pub wx: u8,
-	pub stat: STATFlags,
+	pub registers: Registers,
 
 	pub bg_color: ColorRamController,
 	pub obj_color: ColorRamController,
@@ -75,7 +80,6 @@ pub struct PPU {
 	current_pixel: u8,
 	window_line: u8,
 	lcdc: LCDFlags,
-	ly: u8,
 
 	sprites: Vec<Sprite>,
 	current_tile: u8,
@@ -102,18 +106,23 @@ impl PPU {
 
 	pub fn update_lyc(&mut self, interrupt_register: &mut u8) {
 		if self.is_enabled() {
-			let last = self.stat.contains(STATFlags::LYC_EQ_LY);
+			let last = self.registers.stat.contains(STATFlags::LYC_EQ_LY);
 
-			self.stat.set(STATFlags::LYC_EQ_LY, self.ly == self.lyc);
+			self.registers.stat.set(
+				STATFlags::LYC_EQ_LY,
+				self.registers.ly == self.registers.lyc,
+			);
 
-			if self.ly == self.lyc && !last && self.stat.contains(STATFlags::LYC_EQ_LY_IE) {
+			if self.registers.ly == self.registers.lyc
+				&& !last && self.registers.stat.contains(STATFlags::LYC_EQ_LY_IE)
+			{
 				*interrupt_register |= LCD_STAT;
 			}
 		}
 	}
 
 	pub fn get_mode(&self) -> PPUMode {
-		let stat = self.stat & STATFlags::PPU_MODE;
+		let stat = self.registers.stat & STATFlags::PPU_MODE;
 
 		match stat.bits() {
 			0 => PPUMode::HBlank,
@@ -125,7 +134,7 @@ impl PPU {
 	}
 
 	pub fn get_ly(&self) -> u8 {
-		self.ly
+		self.registers.ly
 	}
 
 	pub fn is_enabled(&self) -> bool {
@@ -133,24 +142,26 @@ impl PPU {
 	}
 
 	pub fn set_lyc(&mut self, lyc: u8, interrupt_register: &mut u8) {
-		self.lyc = lyc;
+		self.registers.lyc = lyc;
 		self.update_lyc(interrupt_register);
 	}
 
 	pub fn write_stat(&mut self, value: u8) {
 		let value = STATFlags::from_bits_truncate(value) & !STATFlags::READ_ONLY;
-		self.stat.remove(!STATFlags::READ_ONLY);
-		self.stat |= value;
+		self.registers.stat.remove(!STATFlags::READ_ONLY);
+		self.registers.stat |= value;
 	}
 
 	pub fn set_ly(&mut self, value: u8, interrupt_register: &mut u8) {
-		self.ly = value;
+		self.registers.ly = value;
 		self.update_lyc(interrupt_register);
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) {
-		self.stat.remove(STATFlags::PPU_MODE);
-		self.stat.insert(STATFlags::from_bits_truncate(mode as u8));
+		self.registers.stat.remove(STATFlags::PPU_MODE);
+		self.registers
+			.stat
+			.insert(STATFlags::from_bits_truncate(mode as u8));
 
 		if !self.is_enabled() {
 			// Don't trigger any interrupts if the screen is disabled
@@ -160,9 +171,9 @@ impl PPU {
 		// Do Interrupts
 		use PPUMode::*;
 		if match mode {
-			HBlank => self.stat.contains(STATFlags::H_BLANK_IE),
-			VBlank => self.stat.contains(STATFlags::V_BLANK_IE),
-			OamScan => self.stat.contains(STATFlags::OAM_IE),
+			HBlank => self.registers.stat.contains(STATFlags::H_BLANK_IE),
+			VBlank => self.registers.stat.contains(STATFlags::V_BLANK_IE),
+			OamScan => self.registers.stat.contains(STATFlags::OAM_IE),
 			Draw => false,
 		} {
 			*interrupt_register |= LCD_STAT;
@@ -253,22 +264,13 @@ impl Default for PPU {
 			oam: [0; 0xA0],
 			cycle: 0,
 			lcd: None,
-			scy: 0,
-			scx: 0,
-			lyc: 0,
-			bgp: 0,
-			obp0: 0,
-			obp1: 0,
-			wy: 0,
-			wx: 0,
-			stat: STATFlags::empty(),
+			registers: Registers::default(),
 			bg_color: Default::default(),
 			obj_color: Default::default(),
 			frame: 0,
 			fetcher_mode: FetcherMode::Background,
 			current_pixel: 0,
 			lcdc: LCDFlags::empty(),
-			ly: 0,
 			sprites: vec![],
 			current_tile: 0,
 			fifo_pixel: 0,

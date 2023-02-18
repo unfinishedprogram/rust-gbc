@@ -94,7 +94,8 @@ impl PixelFIFO for PPU {
 				let x = chunk[1];
 				let y = chunk[0];
 				(x > 0 && y > 0 && x <= 168 && y <= 160)
-					&& ((y > self.ly.wrapping_add(height)) && (y <= self.ly.wrapping_add(16)))
+					&& ((y > self.registers.ly.wrapping_add(height))
+						&& (y <= self.registers.ly.wrapping_add(16)))
 			})
 			.enumerate()
 			.map(|(index, bytes)| {
@@ -120,7 +121,8 @@ impl PixelFIFO for PPU {
 		let wn_enabled = self
 			.lcdc
 			.contains(LCDFlags::BG_DISPLAY | LCDFlags::WINDOW_DISPLAY_ENABLE);
-		let wn_in_view = self.current_pixel + 7 >= self.wx && self.ly >= self.wy;
+		let wn_in_view =
+			self.current_pixel + 7 >= self.registers.wx && self.registers.ly >= self.registers.wy;
 
 		wn_in_view && wn_enabled
 	}
@@ -142,12 +144,12 @@ impl PixelFIFO for PPU {
 	fn start_scanline(&mut self) {
 		self.fetcher_mode = FetcherMode::Background;
 		self.fifo_bg.clear();
-		self.current_tile = self.scx / 8;
+		self.current_tile = self.registers.scx / 8;
 		self.sprites = self.fetch_scanline_sprites();
 
 		// Account for x-scroll of bg
 		self.populate_bg_fifo();
-		for _ in 0..self.scx % 8 {
+		for _ in 0..self.registers.scx % 8 {
 			self.fifo_bg.pop_front();
 		}
 
@@ -174,7 +176,7 @@ impl PixelFIFO for PPU {
 
 		let attributes = sprite.tile_attributes;
 
-		let local_y = sprite.y.wrapping_sub(self.ly).wrapping_sub(9);
+		let local_y = sprite.y.wrapping_sub(self.registers.ly).wrapping_sub(9);
 
 		let tile_addr = if double_height {
 			if !attributes.vertical_flip ^ (local_y >= 8) {
@@ -221,7 +223,7 @@ impl PixelFIFO for PPU {
 		let Some(bg) = self.fifo_bg.pop_front() else {return};
 
 		let x = self.current_pixel;
-		let y = self.ly;
+		let y = self.registers.ly;
 
 		self.current_pixel += 1;
 
@@ -317,13 +319,13 @@ impl PixelFIFO for PPU {
 
 	fn populate_bg_fifo(&mut self) {
 		let tile_y = match self.fetcher_mode {
-			FetcherMode::Background => (self.ly.wrapping_add(self.scy)) >> 3,
+			FetcherMode::Background => (self.registers.ly.wrapping_add(self.registers.scy)) >> 3,
 			FetcherMode::Window => self.window_line >> 3,
 		};
 		let tile_x = self.current_tile;
 		self.current_tile = self.current_tile.wrapping_add(1) % 32;
 		let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
-		let tile_row = (self.ly.wrapping_add(self.scy)) % 8;
+		let tile_row = (self.registers.ly.wrapping_add(self.registers.scy)) % 8;
 		let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row, 0);
 		self.fifo_bg.extend(pixels.iter());
 	}
