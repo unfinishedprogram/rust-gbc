@@ -1,21 +1,20 @@
 mod color_ram;
+mod lcdc;
 mod renderer;
 mod sprite;
+mod stat;
 mod tile_data;
 
 use std::collections::VecDeque;
 
-use crate::{
-	flags::{LCDFlags, STATFlags},
-	lcd::GameboyLCD,
-	ppu::renderer::PixelFIFO,
-	util::BigArray,
-};
+use crate::{lcd::GameboyLCD, ppu::renderer::PixelFIFO, util::BigArray};
 
 use serde::{Deserialize, Serialize};
 use sm83::flags::interrupt::{LCD_STAT, V_BLANK};
 
-use self::{color_ram::ColorRamController, renderer::Pixel, sprite::Sprite};
+use self::{
+	color_ram::ColorRamController, lcdc::LCDC, renderer::Pixel, sprite::Sprite, stat::STAT,
+};
 
 #[derive(Clone, Serialize, Deserialize, Default)]
 enum FetcherMode {
@@ -49,7 +48,8 @@ pub struct Registers {
 	pub wy: u8,
 	pub wx: u8,
 	pub ly: u8,
-	pub stat: STATFlags,
+	pub stat: STAT,
+	pub lcdc: LCDC,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -79,7 +79,6 @@ pub struct PPU {
 	fetcher_mode: FetcherMode,
 	current_pixel: u8,
 	window_line: u8,
-	lcdc: LCDFlags,
 
 	sprites: Vec<Sprite>,
 	current_tile: u8,
@@ -91,30 +90,28 @@ pub struct PPU {
 
 impl PPU {
 	pub fn write_lcdc(&mut self, value: u8, interrupt_register: &mut u8) {
-		let value = LCDFlags::from_bits_truncate(value);
-
-		if !value.contains(LCDFlags::DISPLAY_ENABLE) {
+		let value = LCDC::from_bits_truncate(value);
+		if !value.contains(LCDC::DISPLAY_ENABLE) {
 			self.disable_display(interrupt_register);
 		}
-		self.lcdc = value;
+		self.registers.lcdc = value;
 		self.update_lyc(interrupt_register)
 	}
 
 	pub fn read_lcdc(&self) -> u8 {
-		self.lcdc.bits()
+		self.registers.lcdc.bits()
 	}
 
 	pub fn update_lyc(&mut self, interrupt_register: &mut u8) {
 		if self.is_enabled() {
-			let last = self.registers.stat.contains(STATFlags::LYC_EQ_LY);
+			let last = self.registers.stat.contains(STAT::LYC_EQ_LY);
 
-			self.registers.stat.set(
-				STATFlags::LYC_EQ_LY,
-				self.registers.ly == self.registers.lyc,
-			);
+			self.registers
+				.stat
+				.set(STAT::LYC_EQ_LY, self.registers.ly == self.registers.lyc);
 
 			if self.registers.ly == self.registers.lyc
-				&& !last && self.registers.stat.contains(STATFlags::LYC_EQ_LY_IE)
+				&& !last && self.registers.stat.contains(STAT::LYC_EQ_LY_IE)
 			{
 				*interrupt_register |= LCD_STAT;
 			}
@@ -122,7 +119,7 @@ impl PPU {
 	}
 
 	pub fn get_mode(&self) -> PPUMode {
-		let stat = self.registers.stat & STATFlags::PPU_MODE;
+		let stat = self.registers.stat & STAT::PPU_MODE;
 
 		match stat.bits() {
 			0 => PPUMode::HBlank,
@@ -138,7 +135,7 @@ impl PPU {
 	}
 
 	pub fn is_enabled(&self) -> bool {
-		self.lcdc.contains(LCDFlags::DISPLAY_ENABLE)
+		self.registers.lcdc.contains(LCDC::DISPLAY_ENABLE)
 	}
 
 	pub fn set_lyc(&mut self, lyc: u8, interrupt_register: &mut u8) {
@@ -147,8 +144,8 @@ impl PPU {
 	}
 
 	pub fn write_stat(&mut self, value: u8) {
-		let value = STATFlags::from_bits_truncate(value) & !STATFlags::READ_ONLY;
-		self.registers.stat.remove(!STATFlags::READ_ONLY);
+		let value = STAT::from_bits_truncate(value) & !STAT::READ_ONLY;
+		self.registers.stat.remove(!STAT::READ_ONLY);
 		self.registers.stat |= value;
 	}
 
@@ -158,10 +155,10 @@ impl PPU {
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) {
-		self.registers.stat.remove(STATFlags::PPU_MODE);
+		self.registers.stat.remove(STAT::PPU_MODE);
 		self.registers
 			.stat
-			.insert(STATFlags::from_bits_truncate(mode as u8));
+			.insert(STAT::from_bits_truncate(mode as u8));
 
 		if !self.is_enabled() {
 			// Don't trigger any interrupts if the screen is disabled
@@ -171,9 +168,9 @@ impl PPU {
 		// Do Interrupts
 		use PPUMode::*;
 		if match mode {
-			HBlank => self.registers.stat.contains(STATFlags::H_BLANK_IE),
-			VBlank => self.registers.stat.contains(STATFlags::V_BLANK_IE),
-			OamScan => self.registers.stat.contains(STATFlags::OAM_IE),
+			HBlank => self.registers.stat.contains(STAT::H_BLANK_IE),
+			VBlank => self.registers.stat.contains(STAT::V_BLANK_IE),
+			OamScan => self.registers.stat.contains(STAT::OAM_IE),
 			Draw => false,
 		} {
 			*interrupt_register |= LCD_STAT;
@@ -270,7 +267,6 @@ impl Default for PPU {
 			frame: 0,
 			fetcher_mode: FetcherMode::Background,
 			current_pixel: 0,
-			lcdc: LCDFlags::empty(),
 			sprites: vec![],
 			current_tile: 0,
 			fifo_pixel: 0,
