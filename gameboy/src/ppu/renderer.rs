@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use crate::{lcd::LCDDisplay, util::bits::*};
 
 use super::{
-	lcdc::LCDC,
 	sprite::Sprite,
 	tile_data::{TileAttributes, TileData},
 	FetcherMode, PPU,
@@ -40,6 +39,11 @@ pub enum AddressingMode {
 	Unsigned,
 }
 
+pub enum SpriteHeight {
+	Double,
+	Single,
+}
+
 pub trait PixelFIFO {
 	fn step_fifo(&mut self);
 	fn push_pixel(&mut self);
@@ -47,8 +51,6 @@ pub trait PixelFIFO {
 	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> [Pixel; 8];
 	fn populate_bg_fifo(&mut self);
 	fn in_window(&self) -> bool;
-	fn get_tile_map_offset(&self) -> u16;
-	fn get_addressing_mode(&self) -> AddressingMode;
 	fn get_tile_data(&self, tile_index: u16) -> TileData;
 	fn start_window(&mut self);
 	fn step_sprite_fifo(&mut self);
@@ -80,10 +82,9 @@ impl PixelFIFO for PPU {
 	}
 
 	fn fetch_scanline_sprites(&self) -> Vec<Sprite> {
-		let height = if self.registers.lcdc.contains(LCDC::OBJ_SIZE) {
-			0
-		} else {
-			8
+		let height = match self.registers.lcdc.obj_size() {
+			SpriteHeight::Double => 0,
+			SpriteHeight::Single => 8,
 		};
 
 		let mut sprites: Vec<Sprite> = self
@@ -119,10 +120,7 @@ impl PixelFIFO for PPU {
 	///
 	/// If this is true, the window should be drawn for the remainder of the current scanline
 	fn in_window(&self) -> bool {
-		let wn_enabled = self
-			.registers
-			.lcdc
-			.contains(LCDC::BG_DISPLAY | LCDC::WINDOW_DISPLAY_ENABLE);
+		let wn_enabled = self.registers.lcdc.win_enabled();
 		let wn_in_view =
 			self.current_pixel + 7 >= self.registers.wx && self.registers.ly >= self.registers.wy;
 
@@ -170,9 +168,8 @@ impl PixelFIFO for PPU {
 	}
 
 	fn draw_sprite(&mut self, sprite: Sprite) {
-		let double_height = self.registers.lcdc.contains(LCDC::OBJ_SIZE);
-
-		if !self.registers.lcdc.contains(LCDC::OBJ_DISPLAY_ENABLE) {
+		let double_height = self.registers.lcdc.obj_size();
+		if !self.registers.lcdc.obj_enable() {
 			return;
 		}
 
@@ -180,14 +177,15 @@ impl PixelFIFO for PPU {
 
 		let local_y = sprite.y.wrapping_sub(self.registers.ly).wrapping_sub(9);
 
-		let tile_addr = if double_height {
-			if !attributes.vertical_flip ^ (local_y >= 8) {
-				sprite.tile_index | 0x01
-			} else {
-				sprite.tile_index & 0xFE
+		let tile_addr = match double_height {
+			SpriteHeight::Double => {
+				if !attributes.vertical_flip ^ (local_y >= 8) {
+					sprite.tile_index | 0x01
+				} else {
+					sprite.tile_index & 0xFE
+				}
 			}
-		} else {
-			sprite.tile_index
+			SpriteHeight::Single => sprite.tile_index,
 		} as u16 * 16;
 
 		let local_y = local_y & 7;
@@ -233,7 +231,7 @@ impl PixelFIFO for PPU {
 
 		if let Some(fg) = self.fifo_obj.pop_back() {
 			let bg_over = (!fg.background_priority || bg.background_priority) && bg.color != 0;
-			let bg_over = bg_over && self.registers.lcdc.contains(LCDC::BG_DISPLAY);
+			let bg_over = bg_over && self.registers.lcdc.bg_enabled();
 			let bg_over = bg_over || fg.color == 0;
 
 			if bg_over {
@@ -244,17 +242,6 @@ impl PixelFIFO for PPU {
 		} else {
 			lcd.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
 		};
-	}
-
-	fn get_tile_map_offset(&self) -> u16 {
-		if self.registers.lcdc.contains(match self.fetcher_mode {
-			FetcherMode::Window => LCDC::WINDOW_TILE_MAP_DISPLAY_SELECT,
-			FetcherMode::Background => LCDC::BG_TILE_MAP_DISPLAY_SELECT,
-		}) {
-			0x1C00
-		} else {
-			0x1800
-		}
 	}
 
 	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> [Pixel; 8] {
@@ -326,22 +313,12 @@ impl PixelFIFO for PPU {
 		};
 		let tile_x = self.current_tile;
 		self.current_tile = self.current_tile.wrapping_add(1) % 32;
-		let map_index = tile_x as u16 + tile_y as u16 * 32 + self.get_tile_map_offset();
+		let tile_map_offset = self.registers.lcdc.tile_map_offset(self.fetcher_mode);
+
+		let map_index = tile_x as u16 + tile_y as u16 * 32 + tile_map_offset;
 		let tile_row = (self.registers.ly.wrapping_add(self.registers.scy)) % 8;
 		let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row, 0);
 		self.fifo_bg.extend(pixels.iter());
-	}
-
-	fn get_addressing_mode(&self) -> AddressingMode {
-		if self
-			.registers
-			.lcdc
-			.contains(LCDC::BG_AND_WINDOW_TILE_DATA_SELECT)
-		{
-			AddressingMode::Signed
-		} else {
-			AddressingMode::Unsigned
-		}
 	}
 
 	fn get_tile_data(&self, tile_index: u16) -> TileData {
@@ -351,7 +328,7 @@ impl PixelFIFO for PPU {
 		// Tile attributes come from second v-ram bank in CGB mode
 		let attributes = self.v_ram_bank_1[tile_index as usize];
 
-		let index = match self.get_addressing_mode() {
+		let index = match self.registers.lcdc.addressing_mode() {
 			AddressingMode::Signed => 16 * data_addr as i32,
 			AddressingMode::Unsigned => 0x1000 + 16 * (data_addr as i8) as i32,
 		} as u16;

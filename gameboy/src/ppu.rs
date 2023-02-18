@@ -13,11 +13,11 @@ use serde::{Deserialize, Serialize};
 use sm83::flags::interrupt::{LCD_STAT, V_BLANK};
 
 use self::{
-	color_ram::ColorRamController, lcdc::LCDC, renderer::Pixel, sprite::Sprite, stat::Stat,
+	color_ram::ColorRamController, lcdc::Lcdc, renderer::Pixel, sprite::Sprite, stat::Stat,
 };
 
-#[derive(Clone, Serialize, Deserialize, Default)]
-enum FetcherMode {
+#[derive(Clone, Copy, Serialize, Deserialize, Default)]
+pub enum FetcherMode {
 	#[default]
 	Background,
 	Window,
@@ -49,7 +49,7 @@ pub struct Registers {
 	pub wx: u8,
 	pub ly: u8,
 	pub stat: Stat,
-	pub lcdc: LCDC,
+	pub lcdc: Lcdc,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -90,16 +90,15 @@ pub struct PPU {
 
 impl PPU {
 	pub fn write_lcdc(&mut self, value: u8, interrupt_register: &mut u8) {
-		let value = LCDC::from_bits_truncate(value);
-		if !value.contains(LCDC::DISPLAY_ENABLE) {
+		if !self.is_enabled() {
 			self.disable_display(interrupt_register);
 		}
-		self.registers.lcdc = value;
+		self.registers.lcdc.write(value);
 		self.update_lyc(interrupt_register)
 	}
 
 	pub fn read_lcdc(&self) -> u8 {
-		self.registers.lcdc.bits()
+		self.registers.lcdc.read()
 	}
 
 	pub fn update_lyc(&mut self, interrupt_register: &mut u8) {
@@ -125,7 +124,7 @@ impl PPU {
 	}
 
 	pub fn is_enabled(&self) -> bool {
-		self.registers.lcdc.contains(LCDC::DISPLAY_ENABLE)
+		self.registers.lcdc.display_enabled()
 	}
 
 	pub fn set_lyc(&mut self, lyc: u8, interrupt_register: &mut u8) {
