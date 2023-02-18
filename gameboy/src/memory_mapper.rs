@@ -9,12 +9,7 @@ use crate::{
 };
 
 fn is_accessible(gb: &Gameboy, addr: u16, source: Source) -> bool {
-	match (
-		gb.oam_dma.oam_is_accessible(),
-		gb.ppu.get_mode(),
-		addr,
-		source,
-	) {
+	match (gb.oam_dma.oam_is_accessible(), gb.ppu.mode(), addr, source) {
 		(_, _, _, Source::Raw) => true,
 		(_, _, DMA, _) => true,
 		(_, _, 0xFF80..0xFFFE, Source::Cpu) => true,

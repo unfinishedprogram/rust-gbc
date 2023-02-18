@@ -142,7 +142,7 @@ impl IORegisters for Gameboy {
 			WY => self.ppu.registers.wy,
 			WX => self.ppu.registers.wx,
 			LY => self.ppu.get_ly(),
-			STAT => self.ppu.registers.stat.bits(),
+			STAT => self.ppu.registers.stat.read(),
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {

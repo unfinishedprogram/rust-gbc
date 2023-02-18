@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use sm83::flags::interrupt::{LCD_STAT, V_BLANK};
 
 use self::{
-	color_ram::ColorRamController, lcdc::LCDC, renderer::Pixel, sprite::Sprite, stat::STAT,
+	color_ram::ColorRamController, lcdc::LCDC, renderer::Pixel, sprite::Sprite, stat::Stat,
 };
 
 #[derive(Clone, Serialize, Deserialize, Default)]
@@ -48,7 +48,7 @@ pub struct Registers {
 	pub wy: u8,
 	pub wx: u8,
 	pub ly: u8,
-	pub stat: STAT,
+	pub stat: Stat,
 	pub lcdc: LCDC,
 }
 
@@ -103,31 +103,21 @@ impl PPU {
 	}
 
 	pub fn update_lyc(&mut self, interrupt_register: &mut u8) {
-		if self.is_enabled() {
-			let last = self.registers.stat.contains(STAT::LYC_EQ_LY);
+		if !self.is_enabled() {
+			return;
+		}
 
-			self.registers
-				.stat
-				.set(STAT::LYC_EQ_LY, self.registers.ly == self.registers.lyc);
-
-			if self.registers.ly == self.registers.lyc
-				&& !last && self.registers.stat.contains(STAT::LYC_EQ_LY_IE)
-			{
-				*interrupt_register |= LCD_STAT;
-			}
+		if self
+			.registers
+			.stat
+			.set_lyc_eq_ly(self.registers.ly == self.registers.lyc)
+		{
+			*interrupt_register |= LCD_STAT;
 		}
 	}
 
-	pub fn get_mode(&self) -> PPUMode {
-		let stat = self.registers.stat & STAT::PPU_MODE;
-
-		match stat.bits() {
-			0 => PPUMode::HBlank,
-			1 => PPUMode::VBlank,
-			2 => PPUMode::OamScan,
-			3 => PPUMode::Draw,
-			_ => unreachable!(),
-		}
+	pub fn mode(&self) -> PPUMode {
+		self.registers.stat.ppu_mode()
 	}
 
 	pub fn get_ly(&self) -> u8 {
@@ -144,9 +134,7 @@ impl PPU {
 	}
 
 	pub fn write_stat(&mut self, value: u8) {
-		let value = STAT::from_bits_truncate(value) & !STAT::READ_ONLY;
-		self.registers.stat.remove(!STAT::READ_ONLY);
-		self.registers.stat |= value;
+		self.registers.stat.write(value);
 	}
 
 	pub fn set_ly(&mut self, value: u8, interrupt_register: &mut u8) {
@@ -155,28 +143,18 @@ impl PPU {
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) {
-		self.registers.stat.remove(STAT::PPU_MODE);
-		self.registers
-			.stat
-			.insert(STAT::from_bits_truncate(mode as u8));
+		self.registers.stat.set_ppu_mode(mode);
 
+		// Don't trigger any interrupts if the screen is disabled
 		if !self.is_enabled() {
-			// Don't trigger any interrupts if the screen is disabled
 			return;
 		}
 
-		// Do Interrupts
-		use PPUMode::*;
-		if match mode {
-			HBlank => self.registers.stat.contains(STAT::H_BLANK_IE),
-			VBlank => self.registers.stat.contains(STAT::V_BLANK_IE),
-			OamScan => self.registers.stat.contains(STAT::OAM_IE),
-			Draw => false,
-		} {
+		if self.registers.stat.int_enable(mode) {
 			*interrupt_register |= LCD_STAT;
 		}
 
-		if matches!(mode, VBlank) {
+		if matches!(mode, PPUMode::VBlank) {
 			*interrupt_register |= V_BLANK;
 		}
 	}
@@ -198,7 +176,7 @@ impl PPU {
 		}
 
 		use PPUMode::*;
-		match self.get_mode() {
+		match self.mode() {
 			HBlank => {
 				self.set_ly(self.get_ly() + 1, interrupt_register);
 				if self.get_ly() < 144 {
