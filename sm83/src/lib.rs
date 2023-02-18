@@ -1,6 +1,6 @@
 mod bits;
 mod cpu;
-pub mod instruction;
+mod instruction;
 pub mod memory_mapper;
 pub mod registers;
 mod stack;
@@ -170,8 +170,12 @@ pub trait SM83<M: SourcedMemoryMapper> {
 	}
 
 	fn exec_stop(&mut self) {}
-	fn tick_m_cycles(&mut self, _m_cycles: u32) {
-		self.cpu_state_mut().interrupt_master_enable = self.cpu_state().ie_next;
+	fn tick_m_cycles(&mut self, m_cycles: u32) {
+		self.cpu_state_mut().tick_ie_delay();
+		self.on_m_cycle(m_cycles);
+	}
+	fn on_m_cycle(&mut self, m_cycles: u32) {
+		_ = m_cycles
 	}
 	fn cpu_state(&self) -> &CPUState;
 	fn cpu_state_mut(&mut self) -> &mut CPUState;

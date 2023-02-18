@@ -48,4 +48,8 @@ impl CPUState {
 			None
 		}
 	}
+
+	pub fn tick_ie_delay(&mut self) {
+		self.interrupt_master_enable = self.ie_next;
+	}
 }

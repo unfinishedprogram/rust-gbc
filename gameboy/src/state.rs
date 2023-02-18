@@ -259,8 +259,7 @@ impl SM83<Gameboy> for Gameboy {
 		&mut self.cpu_state
 	}
 
-	fn tick_m_cycles(&mut self, m_cycles: u32) {
-		self.cpu_state.interrupt_master_enable = self.cpu_state.ie_next;
+	fn on_m_cycle(&mut self, m_cycles: u32) {
 		Gameboy::tick_m_cycles(self, m_cycles)
 	}
 
