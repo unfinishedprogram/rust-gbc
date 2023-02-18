@@ -75,6 +75,6 @@ impl Stat {
 		self.flags.set(Flags::LYC_EQ_LY, value);
 
 		// If the value goes from low to high and Lyc interrupts are enabled, trigger one
-		value & last & self.flags.contains(Flags::LYC_EQ_LY_IE)
+		value & !last & self.flags.contains(Flags::LYC_EQ_LY_IE)
 	}
 }
