@@ -7,19 +7,19 @@
 pub mod cartridge;
 pub mod cgb;
 pub mod controller;
-pub mod dma_controller;
+mod dma_controller;
 mod flags;
 pub mod io_registers;
 pub mod lcd;
 pub mod memory_mapper;
-pub mod oam_dma;
+mod oam_dma;
 pub mod ppu;
 pub mod save_state;
-pub mod state;
+mod state;
 mod timer;
-pub mod util;
+mod util;
 mod work_ram;
-pub use state::Gameboy;
+pub use state::{Gameboy, Mode};
 
 #[cfg(test)]
 pub mod test;

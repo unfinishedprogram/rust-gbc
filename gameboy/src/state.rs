@@ -23,7 +23,7 @@ use super::{
 use sm83::{memory_mapper::MemoryMapper, CPUState, SM83};
 
 #[derive(Clone, Serialize, Deserialize)]
-pub enum GameboyMode {
+pub enum Mode {
 	// Gameboy Color mode
 	GBC(CGBState),
 	// Basic monochrome mode
@@ -31,11 +31,11 @@ pub enum GameboyMode {
 }
 const DMG_SPEED: Speed = Speed::Normal;
 
-impl GameboyMode {
+impl Mode {
 	pub fn get_speed(&self) -> &Speed {
 		match self {
-			GameboyMode::GBC(state) => state.current_speed(),
-			GameboyMode::DMG => &DMG_SPEED,
+			Mode::GBC(state) => state.current_speed(),
+			Mode::DMG => &DMG_SPEED,
 		}
 	}
 }
@@ -43,7 +43,7 @@ impl GameboyMode {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Gameboy {
 	pub ram_bank: u8,
-	pub mode: GameboyMode,
+	pub mode: Mode,
 	pub cpu_state: CPUState,
 	pub ppu: PPU,
 	pub cartridge_state: Option<Cartridge>,
@@ -85,7 +85,7 @@ impl Default for Gameboy {
 			booting: true,
 			cartridge_state: None,
 			ram_bank: 0,
-			mode: GameboyMode::DMG,
+			mode: Mode::DMG,
 			w_ram: WorkRam::DMG(Box::<WorkRamDataDMG>::default()),
 			hram: [0; 0x80],
 			serial_output: vec![],
@@ -93,7 +93,7 @@ impl Default for Gameboy {
 			t_states: 0,
 			speed_switch_delay: 0,
 		};
-		emulator.set_gb_mode(GameboyMode::GBC(CGBState::default()));
+		emulator.set_gb_mode(Mode::GBC(CGBState::default()));
 		emulator
 			.ppu
 			.set_mode(PPUMode::OamScan, &mut cpu_state.interrupt_request);
@@ -217,15 +217,15 @@ impl Gameboy {
 		new_state
 	}
 
-	fn set_gb_mode(&mut self, mode: GameboyMode) {
+	fn set_gb_mode(&mut self, mode: Mode) {
 		self.boot_rom = match mode {
-			GameboyMode::DMG => include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
-			GameboyMode::GBC(_) => include_bytes!("../../roms/other/cgb_boot.bin").to_vec(),
+			Mode::DMG => include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
+			Mode::GBC(_) => include_bytes!("../../roms/other/cgb_boot.bin").to_vec(),
 		};
 
 		self.w_ram = match mode {
-			GameboyMode::GBC(_) => WorkRam::CGB(Box::<WorkRamDataCGB>::default()),
-			GameboyMode::DMG => WorkRam::DMG(Box::<WorkRamDataDMG>::default()),
+			Mode::GBC(_) => WorkRam::CGB(Box::<WorkRamDataCGB>::default()),
+			Mode::DMG => WorkRam::DMG(Box::<WorkRamDataDMG>::default()),
 		};
 		self.mode = mode;
 	}
@@ -236,8 +236,8 @@ impl Gameboy {
 
 	pub fn get_vram_bank(&self) -> VRAMBank {
 		match &self.mode {
-			GameboyMode::DMG => VRAMBank::Bank0,
-			GameboyMode::GBC(state) => state.get_vram_bank(),
+			Mode::DMG => VRAMBank::Bank0,
+			Mode::GBC(state) => state.get_vram_bank(),
 		}
 	}
 }
@@ -264,7 +264,7 @@ impl SM83<Gameboy> for Gameboy {
 	}
 
 	fn exec_stop(&mut self) {
-		if let crate::state::GameboyMode::GBC(state) = &mut self.mode {
+		if let crate::state::Mode::GBC(state) = &mut self.mode {
 			self.speed_switch_delay = 2050;
 			state.perform_speed_switch();
 		}

@@ -7,7 +7,7 @@ use sm83::{
 };
 
 use crate::{
-	state::GameboyMode,
+	state::Mode,
 	util::{bits::*, BigArray},
 	work_ram::BankedWorkRam,
 	Gameboy,
@@ -146,7 +146,7 @@ impl IORegisters for Gameboy {
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
-				if let GameboyMode::GBC(_) = &self.mode {
+				if let Mode::GBC(_) = &self.mode {
 					match addr {
 						BGPI => self.ppu.bg_color.read_spec(),
 						BGPD => self.ppu.bg_color.read_data(),
@@ -169,21 +169,21 @@ impl IORegisters for Gameboy {
 			HDMA5 => self.dma_controller.read_hdma5(),
 
 			SVBK => {
-				if let GameboyMode::GBC(_) = &self.mode {
+				if let Mode::GBC(_) = &self.mode {
 					self.w_ram.get_bank_number()
 				} else {
 					0xFF
 				}
 			}
 			VBK => {
-				if let GameboyMode::GBC(_) = &self.mode {
+				if let Mode::GBC(_) = &self.mode {
 					self.w_ram.get_bank_number()
 				} else {
 					0xFF
 				}
 			}
 			KEY1 => {
-				if let GameboyMode::GBC(state) = &self.mode {
+				if let Mode::GBC(state) = &self.mode {
 					state.read_key1()
 				} else {
 					0xFF
@@ -249,7 +249,7 @@ impl IORegisters for Gameboy {
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
-				if let GameboyMode::GBC(_) = &mut self.mode {
+				if let Mode::GBC(_) = &mut self.mode {
 					match addr {
 						BGPI => self.ppu.bg_color.write_spec(value),
 						BGPD => self.ppu.bg_color.write_data(value),
@@ -263,12 +263,12 @@ impl IORegisters for Gameboy {
 				self.w_ram.set_bank_number(value);
 			}
 			VBK => {
-				if let GameboyMode::GBC(state) = &mut self.mode {
+				if let Mode::GBC(state) = &mut self.mode {
 					state.set_vram_bank(value);
 				};
 			}
 			KEY1 => {
-				if let GameboyMode::GBC(state) = &mut self.mode {
+				if let Mode::GBC(state) = &mut self.mode {
 					state.write_key1(value);
 				};
 			}

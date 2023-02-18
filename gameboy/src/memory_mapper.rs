@@ -3,7 +3,7 @@ use sm83::memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper};
 use crate::{
 	io_registers::{IORegisters, DMA},
 	ppu::{PPUMode, VRAMBank},
-	state::GameboyMode,
+	state::Mode,
 	work_ram::BankedWorkRam,
 	Gameboy,
 };
@@ -45,12 +45,12 @@ impl MemoryMapper for Gameboy {
 	fn read(&self, addr: u16) -> u8 {
 		if self.booting {
 			match self.mode {
-				GameboyMode::DMG => {
+				Mode::DMG => {
 					if matches!(addr, 0..=0x100) {
 						return self.boot_rom[addr as usize];
 					}
 				}
-				GameboyMode::GBC(_) => match addr {
+				Mode::GBC(_) => match addr {
 					0..0x100 => return self.boot_rom[addr as usize],
 					0x200..0x900 => return self.boot_rom[addr as usize],
 					_ => {}

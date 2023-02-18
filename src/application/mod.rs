@@ -16,8 +16,7 @@ use web_sys::ImageData;
 use gameboy::{
 	lcd::GameboyLCD,
 	save_state::{RomSource, SaveState},
-	state::GameboyMode,
-	Gameboy,
+	Gameboy, Mode,
 };
 
 use self::input::InputState;
@@ -109,7 +108,7 @@ impl Application {
 		let frames: u64 = self.frame_counts.iter().sum();
 		let time: f64 = self.frame_times.iter().sum();
 
-		let _state_text = if let GameboyMode::GBC(state) = &self.emulator_state.mode {
+		let _state_text = if let Mode::GBC(state) = &self.emulator_state.mode {
 			format!("{:?}", state.current_speed())
 		} else {
 			"".to_owned()

@@ -1,13 +1,9 @@
 mod char_mapping;
 use std::vec;
 
-use char_mapping::to_char;
-
-use test_generator::test_resources;
-
-use crate::util::bits::bit;
-
 use super::util::rom_loader::init_emulator_with_rom;
+use char_mapping::to_char;
+use test_generator::test_resources;
 
 #[derive(Debug)]
 pub struct GambatteTest {
@@ -83,7 +79,7 @@ fn pixels_to_tiles(pixels: &[Vec<bool>]) -> Vec<Vec<u64>> {
 				row.reverse();
 				(0..8).for_each(|i| {
 					if row[i] {
-						tile[l] |= bit(i as u8)
+						tile[l] |= 1 << i
 					}
 				});
 			}
