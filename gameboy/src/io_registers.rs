@@ -200,14 +200,7 @@ impl IORegisters for Gameboy {
 			}
 
 			// Interrupt requests
-			IF => {
-				self.cpu_state.interrupt_request | 0xE0
-
-				// self.io_register_state[IF]
-				// 	| self.ppu.interrupt_requests
-				// 	| self.timer.interrupt_requests
-				// 	| 0xE0
-			}
+			IF => self.cpu_state.interrupt_request | 0xE0,
 			IE => self.cpu_state.interrupt_enable | 0xE0,
 			_ => self.io_register_state[addr],
 		}
@@ -290,10 +283,6 @@ impl IORegisters for Gameboy {
 
 			IF => {
 				self.cpu_state.interrupt_request = value & 0b00011111;
-
-				// self.io_register_state[INTERRUPT_REQUEST] = value & 0b00011111;
-				// self.ppu.interrupt_requests = value & 0b00011111;
-				// self.timer.interrupt_requests = value & 0b00011111;
 			}
 
 			IE => self.cpu_state.interrupt_enable = value & 0b00011111,
