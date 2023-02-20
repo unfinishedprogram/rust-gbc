@@ -21,7 +21,11 @@ pub use cpu::condition;
 mod test;
 
 pub trait SM83<M: SourcedMemoryMapper> {
+	fn debug(&self) -> bool {
+		false
+	}
 	fn disable_interrupts(&mut self) {
+		self.cpu_state_mut().interrupt_master_enable = false;
 		self.cpu_state_mut().ie_next = false;
 	}
 
@@ -164,7 +168,11 @@ pub trait SM83<M: SourcedMemoryMapper> {
 				self.tick_m_cycles(1);
 			}
 		} else {
+			let pc = self.cpu_state().registers.pc;
 			let instruction = self.get_next_instruction_or_interrupt();
+			if self.debug() {
+				log::info!("[{pc:04X}]{instruction:?}");
+			}
 			instruction::execute(self, instruction);
 		}
 	}

@@ -18,7 +18,8 @@ impl OamDmaState {
 			self.start_delay = self.start_delay.saturating_sub(m_cycles);
 		}
 
-		if self.cycles_remaining == 0 {
+		if self.cycles_remaining == 0 && !self.oam_accessible {
+			log::warn!("OAM DMA END");
 			self.oam_accessible = true;
 		} else {
 			self.cycles_remaining = self.cycles_remaining.saturating_sub(m_cycles);
@@ -30,12 +31,14 @@ impl OamDmaState {
 					ppu.oam[i] = *data;
 				}
 				self.cycles_remaining = OAM_DMA_DURATION;
+				log::warn!("OAM DMA START");
 				self.oam_accessible = false;
 			}
 		}
 	}
 
 	pub fn start_oam_dma(&mut self, data: Vec<u8>) {
+		log::warn!("OAM DMA REQUEST");
 		self.dma_request = Some(data);
 		self.start_delay = 2;
 	}

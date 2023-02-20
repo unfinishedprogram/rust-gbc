@@ -5,7 +5,9 @@ mod uploader;
 mod web_save_manager;
 pub use setup_listeners::setup_listeners;
 mod events;
-use gloo::{file::callbacks::FileReader, net::http::Request, timers::callback::Interval};
+use gloo::{
+	file::callbacks::FileReader, net::http::Request, timers::callback::Interval, utils::document,
+};
 use screen::get_screen_ctx;
 
 use std::{cell::RefCell, fmt::Display};
@@ -129,6 +131,7 @@ impl Application {
 		let controller_state = self.input_state.get_controller_state();
 		self.emulator_state.set_controller_state(&controller_state);
 		self.step_emulator(0.015 * self.speed_multiplier);
+		// self.step_fast(15.0);
 		self.render_screen()
 	}
 
@@ -150,6 +153,22 @@ impl Application {
 			Playing(_) => self.stop(),
 			Paused => self.start(),
 		};
+	}
+
+	pub fn step_single(&mut self) {
+		document()
+			.query_selector("#debug_info")
+			.unwrap()
+			.unwrap()
+			.set_inner_html(&format!("{:?}", self.emulator_state.cpu_state.registers));
+
+		self.emulator_state.step();
+		self.render_screen();
+	}
+
+	pub fn run_until_boot(&mut self) {
+		self.emulator_state.run_until_boot();
+		self.render_screen();
 	}
 
 	pub async fn load_rom_from_source(source: Option<RomSource>) -> Option<Vec<u8>> {

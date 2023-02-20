@@ -259,6 +259,9 @@ impl SM83<Gameboy> for Gameboy {
 		&mut self.cpu_state
 	}
 
+	fn debug(&self) -> bool {
+		false
+	}
 	fn on_m_cycle(&mut self, m_cycles: u32) {
 		Gameboy::tick_m_cycles(self, m_cycles)
 	}

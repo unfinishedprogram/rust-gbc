@@ -30,7 +30,7 @@ pub enum CPURegister16 {
 	PC,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct CPURegisters {
 	pub bytes: [u8; 8],
 	pub sp: u16,
@@ -53,10 +53,10 @@ impl IndexMut<CPURegister8> for CPURegisters {
 impl CPURegisters {
 	pub fn get_u16(&self, reg: CPURegister16) -> u16 {
 		match reg {
-			AF => u16::from_le_bytes([self[F], self[A]]),
-			BC => u16::from_le_bytes([self[C], self[B]]),
-			DE => u16::from_le_bytes([self[E], self[D]]),
-			HL => u16::from_le_bytes([self[L], self[H]]),
+			AF => u16::from_be_bytes([self[A], self[F]]),
+			BC => u16::from_be_bytes([self[B], self[C]]),
+			DE => u16::from_be_bytes([self[D], self[E]]),
+			HL => u16::from_be_bytes([self[H], self[L]]),
 			SP => self.sp,
 			PC => self.pc,
 		}
@@ -70,10 +70,21 @@ impl CPURegisters {
 			BC => [self[C], self[B]] = bytes,
 			DE => [self[E], self[D]] = bytes,
 			HL => [self[L], self[H]] = bytes,
-
 			SP => self.sp = value,
 			PC => self.pc = value,
 		}
+	}
+}
+
+impl Debug for CPURegisters {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		writeln!(f, "AF:{:04X}", self.get_u16(AF))?;
+		writeln!(f, "BC:{:04X}", self.get_u16(BC))?;
+		writeln!(f, "DE:{:04X}", self.get_u16(DE))?;
+		writeln!(f, "HL:{:04X}", self.get_u16(HL))?;
+		writeln!(f, "SP:{:04X}", self.get_u16(SP))?;
+		writeln!(f, "PC:{:04X}", self.get_u16(PC))?;
+		Ok(())
 	}
 }
 

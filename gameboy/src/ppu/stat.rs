@@ -21,6 +21,7 @@ bitflags! {
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct Stat {
 	flags: Flags,
+	irq: bool,
 }
 
 impl Stat {
@@ -70,11 +71,7 @@ impl Stat {
 	}
 
 	// Returns true if an interrupt should be triggered
-	pub fn set_lyc_eq_ly(&mut self, value: bool) -> bool {
-		let last = self.flags.contains(Flags::LYC_EQ_LY);
+	pub fn set_lyc_eq_ly(&mut self, value: bool) {
 		self.flags.set(Flags::LYC_EQ_LY, value);
-
-		// If the value goes from low to high and Lyc interrupts are enabled, trigger one
-		value & !last & self.flags.contains(Flags::LYC_EQ_LY_IE)
 	}
 }

@@ -9,6 +9,7 @@ use std::collections::VecDeque;
 
 use crate::{lcd::GameboyLCD, ppu::renderer::PixelFIFO, util::BigArray};
 
+use log::debug;
 use serde::{Deserialize, Serialize};
 use sm83::flags::interrupt::{LCD_STAT, V_BLANK};
 
@@ -55,6 +56,8 @@ pub struct Registers {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct PPU {
 	pub cycle: u64,
+	ran_cycles: u64,
+	last_frame: u64,
 
 	#[serde(with = "BigArray")]
 	pub v_ram_bank_0: [u8; 0x2000],
@@ -76,6 +79,7 @@ pub struct PPU {
 
 	pub frame: u64,
 
+	stat_irq: bool,
 	fetcher_mode: FetcherMode,
 	current_pixel: u8,
 	window_line: u8,
@@ -106,11 +110,22 @@ impl PPU {
 			return;
 		}
 
-		if self
-			.registers
+		self.registers
 			.stat
-			.set_lyc_eq_ly(self.registers.ly == self.registers.lyc)
-		{
+			.set_lyc_eq_ly(self.registers.ly == self.registers.lyc);
+
+		self.update_stat_irq(interrupt_register)
+	}
+
+	pub fn update_stat_irq(&mut self, interrupt_register: &mut u8) {
+		let mode_int = self.registers.stat.int_enable(self.mode());
+		let lyc_int = self.registers.stat.lyc_eq_ly() && self.registers.stat.lyc_eq_ly_ie();
+		let new_value = mode_int || lyc_int;
+
+		let rising_edge = !self.stat_irq && new_value;
+		self.stat_irq = new_value;
+
+		if rising_edge {
 			*interrupt_register |= LCD_STAT;
 		}
 	}
@@ -132,8 +147,9 @@ impl PPU {
 		self.update_lyc(interrupt_register);
 	}
 
-	pub fn write_stat(&mut self, value: u8) {
+	pub fn write_stat(&mut self, value: u8, interrupt_register: &mut u8) {
 		self.registers.stat.write(value);
+		self.update_stat_irq(interrupt_register)
 	}
 
 	pub fn set_ly(&mut self, value: u8, interrupt_register: &mut u8) {
@@ -149,11 +165,10 @@ impl PPU {
 			return;
 		}
 
-		if self.registers.stat.int_enable(mode) {
-			*interrupt_register |= LCD_STAT;
-		}
+		self.update_stat_irq(interrupt_register);
 
 		if matches!(mode, PPUMode::VBlank) {
+			debug!("{:} VBlank", self.ran_cycles - self.last_frame);
 			*interrupt_register |= V_BLANK;
 		}
 	}
@@ -169,6 +184,7 @@ impl PPU {
 			return None;
 		}
 
+		self.ran_cycles += 1;
 		if self.cycle != 0 {
 			self.cycle -= 1;
 			return None;
@@ -179,17 +195,12 @@ impl PPU {
 			HBlank => {
 				self.set_ly(self.get_ly() + 1, interrupt_register);
 				if self.get_ly() < 144 {
-					self.cycle += 80;
+					self.cycle += 79;
 					self.set_mode(OamScan, interrupt_register);
 					Some(OamScan)
 				} else {
-					self.cycle += 456;
+					self.cycle += 455;
 					self.window_line = 255;
-
-					if let Some(lcd) = &mut self.lcd {
-						self.frame += 1;
-						lcd.swap_buffers();
-					}
 
 					self.set_mode(VBlank, interrupt_register);
 					Some(VBlank)
@@ -197,18 +208,26 @@ impl PPU {
 			}
 			VBlank => {
 				if self.get_ly() < 153 {
-					self.cycle += 456;
+					self.cycle += 455;
 					self.set_ly(self.get_ly() + 1, interrupt_register);
 					None
 				} else {
 					self.set_ly(0, interrupt_register);
-					self.cycle += 80;
+					self.cycle += 79;
+
+					if let Some(lcd) = &mut self.lcd {
+						self.frame += 1;
+						lcd.swap_buffers();
+						debug!("Cycle:{:}", self.ran_cycles - self.last_frame);
+						self.last_frame = self.ran_cycles;
+					}
+
 					self.set_mode(OamScan, interrupt_register);
 					Some(OamScan)
 				}
 			}
 			OamScan => {
-				self.cycle += 12;
+				self.cycle += 11;
 				self.start_scanline();
 				self.set_mode(Draw, interrupt_register);
 				Some(Draw)
@@ -232,6 +251,9 @@ impl PPU {
 impl Default for PPU {
 	fn default() -> Self {
 		Self {
+			stat_irq: false,
+			last_frame: 0,
+			ran_cycles: 0,
 			window_line: 0xFF,
 			v_ram_bank_0: [0; 0x2000],
 			v_ram_bank_1: [0; 0x2000],

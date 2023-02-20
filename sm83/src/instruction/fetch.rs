@@ -67,17 +67,9 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 		(3, 0, 2, _, _) => inst!(cpu, RET, (Condition::NC)),
 		(3, 0, 3, _, _) => inst!(cpu, RET, (Condition::C)),
 
-		(3, 0, 4, _, _) => {
-			use ValueRefU8::*;
-			inst!(cpu, LDH, (MemOffsetRaw(cpu.next_byte())), A)
-		}
-
+		(3, 0, 4, _, _) => inst!(cpu, LDH, (ValueRefU8::MemOffsetRaw(cpu.next_byte())), A),
 		(3, 0, 5, _, _) => inst!(cpu, ADD_SIGNED, SP, d),
-
-		(3, 0, 6, _, _) => {
-			use ValueRefU8::*;
-			inst!(cpu, LDH, A, (MemOffsetRaw(cpu.next_byte())))
-		}
+		(3, 0, 6, _, _) => inst!(cpu, LDH, A, (ValueRefU8::MemOffsetRaw(cpu.next_byte()))),
 
 		(3, 0, 7, _, _) => inst!(cpu, LD_HL_SP_DD, d),
 
@@ -88,9 +80,8 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 		(3, 1, _, 2, 1) => inst!(cpu, JP, (Condition::Always), HL),
 		(3, 1, _, 3, 1) => inst!(cpu, LD_16, SP, HL),
 
-		(3, 2, 4, _, _) => {
-			inst!(cpu, LDH, (ValueRefU8::MemOffsetReg(C)), A)
-		}
+		(3, 2, 4, _, _) => inst!(cpu, LDH, (ValueRefU8::MemOffsetReg(C)), A),
+
 		(3, 2, 5, _, _) => inst!(cpu, LD_8, [nn]u8, A),
 
 		(3, 2, 6, _, _) => inst!(cpu, LDH, A, (ValueRefU8::MemOffsetReg(C))),

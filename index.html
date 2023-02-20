@@ -6,6 +6,7 @@
 	<link data-trunk rel="copy-dir" href="assets">
 	<link data-trunk rel="copy-file" href="roms.json">
 	<link data-trunk rel="scss" href="/style.scss">
+	<link data-trunk rel="rust" data-wasm-opt="2">
 
 	<script type="module" src="assets/scripts/speed_selector.js"></script>
 	<script type="module" src="assets/scripts/hover.js"></script>
@@ -40,6 +41,8 @@
 				</svg>
 			</button>
 			<div id="menu_content">
+				<div id="debug_info"></div>
+				<button id="step">Step</button>
 				<button id="toggle_play">Pause</button>
 
 				<div class="collapsible">
