@@ -47,6 +47,12 @@ test result: FAILED. 1192 passed; 1734 failed; 0 ignored; 0 measured; 0 filtered
 
 ### 02/20/2023 
 test result: FAILED. 1199 passed; 1727 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.66s
+<!-- Modified ppu timing -->
 test result: FAILED. 1200 passed; 1726 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.02s
+<!-- Modified ppu memory access -->
 test result: FAILED. 1230 passed; 1696 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.96s
+<!-- Proper Stat IRQ blocking -->
 test result: FAILED. 1294 passed; 1632 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.62s
+<!-- Undocumented registers -->
+test result: FAILED. 1311 passed; 1615 failed; 0 ignored; 0 measured; 0 filtered out; finished in 32.16s
+
