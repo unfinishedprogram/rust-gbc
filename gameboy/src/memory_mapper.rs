@@ -1,11 +1,12 @@
 use sm83::memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper};
 
 use crate::{
+	debugger::Event,
 	io_registers::{IORegisters, DMA},
 	ppu::{PPUMode, VRAMBank},
 	state::Mode,
 	work_ram::BankedWorkRam,
-	Gameboy,
+	Debugger, Gameboy,
 };
 
 fn is_accessible(gb: &Gameboy, addr: u16, source: Source) -> bool {
@@ -39,6 +40,7 @@ impl SourcedMemoryMapper for Gameboy {
 
 impl MemoryMapper for Gameboy {
 	fn read(&self, addr: u16) -> u8 {
+		Debugger::emit(Event::ReadMem(addr));
 		if self.booting {
 			match self.mode {
 				Mode::DMG => {
@@ -80,6 +82,7 @@ impl MemoryMapper for Gameboy {
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
+		Debugger::emit(Event::WriteMem(addr, value));
 		match addr {
 			// Cartridge Rom
 			0x0000..0x8000 => {

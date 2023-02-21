@@ -12,6 +12,8 @@ pub enum Event {
 	UpdatePC(u16),
 	ExecInstruction(Instruction),
 	PPUEnterMode(PPUMode),
+	WriteMem(u16, u8),
+	ReadMem(u16),
 }
 
 pub enum Breakpoint {
@@ -19,6 +21,8 @@ pub enum Breakpoint {
 	PPUEnterMode(PPUMode),
 	ExecInstruction(Instruction),
 	PPUModeChange,
+	WriteMem(u16),
+	ReadMem(u16),
 }
 
 impl Breakpoint {
@@ -29,6 +33,12 @@ impl Breakpoint {
 				matches!(event, Event::PPUEnterMode(mode) if mode == br_mode)
 			}
 			Breakpoint::PPUModeChange => matches!(event, Event::PPUEnterMode(_)),
+			Breakpoint::ReadMem(br_addr) => {
+				matches!(event, Event::ReadMem(addr) if addr == br_addr)
+			}
+			Breakpoint::WriteMem(br_addr) => {
+				matches!(event, Event::WriteMem(addr, _) if addr == br_addr)
+			}
 			_ => todo!(),
 		}
 	}
