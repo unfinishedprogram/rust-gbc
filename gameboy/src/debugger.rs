@@ -8,6 +8,7 @@ lazy_static! {
 	pub static ref DEBUGGER: Arc<Mutex<Debugger>> = Arc::new(Mutex::new(Debugger::default()));
 }
 
+#[derive(Debug)]
 pub enum Event {
 	UpdatePC(u16),
 	ExecInstruction(Instruction),
@@ -54,6 +55,8 @@ pub struct Debugger {
 impl Debugger {
 	pub fn emit(event: Event) {
 		let Ok(mut debugger) = DEBUGGER.lock() else {return};
+		log::info!("{event:?}");
+
 		for breakpoint in &debugger.breakpoints {
 			if breakpoint.break_on(&event) {
 				debugger.running = false;

@@ -5,6 +5,7 @@ mod uploader;
 mod web_save_manager;
 pub use setup_listeners::setup_listeners;
 mod events;
+pub mod logger;
 use gloo::{
 	file::callbacks::FileReader, net::http::Request, timers::callback::Interval, utils::document,
 };

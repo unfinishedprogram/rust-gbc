@@ -1,7 +1,10 @@
 #![feature(local_key_cell_methods)]
-
 use gameboy::{debugger::Breakpoint, Debugger};
-use gbc_emu::application::{setup_listeners, APPLICATION};
+use gbc_emu::application::{
+	logger::{GBLogger, LOGGER},
+	setup_listeners, APPLICATION,
+};
+use log::LevelFilter;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[allow(dead_code)]
@@ -24,17 +27,13 @@ pub fn set_speed(multiplier: f64) {
 }
 
 fn main() {
-	wasm_logger::init(wasm_logger::Config::default());
-	console_error_panic_hook::set_once();
-	tracing_wasm::set_as_global_default();
+	log::set_logger(&LOGGER).unwrap();
+	log::set_max_level(LevelFilter::Info);
+
 	setup_listeners();
-	Debugger::add_breakpoint(Breakpoint::PPUEnterMode(gameboy::ppu::PPUMode::VBlank));
+
 	APPLICATION.with_borrow_mut(|app| {
-		app.load_rom(
-			// include_bytes!("../roms/test/mooneye/acceptance/ppu/intr_2_mode3_timing.gb"),
-			include_bytes!("../../BullyGB/bully.gb"),
-			None,
-		);
+		app.load_rom(include_bytes!("../../BullyGB/bully.gb"), None);
 		app.start();
 	});
 }

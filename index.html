@@ -13,8 +13,10 @@
 	<script type="module" src="assets/scripts/menu.js"></script>
 	<script type="module" src="assets/scripts/rom_loader.js"></script>
 	<script type="module" src="assets/scripts/collapsable.js"></script>
+	<script type="module" src="assets/scripts/logs.js"></script>
 
 	<link rel="stylesheet" href="assets/style/collapsible.css">
+	<link rel="stylesheet" href="assets/style/logs.css">
 
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -22,8 +24,14 @@
 </head>
 
 <body>
-	<span id="fps"></span>
+	<div id="logs_container">
+		<div id="logs">
+			<div id="logs_inner"></div>
+		</div>
+	</div>
 	<main id="main">
+
+
 		<canvas width="160" height="144" id="screen"></canvas>
 
 		<div id="menu">
@@ -55,6 +63,7 @@
 						<input hidden type="file" id="rom_upload_input" name="rom">
 					</div>
 				</div>
+
 				<div class="collapsible">
 					<label>Save states</label>
 					<div class="content" id="save_states_container">
