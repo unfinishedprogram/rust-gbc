@@ -1,6 +1,6 @@
 mod bits;
 mod cpu;
-mod instruction;
+pub mod instruction;
 pub mod memory_mapper;
 pub mod registers;
 mod stack;

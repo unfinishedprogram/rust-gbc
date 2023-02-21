@@ -7,7 +7,7 @@ mod tile_data;
 
 use std::collections::VecDeque;
 
-use crate::{lcd::GameboyLCD, ppu::renderer::PixelFIFO, util::BigArray};
+use crate::{debugger, lcd::GameboyLCD, ppu::renderer::PixelFIFO, util::BigArray};
 
 use log::debug;
 use serde::{Deserialize, Serialize};
@@ -24,7 +24,7 @@ pub enum FetcherMode {
 	Window,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PPUMode {
 	HBlank = 0,
 	VBlank = 1,
@@ -159,6 +159,8 @@ impl PPU {
 
 	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) {
 		self.registers.stat.set_ppu_mode(mode);
+
+		debugger::Debugger::emit(debugger::Event::PPUEnterMode(mode));
 
 		// Don't trigger any interrupts if the screen is disabled
 		if !self.is_enabled() {

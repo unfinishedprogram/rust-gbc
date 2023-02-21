@@ -1,5 +1,6 @@
 #![feature(local_key_cell_methods)]
 
+use gameboy::{debugger::Breakpoint, Debugger};
 use gbc_emu::application::{setup_listeners, APPLICATION};
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -27,6 +28,7 @@ fn main() {
 	console_error_panic_hook::set_once();
 	tracing_wasm::set_as_global_default();
 	setup_listeners();
+	Debugger::add_breakpoint(Breakpoint::PPUEnterMode(gameboy::ppu::PPUMode::VBlank));
 	APPLICATION.with_borrow_mut(|app| {
 		app.load_rom(
 			// include_bytes!("../roms/test/mooneye/acceptance/ppu/intr_2_mode3_timing.gb"),

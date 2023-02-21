@@ -18,7 +18,7 @@ use web_sys::ImageData;
 use gameboy::{
 	lcd::GameboyLCD,
 	save_state::{RomSource, SaveState},
-	Gameboy, Mode,
+	Debugger, Gameboy, Mode,
 };
 
 use self::input::InputState;
@@ -122,8 +122,13 @@ impl Application {
 	pub fn step_emulator(&mut self, delta: f64) {
 		let start = self.emulator_state.get_cycle();
 
-		while self.emulator_state.get_cycle() - start < (1.5 * delta * 1_048_576.0) as u64 {
+		while self.emulator_state.get_cycle() - start < (1.5 * delta * 1_048_576.0) as u64
+			&& gameboy::Debugger::running()
+		{
 			self.emulator_state.step();
+			if !gameboy::Debugger::running() {
+				self.stop();
+			}
 		}
 	}
 
@@ -136,6 +141,7 @@ impl Application {
 	}
 
 	pub fn start(&mut self) {
+		Debugger::start();
 		let interval = Interval::new(15, || {
 			APPLICATION.with_borrow_mut(|app| app.step_frame());
 		});

@@ -7,6 +7,7 @@
 pub mod cartridge;
 pub mod cgb;
 pub mod controller;
+pub mod debugger;
 mod dma_controller;
 pub mod io_registers;
 pub mod lcd;
@@ -18,6 +19,7 @@ mod state;
 mod timer;
 mod util;
 mod work_ram;
+pub use debugger::Debugger;
 pub use state::{Gameboy, Mode};
 
 #[cfg(test)]
