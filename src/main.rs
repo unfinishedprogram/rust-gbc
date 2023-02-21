@@ -29,7 +29,8 @@ fn main() {
 	setup_listeners();
 	APPLICATION.with_borrow_mut(|app| {
 		app.load_rom(
-			include_bytes!("../roms/test/mooneye/acceptance/ppu/intr_2_mode3_timing.gb"),
+			// include_bytes!("../roms/test/mooneye/acceptance/ppu/intr_2_mode3_timing.gb"),
+			include_bytes!("../../BullyGB/bully.gb"),
 			None,
 		);
 		app.start();
