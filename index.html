@@ -6,7 +6,7 @@
 	<link data-trunk rel="copy-dir" href="assets">
 	<link data-trunk rel="copy-file" href="roms.json">
 	<link data-trunk rel="scss" href="/style.scss">
-	<link data-trunk rel="rust" data-wasm-opt="2">
+	<link data-trunk rel="rust" data-wasm-opt="s">
 
 	<script type="module" src="assets/scripts/speed_selector.js"></script>
 	<script type="module" src="assets/scripts/hover.js"></script>
@@ -24,14 +24,8 @@
 </head>
 
 <body>
-	<div id="logs_container">
-		<div id="logs">
-			<div id="logs_inner"></div>
-		</div>
-	</div>
+
 	<main id="main">
-
-
 		<canvas width="160" height="144" id="screen"></canvas>
 
 		<div id="menu">

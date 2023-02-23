@@ -17,9 +17,10 @@ use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
 use gameboy::{
+	debugger,
 	lcd::GameboyLCD,
 	save_state::{RomSource, SaveState},
-	Debugger, Gameboy, Mode,
+	Gameboy, Mode,
 };
 
 use self::input::InputState;
@@ -124,10 +125,10 @@ impl Application {
 		let start = self.emulator_state.get_cycle();
 
 		while self.emulator_state.get_cycle() - start < (1.5 * delta * 1_048_576.0) as u64
-			&& gameboy::Debugger::running()
+			&& debugger::running()
 		{
 			self.emulator_state.step();
-			if !gameboy::Debugger::running() {
+			if !debugger::running() {
 				self.stop();
 			}
 		}
@@ -142,7 +143,7 @@ impl Application {
 	}
 
 	pub fn start(&mut self) {
-		Debugger::start();
+		debugger::start();
 		let interval = Interval::new(15, || {
 			APPLICATION.with_borrow_mut(|app| app.step_frame());
 		});

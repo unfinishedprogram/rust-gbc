@@ -1,13 +1,15 @@
 use sm83::memory_mapper::{MemoryMapper, Source, SourcedMemoryMapper};
 
 use crate::{
-	debugger::Event,
 	io_registers::{IORegisters, DMA},
 	ppu::{PPUMode, VRAMBank},
 	state::Mode,
 	work_ram::BankedWorkRam,
-	Debugger, Gameboy,
+	Gameboy,
 };
+
+#[cfg(feature = "debug")]
+use crate::debugger::{self, Event};
 
 fn is_accessible(gb: &Gameboy, addr: u16, source: Source) -> bool {
 	match (gb.oam_dma.oam_is_accessible(), gb.ppu.mode(), addr, source) {
@@ -26,6 +28,7 @@ impl SourcedMemoryMapper for Gameboy {
 		if is_accessible(self, addr, source) {
 			self.read(addr)
 		} else {
+			#[cfg(feature = "debug")]
 			log::warn!("BLOCKED READ: {addr:04X}");
 			0xFF
 		}
@@ -40,7 +43,8 @@ impl SourcedMemoryMapper for Gameboy {
 
 impl MemoryMapper for Gameboy {
 	fn read(&self, addr: u16) -> u8 {
-		Debugger::emit(Event::ReadMem(addr));
+		#[cfg(feature = "debug")]
+		debugger::emit(Event::ReadMem(addr));
 		if self.booting {
 			match self.mode {
 				Mode::DMG => {
@@ -82,7 +86,8 @@ impl MemoryMapper for Gameboy {
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
-		Debugger::emit(Event::WriteMem(addr, value));
+		#[cfg(feature = "debug")]
+		debugger::emit(Event::WriteMem(addr, value));
 		match addr {
 			// Cartridge Rom
 			0x0000..0x8000 => {

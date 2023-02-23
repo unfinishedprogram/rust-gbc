@@ -7,7 +7,10 @@ mod tile_data;
 
 use std::collections::VecDeque;
 
-use crate::{debugger, lcd::GameboyLCD, ppu::renderer::PixelFIFO, util::BigArray};
+use crate::{lcd::GameboyLCD, ppu::renderer::PixelFIFO, util::BigArray};
+
+#[cfg(feature = "debug")]
+use crate::debugger::{emit, Event};
 
 use log::debug;
 use serde::{Deserialize, Serialize};
@@ -160,7 +163,8 @@ impl PPU {
 	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) {
 		self.registers.stat.set_ppu_mode(mode);
 
-		debugger::Debugger::emit(debugger::Event::PPUEnterMode(mode));
+		#[cfg(feature = "debug")]
+		emit(Event::PPUEnterMode(mode));
 
 		// Don't trigger any interrupts if the screen is disabled
 		if !self.is_enabled() {
@@ -271,8 +275,8 @@ impl Default for PPU {
 			sprites: vec![],
 			current_tile: 0,
 			fifo_pixel: 0,
-			fifo_bg: Default::default(),
-			fifo_obj: Default::default(),
+			fifo_bg: VecDeque::with_capacity(16),
+			fifo_obj: VecDeque::with_capacity(16),
 		}
 	}
 }

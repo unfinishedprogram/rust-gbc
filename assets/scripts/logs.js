@@ -2,6 +2,13 @@ import * as wasm from "/gbc-emu.js"
 
 const inRange = (x, a, b) => x >= a && a < b;
 
+const log_markup = `
+<div id="logs_container">
+<div id="logs">
+    <div id="logs_inner"></div>
+</div>
+</div>`;
+
 class LogDisplay {
     constructor(elm = document.querySelector("#logs")) {
         this.elm = elm;
@@ -24,6 +31,7 @@ class LogDisplay {
     }
 
     update() {
+        console.log(wasm.log_count())
         this.logger_height = wasm.log_count() * this.elm_height;
         this.elm.setAttribute("style", `min-height:${this.logger_height}px;`);
         this.container_height = this.elm.parentElement.clientHeight;
@@ -78,6 +86,10 @@ class LogDisplay {
 // }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const temp = document.createElement("div");
+    temp.innerHTML = log_markup;
+    document.body.insertBefore(temp.firstChild, document.body.firstChild);
+
     setTimeout(() => {
         const logDisplay = new LogDisplay();
 

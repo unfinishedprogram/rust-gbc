@@ -19,6 +19,7 @@ impl OamDmaState {
 		}
 
 		if self.cycles_remaining == 0 && !self.oam_accessible {
+			#[cfg(feature = "debug")]
 			log::warn!("OAM DMA END");
 			self.oam_accessible = true;
 		} else {
@@ -31,6 +32,7 @@ impl OamDmaState {
 					ppu.oam[i] = *data;
 				}
 				self.cycles_remaining = OAM_DMA_DURATION;
+				#[cfg(feature = "debug")]
 				log::warn!("OAM DMA START");
 				self.oam_accessible = false;
 			}
@@ -38,6 +40,7 @@ impl OamDmaState {
 	}
 
 	pub fn start_oam_dma(&mut self, data: Vec<u8>) {
+		#[cfg(feature = "debug")]
 		log::warn!("OAM DMA REQUEST");
 		self.dma_request = Some(data);
 		self.start_delay = 2;

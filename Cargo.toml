@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.65.0"
 
+[features]
+debug = ["gameboy/debug"]
+
 [dependencies]
 gameboy = { path = "gameboy" }
 log = "0.4.17"
@@ -37,11 +40,14 @@ tracing-wasm = "0.2.1"
 console_error_panic_hook = "0.1.7"
 wasm-logger = "0.2.0"
 
+[profile.release]
+opt-level = "z"
+
 [profile.test]
-opt-level = 3
+opt-level = "z"
 
 [profile.dev]
-opt-level = 3
+opt-level = "z"
 
 [build-dependencies]
 serde = { version = "1.0.150", features = ["derive"] }
