@@ -64,10 +64,12 @@ impl ColorRamController {
 	pub fn update_color(&mut self, index: usize) {
 		let color = self.data[index];
 
+		// Extract 5 bits of each channel
 		let r = color & 0b11111;
 		let g = (color >> 5) & 0b11111;
 		let b = (color >> 10) & 0b11111;
 
+		// Convert to 8 bit per channel color
 		let r = ((r << 3) | (r >> 2)) as u8;
 		let g = ((g << 3) | (g >> 2)) as u8;
 		let b = ((b << 3) | (b >> 2)) as u8;
