@@ -1,4 +1,5 @@
 use crate::{
+	debugger::emit,
 	ppu::VRAMBank,
 	util::bits::{BIT_0, BIT_7},
 };
@@ -72,6 +73,7 @@ impl CGBState {
 	pub fn perform_speed_switch(&mut self) {
 		if self.prepare_speed_switch {
 			self.speed = !self.speed.clone();
+			emit(crate::debugger::Event::SpeedSwitch(self.speed.clone()));
 		}
 	}
 

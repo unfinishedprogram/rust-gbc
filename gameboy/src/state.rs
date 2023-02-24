@@ -116,6 +116,12 @@ impl Gameboy {
 		if self.speed_switch_delay > 0 {
 			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
 			self.tick_m_cycles(1);
+
+			if self.speed_switch_delay == 0 {
+				if let Mode::GBC(state) = &mut self.mode {
+					state.perform_speed_switch()
+				}
+			}
 			return;
 		}
 		self.step_cpu();
@@ -131,7 +137,7 @@ impl Gameboy {
 
 			let t_states = match self.mode.get_speed() {
 				Speed::Normal => 4,
-				Speed::Double => 2,
+				Speed::Double => 4,
 			};
 
 			let new_ppu_mode: Option<PPUMode> = self.tick_t_states(t_states);
@@ -267,9 +273,8 @@ impl SM83<Gameboy> for Gameboy {
 	}
 
 	fn exec_stop(&mut self) {
-		if let crate::state::Mode::GBC(state) = &mut self.mode {
+		if let crate::state::Mode::GBC(_) = &mut self.mode {
 			self.speed_switch_delay = 2050;
-			state.perform_speed_switch();
 		}
 	}
 }

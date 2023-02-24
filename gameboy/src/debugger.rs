@@ -6,7 +6,7 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
-use crate::ppu::PPUMode;
+use crate::{cgb::Speed, ppu::PPUMode};
 
 lazy_static! {
 	pub static ref DEBUGGER: Arc<Mutex<DebuggerState>> =
@@ -25,6 +25,7 @@ pub enum Event {
 	Info(String),
 	Debug(String),
 	Trace(String),
+	SpeedSwitch(Speed),
 }
 
 pub enum Breakpoint {
@@ -34,6 +35,7 @@ pub enum Breakpoint {
 	PPUModeChange,
 	WriteMem(u16),
 	ReadMem(u16),
+	SpeedSwitch(Speed),
 }
 
 impl Breakpoint {
@@ -50,6 +52,8 @@ impl Breakpoint {
 			Breakpoint::WriteMem(br_addr) => {
 				matches!(event, Event::WriteMem(addr, _) if addr == br_addr)
 			}
+
+			Breakpoint::SpeedSwitch(_) => matches!(event, Event::SpeedSwitch(_)),
 			_ => todo!(),
 		}
 	}
@@ -98,6 +102,7 @@ impl DebuggerState {
 			for breakpoint in &self.breakpoints {
 				if breakpoint.break_on(&event) {
 					self.running = false;
+					self.events.clear();
 					break;
 				}
 			}
