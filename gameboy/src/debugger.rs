@@ -141,5 +141,9 @@ pub fn log_count() -> usize {
 
 pub fn get_range(start: usize, end: usize) -> Vec<Event> {
 	let Ok(debugger) = DEBUGGER.lock() else {return vec![]};
-	debugger.events[start..end].to_vec()
+	if start > 0 && end < debugger.events.len() {
+		debugger.events[start..end].to_vec()
+	} else {
+		vec![]
+	}
 }

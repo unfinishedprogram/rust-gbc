@@ -43,8 +43,8 @@ impl SourcedMemoryMapper for Gameboy {
 
 impl MemoryMapper for Gameboy {
 	fn read(&self, addr: u16) -> u8 {
-		#[cfg(feature = "debug")]
-		debugger::emit(Event::ReadMem(addr));
+		// #[cfg(feature = "debug")]
+		// debugger::emit(Event::ReadMem(addr));
 		if self.booting {
 			match self.mode {
 				Mode::DMG => {
@@ -86,8 +86,8 @@ impl MemoryMapper for Gameboy {
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
-		#[cfg(feature = "debug")]
-		debugger::emit(Event::WriteMem(addr, value));
+		// #[cfg(feature = "debug")]
+		// debugger::emit(Event::WriteMem(addr, value));
 		match addr {
 			// Cartridge Rom
 			0x0000..0x8000 => {

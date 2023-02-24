@@ -29,7 +29,10 @@ fn main() {
 	setup_listeners();
 
 	APPLICATION.with_borrow_mut(|app| {
-		app.load_rom(include_bytes!("../../BullyGB/bully.gb"), None);
+		app.load_rom(
+			include_bytes!("../roms/test/blargg/interrupt_time.gb"),
+			None,
+		);
 		app.start();
 	});
 }

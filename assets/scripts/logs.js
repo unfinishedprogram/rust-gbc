@@ -7,6 +7,19 @@ const log_markup = `
 </div>
 </div>`;
 
+function insertHTML() {
+    const container = document.createElement("div");
+    const logs = document.createElement("div");
+    const inner = document.createElement("div");
+
+    logs.appendChild(inner);
+    container.appendChild(logs);
+    inner.id = "logs_inner";
+    logs.id = "logs";
+    container.id = "logs_container";
+    document.body.insertBefore(container, document.body.firstChild)
+}
+
 class LogDisplay {
     constructor(elm = document.querySelector("#logs")) {
         this.elm = elm;
@@ -65,9 +78,7 @@ class LogDisplay {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-    const temp = document.createElement("div");
-    temp.innerHTML = log_markup;
-    document.body.insertBefore(temp.firstChild, document.body.firstChild);
+    insertHTML();
 
     setTimeout(() => {
         const logDisplay = new LogDisplay();
