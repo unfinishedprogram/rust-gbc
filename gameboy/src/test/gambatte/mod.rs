@@ -96,6 +96,5 @@ fn screen_as_str(screen: &[u8]) -> String {
 		.iter()
 		.flatten()
 		.map(|v| to_char(*v).unwrap())
-		.into_iter()
 		.collect()
 }

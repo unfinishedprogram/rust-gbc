@@ -6,6 +6,7 @@ rust-version = "1.65.0"
 
 [features]
 debug = ["gameboy/debug"]
+default = ["debug"]
 
 [dependencies]
 gameboy = { path = "gameboy" }

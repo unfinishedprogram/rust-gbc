@@ -58,12 +58,8 @@ impl Breakpoint {
 pub struct Debugger;
 
 impl Log for Debugger {
-	fn enabled(&self, metadata: &log::Metadata) -> bool {
-		#[cfg(not(debug))]
-		return false;
-
-		#[cfg(feature = "debug")]
-		return true;
+	fn enabled(&self, _metadata: &log::Metadata) -> bool {
+		cfg!(feature = "debug")
 	}
 
 	fn log(&self, record: &log::Record) {
@@ -98,16 +94,15 @@ pub struct DebuggerState {
 
 impl DebuggerState {
 	pub fn emit(&mut self, event: Event) {
-		#[cfg(not(debug))]
-		return;
-
-		for breakpoint in &self.breakpoints {
-			if breakpoint.break_on(&event) {
-				self.running = false;
-				break;
+		if cfg!(feature = "debug") {
+			for breakpoint in &self.breakpoints {
+				if breakpoint.break_on(&event) {
+					self.running = false;
+					break;
+				}
 			}
+			self.events.push(event);
 		}
-		self.events.push(event);
 	}
 	pub fn add_breakpoint(&mut self, breakpoint: Breakpoint) {
 		self.breakpoints.push(breakpoint);
@@ -115,11 +110,10 @@ impl DebuggerState {
 }
 
 pub fn emit(event: Event) {
-	#[cfg(not(debug))]
-	return;
-
-	let Ok(mut debugger) = DEBUGGER.lock() else {return};
-	debugger.emit(event);
+	if cfg!(feature = "debug") {
+		let Ok(mut debugger) = DEBUGGER.lock() else {return};
+		debugger.emit(event);
+	}
 }
 
 pub fn start() {

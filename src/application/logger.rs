@@ -6,6 +6,12 @@ pub static LOGGER: Debugger = Debugger;
 
 #[allow(dead_code)]
 #[wasm_bindgen]
+pub fn debug_mode() -> bool {
+	cfg!(feature = "debug")
+}
+
+#[allow(dead_code)]
+#[wasm_bindgen]
 pub fn get_logs(from: usize, to: usize) -> String {
 	let logs: Vec<String> = debugger::get_range(from, to)
 		.into_iter()

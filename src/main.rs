@@ -1,9 +1,5 @@
 #![feature(local_key_cell_methods)]
-use gameboy::{debugger::Breakpoint, Debugger};
-use gbc_emu::application::{
-	logger::{GBLogger, LOGGER},
-	setup_listeners, APPLICATION,
-};
+use gbc_emu::application::{logger::LOGGER, setup_listeners, APPLICATION};
 use log::LevelFilter;
 use wasm_bindgen::prelude::wasm_bindgen;
 

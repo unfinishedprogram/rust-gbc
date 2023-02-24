@@ -1,7 +1,5 @@
 import * as wasm from "/gbc-emu.js"
 
-const inRange = (x, a, b) => x >= a && a < b;
-
 const log_markup = `
 <div id="logs_container">
 <div id="logs">
@@ -65,25 +63,6 @@ class LogDisplay {
     }
 }
 
-// const showLog = (text) => {
-//     const elm = log_container.firstChild;
-//     elm.innerText = text;
-//     log_container.aappendChild(elm);
-// }
-
-// let displayLogs;
-// displayLogs = () => {
-//     let log_count = wasm.log_count();
-
-//     if (log_count != last_fetched) {
-//         const logs = JSON.parse(wasm.get_logs(Math.max(last_fetched, log_count - 30), log_count));
-//         last_fetched = log_count;
-
-//         for (let log of logs) showLog(log)
-//     }
-
-//     requestAnimationFrame(displayLogs)
-// }
 
 document.addEventListener("DOMContentLoaded", () => {
     const temp = document.createElement("div");
