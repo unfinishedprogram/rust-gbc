@@ -1,4 +1,4 @@
-use std::ops::Not;
+use std::mem;
 
 use serde::{Deserialize, Serialize};
 
@@ -9,26 +9,11 @@ pub trait LCDDisplay {
 	fn put_pixel(&mut self, x: u8, y: u8, color: Color);
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
-pub enum Buffer {
-	A,
-	B,
-}
-
-impl Not for Buffer {
-	type Output = Buffer;
-	fn not(self) -> Self::Output {
-		match self {
-			Buffer::A => Buffer::B,
-			Buffer::B => Buffer::A,
-		}
-	}
-}
-
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GameboyLCD {
-	buffers: (Vec<u8>, Vec<u8>),
-	current_buffer: Buffer,
+	buffer_front: Vec<u8>,
+	buffer_back: Vec<u8>,
+
 	pub frame: u64,
 	pub scale: f32,
 }
@@ -49,7 +34,7 @@ impl LCDDisplay for GameboyLCD {
 
 		let index = (y * width + x) * 4;
 
-		let image = self.get_current_mut();
+		let image = self.get_back_buffer_mut();
 
 		image[index] = r;
 		image[index + 1] = g;
@@ -61,32 +46,27 @@ impl LCDDisplay for GameboyLCD {
 impl GameboyLCD {
 	pub fn swap_buffers(&mut self) {
 		self.frame += 1;
-		self.current_buffer = !self.current_buffer;
+		mem::swap(&mut self.buffer_front, &mut self.buffer_back);
 	}
 
-	pub fn get_current_as_bytes(&self) -> &[u8] {
-		match self.current_buffer {
-			Buffer::A => self.buffers.1.as_slice(),
-			Buffer::B => self.buffers.0.as_slice(),
-		}
+	fn get_back_buffer_mut(&mut self) -> &mut [u8] {
+		return self.buffer_back.as_mut_slice();
 	}
 
-	fn get_current_mut(&mut self) -> &mut [u8] {
-		match self.current_buffer {
-			Buffer::A => self.buffers.0.as_mut_slice(),
-			Buffer::B => self.buffers.1.as_mut_slice(),
-		}
+	pub fn front_buffer(&self) -> &[u8] {
+		return self.buffer_front.as_slice();
 	}
 }
 
 impl Default for GameboyLCD {
 	fn default() -> Self {
-		let buffers = (vec![100; 160 * 144 * 4], vec![255; 160 * 144 * 4]);
+		let buffer_front = vec![100; 160 * 144 * 4];
+		let buffer_back = vec![100; 160 * 144 * 4];
 		Self {
+			buffer_front,
+			buffer_back,
 			frame: 0,
 			scale: 3.0,
-			current_buffer: Buffer::A,
-			buffers,
 		}
 	}
 }

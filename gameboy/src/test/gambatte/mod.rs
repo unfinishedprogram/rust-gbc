@@ -41,7 +41,7 @@ fn get_test_output(test: &GambatteTest) -> String {
 		state.step();
 	}
 
-	let buffer = state.ppu.lcd.as_ref().unwrap().get_current_as_bytes();
+	let buffer = state.ppu.lcd.as_ref().unwrap().front_buffer();
 	screen_as_str(buffer)
 }
 

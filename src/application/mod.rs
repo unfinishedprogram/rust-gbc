@@ -80,8 +80,7 @@ impl Application {
 		let screen = self.emulator_state.ppu.lcd.as_ref().unwrap();
 
 		let img_data =
-			ImageData::new_with_u8_clamped_array(Clamped(screen.get_current_as_bytes()), 160)
-				.unwrap();
+			ImageData::new_with_u8_clamped_array(Clamped(screen.front_buffer()), 160).unwrap();
 
 		get_screen_ctx()
 			.put_image_data(&img_data, 0.0, 0.0)
