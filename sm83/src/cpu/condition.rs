@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Formatter, Result};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Condition {
 	NZ,
 	Z,

@@ -8,7 +8,7 @@ use std::{
 use CPURegister16::*;
 use CPURegister8::*;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum CPURegister8 {
 	A,
 	B,
@@ -20,7 +20,7 @@ pub enum CPURegister8 {
 	L,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum CPURegister16 {
 	AF,
 	BC,

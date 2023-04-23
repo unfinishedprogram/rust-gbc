@@ -28,6 +28,7 @@ pub enum Event {
 	SpeedSwitch(Speed),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Breakpoint {
 	Addr(u16),
 	PPUEnterMode(PPUMode),
@@ -66,13 +67,13 @@ impl Log for Debugger {
 		cfg!(feature = "debug")
 	}
 
-	fn log(&self, record: &log::Record) {
+	fn log(&self, _record: &log::Record) {
 		#[cfg(feature = "debug")]
 		{
-			let args = record.args();
+			let args = _record.args();
 			let args = format!("{args}");
 
-			let event = match record.metadata().level() {
+			let event = match _record.metadata().level() {
 				log::Level::Error => Event::Error(args),
 				log::Level::Warn => Event::Warn(args),
 				log::Level::Info => Event::Info(args),
@@ -91,9 +92,9 @@ impl Log for Debugger {
 
 #[derive(Default)]
 pub struct DebuggerState {
-	breakpoints: Vec<Breakpoint>,
-	events: Vec<Event>,
-	running: bool,
+	pub breakpoints: Vec<Breakpoint>,
+	pub events: Vec<Event>,
+	pub running: bool,
 }
 
 impl DebuggerState {
@@ -111,6 +112,10 @@ impl DebuggerState {
 	}
 	pub fn add_breakpoint(&mut self, breakpoint: Breakpoint) {
 		self.breakpoints.push(breakpoint);
+	}
+
+	pub fn remove_breakpoint(&mut self, breakpoint: Breakpoint) {
+		self.breakpoints.retain(|br| br != &breakpoint);
 	}
 }
 

@@ -4,11 +4,6 @@ use serde::{Deserialize, Serialize};
 
 pub type Color = (u8, u8, u8, u8);
 
-pub trait LCDDisplay {
-	fn get_size(&self) -> (u8, u8);
-	fn put_pixel(&mut self, x: u8, y: u8, color: Color);
-}
-
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GameboyLCD {
 	buffer_front: Vec<u8>,
@@ -18,13 +13,13 @@ pub struct GameboyLCD {
 	pub scale: f32,
 }
 
-impl LCDDisplay for GameboyLCD {
-	fn get_size(&self) -> (u8, u8) {
+impl GameboyLCD {
+	pub fn size(&self) -> (u8, u8) {
 		(160, 144)
 	}
 
-	fn put_pixel(&mut self, x: u8, y: u8, color: Color) {
-		let (width, _) = self.get_size();
+	pub fn put_pixel(&mut self, x: u8, y: u8, color: Color) {
+		let (width, _) = self.size();
 
 		let y = y as usize;
 		let x = x as usize;

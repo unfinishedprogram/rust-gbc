@@ -19,7 +19,7 @@ use super::{
 };
 
 #[allow(non_camel_case_types)]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Instruction {
 	NOP,
 	STOP,
@@ -64,13 +64,13 @@ pub enum Instruction {
 
 	INT(u8),
 
-	LD_A_INC_HL,
-	LD_A_DEC_HL,
-	LD_INC_HL_A,
-	LD_DEC_HL_A,
+	LDI_A_HL,
+	LDD_A_HL,
+	LDI_HL_A,
+	LDD_HL_A,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ALUOperation {
 	ADD,
 	ADC,
@@ -82,7 +82,7 @@ pub enum ALUOperation {
 	CP,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum RotShiftOperation {
 	RLC,
 	RRC,
@@ -168,10 +168,10 @@ impl Debug for Instruction {
 			Self::SET(arg0, arg1) => write!(f, "set {arg0}, {arg1:?}"),
 			Self::ROT(arg0, arg1) => write!(f, "{arg0:?} {arg1:?}"),
 			Self::INT(arg0) => f.debug_tuple("int").field(arg0).finish(),
-			Self::LD_A_DEC_HL => write!(f, "ld a, [hl-]"),
-			Self::LD_A_INC_HL => write!(f, "ld a, [hl+]"),
-			Self::LD_DEC_HL_A => write!(f, "ld [hl-], a"),
-			Self::LD_INC_HL_A => write!(f, "ld [hl+], a"),
+			Self::LDI_A_HL => write!(f, "ld a, [hl-]"),
+			Self::LDD_A_HL => write!(f, "ld a, [hl+]"),
+			Self::LDI_HL_A => write!(f, "ld [hl-], a"),
+			Self::LDD_HL_A => write!(f, "ld [hl+], a"),
 			Self::LD_HL_SP_DD(arg0) => write!(f, "ld hl, sp + {arg0:?}"),
 			Self::RETI => write!(f, "reti"),
 		}

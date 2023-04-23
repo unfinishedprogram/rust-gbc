@@ -438,7 +438,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.write_16(&CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
 		}
 
-		LD_A_INC_HL => {
+		LDI_A_HL => {
 			execute(
 				cpu,
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
@@ -448,7 +448,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
 
-		LD_A_DEC_HL => {
+		LDD_A_HL => {
 			execute(
 				cpu,
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
@@ -470,7 +470,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.write_16(ptr, ptr_val.wrapping_sub(1));
 		}
 
-		LD_INC_HL_A => {
+		LDI_HL_A => {
 			execute(
 				cpu,
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
@@ -480,7 +480,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
 
-		LD_DEC_HL_A => {
+		LDD_HL_A => {
 			execute(
 				cpu,
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),

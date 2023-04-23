@@ -27,7 +27,7 @@ pub enum FetcherMode {
 	Window,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PPUMode {
 	HBlank = 0,
 	VBlank = 1,
@@ -73,7 +73,7 @@ pub struct PPU {
 	pub oam: [u8; 0xA0],
 
 	#[serde(skip)]
-	pub lcd: Option<GameboyLCD>,
+	pub lcd: GameboyLCD,
 
 	pub registers: Registers,
 
@@ -221,12 +221,10 @@ impl PPU {
 					self.set_ly(0, interrupt_register);
 					self.cycle += 79;
 
-					if let Some(lcd) = &mut self.lcd {
-						self.frame += 1;
-						lcd.swap_buffers();
-						debug!("Cycle:{:}", self.ran_cycles - self.last_frame);
-						self.last_frame = self.ran_cycles;
-					}
+					self.frame += 1;
+					self.lcd.swap_buffers();
+					debug!("Cycle:{:}", self.ran_cycles - self.last_frame);
+					self.last_frame = self.ran_cycles;
 
 					self.set_mode(OamScan, interrupt_register);
 					Some(OamScan)
@@ -265,7 +263,7 @@ impl Default for PPU {
 			v_ram_bank_1: [0; 0x2000],
 			oam: [0; 0xA0],
 			cycle: 0,
-			lcd: None,
+			lcd: Default::default(),
 			registers: Registers::default(),
 			bg_color: Default::default(),
 			obj_color: Default::default(),

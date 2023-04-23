@@ -8,9 +8,6 @@ use crate::{
 	Gameboy,
 };
 
-#[cfg(feature = "debug")]
-use crate::debugger::{self, Event};
-
 fn is_accessible(gb: &Gameboy, addr: u16, source: Source) -> bool {
 	match (gb.oam_dma.oam_is_accessible(), gb.ppu.mode(), addr, source) {
 		(_, _, _, Source::Raw) => true,

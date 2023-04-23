@@ -6,9 +6,7 @@ mod web_save_manager;
 pub use setup_listeners::setup_listeners;
 mod events;
 pub mod logger;
-use gloo::{
-	file::callbacks::FileReader, net::http::Request, timers::callback::Interval, utils::document,
-};
+use gloo::{file::callbacks::FileReader, net::http::Request, timers::callback::Interval};
 use screen::get_screen_ctx;
 
 use std::{cell::RefCell, fmt::Display};
@@ -17,8 +15,6 @@ use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
 use gameboy::{
-	debugger,
-	lcd::GameboyLCD,
 	save_state::{RomSource, SaveState},
 	Gameboy, Mode,
 };
@@ -56,12 +52,7 @@ pub struct Application {
 
 impl Default for Application {
 	fn default() -> Self {
-		let emulator_state = {
-			let mut state = Gameboy::default();
-			let lcd = GameboyLCD::default();
-			state.bind_lcd(lcd);
-			state
-		};
+		let emulator_state = Gameboy::default();
 
 		Self {
 			frame_counts: vec![0; 30],
@@ -77,7 +68,7 @@ impl Default for Application {
 
 impl Application {
 	pub fn render_screen(&mut self) {
-		let screen = self.emulator_state.ppu.lcd.as_ref().unwrap();
+		let screen = &self.emulator_state.ppu.lcd;
 
 		let img_data =
 			ImageData::new_with_u8_clamped_array(Clamped(screen.front_buffer()), 160).unwrap();
@@ -123,13 +114,8 @@ impl Application {
 	pub fn step_emulator(&mut self, delta: f64) {
 		let start = self.emulator_state.get_cycle();
 
-		while self.emulator_state.get_cycle() - start < (1.5 * delta * 1_048_576.0) as u64
-			&& debugger::running()
-		{
+		while self.emulator_state.get_cycle() - start < (1.5 * delta * 1_048_576.0) as u64 {
 			self.emulator_state.step();
-			if !debugger::running() {
-				self.stop();
-			}
 		}
 	}
 
@@ -142,7 +128,6 @@ impl Application {
 	}
 
 	pub fn start(&mut self) {
-		debugger::start();
 		let interval = Interval::new(15, || {
 			APPLICATION.with_borrow_mut(|app| app.step_frame());
 		});
@@ -162,17 +147,6 @@ impl Application {
 		};
 	}
 
-	pub fn step_single(&mut self) {
-		document()
-			.query_selector("#debug_info")
-			.unwrap()
-			.unwrap()
-			.set_inner_html(&format!("{:?}", self.emulator_state.cpu_state.registers));
-
-		self.emulator_state.step();
-		self.render_screen();
-	}
-
 	pub fn run_until_boot(&mut self) {
 		self.emulator_state.run_until_boot();
 		self.render_screen();
@@ -190,15 +164,12 @@ impl Application {
 
 	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
 		self.emulator_state = Gameboy::default();
-		let lcd = GameboyLCD::default();
-		self.emulator_state.bind_lcd(lcd);
 		self.emulator_state.load_rom(rom, source);
 	}
 
 	pub fn load_save_state_with_rom(&mut self, rom: &[u8], save: SaveState) {
 		self.load_rom(rom, save.rom_source.clone());
 		self.emulator_state = self.emulator_state.clone().load_save_state(save);
-		self.emulator_state.bind_lcd(GameboyLCD::default());
 	}
 
 	pub async fn load_save_state(&mut self, save: SaveState) {

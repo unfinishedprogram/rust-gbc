@@ -32,15 +32,15 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 		(0, 2, _, 0, 0) => inst!(cpu, LD_8, [BC]u8, A),
 		(0, 2, _, 1, 0) => inst!(cpu, LD_8, [DE]u8, A),
 
-		(0, 2, _, 2, 0) => inst!(cpu, LD_INC_HL_A),
+		(0, 2, _, 2, 0) => inst!(cpu, LDI_HL_A),
 
-		(0, 2, _, 3, 0) => inst!(cpu, LD_DEC_HL_A),
+		(0, 2, _, 3, 0) => inst!(cpu, LDD_HL_A),
 
 		(0, 2, _, 0, 1) => inst!(cpu, LD_8, A, [BC]u8),
 		(0, 2, _, 1, 1) => inst!(cpu, LD_8, A, [DE]u8),
 
-		(0, 2, _, 2, 1) => inst!(cpu, LD_A_INC_HL),
-		(0, 2, _, 3, 1) => inst!(cpu, LD_A_DEC_HL),
+		(0, 2, _, 2, 1) => inst!(cpu, LDI_A_HL),
+		(0, 2, _, 3, 1) => inst!(cpu, LDD_A_HL),
 
 		(0, 3, _, _, 0) => inst!(cpu, INC_16, (DT.rp[p])),
 		(0, 3, _, _, 1) => inst!(cpu, DEC_16, (DT.rp[p])),

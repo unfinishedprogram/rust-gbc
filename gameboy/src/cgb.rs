@@ -14,7 +14,7 @@ pub struct CGBState {
 	prepare_speed_switch: bool,
 }
 
-#[derive(Clone, Serialize, Deserialize, Default, Debug)]
+#[derive(Clone, Serialize, Deserialize, Default, Debug, Eq, PartialEq)]
 pub enum Speed {
 	#[default]
 	Normal,

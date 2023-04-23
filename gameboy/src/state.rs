@@ -14,7 +14,6 @@ use super::{
 	cartridge::memory_bank_controller::Cartridge,
 	controller::ControllerState,
 	io_registers::IORegisterState,
-	lcd::GameboyLCD,
 	ppu::{PPUMode, PPU},
 	save_state::{RomSource, SaveState},
 	timer::Timer,
@@ -81,7 +80,7 @@ impl Default for Gameboy {
 			ppu: PPU::default(),
 			timer: Timer::default(),
 			io_register_state: IORegisterState::default(),
-			boot_rom: include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
+			boot_rom: include_bytes!("roms/dmg_boot.bin").to_vec(),
 			booting: true,
 			cartridge_state: None,
 			ram_bank: 0,
@@ -102,6 +101,18 @@ impl Default for Gameboy {
 }
 
 impl Gameboy {
+	pub fn cgb() -> Self {
+		let mut state = Self::default();
+		state.set_gb_mode(Mode::GBC(Default::default()));
+		state
+	}
+
+	pub fn dmg() -> Self {
+		let mut state = Self::default();
+		state.set_gb_mode(Mode::DMG);
+		state
+	}
+
 	pub fn get_cycle(&self) -> u64 {
 		self.t_states / 4
 	}
@@ -109,6 +120,19 @@ impl Gameboy {
 	pub fn run_until_boot(&mut self) {
 		while self.booting {
 			self.step_cpu();
+		}
+	}
+
+	pub fn step_single_frame(&mut self) {
+		let start_frame = self.ppu.frame;
+		while self.ppu.frame == start_frame && self.ppu.is_enabled() {
+			self.step();
+		}
+		if !self.ppu.is_enabled() {
+			let start_cycles = self.get_cycle();
+			while self.get_cycle() - start_cycles < 100000 {
+				self.step();
+			}
 		}
 	}
 
@@ -125,10 +149,6 @@ impl Gameboy {
 			return;
 		}
 		self.step_cpu();
-	}
-
-	pub fn bind_lcd(&mut self, lcd: GameboyLCD) {
-		self.ppu.lcd = Some(lcd);
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
@@ -225,8 +245,8 @@ impl Gameboy {
 
 	fn set_gb_mode(&mut self, mode: Mode) {
 		self.boot_rom = match mode {
-			Mode::DMG => include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
-			Mode::GBC(_) => include_bytes!("../../roms/other/cgb_boot.bin").to_vec(),
+			Mode::DMG => include_bytes!("roms/dmg_boot.bin").to_vec(),
+			Mode::GBC(_) => include_bytes!("roms/cgb_boot.bin").to_vec(),
 		};
 
 		self.w_ram = match mode {

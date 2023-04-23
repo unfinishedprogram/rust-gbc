@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{lcd::LCDDisplay, util::bits::*};
+use crate::util::bits::*;
 
 use super::{
 	sprite::Sprite,
@@ -227,20 +227,21 @@ impl PixelFIFO for PPU {
 
 		self.current_pixel += 1;
 
-		let Some(lcd) = &mut self.lcd else {return};
-
 		if let Some(fg) = self.fifo_obj.pop_back() {
 			let bg_over = (!fg.background_priority || bg.background_priority) && bg.color != 0;
 			let bg_over = bg_over && self.registers.lcdc.bg_enabled();
 			let bg_over = bg_over || fg.color == 0;
 
 			if bg_over {
-				lcd.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
+				self.lcd
+					.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
 			} else {
-				lcd.put_pixel(x, y, self.obj_color.get_color(fg.palette, fg.color));
+				self.lcd
+					.put_pixel(x, y, self.obj_color.get_color(fg.palette, fg.color));
 			}
 		} else {
-			lcd.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
+			self.lcd
+				.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
 		};
 	}
 

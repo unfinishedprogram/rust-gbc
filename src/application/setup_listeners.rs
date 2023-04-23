@@ -14,10 +14,4 @@ pub fn setup_listeners() {
 			app.toggle_play();
 		})
 	});
-
-	add_click_listener("#step", |_e| {
-		APPLICATION.with_borrow_mut(|app| {
-			app.step_single();
-		})
-	})
 }

@@ -38,7 +38,7 @@ impl From<u16> for ValueRefU16 {
 	}
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ValueRefU8 {
 	Reg(CPURegister8),
 	Mem(ValueRefU16),
@@ -47,14 +47,14 @@ pub enum ValueRefU8 {
 	MemOffsetReg(CPURegister8),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ValueRefU16 {
 	Reg(CPURegister16),
 	Mem(u16),
 	Raw(u16),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ValueRefI8(pub i8);
 
 impl fmt::Debug for ValueRefU16 {
