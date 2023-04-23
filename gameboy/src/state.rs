@@ -14,7 +14,6 @@ use super::{
 	cartridge::memory_bank_controller::Cartridge,
 	controller::ControllerState,
 	io_registers::IORegisterState,
-	lcd::GameboyLCD,
 	ppu::{PPUMode, PPU},
 	save_state::{RomSource, SaveState},
 	timer::Timer,
@@ -119,10 +118,6 @@ impl Gameboy {
 			return;
 		}
 		self.step_cpu();
-	}
-
-	pub fn bind_lcd(&mut self, lcd: GameboyLCD) {
-		self.ppu.lcd = Some(lcd);
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
