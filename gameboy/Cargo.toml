@@ -17,7 +17,7 @@ sm83 = { path = "../sm83" }
 
 [dev-dependencies]
 image = { version = "0.24.5", default-features = false, features = ["png"] }
-test-generator = { git = "https://github.com/JamesGuthrie/test-generator.git" }
+test-generator = { git = "https://github.com/unfinishedprogram/test-generator.git", branch = "master" }
 
 [lib]
 name = "gameboy"

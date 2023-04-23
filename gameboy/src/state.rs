@@ -101,6 +101,18 @@ impl Default for Gameboy {
 }
 
 impl Gameboy {
+	pub fn cgb() -> Self {
+		let mut state = Self::default();
+		state.set_gb_mode(Mode::GBC(Default::default()));
+		state
+	}
+
+	pub fn dmg() -> Self {
+		let mut state = Self::default();
+		state.set_gb_mode(Mode::DMG);
+		state
+	}
+
 	pub fn get_cycle(&self) -> u64 {
 		self.t_states / 4
 	}
