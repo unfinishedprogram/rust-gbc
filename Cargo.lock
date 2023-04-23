@@ -747,7 +747,7 @@ dependencies = [
 [[package]]
 name = "test-generator"
 version = "0.3.0"
-source = "git+https://github.com/JamesGuthrie/test-generator.git#82e799979980962aec1aa324ec6e0e4cad781f41"
+source = "git+https://github.com/unfinishedprogram/test-generator.git?branch=master#d40791b53d4d1334f698327e01cdda4d529ed645"
 dependencies = [
  "glob",
  "proc-macro2 0.4.30",
