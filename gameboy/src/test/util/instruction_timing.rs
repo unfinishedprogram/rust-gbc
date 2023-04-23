@@ -1,6 +1,6 @@
 use sm83::{Flags, SM83};
 
-use crate::test::boot::BOOTED_EMULATOR;
+use crate::test::boot::cgb_test_instance;
 
 /// Instrs will be loaded as if the first instructions in the rom
 pub fn expect_instr_timing(name: &str, instrs: &[u8], steps: usize, expected: u64, flag: u8) {
@@ -14,7 +14,7 @@ pub fn expect_instr_timing(name: &str, instrs: &[u8], steps: usize, expected: u6
 /// Computes the number of cycles taken
 /// Flags are used to force conditions
 pub fn get_cycles_taken(instrs: &[u8], steps: usize, flag: u8) -> u64 {
-	let mut state = BOOTED_EMULATOR.clone();
+	let mut state = cgb_test_instance();
 	let start_cycle = state.get_cycle();
 
 	// Clear all the flags
