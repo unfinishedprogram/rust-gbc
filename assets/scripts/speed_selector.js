@@ -1,4 +1,5 @@
-import * as wasm from "/gbc-emu.js"
+import * as wasm from "/application.js"
+
 let speed_index = 3;
 
 const speed_options = [
