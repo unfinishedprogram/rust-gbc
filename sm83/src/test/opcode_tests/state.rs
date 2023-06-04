@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Deserialize, PartialEq, Eq, Clone)]
 pub struct TestState {
 	pub pc: u16,
 	pub sp: u16,
@@ -14,7 +14,6 @@ pub struct TestState {
 	pub l: u8,
 	pub ime: u8,
 	pub ram: Vec<(u16, u8)>,
-	// pub ei: u8,
 }
 
 #[derive(Deserialize)]

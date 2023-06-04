@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 pub const BIT_0: u8 = 0b00000001;
 pub const BIT_1: u8 = 0b00000010;
 pub const BIT_2: u8 = 0b00000100;

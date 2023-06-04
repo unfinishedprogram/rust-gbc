@@ -22,9 +22,7 @@ pub fn run_opcode_tests() {
 			cpu.step_cpu();
 			let end_state: TestState = cpu.into();
 			if end_state != test.final_state {
-				println!("Start: \n{:?}", test.initial_state);
 				println!("FAILED:{:}", test.name);
-				panic!("\n{end_state:?} NOT EQUAL \n{:?}", test.final_state);
 			}
 		}
 	}

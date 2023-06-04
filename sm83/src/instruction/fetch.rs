@@ -16,7 +16,7 @@ use crate::{
 pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 	let raw = cpu.next_byte();
 
-	let Opcode(x, z, y, p, q) = *parse_opcode(raw);
+	let Opcode(x, z, y, p, q) = parse_opcode(raw);
 	match (x, z, y, p, q) {
 		(0, 0, 0, _, _) => NOP,
 		(0, 0, 1, _, _) => inst!(cpu, LD_16, (ValueRefU16::Mem(cpu.next_chomp())), SP),
@@ -93,7 +93,7 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 
 		(3, 3, 1, _, _) => {
 			let cb_raw = cpu.next_byte();
-			let Opcode(cb_x, cb_z, cb_y, _, _) = *parse_opcode(cb_raw);
+			let Opcode(cb_x, cb_z, cb_y, _, _) = parse_opcode(cb_raw);
 			match cb_x {
 				0 => inst!(cpu, ROT, (DT.rot[cb_y]), (DT.r[cb_z])),
 				1 => inst!(cpu, BIT, (cb_y as u8), (DT.r[cb_z])),

@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 
 #[derive(Clone)]
 pub struct Opcode(pub usize, pub usize, pub usize, pub usize, pub usize);
@@ -15,11 +14,13 @@ impl From<usize> for Opcode {
 	}
 }
 
-lazy_static! {
-	pub static ref OPCODE_INDEX: Vec<Opcode> = (0..256usize).map(|i| i.into()).collect();
-}
+// lazy_static! {
+// 	pub static ref OPCODE_INDEX: Vec<Opcode> = (0..256usize).map(|i| i.into()).collect();
+// }
 
 #[inline(always)]
-pub fn parse_opcode(raw: u8) -> &'static Opcode {
-	&OPCODE_INDEX[raw as usize]
+pub fn parse_opcode(raw: u8) -> Opcode {
+	Opcode::from(raw as usize)
+	// (raw as usize).into()
+	// &OPCODE_INDEX[raw as usize]
 }
