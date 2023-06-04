@@ -6,6 +6,7 @@ rust-version = "1.65.0"
 
 [dependencies]
 gameboy = { path = "gameboy" }
+gb-debug = { path = "debugger" }
 log = "0.4.17"
 serde = { version = "1.0.150", features = ["derive"] }
 chrono = { version = "0.4.23", features = ["serde"] }
@@ -48,4 +49,4 @@ serde = { version = "1.0.150", features = ["derive"] }
 serde_json = "1.0.89"
 
 [workspace]
-members = ["gameboy", "sm83"]
+members = ["gameboy", "sm83", "debugger"]

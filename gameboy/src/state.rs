@@ -141,7 +141,7 @@ impl Gameboy {
 				Speed::Double => 2,
 			};
 
-			let new_ppu_mode: Option<PPUMode> = self.tick_t_states(t_states);
+			let new_ppu_mode = self.tick_t_states(t_states);
 
 			if matches!(new_ppu_mode, Some(PPUMode::HBlank)) {
 				if let Some(request) = self.dma_controller.step() {

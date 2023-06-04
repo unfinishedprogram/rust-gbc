@@ -168,11 +168,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 				self.tick_m_cycles(1);
 			}
 		} else {
-			let pc = self.cpu_state().registers.pc;
 			let instruction = self.get_next_instruction_or_interrupt();
-			if self.debug() {
-				log::info!("[{pc:04X}]{instruction:?}");
-			}
 			instruction::execute(self, instruction);
 		}
 	}

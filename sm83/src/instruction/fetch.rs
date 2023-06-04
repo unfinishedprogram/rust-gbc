@@ -23,7 +23,7 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 		(0, 0, 2, _, _) => STOP,
 
 		(0, 0, 3, _, _) => inst!(cpu, JR, (Condition::Always), d),
-		(0, 0, _, _, _) => inst!(cpu, JR, (DT.cc[(y - 4)]), d),
+		(0, 0, _, _, _) => inst!(cpu, JR, (DT.cc[y - 4]), d),
 
 		(0, 1, _, _, 0) => inst!(cpu, LD_16, (DT.rp[p]), nn),
 
