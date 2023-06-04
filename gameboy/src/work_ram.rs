@@ -4,8 +4,8 @@ use crate::util::BigArray;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum WorkRam {
-	CGB(Box<WorkRamDataCGB>),
-	DMG(Box<WorkRamDataDMG>),
+	Cgb(Box<WorkRamDataCGB>),
+	Dmg(Box<WorkRamDataDMG>),
 }
 
 pub trait BankedWorkRam {
@@ -19,29 +19,29 @@ pub trait BankedWorkRam {
 impl BankedWorkRam for WorkRam {
 	fn get_bank_number(&self) -> u8 {
 		match self {
-			WorkRam::CGB(state) => state.bank,
-			WorkRam::DMG(_) => 1,
+			WorkRam::Cgb(state) => state.bank,
+			WorkRam::Dmg(_) => 1,
 		}
 	}
 
 	fn get_bank(&self, bank: u8) -> &[u8; 0x1000] {
 		match self {
-			WorkRam::CGB(state) => state.get_bank(bank),
-			WorkRam::DMG(state) => state.get_bank(bank),
+			WorkRam::Cgb(state) => state.get_bank(bank),
+			WorkRam::Dmg(state) => state.get_bank(bank),
 		}
 	}
 
 	fn get_bank_mut(&mut self, bank: u8) -> &mut [u8; 0x1000] {
 		match self {
-			WorkRam::CGB(state) => state.get_bank_mut(bank),
-			WorkRam::DMG(state) => state.get_bank_mut(bank),
+			WorkRam::Cgb(state) => state.get_bank_mut(bank),
+			WorkRam::Dmg(state) => state.get_bank_mut(bank),
 		}
 	}
 
 	fn set_bank_number(&mut self, bank: u8) {
 		match self {
-			WorkRam::CGB(state) => state.set_bank_number(bank),
-			WorkRam::DMG(state) => state.set_bank_number(bank),
+			WorkRam::Cgb(state) => state.set_bank_number(bank),
+			WorkRam::Dmg(state) => state.set_bank_number(bank),
 		}
 	}
 }
