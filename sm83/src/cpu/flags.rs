@@ -1,8 +1,10 @@
 pub mod cpu {
-	pub const Z: u8 = 0b10000000;
-	pub const N: u8 = 0b01000000;
-	pub const H: u8 = 0b00100000;
-	pub const C: u8 = 0b00010000;
+	use crate::bits::*;
+
+	pub const Z: u8 = BIT_0;
+	pub const N: u8 = BIT_1;
+	pub const H: u8 = BIT_2;
+	pub const C: u8 = BIT_3;
 }
 
 // Interrupt Flag Bits

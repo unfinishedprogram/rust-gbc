@@ -29,11 +29,10 @@ impl From<TestState> for MockCpu {
 	fn from(state: TestState) -> Self {
 		let mut res = Self::default();
 		res.cpu_state.interrupt_master_enable = state.ime == 1;
-		res.cpu_state.ie_next = res.cpu_state.interrupt_master_enable;
+		res.cpu_state.ie_next = state.ime == 1;
 
 		res.cpu_state.registers.pc = state.pc;
 		res.cpu_state.registers.sp = state.sp;
-		// res.cpu_state.ie_register = state.ei;
 
 		res.cpu_state.registers[A] = state.a;
 		res.cpu_state.registers[B] = state.b;
@@ -71,7 +70,6 @@ impl From<MockCpu> for TestState {
 			} else {
 				0
 			},
-			// ei: state.cpu_state.ie_register,
 			ram,
 		}
 	}
