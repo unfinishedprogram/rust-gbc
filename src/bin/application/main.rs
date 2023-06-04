@@ -1,6 +1,17 @@
 #![feature(local_key_cell_methods)]
 
-use gbc_emu::application::{setup_listeners, APPLICATION};
+pub mod web_save_manager;
+pub mod uploader;
+pub mod events;
+pub mod screen;
+pub mod input;
+pub mod app;
+pub mod setup_listeners;
+
+use setup_listeners::setup_listeners;
+
+pub use app::APPLICATION;
+
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[allow(dead_code)]
@@ -30,7 +41,7 @@ fn main() {
 	APPLICATION.with_borrow_mut(|app| {
 		app.load_rom(
 			// include_bytes!("../roms/test/mooneye/acceptance/ppu/intr_2_mode3_timing.gb"),
-			include_bytes!("../../BullyGB/bully.gb"),
+			include_bytes!("../../../../BullyGB/bully.gb"),
 			None,
 		);
 		app.start();

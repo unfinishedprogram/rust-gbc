@@ -4,7 +4,7 @@ use web_sys::{window, Storage};
 
 use gameboy::save_state::{SaveError, SaveManager, SaveState};
 
-use super::{Application, APPLICATION};
+use crate::app::{Application, APPLICATION};
 
 pub struct WebSaveManager {}
 

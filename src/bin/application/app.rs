@@ -1,14 +1,8 @@
-mod input;
-mod screen;
-mod setup_listeners;
-mod uploader;
-mod web_save_manager;
-pub use setup_listeners::setup_listeners;
-mod events;
+
 use gloo::{
 	file::callbacks::FileReader, net::http::Request, timers::callback::Interval, utils::document,
 };
-use screen::get_screen_ctx;
+
 
 use std::{cell::RefCell, fmt::Display};
 
@@ -20,7 +14,8 @@ use gameboy::{
 	Gameboy, Mode,
 };
 
-use self::input::InputState;
+use crate::{screen, input::InputState};
+use screen::get_screen_ctx;
 
 thread_local! {
 	pub static APPLICATION: RefCell<Application> = RefCell::new(Application::default());
@@ -42,9 +37,9 @@ impl Display for RunningState {
 
 pub struct Application {
 	// Keeps file reader state, should never be used internal only
-	_file_reader: Option<FileReader>,
-	emulator_state: Gameboy,
-	running_state: RunningState,
+	pub _file_reader: Option<FileReader>,
+	pub emulator_state: Gameboy,
+	pub running_state: RunningState,
 	input_state: InputState,
 	frame_counts: Vec<u64>,
 	frame_times: Vec<f64>,
@@ -59,7 +54,7 @@ impl Default for Application {
 			frame_counts: vec![0; 30],
 			frame_times: vec![0.0; 30],
 			_file_reader: None,
-			input_state: InputState::new(),
+			input_state: InputState::default(),
 			running_state: RunningState::Paused,
 			emulator_state,
 			speed_multiplier: 1.0,

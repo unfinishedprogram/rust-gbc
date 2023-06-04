@@ -60,9 +60,11 @@ impl InputState {
 
 		state
 	}
+}
 
-	pub fn new() -> Self {
-		let inner = Rc::new(RefCell::new(InputStateInner::default()));
+impl Default for InputState {
+    fn default() -> Self {
+        let inner = Rc::new(RefCell::new(InputStateInner::default()));
 
 		let key_down = {
 			let inner = inner.clone();
@@ -85,7 +87,7 @@ impl InputState {
 			_key_up: key_up,
 			inner,
 		}
-	}
+    }
 }
 
 pub fn gamepad_to_controller_state(gp: &Gamepad) -> ControllerState {
