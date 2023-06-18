@@ -165,6 +165,10 @@ impl IORegisters for Gameboy {
 			TIMA => self.timer.get_tima(),
 			TMA => self.timer.get_tma(),
 
+			// HDMA1 => self.dma_controller.read_source_high(),
+			// HDMA2 => self.dma_controller.read_source_low(),
+			// HDMA3 => self.dma_controller.read_destination_high(),
+			// HDMA4 => self.dma_controller.read_destination_low(),
 			//HDMA
 			HDMA5 => self.dma_controller.read_hdma5(),
 

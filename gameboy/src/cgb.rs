@@ -69,9 +69,13 @@ impl CGBState {
 		switch_bit | speed_bit
 	}
 
-	pub fn perform_speed_switch(&mut self) {
+	pub fn perform_speed_switch(&mut self) -> bool {
 		if self.prepare_speed_switch {
 			self.speed = !self.speed.clone();
+			self.prepare_speed_switch = false;
+			true
+		} else {
+			false
 		}
 	}
 

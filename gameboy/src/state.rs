@@ -125,7 +125,6 @@ impl Gameboy {
 
 	pub fn step(&mut self) {
 		if self.speed_switch_delay > 0 {
-			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
 			self.tick_m_cycles(1);
 			return;
 		}
@@ -134,6 +133,7 @@ impl Gameboy {
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
 		for _ in 0..m_cycles {
+			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
 			self.oam_dma.step(1, &mut self.ppu);
 
 			let t_states = match self.mode.get_speed() {
@@ -141,13 +141,7 @@ impl Gameboy {
 				Speed::Double => 2,
 			};
 
-			let new_ppu_mode = self.tick_t_states(t_states);
-
-			if matches!(new_ppu_mode, Some(PPUMode::HBlank)) {
-				if let Some(request) = self.dma_controller.step() {
-					self.handle_transfer(request)
-				}
-			}
+			self.tick_t_states(t_states);
 
 			if self.speed_switch_delay == 0 {
 				self.timer.step(
@@ -165,20 +159,26 @@ impl Gameboy {
 		for i in 0..bytes {
 			self.write(to + i, self.read(from + i));
 		}
+
+		let speed_div = match self.mode.get_speed() {
+			Speed::Normal => 2,
+			Speed::Double => 1,
+		};
+
+		self.tick_m_cycles(bytes as u32 / speed_div);
 	}
 
-	fn tick_t_states(&mut self, t_states: u32) -> Option<PPUMode> {
-		let mut new_mode: Option<PPUMode> = None;
-
+	fn tick_t_states(&mut self, t_states: u32) {
 		for _ in 0..t_states {
 			let mode = self.ppu.step_ppu(&mut self.cpu_state.interrupt_request);
-			if let Some(mode) = mode {
-				new_mode = Some(mode);
-			};
+			if matches!(mode, Some(PPUMode::HBlank)) {
+				if let Some(request) = self.dma_controller.step() {
+					self.handle_transfer(request)
+				}
+			}
 		}
 
 		self.t_states += t_states as u64;
-		new_mode
 	}
 
 	pub fn request_interrupt(&mut self, interrupt: u8) {
@@ -274,9 +274,16 @@ impl SM83<Gameboy> for Gameboy {
 	}
 
 	fn exec_stop(&mut self) {
-		if let crate::state::Mode::GBC(state) = &mut self.mode {
+		let switched = if let crate::state::Mode::GBC(state) = &mut self.mode {
+			state.perform_speed_switch()
+		} else {
+			false
+		};
+		if switched {
 			self.speed_switch_delay = 2050;
-			state.perform_speed_switch();
+			while self.speed_switch_delay > 0 {
+				self.tick_m_cycles(1);
+			}
 		}
 	}
 }
