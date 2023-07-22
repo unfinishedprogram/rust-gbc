@@ -201,11 +201,7 @@ impl MemoryMapper for Cartridge {
 				}
 				_ => unreachable!(),
 			},
-			MMM01 => {}
-			MBC6 => {}
-			MBC7 => {}
-			HUC3 => {}
-			HUC1 => {}
+			_ => todo!(),
 		}
 	}
 }
