@@ -98,18 +98,6 @@ fn screen_pixels(screen: &[u8]) -> Vec<Vec<bool>> {
 		for (x, pixel) in pixel_row.iter_mut().enumerate() {
 			let index = (x + y * 160) * 4;
 			*pixel = screen[index] == 0;
-			// let [r, g, b, a] = [
-			// 	screen[index],
-			// 	screen[index + 1],
-			// 	screen[index + 2],
-			// 	screen[index + 3],
-			// ];
-
-			// *pixel = match (r, g, b, a) {
-			// 	(0, 0, 0, 255) => true,
-			// 	(255, 255, 255, 255) => false,
-			// 	_ => unreachable!("Must be all black and white"),
-			// };
 		}
 	}
 	pixels
