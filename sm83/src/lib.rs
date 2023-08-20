@@ -25,12 +25,11 @@ pub trait SM83<M: SourcedMemoryMapper> {
 		false
 	}
 	fn disable_interrupts(&mut self) {
-		self.cpu_state_mut().interrupt_master_enable = false;
-		self.cpu_state_mut().ie_next = false;
+		self.cpu_state_mut().disable_interrupts();
 	}
 
 	fn enable_interrupts(&mut self) {
-		self.cpu_state_mut().ie_next = true;
+		self.cpu_state_mut().enable_interrupts();
 	}
 
 	fn next_displacement(&mut self) -> i8 {
@@ -150,7 +149,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 	where
 		Self: Sized,
 	{
-		if let Some(int) = self.cpu_state_mut().fetch_next_interrupt() {
+		if let Some(int) = self.cpu_state_mut().consume_next_interrupt() {
 			Instruction::INT(int)
 		} else {
 			self.fetch_next_instruction()
@@ -166,11 +165,12 @@ pub trait SM83<M: SourcedMemoryMapper> {
 				self.cpu_state_mut().halted = false;
 			} else {
 				self.tick_m_cycles(1);
+				return;
 			}
-		} else {
-			let instruction = self.get_next_instruction_or_interrupt();
-			instruction::execute(self, instruction);
 		}
+
+		let instruction = self.get_next_instruction_or_interrupt();
+		instruction::execute(self, instruction);
 	}
 
 	fn exec_stop(&mut self) {}

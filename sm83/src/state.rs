@@ -9,8 +9,8 @@ pub struct CPUState {
 	pub registers: CPURegisters,
 	pub halted: bool,
 	pub interrupt_master_enable: bool,
-	pub interrupt_enable: u8,
-	pub interrupt_request: u8,
+	pub interrupt_enable: u8,  // IE
+	pub interrupt_request: u8, // IF
 	pub ie_next: bool,
 }
 
@@ -33,7 +33,16 @@ impl CPUState {
 		self.interrupt_request & self.interrupt_enable != 0
 	}
 
-	pub fn fetch_next_interrupt(&mut self) -> Option<u8> {
+	pub fn disable_interrupts(&mut self) {
+		self.interrupt_master_enable = false;
+		self.ie_next = false;
+	}
+
+	pub fn enable_interrupts(&mut self) {
+		self.ie_next = true;
+	}
+
+	pub fn consume_next_interrupt(&mut self) -> Option<u8> {
 		if !self.interrupt_master_enable {
 			return None;
 		}

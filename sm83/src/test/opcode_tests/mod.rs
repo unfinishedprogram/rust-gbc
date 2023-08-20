@@ -3,7 +3,6 @@ mod memory_mapper;
 mod state;
 
 use self::cpu::MockCpu;
-use core::panic;
 use std::fs::{self, read_dir, DirEntry};
 
 use crate::test::opcode_tests::state::{OpcodeTest, TestState};
