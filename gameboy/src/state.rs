@@ -250,11 +250,11 @@ impl Gameboy {
 }
 
 impl SM83<Gameboy> for Gameboy {
-	fn get_memory_mapper_mut(&mut self) -> &mut Gameboy {
+	fn memory_mapper_mut(&mut self) -> &mut Gameboy {
 		self
 	}
 
-	fn get_memory_mapper(&self) -> &Gameboy {
+	fn memory_mapper(&self) -> &Gameboy {
 		self
 	}
 

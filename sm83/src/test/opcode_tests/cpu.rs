@@ -16,11 +16,11 @@ impl SM83<FlatMemory> for MockCpu {
 		&mut self.cpu_state
 	}
 
-	fn get_memory_mapper(&self) -> &FlatMemory {
+	fn memory_mapper(&self) -> &FlatMemory {
 		&self.memory
 	}
 
-	fn get_memory_mapper_mut(&mut self) -> &mut FlatMemory {
+	fn memory_mapper_mut(&mut self) -> &mut FlatMemory {
 		&mut self.memory
 	}
 }

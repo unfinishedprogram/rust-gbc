@@ -57,7 +57,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 			ValueRefU8::Mem(addr) => {
 				self.tick_m_cycles(1);
 				let index = self.read_16(addr);
-				let value = self.get_memory_mapper_mut().read_from(index, Source::Cpu);
+				let value = self.memory_mapper_mut().read_from(index, Source::Cpu);
 				value
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state().registers[*reg],
@@ -77,7 +77,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 			ValueRefU8::Mem(addr) => {
 				self.tick_m_cycles(1);
 				let index = self.read_16(addr);
-				self.get_memory_mapper_mut()
+				self.memory_mapper_mut()
 					.write_from(index, value, Source::Cpu);
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state_mut().registers[*reg] = value,
@@ -100,9 +100,9 @@ pub trait SM83<M: SourcedMemoryMapper> {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				self.tick_m_cycles(1);
-				let lsb = self.get_memory_mapper_mut().read_from(*i, Source::Cpu);
+				let lsb = self.memory_mapper_mut().read_from(*i, Source::Cpu);
 				self.tick_m_cycles(1);
-				let msb = self.get_memory_mapper_mut().read_from(i + 1, Source::Cpu);
+				let msb = self.memory_mapper_mut().read_from(i + 1, Source::Cpu);
 				u16::from_le_bytes([lsb, msb])
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state().registers.get_u16(*reg),
@@ -115,10 +115,10 @@ pub trait SM83<M: SourcedMemoryMapper> {
 			ValueRefU16::Mem(i) => {
 				let bytes = u16::to_le_bytes(value);
 				self.tick_m_cycles(1);
-				self.get_memory_mapper_mut()
+				self.memory_mapper_mut()
 					.write_from(*i + 1, bytes[1], Source::Cpu);
 				self.tick_m_cycles(1);
-				self.get_memory_mapper_mut()
+				self.memory_mapper_mut()
 					.write_from(*i, bytes[0], Source::Cpu);
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state_mut().registers.set_u16(*reg, value),
@@ -183,6 +183,6 @@ pub trait SM83<M: SourcedMemoryMapper> {
 	}
 	fn cpu_state(&self) -> &CPUState;
 	fn cpu_state_mut(&mut self) -> &mut CPUState;
-	fn get_memory_mapper_mut(&mut self) -> &mut M;
-	fn get_memory_mapper(&self) -> &M;
+	fn memory_mapper_mut(&mut self) -> &mut M;
+	fn memory_mapper(&self) -> &M;
 }
