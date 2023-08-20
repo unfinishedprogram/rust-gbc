@@ -66,7 +66,7 @@ impl Timer {
 		}
 	}
 
-	pub fn step_cycle(&mut self, speed: &Speed, interrupt_request: &mut u8) {
+	pub fn step_cycle(&mut self, speed: Speed, interrupt_request: &mut u8) {
 		let from = self.system_clock;
 		self.system_clock = self.system_clock.wrapping_add(1);
 		let to = self.system_clock;
@@ -103,8 +103,8 @@ impl Timer {
 		}
 	}
 
-	pub fn step(&mut self, cycles: u64, speed: &Speed, interrupt_request: &mut u8) {
-		let cycles = match *speed {
+	pub fn step(&mut self, cycles: u64, speed: Speed, interrupt_request: &mut u8) {
+		let cycles = match speed {
 			Speed::Normal => cycles * 4,
 			Speed::Double => cycles * 8,
 		};
