@@ -10,7 +10,7 @@ pub struct CGBState {
 	wram_bank: usize,
 	vram_bank: VRAMBank,
 	speed: Speed,
-	prepare_speed_switch: bool,
+	pub prepare_speed_switch: bool,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize, Default, Debug)]

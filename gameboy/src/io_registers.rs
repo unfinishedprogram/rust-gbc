@@ -181,7 +181,10 @@ impl IORegisters for Gameboy {
 			}
 			VBK => {
 				if let Mode::GBC(_) = &self.mode {
-					self.w_ram.get_bank_number()
+					match self.get_vram_bank() {
+						crate::ppu::VRAMBank::Bank0 => 0,
+						crate::ppu::VRAMBank::Bank1 => 1,
+					}
 				} else {
 					0xFF
 				}
@@ -194,13 +197,15 @@ impl IORegisters for Gameboy {
 				}
 			}
 			JOYP => {
-				if self.io_register_state[JOYP] & BIT_4 == BIT_4 {
-					(self.raw_joyp_input & 0b1111) | 0b11000000
-				} else if self.io_register_state[addr] & BIT_5 == BIT_5 {
-					((self.raw_joyp_input >> 4) & 0b1111) | 0b11000000
-				} else {
-					0b11001111
+				let mut res = 0b11000000;
+
+				if self.io_register_state[JOYP] & BIT_4 == 0 {
+					res |= ((self.raw_joyp_input >> 4) & 0b1111) | 0b11000000;
+				} else if self.io_register_state[addr] & BIT_5 == 0 {
+					res |= (self.raw_joyp_input & 0b1111) | 0b11000000;
 				}
+
+				res
 			}
 
 			// Interrupt requests
@@ -216,7 +221,6 @@ impl IORegisters for Gameboy {
 			0xFF57..0xFF68 => 0xFF,
 			0xFF71..0xFF72 => 0xFF,
 			0xFF78..0xFF80 => 0xFF,
-
 			_ => self.io_register_state[addr],
 		}
 	}

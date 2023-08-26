@@ -1,12 +1,12 @@
 #![feature(local_key_cell_methods)]
 
-pub mod web_save_manager;
-pub mod uploader;
-pub mod events;
-pub mod screen;
-pub mod input;
 pub mod app;
+pub mod events;
+pub mod input;
+pub mod screen;
 pub mod setup_listeners;
+pub mod uploader;
+pub mod web_save_manager;
 
 use setup_listeners::setup_listeners;
 
@@ -40,8 +40,7 @@ fn main() {
 	setup_listeners();
 	APPLICATION.with_borrow_mut(|app| {
 		app.load_rom(
-			// include_bytes!("../roms/test/mooneye/acceptance/ppu/intr_2_mode3_timing.gb"),
-			include_bytes!("../../../../BullyGB/bully.gb"),
+			include_bytes!("../../../test_data/blargg/cpu_instrs/individual/04-op r,imm.gb"),
 			None,
 		);
 		app.start();

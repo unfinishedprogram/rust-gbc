@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
 	cgb::{CGBState, Speed},
 	dma_controller::{DMAController, TransferRequest},
+	io_registers::JOYP,
 	lcd::Color,
 	oam_dma::OamDmaState,
 	ppu::VRAMBank,
@@ -40,7 +41,6 @@ impl Mode {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Gameboy {
-	pub ram_bank: u8,
 	pub mode: Mode,
 	pub cpu_state: CPUState,
 	pub ppu: PPU,
@@ -82,7 +82,6 @@ impl Default for Gameboy {
 			boot_rom: include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
 			booting: true,
 			cartridge_state: None,
-			ram_bank: 0,
 			mode: Mode::DMG,
 			w_ram: WorkRam::Dmg(Box::<WorkRamDataDMG>::default()),
 			hram: [0; 0x80],
@@ -270,16 +269,52 @@ impl SM83<Gameboy> for Gameboy {
 	}
 
 	fn exec_stop(&mut self) {
-		let switched = if let crate::state::Mode::GBC(state) = &mut self.mode {
-			state.perform_speed_switch()
-		} else {
-			false
+		// https://gbdev.io/pandocs/Reducing_Power_Consumption.html?highlight=stop#using-the-stop-instruction
+
+		let interrupt_pending = self.cpu_state.interrupt_pending();
+		let has_joyp_input = self.read(JOYP) & 0b1111 != 0;
+		let Some(speed_switch_pending) = (match &self.mode {
+			Mode::GBC(state) => Some(state.prepare_speed_switch),
+			Mode::DMG => None,
+		}) else {
+			return;
 		};
-		if switched {
-			self.speed_switch_delay = 2050;
-			while self.speed_switch_delay > 0 {
-				self.tick_m_cycles(1);
+
+		if has_joyp_input {
+			if interrupt_pending {
+				// STOP is a 1 byte opcode
+				// mode does not change
+				// DIV does not reset
+			} else {
+				// STOP is a 1 byte opcode
+				// HALT mode is entered
+				// DIV is reset
+				self.timer.set_div(0);
+				self.cpu_state.halted = true;
 			}
+		} else if speed_switch_pending {
+			if !interrupt_pending {
+				self.next_byte();
+			}
+
+			self.timer.set_div(0);
+
+			let switched = if let Mode::GBC(state) = &mut self.mode {
+				state.perform_speed_switch()
+			} else {
+				false
+			};
+			if switched {
+				self.speed_switch_delay = 2050;
+				while self.speed_switch_delay > 0 {
+					self.tick_m_cycles(1);
+				}
+			}
+		} else {
+			if !interrupt_pending {
+				self.next_byte();
+			}
+			self.timer.set_div(0);
 		}
 	}
 }

@@ -21,9 +21,6 @@ pub use cpu::condition;
 mod test;
 
 pub trait SM83<M: SourcedMemoryMapper> {
-	fn debug(&self) -> bool {
-		false
-	}
 	fn disable_interrupts(&mut self) {
 		self.cpu_state_mut().disable_interrupts();
 	}
@@ -116,7 +113,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 				let bytes = u16::to_le_bytes(value);
 				self.tick_m_cycles(1);
 				self.memory_mapper_mut()
-					.write_from(*i + 1, bytes[1], Source::Cpu);
+					.write_from(i.wrapping_add(1), bytes[1], Source::Cpu);
 				self.tick_m_cycles(1);
 				self.memory_mapper_mut()
 					.write_from(*i, bytes[0], Source::Cpu);
