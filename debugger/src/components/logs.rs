@@ -1,28 +1,27 @@
 use egui::Ui;
 use egui_extras::{Column, TableBuilder};
-use gameboy::debugger::DEBUGGER;
 
 pub struct Logs;
 impl Logs {
-    pub fn draw(ui: &mut Ui) {
-        let mut debugger = DEBUGGER.lock().unwrap();
+	pub fn draw(ui: &mut Ui) {
+		// let mut debugger = DEBUGGER.lock().unwrap();
 
-        if ui.button("Clear Logs").clicked() {
-            debugger.events.clear();
-        }
+		// if ui.button("Clear Logs").clicked() {
+		// 	debugger.events.clear();
+		// }
 
-        TableBuilder::new(ui)
-            .vscroll(true)
-            .striped(true)
-            .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-            .stick_to_bottom(true)
-            .column(Column::auto())
-            .body(|body| {
-                body.rows(18.0, debugger.events.len(), |index, mut row| {
-                    row.col(|ui| {
-                        ui.label(format!("{:?}", debugger.events[index]));
-                    });
-                });
-            });
-    }
+		// TableBuilder::new(ui)
+		// 	.vscroll(true)
+		// 	.striped(true)
+		// 	.cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+		// 	.stick_to_bottom(true)
+		// 	.column(Column::auto())
+		// 	.body(|body| {
+		// 		body.rows(18.0, debugger.events.len(), |index, mut row| {
+		// 			row.col(|ui| {
+		// 				ui.label(format!("{:?}", debugger.events[index]));
+		// 			});
+		// 		});
+		// 	});
+	}
 }

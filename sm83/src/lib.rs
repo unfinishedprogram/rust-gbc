@@ -6,7 +6,7 @@ pub mod registers;
 mod stack;
 mod state;
 mod values;
-use instruction::Instruction;
+pub use instruction::Instruction;
 use memory_mapper::{Source, SourcedMemoryMapper};
 pub use state::CPUState;
 
