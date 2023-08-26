@@ -21,7 +21,7 @@ use super::{
 #[allow(non_camel_case_types)]
 pub enum Instruction {
 	NOP,
-	STOP(u8),
+	STOP,
 	ERROR(u8),
 	LD_8(ValueRefU8, ValueRefU8),
 	LDH(ValueRefU8, ValueRefU8),
@@ -127,7 +127,7 @@ impl Debug for Instruction {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Self::NOP => write!(f, "nop"),
-			Self::STOP(_) => write!(f, "stop"),
+			Self::STOP => write!(f, "stop"),
 			Self::ERROR(arg0) => f.debug_tuple("error").field(arg0).finish(),
 			Self::LD_8(arg0, arg1) => write!(f, "ld {arg0:?}, {arg1:?}"),
 			Self::LDH(arg0, arg1) => write!(f, "ldh {arg0:?}, {arg1:?}"),

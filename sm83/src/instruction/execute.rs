@@ -103,7 +103,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.write_16(&ptr, ptr_val.wrapping_sub(1));
 		}
 
-		STOP(_) => cpu.exec_stop(),
+		STOP => cpu.exec_stop(),
 		ERROR(_) => {}
 
 		JR(condition, ValueRefI8(offset)) => {
