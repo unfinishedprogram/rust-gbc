@@ -31,8 +31,8 @@ impl TileAttributes {
 	}
 
 	#[inline]
-	pub fn v_ram_bank(self) -> usize {
-		((self.byte >> 3) & 1) as usize
+	pub fn v_ram_bank(self) -> u8 {
+		(self.byte >> 3) & 1
 	}
 
 	#[inline]

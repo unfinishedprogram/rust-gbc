@@ -280,19 +280,14 @@ impl PixelFIFO for PPU {
 				(row, false, false, 0, 0)
 			};
 
-		let (high, low) = match bank {
-			0 => {
-				let low = self.v_ram_bank_0[index as usize + row as usize * 2];
-				let high = self.v_ram_bank_0[index as usize + row as usize * 2 + 1];
-				(high, low)
-			}
-			1 => {
-				let low = self.v_ram_bank_1[index as usize + row as usize * 2];
-				let high = self.v_ram_bank_1[index as usize + row as usize * 2 + 1];
-				(high, low)
-			}
+		let bank = match bank {
+			0 => &self.v_ram_bank_0,
+			1 => &self.v_ram_bank_1,
 			_ => unreachable!(),
 		};
+
+		let low = bank[index as usize + row as usize * 2];
+		let high = bank[index as usize + row as usize * 2 + 1];
 
 		let interleaved = interleave(low, high);
 
