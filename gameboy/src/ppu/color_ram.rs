@@ -61,7 +61,7 @@ impl ColorRamController {
 		}
 	}
 
-	pub fn update_color(&mut self, index: usize) {
+	fn update_color(&mut self, index: usize) {
 		let color = self.data[index];
 
 		let r = color & 0b11111;
