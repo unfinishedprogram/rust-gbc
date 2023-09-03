@@ -1,4 +1,4 @@
-use std::{cell::RefCell, result};
+use std::cell::RefCell;
 
 use egui::Ui;
 use gameboy::Gameboy;

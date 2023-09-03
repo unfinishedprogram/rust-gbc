@@ -4,23 +4,39 @@ use crate::util::bits::*;
 
 pub struct TileData(pub u16, pub Option<TileAttributes>);
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct TileAttributes {
-	pub vertical_flip: bool,
-	pub horizontal_flip: bool,
-	pub v_ram_bank: usize,
-	pub bg_priority: bool,
-	pub palette_number: usize,
+	byte: u8,
 }
 
 impl TileAttributes {
+	#[inline]
 	pub fn new(attributes: u8) -> TileAttributes {
-		TileAttributes {
-			bg_priority: attributes & BIT_7 == BIT_7,
-			vertical_flip: attributes & BIT_6 == BIT_6,
-			horizontal_flip: attributes & BIT_5 == BIT_5,
-			v_ram_bank: ((attributes >> 3) & 1) as usize,
-			palette_number: (attributes & 0b111) as usize,
-		}
+		TileAttributes { byte: attributes }
+	}
+
+	#[inline]
+	pub fn bg_priority(self) -> bool {
+		self.byte & BIT_7 == BIT_7
+	}
+
+	#[inline]
+	pub fn vertical_flip(self) -> bool {
+		self.byte & BIT_6 == BIT_6
+	}
+
+	#[inline]
+	pub fn horizontal_flip(self) -> bool {
+		self.byte & BIT_5 == BIT_5
+	}
+
+	#[inline]
+	pub fn v_ram_bank(self) -> usize {
+		((self.byte >> 3) & 1) as usize
+	}
+
+	#[inline]
+	pub fn palette_number(self) -> u8 {
+		self.byte & 0b111
 	}
 }

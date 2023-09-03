@@ -1,3 +1,4 @@
+use chrono::naive::serde::ts_milliseconds_option;
 use serde::{Deserialize, Serialize};
 
 use crate::util::bits::*;
@@ -17,25 +18,15 @@ pub struct Sprite {
 impl Sprite {
 	pub fn new(addr: u16, bytes: [u8; 4]) -> Self {
 		let [y, x, tile_index, attributes] = bytes;
+		let pallet_address = attributes & BIT_4 == BIT_4;
 
-		let above_bg = attributes & BIT_7 == 0;
-		let flip_y = attributes & BIT_6 != 0;
-		let flip_x = attributes & BIT_5 != 0;
-		let pallet_address = attributes & BIT_4 != 0;
-		let tile_vram_bank = (attributes >> 3) & 1;
-		let palette_number = (attributes & 0b111) as usize;
-
+		// bg_priority, v-flip and h-flip are inverted for sprites
+		let tile_attributes = TileAttributes::new(attributes ^ 0b11100000);
 		Self {
 			addr,
 			x,
 			y,
-			tile_attributes: TileAttributes {
-				vertical_flip: !flip_y,
-				horizontal_flip: !flip_x,
-				v_ram_bank: tile_vram_bank as usize,
-				bg_priority: above_bg,
-				palette_number,
-			},
+			tile_attributes,
 			tile_index,
 			pallet_address,
 		}

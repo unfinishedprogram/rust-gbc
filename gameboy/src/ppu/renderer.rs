@@ -155,9 +155,13 @@ impl PixelFIFO for PPU {
 
 		for i in 0..8 {
 			'_inner: loop {
-				let Some(next) = self.sprites.last() else {break '_inner};
+				let Some(next) = self.sprites.last() else {
+					break '_inner;
+				};
 				if next.x <= i {
-					let Some(sprite) = self.sprites.pop() else {break '_inner};
+					let Some(sprite) = self.sprites.pop() else {
+						break '_inner;
+					};
 					self.draw_sprite(sprite)
 				} else {
 					break '_inner;
@@ -179,7 +183,7 @@ impl PixelFIFO for PPU {
 
 		let tile_addr = match double_height {
 			SpriteHeight::Double => {
-				if !attributes.vertical_flip ^ (local_y >= 8) {
+				if !attributes.vertical_flip() ^ (local_y >= 8) {
 					sprite.tile_index | 0x01
 				} else {
 					sprite.tile_index & 0xFE
@@ -195,10 +199,14 @@ impl PixelFIFO for PPU {
 	}
 
 	fn step_sprite_fifo(&mut self) {
-		let Some(next) = self.sprites.last() else {return};
+		let Some(next) = self.sprites.last() else {
+			return;
+		};
 
 		if next.x == self.current_pixel.wrapping_add(8) {
-			let Some(sprite) = self.sprites.pop() else {return};
+			let Some(sprite) = self.sprites.pop() else {
+				return;
+			};
 			self.draw_sprite(sprite);
 			// Account for multiple sprites with the same X-position
 			self.step_sprite_fifo();
@@ -220,7 +228,9 @@ impl PixelFIFO for PPU {
 
 	/// Tries to push a pixel to the LCD
 	fn push_pixel(&mut self) {
-		let Some(bg) = self.fifo_bg.pop_front() else {return};
+		let Some(bg) = self.fifo_bg.pop_front() else {
+			return;
+		};
 
 		let x = self.current_pixel;
 		let y = self.registers.ly;
@@ -250,21 +260,21 @@ impl PixelFIFO for PPU {
 		let TileData(index, attributes) = tile_data;
 
 		let (row, horizontal_flip, background_priority, palette, bank) =
-			if let Some(attributes) = &attributes {
-				let row = if attributes.vertical_flip {
+			if let Some(attributes) = attributes {
+				let row = if attributes.vertical_flip() {
 					7 - row
 				} else {
 					row
 				};
 
-				let horizontal_flip = attributes.horizontal_flip;
+				let horizontal_flip = attributes.horizontal_flip();
 
 				(
 					row,
 					horizontal_flip,
-					attributes.bg_priority,
-					attributes.palette_number as u8,
-					attributes.v_ram_bank,
+					attributes.bg_priority(),
+					attributes.palette_number(),
+					attributes.v_ram_bank(),
 				)
 			} else {
 				(row, false, false, 0, 0)
