@@ -7,11 +7,26 @@
     <title>Debugger</title>
     <link data-trunk rel="copy-dir" href="roms" />
     <link data-trunk rel="rust" data-wasm-opt="0" data-bin="debugger" />
-    <link data-trunk rel="scss" href="style.scss">
 </head>
 
 <body>
     <canvas id="canvas" />
 </body>
+
+<style>
+    canvas {
+        width: 100vw;
+        height: 100vh;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+</style>
 
 </html>

@@ -34,7 +34,7 @@ impl eframe::App for Debugger {
 				use run_controller::Action;
 				match self.run_controller.draw(ui) {
 					Some(Action::StepFrame) => {
-						for i in 0..70224 {
+						for _ in 0..70224 {
 							self.gameboy.step();
 						}
 					}
