@@ -38,6 +38,17 @@ pub enum VRAMBank {
 	Bank0,
 	Bank1,
 }
+
+impl From<u8> for VRAMBank {
+	fn from(value: u8) -> Self {
+		match value & 1 {
+			0 => VRAMBank::Bank0,
+			1 => VRAMBank::Bank1,
+			_ => unreachable!(),
+		}
+	}
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Registers {
 	pub scy: u8,

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use super::VRAMBank;
 use crate::util::bits::*;
 
 pub struct TileData(pub u16, pub Option<TileAttributes>);
@@ -31,8 +32,8 @@ impl TileAttributes {
 	}
 
 	#[inline]
-	pub fn v_ram_bank(self) -> u8 {
-		(self.byte >> 3) & 1
+	pub fn v_ram_bank(self) -> VRAMBank {
+		VRAMBank::from((self.byte >> 3) & 1)
 	}
 
 	#[inline]

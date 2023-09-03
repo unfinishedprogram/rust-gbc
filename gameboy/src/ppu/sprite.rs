@@ -1,4 +1,3 @@
-use chrono::naive::serde::ts_milliseconds_option;
 use serde::{Deserialize, Serialize};
 
 use crate::util::bits::*;
@@ -7,12 +6,12 @@ use std::{cmp::PartialOrd, option::Option};
 use super::tile_data::TileAttributes;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Sprite {
+	pub addr: u16,
 	pub x: u8,
 	pub y: u8,
 	pub tile_attributes: TileAttributes,
 	pub tile_index: u8,
 	pub pallet_address: bool,
-	pub addr: u16,
 }
 
 impl Sprite {

@@ -43,11 +43,7 @@ impl Default for CGBState {
 
 impl CGBState {
 	pub fn set_vram_bank(&mut self, bank: u8) {
-		self.vram_bank = if (bank) & 1 == 1 {
-			VRAMBank::Bank1
-		} else {
-			VRAMBank::Bank0
-		};
+		self.vram_bank = VRAMBank::from(bank)
 	}
 
 	pub fn get_vram_bank(&self) -> VRAMBank {

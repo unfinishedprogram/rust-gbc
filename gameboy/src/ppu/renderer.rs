@@ -5,7 +5,7 @@ use crate::util::bits::*;
 use super::{
 	sprite::Sprite,
 	tile_data::{TileAttributes, TileData},
-	FetcherMode, PPU,
+	FetcherMode, VRAMBank, PPU,
 };
 
 #[derive(Clone, Serialize, Deserialize, Default, Copy)]
@@ -277,13 +277,12 @@ impl PixelFIFO for PPU {
 					attributes.v_ram_bank(),
 				)
 			} else {
-				(row, false, false, 0, 0)
+				(row, false, false, 0, VRAMBank::Bank0)
 			};
 
 		let bank = match bank {
-			0 => &self.v_ram_bank_0,
-			1 => &self.v_ram_bank_1,
-			_ => unreachable!(),
+			VRAMBank::Bank0 => &self.v_ram_bank_0,
+			VRAMBank::Bank1 => &self.v_ram_bank_1,
 		};
 
 		let low = bank[index as usize + row as usize * 2];
