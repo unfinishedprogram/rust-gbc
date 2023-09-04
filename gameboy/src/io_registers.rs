@@ -302,10 +302,7 @@ impl IORegisters for Gameboy {
 				}
 			}
 
-			IF => {
-				self.cpu_state.interrupt_request = value & 0b00011111;
-			}
-
+			IF => self.cpu_state.interrupt_request = value & 0b00011111,
 			IE => self.cpu_state.interrupt_enable = value & 0b00011111,
 			DMA => {
 				self.io_register_state[DMA] = value;

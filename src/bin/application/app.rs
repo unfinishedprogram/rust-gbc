@@ -1,8 +1,6 @@
-
 use gloo::{
 	file::callbacks::FileReader, net::http::Request, timers::callback::Interval, utils::document,
 };
-
 
 use std::{cell::RefCell, fmt::Display};
 
@@ -14,7 +12,7 @@ use gameboy::{
 	Gameboy, Mode,
 };
 
-use crate::{screen, input::InputState};
+use crate::{input::InputState, screen};
 use screen::get_screen_ctx;
 
 thread_local! {
@@ -108,9 +106,9 @@ impl Application {
 	}
 
 	pub fn step_emulator(&mut self, delta: f64) {
-		let start = self.emulator_state.get_cycle();
+		let start = self.emulator_state.t_states;
 
-		while self.emulator_state.get_cycle() - start < (1.5 * delta * 1_048_576.0) as u64 {
+		while self.emulator_state.t_states - start < (1.5 * delta * 1_048_576.0 * 4.0) as u64 {
 			self.emulator_state.step();
 		}
 	}

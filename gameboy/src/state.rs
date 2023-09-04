@@ -57,7 +57,7 @@ pub struct Gameboy {
 	pub boot_rom: Vec<u8>,
 	pub dma_controller: DMAController,
 	pub oam_dma: OamDmaState,
-	t_states: u64,
+	pub t_states: u64,
 	pub color_scheme_dmg: (Color, Color, Color, Color),
 	pub speed_switch_delay: u32,
 }
@@ -111,10 +111,6 @@ impl Gameboy {
 		state
 	}
 
-	pub fn get_cycle(&self) -> u64 {
-		self.t_states / 4
-	}
-
 	pub fn run_until_boot(&mut self) {
 		while self.booting {
 			self.step_cpu();
@@ -152,7 +148,7 @@ impl Gameboy {
 	}
 
 	pub fn handle_transfer(&mut self, request: TransferRequest) {
-		log::info!("[{:X}]:{request:?}", self.get_cycle());
+		log::info!("[{:X}]:{request:?}", self.t_states / 4);
 		let TransferRequest { from, to, bytes } = request;
 		for i in 0..bytes {
 			self.write(to + i, self.read(from + i));

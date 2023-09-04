@@ -15,7 +15,7 @@ pub fn expect_instr_timing(name: &str, instrs: &[u8], steps: usize, expected: u6
 /// Flags are used to force conditions
 pub fn get_cycles_taken(instrs: &[u8], steps: usize, flag: u8) -> u64 {
 	let mut state = cgb_test_instance();
-	let start_cycle = state.get_cycle();
+	let start_t_states = state.t_states;
 
 	// Clear all the flags
 	state.cpu_state_mut().clear_flag(0xFF);
@@ -31,5 +31,5 @@ pub fn get_cycles_taken(instrs: &[u8], steps: usize, flag: u8) -> u64 {
 		state.step();
 	}
 
-	state.get_cycle() - start_cycle
+	(state.t_states - start_t_states) / 4
 }
