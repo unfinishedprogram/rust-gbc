@@ -26,42 +26,48 @@ thread_local! {
 	pub static LOAD_RESULT:RefCell<Option<Result<RomResource, String>>> = RefCell::new(None);
 }
 
-fn recursive_dir(ui: &mut Ui, url: &mut String, entry: &Entry) {
+fn recursive_dir(ui: &mut Ui, url: &mut String, entry: &Entry) -> bool {
+	fn file_name(path: &str) -> &str {
+		path.split('/').last().unwrap()
+	}
+	let mut updated = false;
 	match entry {
 		Entry::File { path } => {
-			if ui.button(path).clicked() {
+			ui.set_min_width(300.0);
+			if ui.button(file_name(path)).clicked() {
 				*url = path.clone();
+				updated = true;
 				ui.close_menu();
 			}
 		}
 		Entry::Dir { path, entries } => {
-			ui.menu_button(path, |ui| {
+			ui.menu_button(file_name(path), |ui| {
 				for entry in entries {
-					recursive_dir(ui, url, entry);
+					updated |= recursive_dir(ui, url, entry);
 				}
 			});
 		}
 	}
+
+	updated
 }
 
 impl RomLoader {
-	pub fn draw(&mut self, ui: &mut Ui, gameboy: &mut Gameboy) {
-		ui.menu_button("roms", |ui| {
-			recursive_dir(ui, &mut self.url, &ROMS.with(|r| r.clone()));
+	pub fn load_rom(&mut self, ui: &Ui) {
+		let ctx = ui.ctx().clone();
+
+		let request = ehttp::Request::get(&self.url);
+
+		ehttp::fetch(request, move |response| {
+			let resource = response.map(|response| RomResource { response });
+			LOAD_RESULT.with(|r| *r.borrow_mut() = Some(resource));
+			ctx.request_repaint();
 		});
+	}
 
-		ui.text_edit_singleline(&mut self.url);
-
-		if ui.button("load").clicked() {
-			let ctx = ui.ctx().clone();
-
-			let request = ehttp::Request::get(&self.url);
-
-			ehttp::fetch(request, move |response| {
-				let resource = response.map(|response| RomResource { response });
-				LOAD_RESULT.with(|r| *r.borrow_mut() = Some(resource));
-				ctx.request_repaint();
-			});
+	pub fn draw(&mut self, ui: &mut Ui, gameboy: &mut Gameboy) {
+		if recursive_dir(ui, &mut self.url, &ROMS.with(|r| r.clone())) {
+			self.load_rom(ui);
 		}
 
 		match LOAD_RESULT.with(|r| r.borrow_mut().take()) {
@@ -73,9 +79,7 @@ impl RomLoader {
 				let msg = if error.is_empty() { "Error" } else { &error };
 				self.error_msg = Some(msg.to_owned());
 			}
-			None => {
-				ui.spinner();
-			}
+			None => {}
 		}
 
 		if let Some(error) = &self.error_msg {
