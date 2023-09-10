@@ -183,4 +183,20 @@ pub trait SM83<M: SourcedMemoryMapper> {
 	fn cpu_state_mut(&mut self) -> &mut CPUState;
 	fn memory_mapper_mut(&mut self) -> &mut M;
 	fn memory_mapper(&self) -> &M;
+
+	fn clear_flag(&mut self, flag: u8) {
+		self.cpu_state_mut().clear_flag(flag)
+	}
+
+	fn set_flag(&mut self, flag: u8) {
+		self.cpu_state_mut().set_flag(flag)
+	}
+
+	fn get_flag(&mut self, flag: u8) -> bool {
+		self.cpu_state_mut().get_flag(flag)
+	}
+
+	fn set_flag_to(&mut self, flag: u8, value: bool) {
+		self.cpu_state_mut().set_flag_to(flag, value)
+	}
 }

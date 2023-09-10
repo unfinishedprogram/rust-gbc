@@ -62,10 +62,9 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 
 		INC_8(ptr) => {
 			let val = cpu.read_8(&ptr);
-			cpu.cpu_state_mut().set_flag_to(Z, val.wrapping_add(1) == 0);
-			cpu.cpu_state_mut().clear_flag(N);
-			cpu.cpu_state_mut()
-				.set_flag_to(H, ((val & 0xF).wrapping_add(1) & 0x10) == 0x10);
+			cpu.set_flag_to(Z, val.wrapping_add(1) == 0);
+			cpu.clear_flag(N);
+			cpu.set_flag_to(H, ((val & 0xF).wrapping_add(1) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_add(1));
 		}
 
@@ -77,10 +76,9 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 
 		DEC_8(ptr) => {
 			let val = cpu.read_8(&ptr);
-			cpu.cpu_state_mut().set_flag_to(Z, val.wrapping_sub(1) == 0);
-			cpu.cpu_state_mut().set_flag(N);
-			cpu.cpu_state_mut()
-				.set_flag_to(H, ((val & 0xF).wrapping_sub(1 & 0xF) & 0x10) == 0x10);
+			cpu.set_flag_to(Z, val.wrapping_sub(1) == 0);
+			cpu.set_flag(N);
+			cpu.set_flag_to(H, ((val & 0xF).wrapping_sub(1 & 0xF) & 0x10) == 0x10);
 			cpu.write_8(&ptr, val.wrapping_sub(1));
 		}
 
@@ -92,11 +90,9 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			match ptr {
 				ValueRefU16::Reg(_) => {}
 				_ => {
-					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut()
-						.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.cpu_state_mut()
-						.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
+					cpu.set_flag(N);
+					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -133,33 +129,30 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			let a_val = cpu.read_16(&a_ref);
 			let b_val = cpu.read_16(&b_ref);
 
-			cpu.cpu_state_mut()
-				.set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
-			cpu.cpu_state_mut().clear_flag(N);
-			cpu.cpu_state_mut()
-				.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
+			cpu.set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
+			cpu.clear_flag(N);
+			cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 			cpu.write_16(&a_ref, a_val.wrapping_add(b_val));
 		}
 
 		ADD_SIGNED(a_ref, ValueRefI8(b_ref)) => {
-			cpu.cpu_state_mut().clear_flag(Z);
-			cpu.cpu_state_mut().clear_flag(N);
+			cpu.clear_flag(Z);
+			cpu.clear_flag(N);
 
 			let a_val = cpu.read_16(&a_ref);
 			let b_val = b_ref as i16;
 
 			let (_, carry) = ((a_val & 0xFF) as u8).overflowing_add(((b_ref as u16) & 0xFF) as u8);
 
-			cpu.cpu_state_mut().set_flag_to(C, carry);
+			cpu.set_flag_to(C, carry);
 
-			cpu.cpu_state_mut().set_flag_to(
+			cpu.set_flag_to(
 				H,
 				((a_val & 0xF).wrapping_add((b_ref as u16) & 0xF) & 0x10) == 0x10,
 			);
 
 			cpu.write_16(&a_ref, a_val.wrapping_add_signed(b_val));
-			cpu.tick_m_cycles(1);
-			cpu.tick_m_cycles(1);
+			cpu.tick_m_cycles(2);
 		}
 
 		ALU_OP_8(op, to, from) => {
@@ -171,70 +164,66 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 
 			let result = match op {
 				ADD => {
-					cpu.cpu_state_mut().clear_flag(N);
-					cpu.cpu_state_mut()
-						.set_flag_to(H, (a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10 == 0x10);
-					cpu.cpu_state_mut()
-						.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
+					cpu.clear_flag(N);
+					cpu.set_flag_to(H, (a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10 == 0x10);
+					cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 					a_val.wrapping_add(b_val)
 				}
 
 				ADC => {
 					let sum: u16 = a_val as u16 + b_val as u16 + carry as u16;
-					cpu.cpu_state_mut().set_flag_to(
+					cpu.set_flag_to(
 						H,
 						(a_val & 0xF).wrapping_add(b_val & 0xF).wrapping_add(carry) > 0xF,
 					);
-					cpu.cpu_state_mut().set_flag_to(C, sum > 0xFF);
-					cpu.cpu_state_mut().clear_flag(N);
+					cpu.set_flag_to(C, sum > 0xFF);
+					cpu.clear_flag(N);
 
 					sum as u8
 				}
 
 				SUB => {
-					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut()
-						.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
-					cpu.cpu_state_mut().set_flag_to(C, b_val > a_val);
+					cpu.set_flag(N);
+					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
+					cpu.set_flag_to(C, b_val > a_val);
 					a_val.wrapping_sub(b_val)
 				}
 
 				SBC => {
 					let sum: i32 = a_val as i32 - b_val as i32 - carry as i32;
-					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut().set_flag_to(
+					cpu.set_flag(N);
+					cpu.set_flag_to(
 						H,
 						(a_val & 0xF) as i32 - (b_val & 0xF) as i32 - (carry as i32) < 0,
 					);
-					cpu.cpu_state_mut().set_flag_to(C, sum < 0);
+					cpu.set_flag_to(C, sum < 0);
 					(sum & 0xFF) as u8
 				}
 
 				AND => {
-					cpu.cpu_state_mut().clear_flag(C);
-					cpu.cpu_state_mut().clear_flag(N);
-					cpu.cpu_state_mut().set_flag(H);
+					cpu.clear_flag(C);
+					cpu.clear_flag(N);
+					cpu.set_flag(H);
 					a_val.bitand(b_val)
 				}
 				XOR => {
-					cpu.cpu_state_mut().clear_flag(C);
-					cpu.cpu_state_mut().clear_flag(H);
-					cpu.cpu_state_mut().clear_flag(N);
+					cpu.clear_flag(C);
+					cpu.clear_flag(H);
+					cpu.clear_flag(N);
 					a_val.bitxor(b_val)
 				}
 				OR => {
-					cpu.cpu_state_mut().clear_flag(C);
-					cpu.cpu_state_mut().clear_flag(H);
-					cpu.cpu_state_mut().clear_flag(N);
+					cpu.clear_flag(C);
+					cpu.clear_flag(H);
+					cpu.clear_flag(N);
 					a_val.bitor(b_val)
 				}
 
 				CP => {
-					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut().set_flag_to(C, a_val < b_val);
-					cpu.cpu_state_mut().set_flag_to(Z, a_val == b_val);
-					cpu.cpu_state_mut()
-						.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
+					cpu.set_flag(N);
+					cpu.set_flag_to(C, a_val < b_val);
+					cpu.set_flag_to(Z, a_val == b_val);
+					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
 					a_val
 				}
 			};
@@ -243,7 +232,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				CP => {}
 				_ => {
 					cpu.write_8(&to, result);
-					cpu.cpu_state_mut().set_flag_to(Z, result == 0);
+					cpu.set_flag_to(Z, result == 0);
 				}
 			}
 		}
@@ -290,18 +279,18 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		}
 		RLCA => {
 			let value = cpu.read_8(&CPURegister8::A.into());
-			cpu.cpu_state_mut().clear_flag(N);
-			cpu.cpu_state_mut().clear_flag(H);
-			cpu.cpu_state_mut().clear_flag(Z);
-			cpu.cpu_state_mut().set_flag_to(C, value & BIT_7 == BIT_7);
+			cpu.clear_flag(N);
+			cpu.clear_flag(H);
+			cpu.clear_flag(Z);
+			cpu.set_flag_to(C, value & BIT_7 == BIT_7);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_left(1));
 		}
 		RRCA => {
 			let value = cpu.read_8(&CPURegister8::A.into());
-			cpu.cpu_state_mut().clear_flag(N);
-			cpu.cpu_state_mut().clear_flag(H);
-			cpu.cpu_state_mut().clear_flag(Z);
-			cpu.cpu_state_mut().set_flag_to(C, value & BIT_0 == BIT_0);
+			cpu.clear_flag(N);
+			cpu.clear_flag(H);
+			cpu.clear_flag(Z);
+			cpu.set_flag_to(C, value & BIT_0 == BIT_0);
 			cpu.write_8(&CPURegister8::A.into(), value.rotate_right(1));
 		}
 
@@ -310,16 +299,16 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				cpu,
 				Instruction::ROT(super::RotShiftOperation::RL, CPURegister8::A.into()),
 			);
-			cpu.cpu_state_mut().clear_flag(Z);
+			cpu.clear_flag(Z);
 		}
 		RRA => {
 			execute(
 				cpu,
 				Instruction::ROT(super::RotShiftOperation::RR, CPURegister8::A.into()),
 			);
-			cpu.cpu_state_mut().clear_flag(Z);
-			cpu.cpu_state_mut().clear_flag(H);
-			cpu.cpu_state_mut().clear_flag(N);
+			cpu.clear_flag(Z);
+			cpu.clear_flag(H);
+			cpu.clear_flag(N);
 		}
 		DAA => {
 			// Decimal Adjust A Register
@@ -329,7 +318,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			if !cpu.cpu_state().get_flag(N) {
 				if cpu.cpu_state().get_flag(C) || a_val > 0x99 {
 					a_val = a_val.wrapping_add(0x60);
-					cpu.cpu_state_mut().set_flag(C);
+					cpu.set_flag(C);
 				}
 				if cpu.cpu_state().get_flag(H) || (a_val & 0x0f) > 0x09 {
 					a_val = a_val.wrapping_add(0x6);
@@ -343,35 +332,35 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				}
 			}
 
-			cpu.cpu_state_mut().clear_flag(H);
-			cpu.cpu_state_mut().set_flag_to(Z, a_val == 0);
+			cpu.clear_flag(H);
+			cpu.set_flag_to(Z, a_val == 0);
 			cpu.write_8(a_ref, a_val);
 		}
 		CPL => {
 			// Complement A Register
 			let current = cpu.read_8(&CPURegister8::A.into());
-			cpu.cpu_state_mut().set_flag(H);
-			cpu.cpu_state_mut().set_flag(N);
+			cpu.set_flag(H);
+			cpu.set_flag(N);
 			cpu.write_8(&CPURegister8::A.into(), !current);
 		}
 		SCF => {
 			// Set Carry Flag
-			cpu.cpu_state_mut().clear_flag(H);
-			cpu.cpu_state_mut().clear_flag(N);
-			cpu.cpu_state_mut().set_flag(C);
+			cpu.clear_flag(H);
+			cpu.clear_flag(N);
+			cpu.set_flag(C);
 		}
 		CCF => {
 			// Complement Carry FLag
-			cpu.cpu_state_mut().clear_flag(H);
-			cpu.cpu_state_mut().clear_flag(N);
+			cpu.clear_flag(H);
+			cpu.clear_flag(N);
 			let f = cpu.cpu_state().get_flag(C);
-			cpu.cpu_state_mut().set_flag_to(C, !f);
+			cpu.set_flag_to(C, !f);
 		}
 		BIT(bit, value) => {
 			let value = cpu.read_8(&value);
-			cpu.cpu_state_mut().set_flag_to(Z, (value >> bit) & 1 == 0);
-			cpu.cpu_state_mut().set_flag(H);
-			cpu.cpu_state_mut().clear_flag(N);
+			cpu.set_flag_to(Z, (value >> bit) & 1 == 0);
+			cpu.set_flag(H);
+			cpu.clear_flag(N);
 		}
 		RES(bit, value) => {
 			let current = cpu.read_8(&value);
@@ -397,10 +386,10 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				SRL => value >> 1,
 			};
 
-			cpu.cpu_state_mut().clear_flag(N);
-			cpu.cpu_state_mut().clear_flag(H);
-			cpu.cpu_state_mut().set_flag_to(Z, result == 0);
-			cpu.cpu_state_mut().set_flag_to(
+			cpu.clear_flag(N);
+			cpu.clear_flag(H);
+			cpu.set_flag_to(Z, result == 0);
+			cpu.set_flag_to(
 				C,
 				match operator {
 					RLC | RL | SLA => value & BIT_7 == BIT_7,
@@ -414,17 +403,17 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 
 		LD_HL_SP_DD(ValueRefI8(b_ref)) => {
 			cpu.tick_m_cycles(1);
-			cpu.cpu_state_mut().clear_flag(Z);
-			cpu.cpu_state_mut().clear_flag(N);
+			cpu.clear_flag(Z);
+			cpu.clear_flag(N);
 
 			let a_val = cpu.read_16(&CPURegister16::SP.into());
 			let b_val = b_ref as i16;
 
 			let (_, carry) = ((a_val & 0xFF) as u8).overflowing_add(((b_ref as u16) & 0xFF) as u8);
 
-			cpu.cpu_state_mut().set_flag_to(C, carry);
+			cpu.set_flag_to(C, carry);
 
-			cpu.cpu_state_mut().set_flag_to(
+			cpu.set_flag_to(
 				H,
 				((a_val & 0xF).wrapping_add((b_ref as u16) & 0xF) & 0x10) == 0x10,
 			);
@@ -453,11 +442,9 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			match ptr {
 				ValueRefU16::Reg(_) => {}
 				_ => {
-					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut()
-						.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.cpu_state_mut()
-						.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
+					cpu.set_flag(N);
+					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
@@ -486,11 +473,9 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			match ptr {
 				ValueRefU16::Reg(_) => {}
 				_ => {
-					cpu.cpu_state_mut().set_flag(N);
-					cpu.cpu_state_mut()
-						.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-					cpu.cpu_state_mut()
-						.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
+					cpu.set_flag(N);
+					cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
+					cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
 				}
 			}
 
