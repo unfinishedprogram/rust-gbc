@@ -1,5 +1,3 @@
-use std::mem;
-
 use serde::{Deserialize, Serialize};
 
 pub type Color = (u8, u8, u8, u8);
@@ -8,9 +6,16 @@ pub type Color = (u8, u8, u8, u8);
 pub struct GameboyLCD {
 	buffer_front: Vec<u8>,
 	buffer_back: Vec<u8>,
+	pub sync_mode: SyncMode,
 
 	pub frame: u64,
 	pub scale: f32,
+}
+
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub enum SyncMode {
+	DoubleBuffered,
+	None,
 }
 
 impl GameboyLCD {
@@ -41,7 +46,12 @@ impl GameboyLCD {
 impl GameboyLCD {
 	pub fn swap_buffers(&mut self) {
 		self.frame += 1;
-		mem::swap(&mut self.buffer_front, &mut self.buffer_back);
+		match self.sync_mode {
+			SyncMode::DoubleBuffered => {
+				std::mem::swap(&mut self.buffer_front, &mut self.buffer_back)
+			}
+			SyncMode::None => {}
+		}
 	}
 
 	fn get_back_buffer_mut(&mut self) -> &mut [u8] {
@@ -49,7 +59,11 @@ impl GameboyLCD {
 	}
 
 	pub fn front_buffer(&self) -> &[u8] {
-		return self.buffer_front.as_slice();
+		match self.sync_mode {
+			SyncMode::DoubleBuffered => &self.buffer_front,
+			SyncMode::None => &self.buffer_back,
+		}
+		.as_slice()
 	}
 }
 
@@ -60,6 +74,7 @@ impl Default for GameboyLCD {
 		Self {
 			buffer_front,
 			buffer_back,
+			sync_mode: SyncMode::DoubleBuffered,
 			frame: 0,
 			scale: 3.0,
 		}
