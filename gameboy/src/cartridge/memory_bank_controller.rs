@@ -43,12 +43,12 @@ impl Cartridge {
 
 		let mbc = match raw_header.cartridge_type {
 			0x00 => Ok(ROM),
-			0x01 | 0x02 | 0x03 => Ok(MBC1(MBC1State::default())),
+			0x01..=0x03 => Ok(MBC1(MBC1State::default())),
 			0x05 | 0x06 => Ok(MBC2(MBC2State::default())),
 			0x08 | 0x09 => Ok(ROM),
-			0x0F | 0x10 | 0x11 | 0x12 | 0x13 => Ok(MBC3(MBC3State::default())),
-			0x0B | 0x0C | 0x0D => Ok(MMM01),
-			0x19 | 0x1A | 0x1B | 0x1C | 0x1D | 0x1E => Ok(MBC5(MBC5State::default())),
+			0x0F..=0x13 => Ok(MBC3(MBC3State::default())),
+			0x0B..=0x0D => Ok(MMM01),
+			0x19..=0x1E => Ok(MBC5(MBC5State::default())),
 			0x20 => Ok(MBC6),
 			0x22 => Ok(MBC7),
 			0xFE => Ok(HUC3),

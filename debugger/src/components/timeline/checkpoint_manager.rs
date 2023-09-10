@@ -1,4 +1,4 @@
-use egui::{DragValue, Ui};
+use egui::Ui;
 use gameboy::Gameboy;
 
 use crate::components::validated_input::ValidatedInput;

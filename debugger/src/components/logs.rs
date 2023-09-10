@@ -1,9 +1,8 @@
 use egui::Ui;
-use egui_extras::{Column, TableBuilder};
 
 pub struct Logs;
 impl Logs {
-	pub fn draw(ui: &mut Ui) {
+	pub fn draw(_ui: &mut Ui) {
 		// let mut debugger = DEBUGGER.lock().unwrap();
 
 		// if ui.button("Clear Logs").clicked() {

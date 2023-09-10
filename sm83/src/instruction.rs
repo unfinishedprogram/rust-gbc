@@ -71,6 +71,7 @@ pub enum Instruction {
 }
 
 #[derive(Clone, Copy)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum ALUOperation {
 	ADD,
 	ADC,
@@ -83,6 +84,7 @@ pub enum ALUOperation {
 }
 
 #[derive(Clone, Copy)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum RotShiftOperation {
 	RLC,
 	RRC,

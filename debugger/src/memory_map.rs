@@ -1,8 +1,5 @@
-pub struct AddressInfo {
-	label: Option<String>,
-}
-
 #[derive(Debug)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum IORegister {
 	DIV,
 	TIMA,
@@ -41,7 +38,6 @@ pub enum IORegister {
 	SB,
 	SC,
 	IF,
-	IE,
 }
 
 #[derive(Debug)]
