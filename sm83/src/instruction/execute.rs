@@ -142,7 +142,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			let a_val = cpu.read_16(&a_ref);
 			let b_val = b_ref as i16;
 
-			let (_, carry) = ((a_val & 0xFF) as u8).overflowing_add(((b_ref as u16) & 0xFF) as u8);
+			let (_, carry) = (a_val as u8).overflowing_add_signed(b_ref);
 
 			cpu.set_flag_to(C, carry);
 
@@ -178,7 +178,6 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 					);
 					cpu.set_flag_to(C, sum > 0xFF);
 					cpu.clear_flag(N);
-
 					sum as u8
 				}
 
@@ -221,7 +220,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 
 				CP => {
 					cpu.set_flag(N);
-					cpu.set_flag_to(C, a_val < b_val);
+					cpu.set_flag_to(C, b_val > a_val);
 					cpu.set_flag_to(Z, a_val == b_val);
 					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
 					a_val
@@ -311,30 +310,28 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.clear_flag(N);
 		}
 		DAA => {
-			// Decimal Adjust A Register
-			let a_ref = &CPURegister8::A.into();
-			let mut a_val = cpu.read_8(a_ref);
+			let mut a_val = cpu.cpu_state().registers[CPURegister8::A];
+			let mut carry = false;
 
-			if !cpu.cpu_state().get_flag(N) {
-				if cpu.cpu_state().get_flag(C) || a_val > 0x99 {
+			if !cpu.get_flag(N) {
+				if cpu.get_flag(C) || a_val > 0x99 {
 					a_val = a_val.wrapping_add(0x60);
-					cpu.set_flag(C);
+					carry = true;
 				}
-				if cpu.cpu_state().get_flag(H) || (a_val & 0x0f) > 0x09 {
-					a_val = a_val.wrapping_add(0x6);
+				if cpu.get_flag(H) || a_val & 0x0f > 0x09 {
+					a_val = a_val.wrapping_add(0x06);
 				}
-			} else {
-				if cpu.cpu_state().get_flag(C) {
-					a_val = a_val.wrapping_sub(0x60);
-				}
-				if cpu.cpu_state().get_flag(H) {
-					a_val = a_val.wrapping_sub(0x6);
-				}
+			} else if cpu.get_flag(C) {
+				carry = true;
+				a_val = a_val.wrapping_add(if cpu.get_flag(H) { 0x9a } else { 0xa0 });
+			} else if cpu.get_flag(H) {
+				a_val = a_val.wrapping_add(0xfa);
 			}
 
-			cpu.clear_flag(H);
 			cpu.set_flag_to(Z, a_val == 0);
-			cpu.write_8(a_ref, a_val);
+			cpu.clear_flag(H);
+			cpu.set_flag_to(C, carry);
+			cpu.cpu_state_mut().registers[CPURegister8::A] = a_val;
 		}
 		CPL => {
 			// Complement A Register
@@ -353,7 +350,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			// Complement Carry FLag
 			cpu.clear_flag(H);
 			cpu.clear_flag(N);
-			let f = cpu.cpu_state().get_flag(C);
+			let f = cpu.get_flag(C);
 			cpu.set_flag_to(C, !f);
 		}
 		BIT(bit, value) => {

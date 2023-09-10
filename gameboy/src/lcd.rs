@@ -74,7 +74,7 @@ impl Default for GameboyLCD {
 		Self {
 			buffer_front,
 			buffer_back,
-			sync_mode: SyncMode::DoubleBuffered,
+			sync_mode: SyncMode::None,
 			frame: 0,
 			scale: 3.0,
 		}

@@ -1,6 +1,8 @@
+#![feature(bigint_helper_methods)]
+
 mod bits;
 mod cpu;
-mod instruction;
+pub mod instruction;
 pub mod memory_mapper;
 pub mod registers;
 mod stack;
@@ -110,13 +112,11 @@ pub trait SM83<M: SourcedMemoryMapper> {
 	fn write_16(&mut self, value_ref: &ValueRefU16, value: u16) {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
-				let bytes = u16::to_le_bytes(value);
+				let [lsb, msb] = u16::to_be_bytes(value);
 				self.tick_m_cycles(1);
-				self.memory_mapper_mut()
-					.write_from(i.wrapping_add(1), bytes[1], Source::Cpu);
+				self.memory_mapper_mut().write_from(i + 1, lsb, Source::Cpu);
 				self.tick_m_cycles(1);
-				self.memory_mapper_mut()
-					.write_from(*i, bytes[0], Source::Cpu);
+				self.memory_mapper_mut().write_from(*i, msb, Source::Cpu);
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state_mut().registers.set_u16(*reg, value),
 			ValueRefU16::Raw(_) => unreachable!(),
