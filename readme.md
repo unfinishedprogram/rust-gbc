@@ -64,3 +64,12 @@ test result: FAILED. 1289 passed; 1595 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Improved stop handling -->
 test result: FAILED. 1292 passed; 1595 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.14s
+
+<!-- Fixed incorrect flag bits -->
+test result: FAILED. 1308 passed; 1582 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.23s
+
+<!-- Added some missing mooneye tests -->
+test result: FAILED. 1353 passed; 1601 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.46s
+
+<!-- Added some missing gambatte tests -->
+test result: FAILED. 1519 passed; 1756 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.26s

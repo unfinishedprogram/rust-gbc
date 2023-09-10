@@ -66,7 +66,7 @@ impl GambatteTest {
 	}
 }
 
-#[test_resources("../test_data/gambatte/*/*cgb04c_out*.gbc")]
+#[test_resources("../test_data/gambatte/**/*cgb04c_out*.gbc")]
 fn gambatte(resource: &str) {
 	let test = GambatteTest::new(resource.to_string());
 	let output = get_test_output(&test);

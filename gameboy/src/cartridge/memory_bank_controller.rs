@@ -68,7 +68,7 @@ impl MemoryMapper for Cartridge {
 			ROM => match addr {
 				0..0x4000 => data.rom_banks[0][addr as usize],
 				0x4000..0x8000 => data.rom_banks[1][(addr as usize) - 0x4000],
-				_ => unreachable!(),
+				_ => 0xFF,
 			},
 			MBC1(state) => match addr {
 				0..0x4000 => {
