@@ -20,7 +20,7 @@ use super::{
 	timer::Timer,
 };
 
-use sm83::{memory_mapper::MemoryMapper, CPUState, SM83};
+use sm83::{memory_mapper::MemoryMapper, CPUState, Instruction, SM83};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Mode {
@@ -117,12 +117,12 @@ impl Gameboy {
 		}
 	}
 
-	pub fn step(&mut self) {
+	pub fn step(&mut self) -> Option<Instruction> {
 		if self.speed_switch_delay > 0 {
 			self.tick_m_cycles(1);
-			return;
+			return None;
 		}
-		self.step_cpu();
+		self.step_cpu()
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {

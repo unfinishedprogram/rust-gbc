@@ -5,7 +5,7 @@ pub mod memory_mapper;
 pub mod registers;
 mod stack;
 mod state;
-mod values;
+pub mod values;
 pub use instruction::Instruction;
 use memory_mapper::{Source, SourcedMemoryMapper};
 pub use state::CPUState;
@@ -153,7 +153,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 		}
 	}
 
-	fn step_cpu(&mut self)
+	fn step_cpu(&mut self) -> Option<Instruction>
 	where
 		Self: Sized,
 	{
@@ -162,12 +162,13 @@ pub trait SM83<M: SourcedMemoryMapper> {
 				self.cpu_state_mut().halted = false;
 			} else {
 				self.tick_m_cycles(1);
-				return;
+				return None;
 			}
 		}
 
 		let instruction = self.get_next_instruction_or_interrupt();
 		instruction::execute(self, instruction);
+		Some(instruction)
 	}
 
 	fn exec_stop(&mut self) {}
