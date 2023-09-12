@@ -257,7 +257,7 @@ impl IORegisters for Gameboy {
 			}
 
 			// Timer
-			DIV => self.timer.set_div(value),
+			DIV => self.timer.set_div(value, self.mode.get_speed()),
 			TAC => self.timer.set_tac(value),
 			TIMA => self.timer.set_tima(value),
 			TMA => self.timer.set_tma(value),
