@@ -155,12 +155,12 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.tick_m_cycles(2);
 		}
 
-		ALU_OP_8(op, to, from) => {
+		ALU_OP_8(op, from) => {
 			use ALUOperation::*;
 
-			let a_val = cpu.read_8(&to);
+			let a_val = cpu.read_8(&CPURegister8::A.into());
 			let b_val = cpu.read_8(&from);
-			let carry = u8::from(cpu.cpu_state().get_flag(C));
+			let carry = u8::from(cpu.get_flag(C));
 
 			let result = match op {
 				ADD => {
@@ -230,7 +230,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			match op {
 				CP => {}
 				_ => {
-					cpu.write_8(&to, result);
+					cpu.write_8(&CPURegister8::A.into(), result);
 					cpu.set_flag_to(Z, result == 0);
 				}
 			}
@@ -370,7 +370,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		ROT(operator, val_ref) => {
 			use super::RotShiftOperation::*;
 			let value = cpu.read_8(&val_ref);
-			let carry_bit = u8::from(cpu.cpu_state().get_flag(C));
+			let carry_bit = u8::from(cpu.get_flag(C));
 
 			let result = match operator {
 				RLC => value.rotate_left(1),

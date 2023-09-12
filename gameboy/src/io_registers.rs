@@ -200,9 +200,10 @@ impl IORegisters for Gameboy {
 				let mut res = 0b11000000;
 
 				if self.io_register_state[JOYP] & BIT_4 == 0 {
-					res |= ((self.raw_joyp_input >> 4) & 0b1111) | 0b11000000;
-				} else if self.io_register_state[addr] & BIT_5 == 0 {
-					res |= (self.raw_joyp_input & 0b1111) | 0b11000000;
+					res |= (self.raw_joyp_input >> 4) & 0b1111;
+				}
+				if self.io_register_state[addr] & BIT_5 == 0 {
+					res |= self.raw_joyp_input & 0b1111;
 				}
 
 				res

@@ -12,7 +12,6 @@ use super::{
 pub struct DecodeTables {
 	pub r: [ValueRefU8; 8],
 	pub rp: [CPURegister16; 4],
-	pub rp2: [CPURegister16; 4],
 	pub cc: [Condition; 4],
 	pub alu: [ALUOperation; 8],
 	pub rot: [RotShiftOperation; 8],
@@ -31,12 +30,7 @@ pub const DT: DecodeTables = DecodeTables {
 	],
 
 	rp: [BC, DE, HL, SP],
-
-	rp2: [BC, DE, HL, AF],
-
 	cc: [Condition::NZ, Condition::Z, Condition::NC, Condition::C],
-
 	alu: [ADD, ADC, SUB, SBC, AND, XOR, OR, CP],
-
 	rot: [RLC, RRC, RL, RR, SLA, SRA, SWAP, SRL],
 };
