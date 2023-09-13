@@ -36,10 +36,7 @@ impl GameboyLCD {
 
 		let image = self.get_back_buffer_mut();
 
-		image[index] = r;
-		image[index + 1] = g;
-		image[index + 2] = b;
-		image[index + 3] = a;
+		image[index..index + 4].copy_from_slice(&[r, g, b, a])
 	}
 }
 
