@@ -75,4 +75,4 @@ test result: FAILED. 1353 passed; 1601 failed; 0 ignored; 0 measured; 0 filtered
 test result: FAILED. 1519 passed; 1756 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.26s
 
 <!-- Fix timer timing in CGB double speed mode -->
-test result: FAILED. 1530 passed; 1745 failed; 0 ignored; 0 measured; 0 filtered out; finished in 24.24s
+test result: FAILED. 1530 passed; 1745 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.76s

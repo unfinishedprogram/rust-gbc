@@ -36,22 +36,22 @@ pub trait SM83<M: SourcedMemoryMapper> {
 	}
 
 	fn next_byte(&mut self) -> u8 {
-		let value = self.read_8(&ValueRefU8::Mem(self.cpu_state().registers.pc.into()));
+		let value = self.read_8(ValueRefU8::Mem(self.cpu_state().registers.pc.into()));
 		self.cpu_state_mut().registers.pc = self.cpu_state().registers.pc.wrapping_add(1);
 		value
 	}
 
 	fn next_chomp(&mut self) -> u16 {
 		let pc = self.cpu_state().registers.pc;
-		let high = self.read_8(&ValueRefU8::Mem(pc.into()));
-		let low = self.read_8(&ValueRefU8::Mem((pc.wrapping_add(1)).into()));
+		let high = self.read_8(ValueRefU8::Mem(pc.into()));
+		let low = self.read_8(ValueRefU8::Mem((pc.wrapping_add(1)).into()));
 
 		self.cpu_state_mut().registers.pc = self.cpu_state().registers.pc.wrapping_add(2);
 
 		u16::from_le_bytes([high, low])
 	}
 
-	fn read_8(&mut self, value_ref: &ValueRefU8) -> u8 {
+	fn read_8(&mut self, value_ref: ValueRefU8) -> u8 {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
 				self.tick_m_cycles(1);
@@ -59,19 +59,19 @@ pub trait SM83<M: SourcedMemoryMapper> {
 				let value = self.memory_mapper_mut().read_from(index, Source::Cpu);
 				value
 			}
-			ValueRefU8::Reg(reg) => self.cpu_state().registers[*reg],
-			ValueRefU8::Raw(x) => *x,
-			ValueRefU8::MemOffsetRaw(offset) => self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw(
-				(*offset as u16) | 0xFF00,
-			))),
+			ValueRefU8::Reg(reg) => self.cpu_state().registers[reg],
+			ValueRefU8::Raw(x) => x,
+			ValueRefU8::MemOffsetRaw(offset) => {
+				self.read_8(ValueRefU8::Mem(ValueRefU16::Raw((offset as u16) | 0xFF00)))
+			}
 			ValueRefU8::MemOffsetReg(reg) => {
-				let offset = self.cpu_state().registers[*reg];
-				self.read_8(&ValueRefU8::Mem(ValueRefU16::Raw((offset as u16) | 0xFF00)))
+				let offset = self.cpu_state().registers[reg];
+				self.read_8(ValueRefU8::Mem(ValueRefU16::Raw((offset as u16) | 0xFF00)))
 			}
 		}
 	}
 
-	fn write_8(&mut self, value_ref: &ValueRefU8, value: u8) {
+	fn write_8(&mut self, value_ref: ValueRefU8, value: u8) {
 		match value_ref {
 			ValueRefU8::Mem(addr) => {
 				self.tick_m_cycles(1);
@@ -79,15 +79,15 @@ pub trait SM83<M: SourcedMemoryMapper> {
 				self.memory_mapper_mut()
 					.write_from(index, value, Source::Cpu);
 			}
-			ValueRefU8::Reg(reg) => self.cpu_state_mut().registers[*reg] = value,
+			ValueRefU8::Reg(reg) => self.cpu_state_mut().registers[reg] = value,
 			ValueRefU8::MemOffsetRaw(offset) => self.write_8(
-				&ValueRefU8::Mem(ValueRefU16::Raw((*offset as u16) | 0xFF00)),
+				ValueRefU8::Mem(ValueRefU16::Raw((offset as u16) | 0xFF00)),
 				value,
 			),
 			ValueRefU8::MemOffsetReg(reg) => {
-				let offset = self.cpu_state_mut().registers[*reg];
+				let offset = self.cpu_state_mut().registers[reg];
 				self.write_8(
-					&ValueRefU8::Mem(ValueRefU16::Raw((offset as u16) | 0xFF00)),
+					ValueRefU8::Mem(ValueRefU16::Raw((offset as u16) | 0xFF00)),
 					value,
 				);
 			}
@@ -95,30 +95,30 @@ pub trait SM83<M: SourcedMemoryMapper> {
 		}
 	}
 
-	fn read_16(&mut self, value_ref: &ValueRefU16) -> u16 {
+	fn read_16(&mut self, value_ref: ValueRefU16) -> u16 {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				self.tick_m_cycles(1);
-				let lsb = self.memory_mapper_mut().read_from(*i, Source::Cpu);
+				let lsb = self.memory_mapper_mut().read_from(i, Source::Cpu);
 				self.tick_m_cycles(1);
 				let msb = self.memory_mapper_mut().read_from(i + 1, Source::Cpu);
 				u16::from_le_bytes([lsb, msb])
 			}
-			ValueRefU16::Reg(reg) => self.cpu_state().registers.get_u16(*reg),
-			ValueRefU16::Raw(x) => *x,
+			ValueRefU16::Reg(reg) => self.cpu_state().registers.get_u16(reg),
+			ValueRefU16::Raw(x) => x,
 		}
 	}
 
-	fn write_16(&mut self, value_ref: &ValueRefU16, value: u16) {
+	fn write_16(&mut self, value_ref: ValueRefU16, value: u16) {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				let [lsb, msb] = u16::to_be_bytes(value);
 				self.tick_m_cycles(1);
 				self.memory_mapper_mut().write_from(i + 1, lsb, Source::Cpu);
 				self.tick_m_cycles(1);
-				self.memory_mapper_mut().write_from(*i, msb, Source::Cpu);
+				self.memory_mapper_mut().write_from(i, msb, Source::Cpu);
 			}
-			ValueRefU16::Reg(reg) => self.cpu_state_mut().registers.set_u16(*reg, value),
+			ValueRefU16::Reg(reg) => self.cpu_state_mut().registers.set_u16(reg, value),
 			ValueRefU16::Raw(_) => unreachable!(),
 		}
 	}

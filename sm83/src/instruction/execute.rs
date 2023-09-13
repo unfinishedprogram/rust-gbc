@@ -1,6 +1,6 @@
 use crate::{
 	bits::*,
-	flags::{cpu::*, interrupt::*, Flags},
+	flags::{cpu::*, interrupt::*},
 	instruction::ALUOperation,
 	memory_mapper::SourcedMemoryMapper,
 	registers::{CPURegister16, CPURegister8},
@@ -32,60 +32,60 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				_ => unreachable!(),
 			};
 
-			let current_pc = cpu.read_16(&CPURegister16::PC.into());
+			let current_pc = cpu.read_16(CPURegister16::PC.into());
 			cpu.push(current_pc);
-			cpu.write_16(&CPURegister16::PC.into(), location);
+			cpu.write_16(CPURegister16::PC.into(), location);
 			cpu.tick_m_cycles(1);
 
 			cpu.disable_interrupts();
 		}
 
 		LDH(to, from) => {
-			let val = cpu.read_8(&from);
-			cpu.write_8(&to, val);
+			let val = cpu.read_8(from);
+			cpu.write_8(to, val);
 		}
 
 		LD_8(to, from) => {
-			let val = cpu.read_8(&from);
-			cpu.write_8(&to, val);
+			let val = cpu.read_8(from);
+			cpu.write_8(to, val);
 		}
 
 		LD_16(to, from) => {
 			use ValueRefU16::*;
-			if matches!((&to, &from), (Reg(_), Reg(_))) {
+			if matches!((to, from), (Reg(_), Reg(_))) {
 				cpu.tick_m_cycles(1);
 			}
 
-			let val = cpu.read_16(&from);
-			cpu.write_16(&to, val);
+			let val = cpu.read_16(from);
+			cpu.write_16(to, val);
 		}
 
 		INC_8(ptr) => {
-			let val = cpu.read_8(&ptr);
+			let val = cpu.read_8(ptr);
 			cpu.set_flag_to(Z, val.wrapping_add(1) == 0);
 			cpu.clear_flag(N);
 			cpu.set_flag_to(H, ((val & 0xF).wrapping_add(1) & 0x10) == 0x10);
-			cpu.write_8(&ptr, val.wrapping_add(1));
+			cpu.write_8(ptr, val.wrapping_add(1));
 		}
 
 		INC_16(ptr) => {
 			cpu.tick_m_cycles(1);
-			let ptr_val = cpu.read_16(&ptr);
-			cpu.write_16(&ptr, ptr_val.wrapping_add(1));
+			let ptr_val = cpu.read_16(ptr);
+			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
 
 		DEC_8(ptr) => {
-			let val = cpu.read_8(&ptr);
+			let val = cpu.read_8(ptr);
 			cpu.set_flag_to(Z, val.wrapping_sub(1) == 0);
 			cpu.set_flag(N);
 			cpu.set_flag_to(H, ((val & 0xF).wrapping_sub(1 & 0xF) & 0x10) == 0x10);
-			cpu.write_8(&ptr, val.wrapping_sub(1));
+			cpu.write_8(ptr, val.wrapping_sub(1));
 		}
 
 		DEC_16(ptr) => {
 			cpu.tick_m_cycles(1);
 
-			let ptr_val = cpu.read_16(&ptr);
+			let ptr_val = cpu.read_16(ptr);
 
 			match ptr {
 				ValueRefU16::Reg(_) => {}
@@ -96,7 +96,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				}
 			}
 
-			cpu.write_16(&ptr, ptr_val.wrapping_sub(1));
+			cpu.write_16(ptr, ptr_val.wrapping_sub(1));
 		}
 
 		STOP => cpu.exec_stop(),
@@ -105,18 +105,18 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		JR(condition, ValueRefI8(offset)) => {
 			if cpu.check_condition(condition) {
 				let addr = cpu
-					.read_16(&CPURegister16::PC.into())
+					.read_16(CPURegister16::PC.into())
 					.wrapping_add_signed(offset as i16);
 
-				cpu.write_16(&CPURegister16::PC.into(), addr);
+				cpu.write_16(CPURegister16::PC.into(), addr);
 				cpu.tick_m_cycles(1);
 			}
 		}
 
 		JP(condition, location) => {
 			if cpu.check_condition(condition) {
-				let loc_val = cpu.read_16(&location);
-				cpu.write_16(&CPURegister16::PC.into(), loc_val);
+				let loc_val = cpu.read_16(location);
+				cpu.write_16(CPURegister16::PC.into(), loc_val);
 				if !matches!(location, ValueRefU16::Reg(CPURegister16::HL)) {
 					cpu.tick_m_cycles(1);
 				}
@@ -126,20 +126,20 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		ADD_16(a_ref, b_ref) => {
 			cpu.tick_m_cycles(1);
 
-			let a_val = cpu.read_16(&a_ref);
-			let b_val = cpu.read_16(&b_ref);
+			let a_val = cpu.read_16(a_ref);
+			let b_val = cpu.read_16(b_ref);
 
 			cpu.set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
 			cpu.clear_flag(N);
 			cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
-			cpu.write_16(&a_ref, a_val.wrapping_add(b_val));
+			cpu.write_16(a_ref, a_val.wrapping_add(b_val));
 		}
 
 		ADD_SIGNED(a_ref, ValueRefI8(b_ref)) => {
 			cpu.clear_flag(Z);
 			cpu.clear_flag(N);
 
-			let a_val = cpu.read_16(&a_ref);
+			let a_val = cpu.read_16(a_ref);
 			let b_val = b_ref as i16;
 
 			let (_, carry) = (a_val as u8).overflowing_add_signed(b_ref);
@@ -151,15 +151,15 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				((a_val & 0xF).wrapping_add((b_ref as u16) & 0xF) & 0x10) == 0x10,
 			);
 
-			cpu.write_16(&a_ref, a_val.wrapping_add_signed(b_val));
+			cpu.write_16(a_ref, a_val.wrapping_add_signed(b_val));
 			cpu.tick_m_cycles(2);
 		}
 
 		ALU_OP_8(op, from) => {
 			use ALUOperation::*;
 
-			let a_val = cpu.read_8(&CPURegister8::A.into());
-			let b_val = cpu.read_8(&from);
+			let a_val = cpu.read_8(CPURegister8::A.into());
+			let b_val = cpu.read_8(from);
 			let carry = u8::from(cpu.get_flag(C));
 
 			let result = match op {
@@ -230,14 +230,14 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			match op {
 				CP => {}
 				_ => {
-					cpu.write_8(&CPURegister8::A.into(), result);
+					cpu.write_8(CPURegister8::A.into(), result);
 					cpu.set_flag_to(Z, result == 0);
 				}
 			}
 		}
 		HALT => cpu.cpu_state_mut().halted = true,
 		CALL(condition, location) => {
-			let loc_value = cpu.read_16(&location);
+			let loc_value = cpu.read_16(location);
 			if cpu.check_condition(condition) {
 				cpu.tick_m_cycles(1);
 				let current_pc = cpu.cpu_state().registers.pc;
@@ -247,10 +247,10 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		}
 		POP(value_ref) => {
 			let val = cpu.pop();
-			cpu.write_16(&value_ref.into(), val);
+			cpu.write_16(value_ref.into(), val);
 		}
 		PUSH(value_ref) => {
-			let value = cpu.read_16(&value_ref.into());
+			let value = cpu.read_16(value_ref.into());
 			cpu.tick_m_cycles(1);
 			cpu.push(value)
 		}
@@ -265,10 +265,10 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		}
 		RST(addr) => {
 			cpu.tick_m_cycles(1);
-			let current_pc = cpu.read_16(&CPURegister16::PC.into());
+			let current_pc = cpu.read_16(CPURegister16::PC.into());
 			cpu.push(current_pc);
-			let new_pc = cpu.read_16(&addr);
-			cpu.write_16(&CPURegister16::PC.into(), new_pc);
+			let new_pc = cpu.read_16(addr);
+			cpu.write_16(CPURegister16::PC.into(), new_pc);
 		}
 		DI => {
 			cpu.disable_interrupts();
@@ -277,20 +277,20 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.enable_interrupts();
 		}
 		RLCA => {
-			let value = cpu.read_8(&CPURegister8::A.into());
+			let value = cpu.read_8(CPURegister8::A.into());
 			cpu.clear_flag(N);
 			cpu.clear_flag(H);
 			cpu.clear_flag(Z);
 			cpu.set_flag_to(C, value & BIT_7 == BIT_7);
-			cpu.write_8(&CPURegister8::A.into(), value.rotate_left(1));
+			cpu.write_8(CPURegister8::A.into(), value.rotate_left(1));
 		}
 		RRCA => {
-			let value = cpu.read_8(&CPURegister8::A.into());
+			let value = cpu.read_8(CPURegister8::A.into());
 			cpu.clear_flag(N);
 			cpu.clear_flag(H);
 			cpu.clear_flag(Z);
 			cpu.set_flag_to(C, value & BIT_0 == BIT_0);
-			cpu.write_8(&CPURegister8::A.into(), value.rotate_right(1));
+			cpu.write_8(CPURegister8::A.into(), value.rotate_right(1));
 		}
 
 		RLA => {
@@ -335,10 +335,10 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		}
 		CPL => {
 			// Complement A Register
-			let current = cpu.read_8(&CPURegister8::A.into());
+			let current = cpu.read_8(CPURegister8::A.into());
 			cpu.set_flag(H);
 			cpu.set_flag(N);
-			cpu.write_8(&CPURegister8::A.into(), !current);
+			cpu.write_8(CPURegister8::A.into(), !current);
 		}
 		SCF => {
 			// Set Carry Flag
@@ -354,22 +354,22 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.set_flag_to(C, !f);
 		}
 		BIT(bit, value) => {
-			let value = cpu.read_8(&value);
+			let value = cpu.read_8(value);
 			cpu.set_flag_to(Z, (value >> bit) & 1 == 0);
 			cpu.set_flag(H);
 			cpu.clear_flag(N);
 		}
 		RES(bit, value) => {
-			let current = cpu.read_8(&value);
-			cpu.write_8(&value, current & (0xFF ^ (1 << bit)));
+			let current = cpu.read_8(value);
+			cpu.write_8(value, current & (0xFF ^ (1 << bit)));
 		}
 		SET(bit, value) => {
-			let current = cpu.read_8(&value);
-			cpu.write_8(&value, current | (1 << bit));
+			let current = cpu.read_8(value);
+			cpu.write_8(value, current | (1 << bit));
 		}
 		ROT(operator, val_ref) => {
 			use super::RotShiftOperation::*;
-			let value = cpu.read_8(&val_ref);
+			let value = cpu.read_8(val_ref);
 			let carry_bit = u8::from(cpu.get_flag(C));
 
 			let result = match operator {
@@ -395,7 +395,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				},
 			);
 
-			cpu.write_8(&val_ref, result);
+			cpu.write_8(val_ref, result);
 		}
 
 		LD_HL_SP_DD(ValueRefI8(b_ref)) => {
@@ -403,7 +403,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.clear_flag(Z);
 			cpu.clear_flag(N);
 
-			let a_val = cpu.read_16(&CPURegister16::SP.into());
+			let a_val = cpu.read_16(CPURegister16::SP.into());
 			let b_val = b_ref as i16;
 
 			let (_, carry) = ((a_val & 0xFF) as u8).overflowing_add(((b_ref as u16) & 0xFF) as u8);
@@ -415,7 +415,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				((a_val & 0xF).wrapping_add((b_ref as u16) & 0xF) & 0x10) == 0x10,
 			);
 
-			cpu.write_16(&CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
+			cpu.write_16(CPURegister16::HL.into(), a_val.wrapping_add_signed(b_val));
 		}
 
 		LD_A_INC_HL => {
@@ -423,7 +423,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				cpu,
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 			);
-			let ptr = &CPURegister16::HL.into();
+			let ptr = CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
 			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
@@ -433,7 +433,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				cpu,
 				Instruction::LD_8(CPURegister8::A.into(), CPURegister16::HL.into()),
 			);
-			let ptr = &CPURegister16::HL.into();
+			let ptr = CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
 
 			match ptr {
@@ -453,7 +453,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				cpu,
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 			);
-			let ptr = &CPURegister16::HL.into();
+			let ptr = CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
 			cpu.write_16(ptr, ptr_val.wrapping_add(1));
 		}
@@ -464,7 +464,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				Instruction::LD_8(CPURegister16::HL.into(), CPURegister8::A.into()),
 			);
 
-			let ptr = &CPURegister16::HL.into();
+			let ptr = CPURegister16::HL.into();
 			let ptr_val = cpu.read_16(ptr);
 
 			match ptr {
