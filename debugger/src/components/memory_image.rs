@@ -1,4 +1,4 @@
-use egui::{Color32, ColorImage, Image, TextureHandle, TextureOptions, Ui, Vec2};
+use egui::{Color32, ColorImage, Image, Rgba, TextureHandle, TextureOptions, Ui, Vec2};
 use gameboy::Gameboy;
 use sm83::{memory_mapper::MemoryMapper, SM83};
 
@@ -22,21 +22,38 @@ enum AddressRange {
 	HighRam,
 	InterruptEnable,
 }
+
+const COLORS: [egui::Rgba; 12] = [
+	egui::Rgba::from_rgba_premultiplied(186.0 / 255.0, 172.0 / 255.0, 147.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(41.0 / 255.0, 112.0 / 255.0, 248.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(193.0 / 255.0, 181.0 / 255.0, 201.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(197.0 / 255.0, 149.0 / 255.0, 95.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(168.0 / 255.0, 254.0 / 255.0, 95.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(12.0 / 255.0, 175.0 / 255.0, 83.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(247.0 / 255.0, 235.0 / 255.0, 214.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(228.0 / 255.0, 188.0 / 255.0, 134.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(71.0 / 255.0, 67.0 / 255.0, 135.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(63.0 / 255.0, 69.0 / 255.0, 11.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(125.0 / 255.0, 27.0 / 255.0, 237.0 / 255.0, 255.0),
+	egui::Rgba::from_rgba_premultiplied(174.0 / 255.0, 119.0 / 255.0, 138.0 / 255.0, 255.0),
+];
+
 impl AddressRange {
-	fn color(&self) -> egui::Color32 {
+	#[inline(always)]
+	const fn color(&self) -> egui::Rgba {
 		match self {
-			AddressRange::RomBank0 => egui::Color32::from_rgb(186, 172, 147),
-			AddressRange::RomBankN => egui::Color32::from_rgb(41, 112, 248),
-			AddressRange::VRam => egui::Color32::from_rgb(193, 181, 201),
-			AddressRange::ExternalRam => egui::Color32::from_rgb(197, 149, 95),
-			AddressRange::WRamBank0 => egui::Color32::from_rgb(168, 254, 95),
-			AddressRange::WRamBankN => egui::Color32::from_rgb(12, 175, 83),
-			AddressRange::Mirror => egui::Color32::from_rgb(247, 235, 214),
-			AddressRange::SpriteAttributes => egui::Color32::from_rgb(228, 188, 134),
-			AddressRange::Unusable => egui::Color32::from_rgb(71, 67, 135),
-			AddressRange::IORegisters => egui::Color32::from_rgb(63, 69, 11),
-			AddressRange::HighRam => egui::Color32::from_rgb(125, 27, 237),
-			AddressRange::InterruptEnable => egui::Color32::from_rgb(174, 119, 138),
+			AddressRange::RomBank0 => COLORS[0],
+			AddressRange::RomBankN => COLORS[1],
+			AddressRange::VRam => COLORS[2],
+			AddressRange::ExternalRam => COLORS[3],
+			AddressRange::WRamBank0 => COLORS[4],
+			AddressRange::WRamBankN => COLORS[5],
+			AddressRange::Mirror => COLORS[6],
+			AddressRange::SpriteAttributes => COLORS[7],
+			AddressRange::Unusable => COLORS[8],
+			AddressRange::IORegisters => COLORS[9],
+			AddressRange::HighRam => COLORS[10],
+			AddressRange::InterruptEnable => COLORS[11],
 		}
 	}
 }
@@ -69,11 +86,23 @@ impl Default for MemoryImage {
 		};
 
 		for i in 0..u16::MAX {
-			res.image.pixels[i as usize] = AddressRange::from(i).color();
+			res.image.pixels[i as usize] = AddressRange::from(i).color().into();
 		}
 
 		res
 	}
+}
+
+fn cheap_multiply_color(color: Rgba, factor: f32) -> Color32 {
+	let [r, g, b, a] = color.to_array();
+
+	let factor = factor * 255.0;
+	Color32::from_rgba_premultiplied(
+		(r * factor) as u8,
+		(g * factor) as u8,
+		(b * factor) as u8,
+		(a * factor) as u8,
+	)
 }
 
 impl MemoryImage {
@@ -99,9 +128,9 @@ impl MemoryImage {
 
 	pub fn render_img(&mut self, gameboy: &Gameboy) {
 		for i in 0..u16::MAX {
-			self.image.pixels[i as usize] = AddressRange::from(i)
-				.color()
-				.linear_multiply(gameboy.memory_mapper().read(i) as f32 / 255.0);
+			let color = AddressRange::from(i).color();
+			let opacity = gameboy.memory_mapper().read(i) as f32 / 255.0;
+			self.image.pixels[i as usize] = cheap_multiply_color(color, opacity);
 		}
 		self.image.pixels[gameboy.cpu_state.registers.pc as usize] = Color32::RED;
 
