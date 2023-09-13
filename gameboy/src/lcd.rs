@@ -38,9 +38,7 @@ impl GameboyLCD {
 
 		image[index..index + 4].copy_from_slice(&[r, g, b, a])
 	}
-}
 
-impl GameboyLCD {
 	pub fn swap_buffers(&mut self) {
 		self.frame += 1;
 		match self.sync_mode {
