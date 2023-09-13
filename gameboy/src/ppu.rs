@@ -203,7 +203,7 @@ impl PPU {
 
 		use PPUMode::*;
 		match self.mode() {
-			HBlank => {
+			PPUMode::HBlank => {
 				self.set_ly(self.get_ly() + 1, interrupt_register);
 				if self.get_ly() < 144 {
 					self.cycle += 79;
@@ -217,7 +217,7 @@ impl PPU {
 					Some(VBlank)
 				}
 			}
-			VBlank => {
+			PPUMode::VBlank => {
 				if self.get_ly() < 153 {
 					self.cycle += 455;
 					self.set_ly(self.get_ly() + 1, interrupt_register);
