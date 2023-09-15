@@ -11,16 +11,17 @@ use CPURegister8::*;
 #[derive(Clone, Copy)]
 pub enum CPURegister8 {
 	A,
+	F,
 	B,
 	C,
 	D,
 	E,
-	F,
 	H,
 	L,
 }
 
 #[derive(Clone, Copy)]
+#[repr(C, align(2))]
 pub enum CPURegister16 {
 	AF,
 	BC,
@@ -53,12 +54,12 @@ impl IndexMut<CPURegister8> for CPURegisters {
 impl CPURegisters {
 	pub fn get_u16(&self, reg: CPURegister16) -> u16 {
 		match reg {
-			AF => u16::from_be_bytes([self[A], self[F]]),
-			BC => u16::from_be_bytes([self[B], self[C]]),
-			DE => u16::from_be_bytes([self[D], self[E]]),
-			HL => u16::from_be_bytes([self[H], self[L]]),
 			SP => self.sp,
 			PC => self.pc,
+			reg => u16::from_le_bytes([
+				self.bytes[reg as usize * 2 + 1],
+				self.bytes[reg as usize * 2],
+			]),
 		}
 	}
 
@@ -66,12 +67,15 @@ impl CPURegisters {
 		let bytes = u16::to_le_bytes(value);
 
 		match reg {
-			AF => [self[F], self[A]] = [bytes[0] & 0xF0, bytes[1]],
-			BC => [self[C], self[B]] = bytes,
-			DE => [self[E], self[D]] = bytes,
-			HL => [self[L], self[H]] = bytes,
+			AF => [self.bytes[F as usize], self.bytes[A as usize]] = [bytes[0] & 0xF0, bytes[1]],
 			SP => self.sp = value,
 			PC => self.pc = value,
+			reg => {
+				[
+					self.bytes[reg as usize * 2 + 1],
+					self.bytes[reg as usize * 2],
+				] = bytes
+			}
 		}
 	}
 }
@@ -83,8 +87,7 @@ impl Debug for CPURegisters {
 		writeln!(f, "DE:{:04X}", self.get_u16(DE))?;
 		writeln!(f, "HL:{:04X}", self.get_u16(HL))?;
 		writeln!(f, "SP:{:04X}", self.get_u16(SP))?;
-		writeln!(f, "PC:{:04X}", self.get_u16(PC))?;
-		Ok(())
+		writeln!(f, "PC:{:04X}", self.get_u16(PC))
 	}
 }
 
