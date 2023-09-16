@@ -30,13 +30,14 @@ fn mooneye_test(rom: &str) {
 			break;
 		}
 	}
-
-	match state.cpu_state.registers.bytes {
-		[_, _, 3, 5, 8, 13, 21, 34] => {} // Success code
-		[_, _, 66, 66, 66, 66, 66, 66] => panic!("Test failed with code"), // Failure code
-		_ => panic!(
-			"Test Failed, no code: {:?}",
-			state.cpu_state.registers.bytes
-		), // Run untill success or failure
+	unsafe {
+		match state.cpu_state.registers.bits_8 {
+			[_, _, 5, 3, 13, 8, 34, 21, _, _, _, _] => {} // Success code
+			[_, _, 66, 66, 66, 66, 66, 66, _, _, _, _] => panic!("Test failed with code"), // Failure code
+			_ => panic!(
+				"Test Failed, no code: {:?}",
+				state.cpu_state.registers.bits_8
+			), // Run untill success or failure
+		}
 	}
 }

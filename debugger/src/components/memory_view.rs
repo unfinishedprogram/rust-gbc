@@ -5,6 +5,7 @@ use egui::{Rgba, Style, Ui, Vec2};
 use egui_extras::{Column, TableBuilder};
 use gameboy::Gameboy;
 use sm83::memory_mapper::MemoryMapper;
+use sm83::registers::CPURegister16;
 
 #[derive(Default)]
 pub struct MemoryView {
@@ -38,7 +39,7 @@ impl MemoryView {
 			ui.vertical(|ui| {
 				if self.lock_view {
 					TableBuilder::new(ui).scroll_to_row(
-						(gameboy.cpu_state.registers.pc / 16) as usize,
+						(gameboy.cpu_state.registers[CPURegister16::PC] / 16) as usize,
 						Some(egui::Align::Center),
 					)
 				} else {
@@ -68,11 +69,12 @@ impl MemoryView {
 						for i in 0..0x10 {
 							row.col(|ui| {
 								let addr = (index * 16 + i) as u16;
-								let color = if gameboy.cpu_state.registers.pc == addr {
-									Rgba::RED
-								} else {
-									Rgba::WHITE
-								};
+								let color =
+									if gameboy.cpu_state.registers[CPURegister16::PC] == addr {
+										Rgba::RED
+									} else {
+										Rgba::WHITE
+									};
 								ui.colored_label(color, format!("{:02X}", gameboy.read(addr)));
 							});
 						}

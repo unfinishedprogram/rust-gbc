@@ -3,6 +3,7 @@ use egui::{Align, Rgba, Style, Ui, Vec2};
 use egui_extras::{Column, TableBuilder};
 use gameboy::Gameboy;
 use sm83::memory_mapper::MemoryMapper;
+use sm83::registers::CPURegister16;
 use sm83::{Instruction, SM83};
 
 use crate::memory_map::get_addr_info;
@@ -20,12 +21,12 @@ pub fn generate_instructions(gb: &Gameboy) -> Vec<CompiledEntry> {
 
 	let mut instructions = vec![];
 
-	gb.cpu_state.registers.pc = 0;
-	while gb.cpu_state.registers.pc < 0xFFFF {
-		let pc = gb.cpu_state.registers.pc;
+	gb.cpu_state.registers[CPURegister16::PC] = 0;
+	while gb.cpu_state.registers[CPURegister16::PC] < 0xFFFF {
+		let pc = gb.cpu_state.registers[CPURegister16::PC];
 		let instruction = gb.fetch_next_instruction();
 		let mut bytes = vec![];
-		let new_pc = gb.cpu_state.registers.pc;
+		let new_pc = gb.cpu_state.registers[CPURegister16::PC];
 
 		for addr in pc..new_pc {
 			bytes.push(format!("{:02X}", gb.read(addr)));
@@ -40,7 +41,7 @@ pub fn generate_instructions(gb: &Gameboy) -> Vec<CompiledEntry> {
 
 impl LinearMemoryView {
 	pub fn draw(&mut self, gameboy: &Gameboy, ui: &mut Ui) {
-		let pc = gameboy.cpu_state.registers.pc;
+		let pc = gameboy.cpu_state.registers[CPURegister16::PC];
 
 		let instructions = self
 			.instructions

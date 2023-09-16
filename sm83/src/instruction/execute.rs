@@ -240,9 +240,9 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			let loc_value = cpu.read_16(location);
 			if cpu.check_condition(condition) {
 				cpu.tick_m_cycles(1);
-				let current_pc = cpu.cpu_state().registers.pc;
+				let current_pc = cpu.cpu_state().registers[CPURegister16::PC];
 				cpu.push(current_pc);
-				cpu.cpu_state_mut().registers.pc = loc_value;
+				cpu.cpu_state_mut().registers[CPURegister16::PC] = loc_value;
 			}
 		}
 		POP(value_ref) => {
@@ -259,7 +259,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				cpu.tick_m_cycles(1);
 			}
 			if cpu.check_condition(condition) {
-				cpu.cpu_state_mut().registers.pc = cpu.pop();
+				cpu.cpu_state_mut().registers[CPURegister16::PC] = cpu.pop();
 				cpu.tick_m_cycles(1);
 			}
 		}

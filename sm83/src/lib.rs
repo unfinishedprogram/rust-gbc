@@ -10,6 +10,7 @@ mod state;
 pub mod values;
 pub use instruction::Instruction;
 use memory_mapper::{Source, SourcedMemoryMapper};
+use registers::CPURegister16;
 pub use state::CPUState;
 
 use values::{ValueRefU16, ValueRefU8};
@@ -36,17 +37,21 @@ pub trait SM83<M: SourcedMemoryMapper> {
 	}
 
 	fn next_byte(&mut self) -> u8 {
-		let value = self.read_8(ValueRefU8::Mem(self.cpu_state().registers.pc.into()));
-		self.cpu_state_mut().registers.pc = self.cpu_state().registers.pc.wrapping_add(1);
+		let value = self.read_8(ValueRefU8::Mem(
+			self.cpu_state().registers[CPURegister16::PC].into(),
+		));
+		self.cpu_state_mut().registers[CPURegister16::PC] =
+			self.cpu_state().registers[CPURegister16::PC].wrapping_add(1);
 		value
 	}
 
 	fn next_chomp(&mut self) -> u16 {
-		let pc = self.cpu_state().registers.pc;
+		let pc = self.cpu_state().registers[CPURegister16::PC];
 		let high = self.read_8(ValueRefU8::Mem(pc.into()));
 		let low = self.read_8(ValueRefU8::Mem((pc.wrapping_add(1)).into()));
 
-		self.cpu_state_mut().registers.pc = self.cpu_state().registers.pc.wrapping_add(2);
+		self.cpu_state_mut().registers[CPURegister16::PC] =
+			self.cpu_state().registers[CPURegister16::PC].wrapping_add(2);
 
 		u16::from_le_bytes([high, low])
 	}
@@ -104,7 +109,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 				let msb = self.memory_mapper_mut().read_from(i + 1, Source::Cpu);
 				u16::from_le_bytes([lsb, msb])
 			}
-			ValueRefU16::Reg(reg) => self.cpu_state().registers.get_u16(reg),
+			ValueRefU16::Reg(reg) => self.cpu_state().registers[reg],
 			ValueRefU16::Raw(x) => x,
 		}
 	}
@@ -118,7 +123,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 				self.tick_m_cycles(1);
 				self.memory_mapper_mut().write_from(i, msb, Source::Cpu);
 			}
-			ValueRefU16::Reg(reg) => self.cpu_state_mut().registers.set_u16(reg, value),
+			ValueRefU16::Reg(reg) => self.cpu_state_mut().registers[reg] = value,
 			ValueRefU16::Raw(_) => unreachable!(),
 		}
 	}

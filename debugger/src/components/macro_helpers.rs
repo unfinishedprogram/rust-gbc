@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! bool {
-    ( $f:literal, $v:expr) => {
-        format!($f, if $v { "⬛" } else { "⬜" })
-    };
+	( $f:literal, $v:expr) => {
+		format!($f, if $v { "⬛" } else { "⬜" })
+	};
 }

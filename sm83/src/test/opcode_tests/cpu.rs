@@ -1,5 +1,8 @@
 use super::{memory_mapper::FlatMemory, state::TestState};
-use crate::{registers::CPURegister8::*, CPUState, SM83};
+use crate::{
+	registers::{CPURegister16::*, CPURegister8::*},
+	CPUState, SM83,
+};
 
 #[derive(Default)]
 pub struct MockCpu {
@@ -31,8 +34,8 @@ impl From<TestState> for MockCpu {
 		res.cpu_state.interrupt_master_enable = state.ime == 1;
 		res.cpu_state.ie_next = state.ime == 1;
 
-		res.cpu_state.registers.pc = state.pc;
-		res.cpu_state.registers.sp = state.sp;
+		res.cpu_state.registers[PC] = state.pc;
+		res.cpu_state.registers[SP] = state.sp;
 
 		res.cpu_state.registers[A] = state.a;
 		res.cpu_state.registers[B] = state.b;
@@ -55,8 +58,8 @@ impl From<MockCpu> for TestState {
 		ram.sort_by(|a, b| a.0.cmp(&b.0));
 
 		TestState {
-			pc: state.cpu_state.registers.pc,
-			sp: state.cpu_state.registers.sp,
+			pc: state.cpu_state.registers[PC],
+			sp: state.cpu_state.registers[SP],
 			a: state.cpu_state.registers[A],
 			b: state.cpu_state.registers[B],
 			c: state.cpu_state.registers[C],

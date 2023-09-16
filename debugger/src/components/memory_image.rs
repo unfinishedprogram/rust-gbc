@@ -1,6 +1,6 @@
 use egui::{Color32, ColorImage, Image, Rgba, TextureHandle, TextureOptions, Ui, Vec2};
 use gameboy::Gameboy;
-use sm83::{memory_mapper::MemoryMapper, SM83};
+use sm83::{memory_mapper::MemoryMapper, registers::CPURegister16, SM83};
 
 pub struct MemoryImage {
 	texture: Option<TextureHandle>,
@@ -132,7 +132,7 @@ impl MemoryImage {
 			let opacity = gameboy.memory_mapper().read(i) as f32 / 255.0;
 			self.image.pixels[i as usize] = cheap_multiply_color(color, opacity);
 		}
-		self.image.pixels[gameboy.cpu_state.registers.pc as usize] = Color32::RED;
+		self.image.pixels[gameboy.cpu_state.registers[CPURegister16::PC] as usize] = Color32::RED;
 
 		let hdma5 = gameboy.dma_controller.read_hdma5();
 
