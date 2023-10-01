@@ -1,4 +1,4 @@
-use image::{ColorType, DynamicImage, EncodableLayout};
+use image::{DynamicImage, EncodableLayout};
 
 use test_generator::test_resources;
 
