@@ -5,8 +5,6 @@ use std::{
 	ops::{Index, IndexMut},
 };
 
-const FLAG_MASK: u128 = 0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF;
-
 #[derive(Clone, Copy)]
 pub enum CPURegister8 {
 	F,
@@ -64,7 +62,7 @@ impl IndexMut<CPURegister16> for CPURegisters {
 }
 
 impl Serialize for CPURegisters {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn serialize<S>(&self, _: S) -> Result<S::Ok, S::Error>
 	where
 		S: serde::Serializer,
 	{
@@ -73,7 +71,7 @@ impl Serialize for CPURegisters {
 }
 
 impl<'de> Deserialize<'de> for CPURegisters {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	fn deserialize<D>(_: D) -> Result<Self, D::Error>
 	where
 		D: serde::Deserializer<'de>,
 	{

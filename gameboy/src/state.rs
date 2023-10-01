@@ -5,7 +5,7 @@ use crate::{
 	dma_controller::{DMAController, TransferRequest},
 	io_registers::JOYP,
 	lcd::Color,
-	oam_dma::OamDmaState,
+	oam_dma::{step_oam_dma, OamDmaState},
 	ppu::VRAMBank,
 	util::BigArray,
 	work_ram::{BankedWorkRam, WorkRam, WorkRamDataCGB, WorkRamDataDMG},
@@ -128,7 +128,7 @@ impl Gameboy {
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
 		for _ in 0..m_cycles {
 			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
-			self.oam_dma.step(1, &mut self.ppu);
+			step_oam_dma(self);
 
 			let t_states = match self.mode.get_speed() {
 				Speed::Normal => 4,

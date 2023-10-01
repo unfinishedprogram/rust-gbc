@@ -1,10 +1,7 @@
 use std::ops::{Index, IndexMut};
 
 use serde::{Deserialize, Serialize};
-use sm83::{
-	flags::interrupt,
-	memory_mapper::{Source, SourcedMemoryMapper},
-};
+use sm83::flags::interrupt;
 
 use crate::{
 	state::Mode,
@@ -307,18 +304,7 @@ impl IORegisters for Gameboy {
 			IE => self.cpu_state.interrupt_enable = value & 0b00011111,
 			DMA => {
 				self.io_register_state[DMA] = value;
-
-				// Indexing into HRAM should use work-ram instead.
-				let value = if value > 0xDF { value - 0x20 } else { value };
-
-				let mut oam_data = vec![0; 0xA0];
-				let real_addr = (value as u16) << 8;
-
-				(0..0xA0).for_each(|i| {
-					oam_data[i] = self.read_from(real_addr + i as u16, Source::Raw);
-				});
-
-				self.oam_dma.start_oam_dma(oam_data);
+				self.oam_dma.start_oam_dma(value);
 			}
 
 			_ => self.io_register_state[addr] = value,
