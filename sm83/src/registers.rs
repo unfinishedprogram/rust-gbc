@@ -40,28 +40,40 @@ pub struct CPURegisters {
 impl Addressable<CPURegister16, u16> for CPURegisters {
 	fn read(&self, index: CPURegister16) -> u16 {
 		use CPURegister16::*;
+		use CPURegister8::*;
 		match index {
+			AF => u16::from_be_bytes([self.read(A), self.read(F)]),
+			BC => u16::from_be_bytes([self.read(B), self.read(C)]),
+			DE => u16::from_be_bytes([self.read(D), self.read(E)]),
+			HL => u16::from_be_bytes([self.read(H), self.read(L)]),
 			SP => self.sp,
 			PC => self.pc,
-			reg => u16::from_le_bytes([
-				self.inner[reg as usize * 2 + 1],
-				self.inner[reg as usize * 2],
-			]),
 		}
 	}
 
 	fn write(&mut self, index: CPURegister16, value: u16) {
 		use CPURegister16::*;
+		use CPURegister8::*;
 		let bytes = value.to_le_bytes();
 		match index {
+			AF => {
+				self.write(A, bytes[1]);
+				self.write(F, bytes[0]);
+			}
+			BC => {
+				self.write(B, bytes[1]);
+				self.write(C, bytes[0]);
+			}
+			DE => {
+				self.write(D, bytes[1]);
+				self.write(E, bytes[0]);
+			}
+			HL => {
+				self.write(H, bytes[1]);
+				self.write(L, bytes[0]);
+			}
 			SP => self.sp = value,
 			PC => self.pc = value,
-			reg => {
-				[
-					self.inner[reg as usize * 2 + 1],
-					self.inner[reg as usize * 2],
-				] = bytes
-			}
 		}
 	}
 }
@@ -72,7 +84,10 @@ impl Addressable<CPURegister8, u8> for CPURegisters {
 	}
 
 	fn write(&mut self, index: CPURegister8, value: u8) {
-		self.inner[index as usize] = value;
+		match index {
+			CPURegister8::F => self.inner[index as usize] = value & 0xF0,
+			_ => self.inner[index as usize] = value,
+		}
 	}
 }
 
