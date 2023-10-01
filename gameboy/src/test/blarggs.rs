@@ -1,4 +1,4 @@
-use image::{DynamicImage, EncodableLayout};
+use image::{ColorType, DynamicImage, EncodableLayout};
 
 use test_generator::test_resources;
 
@@ -40,7 +40,7 @@ impl BlarggTest {
 		let img = img.into_rgba8();
 		let expected = img.as_bytes();
 
-		for _ in 0..15 {
+		for _ in 0..32 {
 			for _ in 0..1_048_576 {
 				state.step();
 			}
