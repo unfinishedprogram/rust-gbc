@@ -65,22 +65,6 @@ impl DMAController {
 		self.destination |= (value & 0xF0) as u16;
 	}
 
-	pub fn read_source_high(&self) -> u8 {
-		self.source.to_le_bytes()[1]
-	}
-
-	pub fn read_source_low(&self) -> u8 {
-		self.source.to_le_bytes()[0]
-	}
-
-	pub fn read_destination_high(&self) -> u8 {
-		self.destination.to_le_bytes()[1]
-	}
-
-	pub fn read_destination_low(&self) -> u8 {
-		self.destination.to_le_bytes()[0]
-	}
-
 	pub fn read_hdma5(&self) -> u8 {
 		self.hdma5
 	}
@@ -95,9 +79,15 @@ impl DMAController {
 
 	pub fn write_hdma5(&mut self, value: u8) -> Option<TransferRequest> {
 		log::info!("Wrote to HDMA");
-		if value & BIT_7 != 0 {
-			// HDMA Transfer
-			self.hdma5 = value & 0x7F;
+
+		if self.hdma5 != 0xFF {
+			if value & BIT_7 == BIT_7 {
+				// Pause HDMA
+				self.hdma5 = value | 0x80;
+			} else {
+				// Restart HDMA
+				self.hdma5 = value | 0xF7;
+			}
 			return None;
 		}
 
