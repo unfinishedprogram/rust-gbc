@@ -136,22 +136,15 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		}
 
 		ADD_SIGNED(a_ref, ValueRefI8(b_ref)) => {
+			let a_val = cpu.read_16(a_ref);
+			let b_val = b_ref as i16 as u16;
+
+			cpu.set_flag_to(H, u16::test_add_carry_bit(3, a_val, b_val));
+			cpu.set_flag_to(C, u16::test_add_carry_bit(7, a_val, b_val));
 			cpu.clear_flag(Z);
 			cpu.clear_flag(N);
 
-			let a_val = cpu.read_16(a_ref);
-			let b_val = b_ref as i16;
-
-			let (_, carry) = (a_val as u8).overflowing_add_signed(b_ref);
-
-			cpu.set_flag_to(C, carry);
-
-			cpu.set_flag_to(
-				H,
-				((a_val & 0xF).wrapping_add((b_ref as u16) & 0xF) & 0x10) == 0x10,
-			);
-
-			cpu.write_16(a_ref, a_val.wrapping_add_signed(b_val));
+			cpu.write_16(a_ref, a_val.wrapping_add(b_val));
 			cpu.tick_m_cycles(2);
 		}
 
