@@ -1,5 +1,8 @@
 use crate::{
-	memory_mapper::SourcedMemoryMapper, registers::CPURegister16, values::ValueRefU16, SM83,
+	memory_mapper::SourcedMemoryMapper,
+	registers::{Addressable, CPURegister16},
+	values::ValueRefU16,
+	SM83,
 };
 
 pub trait CPUStack<M: SourcedMemoryMapper>: SM83<M> {
@@ -9,19 +12,23 @@ pub trait CPUStack<M: SourcedMemoryMapper>: SM83<M> {
 
 impl<M: SourcedMemoryMapper, C: SM83<M>> CPUStack<M> for C {
 	fn push(&mut self, value: u16) {
-		let next_sp = self.cpu_state().registers[CPURegister16::SP].wrapping_sub(2);
-		self.cpu_state_mut().registers[CPURegister16::SP] = next_sp;
+		let next_sp = self.cpu_state().read(CPURegister16::SP).wrapping_sub(2);
+
+		self.cpu_state_mut().write(CPURegister16::SP, next_sp);
+
 		self.write_16(
-			ValueRefU16::Mem(self.cpu_state().registers[CPURegister16::SP]),
+			ValueRefU16::Mem(self.cpu_state().read(CPURegister16::SP)),
 			value,
 		);
 	}
 
 	fn pop(&mut self) -> u16 {
-		let next_sp = self.cpu_state().registers[CPURegister16::SP].wrapping_add(2);
-		self.cpu_state_mut().registers[CPURegister16::SP] = next_sp;
+		let next_sp = self.cpu_state().read(CPURegister16::SP).wrapping_add(2);
+
+		self.cpu_state_mut().write(CPURegister16::SP, next_sp);
+
 		self.read_16(ValueRefU16::Mem(
-			self.cpu_state().registers[CPURegister16::SP].wrapping_sub(2),
+			self.cpu_state().read(CPURegister16::SP).wrapping_sub(2),
 		))
 	}
 }

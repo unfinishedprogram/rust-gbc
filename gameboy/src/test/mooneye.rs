@@ -1,4 +1,8 @@
-use sm83::{registers::CPURegister8, values::ValueRefU8, Instruction};
+use sm83::{
+	registers::{Addressable, CPURegister8},
+	values::ValueRefU8,
+	Instruction,
+};
 use test_generator::test_resources;
 
 use super::util::rom_loader::init_emulator_with_rom_dmg;
@@ -30,14 +34,19 @@ fn mooneye_test(rom: &str) {
 			break;
 		}
 	}
-	unsafe {
-		match state.cpu_state.registers.bits_8 {
-			[_, _, 5, 3, 13, 8, 34, 21, _, _, _, _] => {} // Success code
-			[_, _, 66, 66, 66, 66, 66, 66, _, _, _, _] => panic!("Test failed with code"), // Failure code
-			_ => panic!(
-				"Test Failed, no code: {:?}",
-				state.cpu_state.registers.bits_8
-			), // Run untill success or failure
-		}
+
+	let bytes = [
+		state.cpu_state.read(CPURegister8::B),
+		state.cpu_state.read(CPURegister8::C),
+		state.cpu_state.read(CPURegister8::D),
+		state.cpu_state.read(CPURegister8::E),
+		state.cpu_state.read(CPURegister8::H),
+		state.cpu_state.read(CPURegister8::L),
+	];
+
+	match bytes {
+		[3, 5, 8, 13, 21, 34] => {} // Success code
+		[66, 66, 66, 66, 66, 66] => panic!("Test failed with code"), // Failure code
+		_ => panic!("Test Failed, no code: {:?}", bytes), // Run until success or failure
 	}
 }

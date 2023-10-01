@@ -1,23 +1,26 @@
 use serde::{Deserialize, Serialize};
 
-use std::{
-	fmt::Debug,
-	ops::{Index, IndexMut},
-};
+use std::fmt::Debug;
 
-#[derive(Clone, Copy)]
-pub enum CPURegister8 {
-	F,
-	A,
-	C,
-	B,
-	E,
-	D,
-	L,
-	H,
+pub trait Addressable<Idx, T> {
+	fn read(&self, index: Idx) -> T;
+	fn write(&mut self, index: Idx, value: T);
 }
 
 #[derive(Clone, Copy)]
+pub enum CPURegister8 {
+	A,
+	F,
+	B,
+	C,
+	D,
+	E,
+	H,
+	L,
+}
+
+#[derive(Clone, Copy)]
+#[repr(C, align(2))]
 pub enum CPURegister16 {
 	AF,
 	BC,
@@ -27,72 +30,60 @@ pub enum CPURegister16 {
 	PC,
 }
 
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub union CPURegisters {
-	pub bits_8: [u8; 12],
-	pub bits_16: [u16; 6],
-	pub bits_128: u128,
+#[derive(Clone, Copy, Serialize, Deserialize, Default)]
+pub struct CPURegisters {
+	inner: [u8; 8],
+	pc: u16,
+	sp: u16,
 }
 
-impl Index<CPURegister8> for CPURegisters {
-	type Output = u8;
-	fn index(&self, reg: CPURegister8) -> &Self::Output {
-		unsafe { &self.bits_8[reg as usize] }
+impl Addressable<CPURegister16, u16> for CPURegisters {
+	fn read(&self, index: CPURegister16) -> u16 {
+		use CPURegister16::*;
+		match index {
+			SP => self.sp,
+			PC => self.pc,
+			reg => u16::from_le_bytes([
+				self.inner[reg as usize * 2 + 1],
+				self.inner[reg as usize * 2],
+			]),
+		}
+	}
+
+	fn write(&mut self, index: CPURegister16, value: u16) {
+		use CPURegister16::*;
+		let bytes = value.to_le_bytes();
+		match index {
+			SP => self.sp = value,
+			PC => self.pc = value,
+			reg => {
+				[
+					self.inner[reg as usize * 2 + 1],
+					self.inner[reg as usize * 2],
+				] = bytes
+			}
+		}
 	}
 }
 
-impl IndexMut<CPURegister8> for CPURegisters {
-	fn index_mut(&mut self, reg: CPURegister8) -> &mut Self::Output {
-		unsafe { &mut self.bits_8[reg as usize] }
+impl Addressable<CPURegister8, u8> for CPURegisters {
+	fn read(&self, index: CPURegister8) -> u8 {
+		self.inner[index as usize]
 	}
-}
 
-impl Index<CPURegister16> for CPURegisters {
-	type Output = u16;
-	fn index(&self, reg: CPURegister16) -> &Self::Output {
-		unsafe { &self.bits_16[reg as usize] }
-	}
-}
-
-impl IndexMut<CPURegister16> for CPURegisters {
-	fn index_mut(&mut self, reg: CPURegister16) -> &mut Self::Output {
-		unsafe { &mut self.bits_16[reg as usize] }
-	}
-}
-
-impl Serialize for CPURegisters {
-	fn serialize<S>(&self, _: S) -> Result<S::Ok, S::Error>
-	where
-		S: serde::Serializer,
-	{
-		todo!()
-	}
-}
-
-impl<'de> Deserialize<'de> for CPURegisters {
-	fn deserialize<D>(_: D) -> Result<Self, D::Error>
-	where
-		D: serde::Deserializer<'de>,
-	{
-		todo!()
-	}
-}
-
-impl Default for CPURegisters {
-	fn default() -> Self {
-		Self { bits_128: 0 }
+	fn write(&mut self, index: CPURegister8, value: u8) {
+		self.inner[index as usize] = value;
 	}
 }
 
 impl Debug for CPURegisters {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		writeln!(f, "AF:{:04X}", self[CPURegister16::AF])?;
-		writeln!(f, "BC:{:04X}", self[CPURegister16::BC])?;
-		writeln!(f, "DE:{:04X}", self[CPURegister16::DE])?;
-		writeln!(f, "HL:{:04X}", self[CPURegister16::HL])?;
-		writeln!(f, "SP:{:04X}", self[CPURegister16::SP])?;
-		writeln!(f, "PC:{:04X}", self[CPURegister16::PC])
+		writeln!(f, "AF:{:04X}", self.read(CPURegister16::AF))?;
+		writeln!(f, "BC:{:04X}", self.read(CPURegister16::BC))?;
+		writeln!(f, "DE:{:04X}", self.read(CPURegister16::DE))?;
+		writeln!(f, "HL:{:04X}", self.read(CPURegister16::HL))?;
+		writeln!(f, "SP:{:04X}", self.read(CPURegister16::SP))?;
+		writeln!(f, "PC:{:04X}", self.read(CPURegister16::PC))
 	}
 }
 

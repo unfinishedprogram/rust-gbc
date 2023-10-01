@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::cpu::flags::Flags;
+use crate::{
+	cpu::flags::Flags,
+	registers::{Addressable, CPURegister16},
+};
 
 use super::registers::{CPURegister8, CPURegisters};
 
@@ -15,12 +18,32 @@ pub struct CPUState {
 }
 
 impl Flags for CPUState {
-	fn get_flag_byte_mut(&mut self) -> &mut u8 {
-		&mut self.registers[CPURegister8::F]
+	fn read_flag_byte(&self) -> u8 {
+		self.read(CPURegister8::F)
 	}
 
-	fn get_flag_byte(&self) -> &u8 {
-		&self.registers[CPURegister8::F]
+	fn write_flag_byte(&mut self, value: u8) {
+		self.write(CPURegister8::F, value)
+	}
+}
+
+impl Addressable<CPURegister8, u8> for CPUState {
+	fn read(&self, index: CPURegister8) -> u8 {
+		self.registers.read(index)
+	}
+
+	fn write(&mut self, index: CPURegister8, value: u8) {
+		self.registers.write(index, value)
+	}
+}
+
+impl Addressable<CPURegister16, u16> for CPUState {
+	fn read(&self, index: CPURegister16) -> u16 {
+		self.registers.read(index)
+	}
+
+	fn write(&mut self, index: CPURegister16, value: u16) {
+		self.registers.write(index, value)
 	}
 }
 

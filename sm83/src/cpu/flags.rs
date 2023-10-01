@@ -19,8 +19,8 @@ pub mod interrupt {
 }
 
 pub trait Flags {
-	fn get_flag_byte_mut(&mut self) -> &mut u8;
-	fn get_flag_byte(&self) -> &u8;
+	fn read_flag_byte(&self) -> u8;
+	fn write_flag_byte(&mut self, value: u8);
 
 	fn set_flag_to(&mut self, flag: u8, value: bool) {
 		if value {
@@ -31,14 +31,14 @@ pub trait Flags {
 	}
 
 	fn clear_flag(&mut self, flag: u8) {
-		*self.get_flag_byte_mut() &= !flag;
+		self.write_flag_byte(self.read_flag_byte() & !flag);
 	}
 
 	fn set_flag(&mut self, flag: u8) {
-		*self.get_flag_byte_mut() |= flag;
+		self.write_flag_byte(self.read_flag_byte() | flag);
 	}
 
 	fn get_flag(&self, flag: u8) -> bool {
-		self.get_flag_byte() & flag != 0
+		self.read_flag_byte() & flag != 0
 	}
 }

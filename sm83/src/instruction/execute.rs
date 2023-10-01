@@ -3,7 +3,7 @@ use crate::{
 	flags::{cpu::*, interrupt::*},
 	instruction::ALUOperation,
 	memory_mapper::SourcedMemoryMapper,
-	registers::{CPURegister16, CPURegister8},
+	registers::{Addressable, CPURegister16, CPURegister8},
 	stack::CPUStack,
 	values::{ValueRefI8, ValueRefU16},
 	SM83,
@@ -240,9 +240,9 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			let loc_value = cpu.read_16(location);
 			if cpu.check_condition(condition) {
 				cpu.tick_m_cycles(1);
-				let current_pc = cpu.cpu_state().registers[CPURegister16::PC];
+				let current_pc = cpu.cpu_state().read(CPURegister16::PC);
 				cpu.push(current_pc);
-				cpu.cpu_state_mut().registers[CPURegister16::PC] = loc_value;
+				cpu.cpu_state_mut().write(CPURegister16::PC, loc_value);
 			}
 		}
 		POP(value_ref) => {
@@ -259,7 +259,8 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 				cpu.tick_m_cycles(1);
 			}
 			if cpu.check_condition(condition) {
-				cpu.cpu_state_mut().registers[CPURegister16::PC] = cpu.pop();
+				let pc = cpu.pop();
+				cpu.cpu_state_mut().write(CPURegister16::PC, pc);
 				cpu.tick_m_cycles(1);
 			}
 		}
@@ -310,7 +311,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.clear_flag(N);
 		}
 		DAA => {
-			let mut a_val = cpu.cpu_state().registers[CPURegister8::A];
+			let mut a_val = cpu.cpu_state().read(CPURegister8::A);
 			let mut carry = false;
 
 			if !cpu.get_flag(N) {
@@ -331,7 +332,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.set_flag_to(Z, a_val == 0);
 			cpu.clear_flag(H);
 			cpu.set_flag_to(C, carry);
-			cpu.cpu_state_mut().registers[CPURegister8::A] = a_val;
+			cpu.cpu_state_mut().write(CPURegister8::A, a_val);
 		}
 		CPL => {
 			// Complement A Register
