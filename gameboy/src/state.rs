@@ -302,9 +302,8 @@ impl SM83<Gameboy> for Gameboy {
 			};
 			if switched {
 				self.speed_switch_delay = 2050;
-				while self.speed_switch_delay > 0 {
-					self.tick_m_cycles(1);
-				}
+				// self.speed_switch_delay = 32 * 1024;
+				// self.speed_switch_delay = 1025 * 2;
 			}
 		} else {
 			if !interrupt_pending {

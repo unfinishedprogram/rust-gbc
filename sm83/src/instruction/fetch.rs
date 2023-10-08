@@ -7,11 +7,11 @@ use super::{
 	Instruction::*,
 	ValueRefU8,
 };
-// test result: FAILED. 1519 passed; 1756 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.86s
+
 use crate::{
 	arg, inst, mem, memory_mapper::SourcedMemoryMapper, registers::CPURegister16,
 	values::ValueRefU16, SM83,
-}; // Macros
+};
 
 pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 	let raw = cpu.next_byte();
