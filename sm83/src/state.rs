@@ -11,10 +11,10 @@ use super::registers::{CPURegister8, CPURegisters};
 pub struct CPUState {
 	registers: CPURegisters,
 	pub halted: bool,
-	pub interrupt_master_enable: bool,
+	interrupt_master_enable: bool,
 	pub interrupt_enable: u8,  // IE
 	pub interrupt_request: u8, // IF
-	pub ie_next: bool,
+	ie_next: bool,
 }
 
 impl Flags for CPUState {
@@ -59,6 +59,10 @@ impl CPUState {
 		} else {
 			None
 		}
+	}
+
+	pub fn ime(&self) -> bool {
+		self.interrupt_master_enable
 	}
 
 	pub fn tick_ie_delay(&mut self) {

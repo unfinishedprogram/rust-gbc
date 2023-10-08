@@ -50,8 +50,7 @@ impl eframe::App for Debugger {
 						}
 						run_controller::Action::NextInterrupt => {
 							while !(self.gameboy.cpu_state.interrupt_pending()
-								&& (self.gameboy.cpu_state.interrupt_master_enable
-									|| self.gameboy.cpu_state.halted))
+								&& (self.gameboy.cpu_state.ime() || self.gameboy.cpu_state.halted))
 							{
 								self.gameboy.step();
 							}

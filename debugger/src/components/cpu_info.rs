@@ -47,7 +47,7 @@ pub fn show_cpu_info(gb: &Gameboy, ui: &mut Ui) {
 	});
 	ui.separator();
 	ui.label(bool!("Halted:{}", cpu.halted));
-	ui.label(bool!("IME:{}", cpu.interrupt_master_enable));
+	ui.label(bool!("IME:{}", cpu.ime()));
 	ui.label(format!("IE:{:08b}", cpu.interrupt_enable));
 	ui.label(format!("IR:{:08b}", cpu.interrupt_request));
 	ui.label(bool!("Booting:{}", gb.booting));
