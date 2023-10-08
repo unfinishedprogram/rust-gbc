@@ -98,17 +98,7 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 
 		(3, 3, 0, _, _) => inst!(cpu, JP, (Condition::Always), nn),
 
-		(3, 3, 1, _, _) => {
-			let cb_raw = cpu.next_byte();
-			let Opcode(cb_x, cb_z, cb_y, _, _) = parse_opcode(cb_raw);
-			match cb_x {
-				0 => inst!(cpu, ROT, (DT.rot[cb_y]), (DT.r[cb_z])),
-				1 => inst!(cpu, BIT, (cb_y as u8), (DT.r[cb_z])),
-				2 => inst!(cpu, RES, (cb_y as u8), (DT.r[cb_z])),
-				3 => inst!(cpu, SET, (cb_y as u8), (DT.r[cb_z])),
-				_ => unreachable!(),
-			}
-		}
+		(3, 3, 1, _, _) => fetch_cb(cpu),
 
 		(3, 3, 6, _, _) => inst!(cpu, DI),
 		(3, 3, 7, _, _) => inst!(cpu, EI),
@@ -128,5 +118,18 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 		(3, 6, y, _, _) => inst!(cpu, ALU_OP_8, (DT.alu[y]), n),
 		(3, 7, y, _, _) => inst!(cpu, RST, ((y as u16) * 8)),
 		(_, _, _, _, _) => inst!(cpu, ERROR, (raw)),
+	}
+}
+
+#[inline]
+fn fetch_cb<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
+	let raw = cpu.next_byte();
+	let Opcode(x, z, y, _, _) = parse_opcode(raw);
+	match (x, z, y) {
+		(0, _, _) => inst!(cpu, ROT, (DT.rot[y]), (DT.r[z])),
+		(1, _, _) => inst!(cpu, BIT, (y as u8), (DT.r[z])),
+		(2, _, _) => inst!(cpu, RES, (y as u8), (DT.r[z])),
+		(3, _, _) => inst!(cpu, SET, (y as u8), (DT.r[z])),
+		(_, _, _) => inst!(cpu, ERROR, (raw)),
 	}
 }
