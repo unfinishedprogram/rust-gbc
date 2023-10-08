@@ -9,7 +9,7 @@ use super::registers::{CPURegister8, CPURegisters};
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct CPUState {
-	pub registers: CPURegisters,
+	registers: CPURegisters,
 	pub halted: bool,
 	pub interrupt_master_enable: bool,
 	pub interrupt_enable: u8,  // IE
@@ -24,26 +24,6 @@ impl Flags for CPUState {
 
 	fn write_flag_byte(&mut self, value: u8) {
 		self.write(CPURegister8::F, value)
-	}
-}
-
-impl Addressable<CPURegister8, u8> for CPUState {
-	fn read(&self, index: CPURegister8) -> u8 {
-		self.registers.read(index)
-	}
-
-	fn write(&mut self, index: CPURegister8, value: u8) {
-		self.registers.write(index, value)
-	}
-}
-
-impl Addressable<CPURegister16, u16> for CPUState {
-	fn read(&self, index: CPURegister16) -> u16 {
-		self.registers.read(index)
-	}
-
-	fn write(&mut self, index: CPURegister16, value: u16) {
-		self.registers.write(index, value)
 	}
 }
 
@@ -83,5 +63,25 @@ impl CPUState {
 
 	pub fn tick_ie_delay(&mut self) {
 		self.interrupt_master_enable = self.ie_next;
+	}
+}
+
+impl Addressable<CPURegister8, u8> for CPUState {
+	fn read(&self, index: CPURegister8) -> u8 {
+		self.registers.read(index)
+	}
+
+	fn write(&mut self, index: CPURegister8, value: u8) {
+		self.registers.write(index, value)
+	}
+}
+
+impl Addressable<CPURegister16, u16> for CPUState {
+	fn read(&self, index: CPURegister16) -> u16 {
+		self.registers.read(index)
+	}
+
+	fn write(&mut self, index: CPURegister16, value: u16) {
+		self.registers.write(index, value)
 	}
 }

@@ -34,16 +34,16 @@ impl From<TestState> for MockCpu {
 		res.cpu_state.interrupt_master_enable = state.ime == 1;
 		res.cpu_state.ie_next = state.ime == 1;
 
-		res.cpu_state.registers.write(PC, state.pc);
-		res.cpu_state.registers.write(SP, state.sp);
-		res.cpu_state.registers.write(A, state.a);
-		res.cpu_state.registers.write(B, state.b);
-		res.cpu_state.registers.write(C, state.c);
-		res.cpu_state.registers.write(D, state.d);
-		res.cpu_state.registers.write(E, state.e);
-		res.cpu_state.registers.write(F, state.f);
-		res.cpu_state.registers.write(H, state.h);
-		res.cpu_state.registers.write(L, state.l);
+		res.cpu_state.write(PC, state.pc);
+		res.cpu_state.write(SP, state.sp);
+		res.cpu_state.write(A, state.a);
+		res.cpu_state.write(B, state.b);
+		res.cpu_state.write(C, state.c);
+		res.cpu_state.write(D, state.d);
+		res.cpu_state.write(E, state.e);
+		res.cpu_state.write(F, state.f);
+		res.cpu_state.write(H, state.h);
+		res.cpu_state.write(L, state.l);
 
 		res.memory.data = state.ram;
 		res
@@ -56,16 +56,16 @@ impl From<MockCpu> for TestState {
 		ram.sort_by(|a, b| a.0.cmp(&b.0));
 
 		TestState {
-			pc: state.cpu_state.registers.read(PC),
-			sp: state.cpu_state.registers.read(SP),
-			a: state.cpu_state.registers.read(A),
-			b: state.cpu_state.registers.read(B),
-			c: state.cpu_state.registers.read(C),
-			d: state.cpu_state.registers.read(D),
-			e: state.cpu_state.registers.read(E),
-			f: state.cpu_state.registers.read(F),
-			h: state.cpu_state.registers.read(H),
-			l: state.cpu_state.registers.read(L),
+			pc: state.cpu_state.read(PC),
+			sp: state.cpu_state.read(SP),
+			a: state.cpu_state.read(A),
+			b: state.cpu_state.read(B),
+			c: state.cpu_state.read(C),
+			d: state.cpu_state.read(D),
+			e: state.cpu_state.read(E),
+			f: state.cpu_state.read(F),
+			h: state.cpu_state.read(H),
+			l: state.cpu_state.read(L),
 			ime: if state.cpu_state.interrupt_master_enable {
 				1
 			} else {

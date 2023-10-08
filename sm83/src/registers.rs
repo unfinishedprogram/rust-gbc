@@ -54,23 +54,23 @@ impl Addressable<CPURegister16, u16> for CPURegisters {
 	fn write(&mut self, index: CPURegister16, value: u16) {
 		use CPURegister16::*;
 		use CPURegister8::*;
-		let bytes = value.to_le_bytes();
+		let [high, low] = value.to_be_bytes();
 		match index {
 			AF => {
-				self.write(A, bytes[1]);
-				self.write(F, bytes[0]);
+				self.write(A, high);
+				self.write(F, low);
 			}
 			BC => {
-				self.write(B, bytes[1]);
-				self.write(C, bytes[0]);
+				self.write(B, high);
+				self.write(C, low);
 			}
 			DE => {
-				self.write(D, bytes[1]);
-				self.write(E, bytes[0]);
+				self.write(D, high);
+				self.write(E, low);
 			}
 			HL => {
-				self.write(H, bytes[1]);
-				self.write(L, bytes[0]);
+				self.write(H, high);
+				self.write(L, low);
 			}
 			SP => self.sp = value,
 			PC => self.pc = value,
