@@ -1,6 +1,4 @@
-use gloo::{
-	file::callbacks::FileReader, net::http::Request, timers::callback::Interval, utils::document,
-};
+use gloo::{file::callbacks::FileReader, net::http::Request, timers::callback::Interval};
 
 use std::{cell::RefCell, fmt::Display};
 
@@ -142,12 +140,6 @@ impl Application {
 	}
 
 	pub fn step_single(&mut self) {
-		document()
-			.query_selector("#debug_info")
-			.unwrap()
-			.unwrap()
-			.set_inner_html(&format!("{:?}", self.emulator_state.cpu_state.registers));
-
 		self.emulator_state.step();
 		self.render_screen();
 	}
