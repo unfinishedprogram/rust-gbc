@@ -9,6 +9,7 @@ mod stack;
 mod state;
 pub mod values;
 pub use instruction::Instruction;
+use instruction::{Execute, Fetch};
 use memory_mapper::{Source, SourcedMemoryMapper};
 use registers::{Addressable, CPURegister16};
 pub use state::CPUState;
@@ -22,7 +23,7 @@ pub use cpu::interrupt::Interrupt;
 #[cfg(test)]
 mod test;
 
-pub trait SM83: SourcedMemoryMapper {
+pub trait SM83: SourcedMemoryMapper + Sized {
 	fn disable_interrupts(&mut self) {
 		self.cpu_state_mut().disable_interrupts();
 	}
@@ -126,32 +127,20 @@ pub trait SM83: SourcedMemoryMapper {
 	}
 
 	fn check_condition(&self, condition: Condition) -> bool {
-		use Condition::*;
-
 		match condition {
-			Always => true,
-			NZ => !self.cpu_state().get_flag(flags::cpu::Z),
-			Z => self.cpu_state().get_flag(flags::cpu::Z),
-			NC => !self.cpu_state().get_flag(flags::cpu::C),
-			C => self.cpu_state().get_flag(flags::cpu::C),
+			Condition::Always => true,
+			Condition::NZ => !self.cpu_state().get_flag(flags::cpu::Z),
+			Condition::Z => self.cpu_state().get_flag(flags::cpu::Z),
+			Condition::NC => !self.cpu_state().get_flag(flags::cpu::C),
+			Condition::C => self.cpu_state().get_flag(flags::cpu::C),
 		}
 	}
 
-	fn fetch_next_instruction(&mut self) -> Instruction
-	where
-		Self: Sized,
-	{
-		instruction::fetch(self)
-	}
-
-	fn get_next_instruction_or_interrupt(&mut self) -> Instruction
-	where
-		Self: Sized,
-	{
+	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
 		if let Some(int) = self.cpu_state_mut().consume_next_interrupt() {
 			Instruction::INT(int)
 		} else {
-			self.fetch_next_instruction()
+			self.fetch()
 		}
 	}
 
@@ -169,7 +158,7 @@ pub trait SM83: SourcedMemoryMapper {
 		}
 
 		let instruction = self.get_next_instruction_or_interrupt();
-		instruction::execute(self, instruction);
+		self.execute(instruction);
 		Some(instruction)
 	}
 

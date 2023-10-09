@@ -4,8 +4,8 @@
 mod decode_tables;
 mod execute;
 mod fetch;
-pub use execute::execute;
-pub use fetch::fetch;
+pub use execute::Execute;
+pub use fetch::Fetch;
 
 #[macro_use]
 pub mod mac_instruction;
