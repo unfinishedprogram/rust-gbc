@@ -15,7 +15,7 @@ pub struct Pixel {
 	/// on CGB a value between 0 and 7 and on DMG this only applies to sprites
 	palette: u8,
 	// on CGB this is the OAM index for the sprite and on DMG this doesn't exist
-	sprite_priority: usize,
+	sprite_priority: u16,
 	// holds the value of the OBJ-to-BG Priority bit
 	background_priority: bool,
 }
@@ -24,6 +24,7 @@ impl Pixel {
 	/// Creates a transparent pixel, with the lowest possible priority.
 	///
 	/// This is primarily for buffering the OBJ-FIFO
+	#[inline]
 	pub fn transparent() -> Self {
 		Self {
 			color: 0,
@@ -48,7 +49,7 @@ pub trait PixelFIFO {
 	fn step_fifo(&mut self);
 	fn push_pixel(&mut self);
 	fn start_scanline(&mut self);
-	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> [Pixel; 8];
+	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: u16) -> [Pixel; 8];
 	fn populate_bg_fifo(&mut self);
 	fn in_window(&self) -> bool;
 	fn get_tile_data(&self, tile_index: u16) -> TileData;
@@ -195,7 +196,7 @@ impl PixelFIFO for PPU {
 		let local_y = local_y & 7;
 
 		let data = TileData(tile_addr, Some(attributes));
-		self.push_sprite_pixels(self.get_tile_row(data, local_y, sprite.addr as usize));
+		self.push_sprite_pixels(self.get_tile_row(data, local_y, sprite.addr));
 	}
 
 	fn step_sprite_fifo(&mut self) {
@@ -255,7 +256,7 @@ impl PixelFIFO for PPU {
 		};
 	}
 
-	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: usize) -> [Pixel; 8] {
+	fn get_tile_row(&self, tile_data: TileData, row: u8, sprite_priority: u16) -> [Pixel; 8] {
 		let row = row % 8;
 		let TileData(index, attributes) = tile_data;
 
