@@ -17,8 +17,7 @@ use values::{ValueRefU16, ValueRefU8};
 
 use cpu::condition::Condition;
 pub use cpu::flags::{self, Flags};
-
-pub use cpu::condition;
+pub use cpu::interrupt::Interrupt;
 
 #[cfg(test)]
 mod test;

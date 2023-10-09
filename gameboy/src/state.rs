@@ -20,7 +20,7 @@ use super::{
 	timer::Timer,
 };
 
-use sm83::{memory_mapper::MemoryMapper, CPUState, Instruction, SM83};
+use sm83::{memory_mapper::MemoryMapper, CPUState, Instruction, Interrupt, SM83};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Mode {
@@ -175,8 +175,8 @@ impl Gameboy {
 		self.t_states += t_states as u64;
 	}
 
-	pub fn request_interrupt(&mut self, interrupt: u8) {
-		self.cpu_state.interrupt_request |= interrupt;
+	pub fn request_interrupt(&mut self, interrupt: Interrupt) {
+		self.cpu_state.interrupt_request |= interrupt.flag_bit();
 	}
 
 	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
@@ -189,7 +189,7 @@ impl Gameboy {
 		self.raw_joyp_input = state.as_byte();
 
 		if ((self.raw_joyp_input) ^ state.as_byte()) & state.as_byte() != 0 {
-			self.request_interrupt(0b10000);
+			self.request_interrupt(Interrupt::JoyPad);
 		}
 	}
 

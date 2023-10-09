@@ -1,6 +1,6 @@
 use crate::{
 	bits::*,
-	flags::{cpu::*, interrupt::*},
+	flags::cpu::{C, H, N, Z},
 	instruction::ALUOperation,
 	memory_mapper::SourcedMemoryMapper,
 	registers::{Addressable, CPURegister16, CPURegister8},
@@ -12,6 +12,7 @@ use crate::{
 use super::{
 	Condition,
 	Instruction::{self, *},
+	RotShiftOperation,
 };
 
 use std::ops::{BitAnd, BitOr, BitXor};
@@ -22,21 +23,10 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		NOP => {}
 		INT(interrupt) => {
 			cpu.tick_m_cycles(2);
-
-			let location = match interrupt {
-				V_BLANK => 0x40,
-				LCD_STAT => 0x48,
-				TIMER => 0x50,
-				SERIAL => 0x58,
-				JOY_PAD => 0x60,
-				_ => unreachable!(),
-			};
-
 			let current_pc = cpu.read_16(CPURegister16::PC.into());
 			cpu.push(current_pc);
-			cpu.write_16(CPURegister16::PC.into(), location);
+			cpu.write_16(CPURegister16::PC.into(), interrupt.jump_addr());
 			cpu.tick_m_cycles(1);
-
 			cpu.disable_interrupts();
 		}
 
@@ -51,8 +41,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		}
 
 		LD_16(to, from) => {
-			use ValueRefU16::*;
-			if matches!((to, from), (Reg(_), Reg(_))) {
+			if matches!((to, from), (ValueRefU16::Reg(_), ValueRefU16::Reg(_))) {
 				cpu.tick_m_cycles(1);
 			}
 
@@ -149,21 +138,19 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 		}
 
 		ALU_OP_8(op, from) => {
-			use ALUOperation::*;
-
 			let a_val = cpu.read_8(CPURegister8::A.into());
 			let b_val = cpu.read_8(from);
 			let carry = u8::from(cpu.get_flag(C));
 
 			let result = match op {
-				ADD => {
+				ALUOperation::ADD => {
 					cpu.clear_flag(N);
 					cpu.set_flag_to(H, (a_val & 0xF).wrapping_add(b_val & 0xF) & 0x10 == 0x10);
 					cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 					a_val.wrapping_add(b_val)
 				}
 
-				ADC => {
+				ALUOperation::ADC => {
 					let sum: u16 = a_val as u16 + b_val as u16 + carry as u16;
 					cpu.set_flag_to(
 						H,
@@ -174,14 +161,14 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 					sum as u8
 				}
 
-				SUB => {
+				ALUOperation::SUB => {
 					cpu.set_flag(N);
 					cpu.set_flag_to(H, (a_val & 0xF).wrapping_sub(b_val & 0xF) & 0x10 == 0x10);
 					cpu.set_flag_to(C, b_val > a_val);
 					a_val.wrapping_sub(b_val)
 				}
 
-				SBC => {
+				ALUOperation::SBC => {
 					let sum: i32 = a_val as i32 - b_val as i32 - carry as i32;
 					cpu.set_flag(N);
 					cpu.set_flag_to(
@@ -192,26 +179,26 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 					(sum & 0xFF) as u8
 				}
 
-				AND => {
+				ALUOperation::AND => {
 					cpu.clear_flag(C);
 					cpu.clear_flag(N);
 					cpu.set_flag(H);
 					a_val.bitand(b_val)
 				}
-				XOR => {
+				ALUOperation::XOR => {
 					cpu.clear_flag(C);
 					cpu.clear_flag(H);
 					cpu.clear_flag(N);
 					a_val.bitxor(b_val)
 				}
-				OR => {
+				ALUOperation::OR => {
 					cpu.clear_flag(C);
 					cpu.clear_flag(H);
 					cpu.clear_flag(N);
 					a_val.bitor(b_val)
 				}
 
-				CP => {
+				ALUOperation::CP => {
 					cpu.set_flag(N);
 					cpu.set_flag_to(C, b_val > a_val);
 					cpu.set_flag_to(Z, a_val == b_val);
@@ -221,7 +208,7 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			};
 
 			match op {
-				CP => {}
+				ALUOperation::CP => {}
 				_ => {
 					cpu.write_8(CPURegister8::A.into(), result);
 					cpu.set_flag_to(Z, result == 0);
@@ -362,19 +349,18 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.write_8(value, current | (1 << bit));
 		}
 		ROT(operator, val_ref) => {
-			use super::RotShiftOperation::*;
 			let value = cpu.read_8(val_ref);
 			let carry_bit = u8::from(cpu.get_flag(C));
 
 			let result = match operator {
-				RLC => value.rotate_left(1),
-				RRC => value.rotate_right(1),
-				RL => (value << 1) | carry_bit,
-				RR => ((value >> 1) & 0b01111111) | (carry_bit << 7),
-				SLA => value << 1,
-				SRA => (value >> 1) | (value & BIT_7),
-				SWAP => value.rotate_right(4),
-				SRL => value >> 1,
+				RotShiftOperation::RLC => value.rotate_left(1),
+				RotShiftOperation::RRC => value.rotate_right(1),
+				RotShiftOperation::RL => (value << 1) | carry_bit,
+				RotShiftOperation::RR => ((value >> 1) & 0b01111111) | (carry_bit << 7),
+				RotShiftOperation::SLA => value << 1,
+				RotShiftOperation::SRA => (value >> 1) | (value & BIT_7),
+				RotShiftOperation::SWAP => value.rotate_right(4),
+				RotShiftOperation::SRL => value >> 1,
 			};
 
 			cpu.clear_flag(N);
@@ -383,9 +369,14 @@ pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: In
 			cpu.set_flag_to(
 				C,
 				match operator {
-					RLC | RL | SLA => value & BIT_7 == BIT_7,
-					SRL | RRC | RR | SRA => value & BIT_0 == BIT_0,
-					SWAP => false,
+					RotShiftOperation::RLC | RotShiftOperation::RL | RotShiftOperation::SLA => {
+						value & BIT_7 == BIT_7
+					}
+					RotShiftOperation::SRL
+					| RotShiftOperation::RRC
+					| RotShiftOperation::RR
+					| RotShiftOperation::SRA => value & BIT_0 == BIT_0,
+					RotShiftOperation::SWAP => false,
 				},
 			);
 

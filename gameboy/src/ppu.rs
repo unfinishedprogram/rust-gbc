@@ -5,13 +5,12 @@ mod sprite;
 mod stat;
 mod tile_data;
 
-use std::collections::VecDeque;
-
 use crate::{lcd::GameboyLCD, ppu::renderer::PixelFIFO, util::BigArray};
+use sm83::Interrupt;
+use std::collections::VecDeque;
 
 use log::debug;
 use serde::{Deserialize, Serialize};
-use sm83::flags::interrupt::{LCD_STAT, V_BLANK};
 
 use self::{
 	color_ram::ColorRamController, lcdc::Lcdc, renderer::Pixel, sprite::Sprite, stat::Stat,
@@ -137,7 +136,7 @@ impl PPU {
 		self.stat_irq = new_value;
 
 		if rising_edge {
-			*interrupt_register |= LCD_STAT;
+			*interrupt_register |= Interrupt::LcdStat.flag_bit();
 		}
 	}
 
@@ -180,7 +179,7 @@ impl PPU {
 
 		if matches!(mode, PPUMode::VBlank) {
 			debug!("{:} VBlank", self.ran_cycles - self.last_frame);
-			*interrupt_register |= V_BLANK;
+			*interrupt_register |= Interrupt::VBlank.flag_bit();
 		}
 	}
 
@@ -201,20 +200,19 @@ impl PPU {
 			return None;
 		}
 
-		use PPUMode::*;
 		match self.mode() {
 			PPUMode::HBlank => {
 				self.set_ly(self.get_ly() + 1, interrupt_register);
 				if self.get_ly() < 144 {
 					self.cycle += 79;
-					self.set_mode(OamScan, interrupt_register);
-					Some(OamScan)
+					self.set_mode(PPUMode::OamScan, interrupt_register);
+					Some(PPUMode::OamScan)
 				} else {
 					self.cycle += 455;
 					self.window_line = 255;
 
-					self.set_mode(VBlank, interrupt_register);
-					Some(VBlank)
+					self.set_mode(PPUMode::VBlank, interrupt_register);
+					Some(PPUMode::VBlank)
 				}
 			}
 			PPUMode::VBlank => {
@@ -231,24 +229,24 @@ impl PPU {
 					debug!("Cycle:{:}", self.ran_cycles - self.last_frame);
 					self.last_frame = self.ran_cycles;
 
-					self.set_mode(OamScan, interrupt_register);
-					Some(OamScan)
+					self.set_mode(PPUMode::OamScan, interrupt_register);
+					Some(PPUMode::OamScan)
 				}
 			}
-			OamScan => {
+			PPUMode::OamScan => {
 				self.cycle += 11;
 				self.start_scanline();
-				self.set_mode(Draw, interrupt_register);
-				Some(Draw)
+				self.set_mode(PPUMode::Draw, interrupt_register);
+				Some(PPUMode::Draw)
 			}
-			Draw => {
+			PPUMode::Draw => {
 				self.step_fifo();
 				if self.current_pixel == 160 {
 					self.current_pixel = 0;
 					self.current_tile = 0;
 					self.cycle += 204;
-					self.set_mode(HBlank, interrupt_register);
-					Some(HBlank)
+					self.set_mode(PPUMode::HBlank, interrupt_register);
+					Some(PPUMode::HBlank)
 				} else {
 					None
 				}

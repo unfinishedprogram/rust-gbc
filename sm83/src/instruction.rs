@@ -10,6 +10,8 @@ pub use fetch::fetch;
 #[macro_use]
 pub mod mac_instruction;
 pub mod opcode;
+use crate::Interrupt;
+
 use super::Condition;
 use core::fmt::Debug;
 
@@ -62,7 +64,7 @@ pub enum Instruction {
 	SET(u8, ValueRefU8),
 	ROT(RotShiftOperation, ValueRefU8),
 
-	INT(u8),
+	INT(Interrupt),
 
 	LD_A_INC_HL,
 	LD_A_DEC_HL,

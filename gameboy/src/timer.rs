@@ -1,7 +1,7 @@
 use crate::{cgb::Speed, util::bits::BIT_2};
 
 use serde::{Deserialize, Serialize};
-use sm83::flags::interrupt::TIMER;
+use sm83::Interrupt;
 
 #[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Timer {
@@ -93,7 +93,7 @@ impl Timer {
 			self.tima_delay -= 1;
 			if self.tima_delay == 0 {
 				self.tima = self.tma;
-				*interrupt_request |= TIMER;
+				*interrupt_request |= Interrupt::Timer.flag_bit();
 			}
 		}
 	}

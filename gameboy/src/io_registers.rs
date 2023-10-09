@@ -1,7 +1,7 @@
 use std::ops::{Index, IndexMut};
 
 use serde::{Deserialize, Serialize};
-use sm83::flags::interrupt;
+use sm83::Interrupt;
 
 use crate::{
 	state::Mode,
@@ -296,7 +296,7 @@ impl IORegisters for Gameboy {
 				if value == 0x81 {
 					self.io_register_state[SC] = 0x01;
 					self.io_register_state[SB] = 0xFF;
-					self.request_interrupt(interrupt::SERIAL);
+					self.request_interrupt(Interrupt::Serial);
 				}
 			}
 

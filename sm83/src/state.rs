@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	cpu::flags::Flags,
+	cpu::{flags::Flags, interrupt::Interrupt},
 	registers::{Addressable, CPURegister16},
 };
 
@@ -45,7 +45,7 @@ impl CPUState {
 		self.ie_next = true;
 	}
 
-	pub fn consume_next_interrupt(&mut self) -> Option<u8> {
+	pub fn consume_next_interrupt(&mut self) -> Option<Interrupt> {
 		if !self.interrupt_master_enable {
 			return None;
 		}
@@ -55,7 +55,7 @@ impl CPUState {
 			// Gets the rightmost set bit
 			let index = requests & (!requests + 1);
 			self.clear_interrupt_request(index);
-			Some(index)
+			index.try_into().ok()
 		} else {
 			None
 		}

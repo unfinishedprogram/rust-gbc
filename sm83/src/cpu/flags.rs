@@ -7,17 +7,6 @@ pub mod cpu {
 	pub const C: u8 = BIT_4;
 }
 
-// Interrupt Flag Bits
-pub mod interrupt {
-	use crate::bits::*;
-
-	pub const V_BLANK: u8 = BIT_0;
-	pub const LCD_STAT: u8 = BIT_1;
-	pub const TIMER: u8 = BIT_2;
-	pub const SERIAL: u8 = BIT_3;
-	pub const JOY_PAD: u8 = BIT_4;
-}
-
 pub trait Flags {
 	fn read_flag_byte(&self) -> u8;
 	fn write_flag_byte(&mut self, value: u8);
