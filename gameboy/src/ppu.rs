@@ -167,20 +167,21 @@ impl PPU {
 		self.update_lyc(interrupt_register);
 	}
 
-	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) {
+	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) -> Option<PPUMode> {
 		self.registers.stat.set_ppu_mode(mode);
 
 		// Don't trigger any interrupts if the screen is disabled
 		if !self.is_enabled() {
-			return;
+			return None;
 		}
 
 		self.update_stat_irq(interrupt_register);
-
-		if matches!(mode, PPUMode::VBlank) {
+		if let PPUMode::VBlank = mode {
 			debug!("{:} VBlank", self.ran_cycles - self.last_frame);
 			*interrupt_register |= Interrupt::VBlank.flag_bit();
 		}
+
+		Some(mode)
 	}
 
 	fn disable_display(&mut self, interrupt_register: &mut u8) {
@@ -205,14 +206,11 @@ impl PPU {
 				self.set_ly(self.get_ly() + 1, interrupt_register);
 				if self.get_ly() < 144 {
 					self.cycle += 79;
-					self.set_mode(PPUMode::OamScan, interrupt_register);
-					Some(PPUMode::OamScan)
+					self.set_mode(PPUMode::OamScan, interrupt_register)
 				} else {
 					self.cycle += 455;
 					self.window_line = 255;
-
-					self.set_mode(PPUMode::VBlank, interrupt_register);
-					Some(PPUMode::VBlank)
+					self.set_mode(PPUMode::VBlank, interrupt_register)
 				}
 			}
 			PPUMode::VBlank => {
@@ -229,15 +227,13 @@ impl PPU {
 					debug!("Cycle:{:}", self.ran_cycles - self.last_frame);
 					self.last_frame = self.ran_cycles;
 
-					self.set_mode(PPUMode::OamScan, interrupt_register);
-					Some(PPUMode::OamScan)
+					self.set_mode(PPUMode::OamScan, interrupt_register)
 				}
 			}
 			PPUMode::OamScan => {
 				self.cycle += 11;
 				self.start_scanline();
-				self.set_mode(PPUMode::Draw, interrupt_register);
-				Some(PPUMode::Draw)
+				self.set_mode(PPUMode::Draw, interrupt_register)
 			}
 			PPUMode::Draw => {
 				self.step_fifo();
@@ -245,8 +241,7 @@ impl PPU {
 					self.current_pixel = 0;
 					self.current_tile = 0;
 					self.cycle += 204;
-					self.set_mode(PPUMode::HBlank, interrupt_register);
-					Some(PPUMode::HBlank)
+					self.set_mode(PPUMode::HBlank, interrupt_register)
 				} else {
 					None
 				}

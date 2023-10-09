@@ -165,13 +165,12 @@ impl Gameboy {
 	fn tick_t_states(&mut self, t_states: u32) {
 		for _ in 0..t_states {
 			let mode = self.ppu.step_ppu(&mut self.cpu_state.interrupt_request);
-			if matches!(mode, Some(PPUMode::HBlank)) {
+			if let Some(PPUMode::HBlank) = mode {
 				if let Some(request) = self.dma_controller.step() {
 					self.handle_transfer(request)
 				}
 			}
 		}
-
 		self.t_states += t_states as u64;
 	}
 
