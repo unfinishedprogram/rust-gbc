@@ -242,15 +242,7 @@ impl Gameboy {
 	}
 }
 
-impl SM83<Gameboy> for Gameboy {
-	fn memory_mapper_mut(&mut self) -> &mut Gameboy {
-		self
-	}
-
-	fn memory_mapper(&self) -> &Gameboy {
-		self
-	}
-
+impl SM83 for Gameboy {
 	fn cpu_state(&self) -> &CPUState {
 		&self.cpu_state
 	}

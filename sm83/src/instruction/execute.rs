@@ -2,7 +2,6 @@ use crate::{
 	bits::*,
 	flags::cpu::{C, H, N, Z},
 	instruction::ALUOperation,
-	memory_mapper::SourcedMemoryMapper,
 	registers::{Addressable, CPURegister16, CPURegister8},
 	stack::CPUStack,
 	values::{ValueRefI8, ValueRefU16},
@@ -17,7 +16,7 @@ use super::{
 
 use std::ops::{BitAnd, BitOr, BitXor};
 
-pub fn execute<T: SourcedMemoryMapper>(state: &mut impl SM83<T>, instruction: Instruction) {
+pub fn execute(state: &mut impl SM83, instruction: Instruction) {
 	let cpu = state;
 	match instruction {
 		NOP => {}

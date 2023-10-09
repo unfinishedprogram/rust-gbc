@@ -1,5 +1,6 @@
 use super::{memory_mapper::FlatMemory, state::TestState};
 use crate::{
+	memory_mapper::{MemoryMapper, SourcedMemoryMapper},
 	registers::{Addressable, CPURegister16::*, CPURegister8::*},
 	CPUState, SM83,
 };
@@ -10,21 +11,33 @@ pub struct MockCpu {
 	pub cpu_state: CPUState,
 }
 
-impl SM83<FlatMemory> for MockCpu {
+impl MemoryMapper for MockCpu {
+	fn read(&self, addr: u16) -> u8 {
+		self.memory.read(addr)
+	}
+
+	fn write(&mut self, addr: u16, value: u8) {
+		self.memory.write(addr, value)
+	}
+}
+
+impl SourcedMemoryMapper for MockCpu {
+	fn read_from(&self, addr: u16, source: crate::memory_mapper::Source) -> u8 {
+		self.memory.read_from(addr, source)
+	}
+
+	fn write_from(&mut self, addr: u16, value: u8, source: crate::memory_mapper::Source) {
+		self.memory.write_from(addr, value, source)
+	}
+}
+
+impl SM83 for MockCpu {
 	fn cpu_state(&self) -> &CPUState {
 		&self.cpu_state
 	}
 
 	fn cpu_state_mut(&mut self) -> &mut CPUState {
 		&mut self.cpu_state
-	}
-
-	fn memory_mapper(&self) -> &FlatMemory {
-		&self.memory
-	}
-
-	fn memory_mapper_mut(&mut self) -> &mut FlatMemory {
-		&mut self.memory
 	}
 }
 

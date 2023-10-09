@@ -1,16 +1,15 @@
 use crate::{
-	memory_mapper::SourcedMemoryMapper,
 	registers::{Addressable, CPURegister16},
 	values::ValueRefU16,
 	SM83,
 };
 
-pub trait CPUStack<M: SourcedMemoryMapper>: SM83<M> {
+pub trait CPUStack: SM83 {
 	fn push(&mut self, value: u16);
 	fn pop(&mut self) -> u16;
 }
 
-impl<M: SourcedMemoryMapper, C: SM83<M>> CPUStack<M> for C {
+impl<M: SM83> CPUStack for M {
 	fn push(&mut self, value: u16) {
 		let next_sp = self.cpu_state().read(CPURegister16::SP).wrapping_sub(2);
 

@@ -9,11 +9,11 @@ use super::{
 };
 
 use crate::{
-	arg, inst, mem, memory_mapper::SourcedMemoryMapper, registers::CPURegister16,
+	arg, inst, mem, registers::CPURegister16,
 	values::ValueRefU16, SM83,
 };
 
-pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
+pub fn fetch(cpu: &mut impl SM83) -> Instruction {
 	let raw = cpu.next_byte();
 
 	let Opcode(x, z, y, p, q) = parse_opcode(raw);
@@ -122,7 +122,7 @@ pub fn fetch<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
 }
 
 #[inline]
-fn fetch_cb<T: SourcedMemoryMapper>(cpu: &mut impl SM83<T>) -> Instruction {
+fn fetch_cb(cpu: &mut impl SM83) -> Instruction {
 	let raw = cpu.next_byte();
 	let Opcode(x, z, y, _, _) = parse_opcode(raw);
 	match (x, z, y) {

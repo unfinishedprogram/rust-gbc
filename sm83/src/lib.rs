@@ -22,7 +22,7 @@ pub use cpu::interrupt::Interrupt;
 #[cfg(test)]
 mod test;
 
-pub trait SM83<M: SourcedMemoryMapper> {
+pub trait SM83: SourcedMemoryMapper {
 	fn disable_interrupts(&mut self) {
 		self.cpu_state_mut().disable_interrupts();
 	}
@@ -60,8 +60,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 			ValueRefU8::Mem(addr) => {
 				self.tick_m_cycles(1);
 				let index = self.read_16(addr);
-				let value = self.memory_mapper_mut().read_from(index, Source::Cpu);
-				value
+				self.read_from(index, Source::Cpu)
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state().read(reg),
 			ValueRefU8::Raw(x) => x,
@@ -80,8 +79,7 @@ pub trait SM83<M: SourcedMemoryMapper> {
 			ValueRefU8::Mem(addr) => {
 				self.tick_m_cycles(1);
 				let index = self.read_16(addr);
-				self.memory_mapper_mut()
-					.write_from(index, value, Source::Cpu);
+				self.write_from(index, value, Source::Cpu);
 			}
 			ValueRefU8::Reg(reg) => self.cpu_state_mut().write(reg, value),
 			ValueRefU8::MemOffsetRaw(offset) => self.write_8(
@@ -103,9 +101,9 @@ pub trait SM83<M: SourcedMemoryMapper> {
 		match value_ref {
 			ValueRefU16::Mem(i) => {
 				self.tick_m_cycles(1);
-				let lsb = self.memory_mapper_mut().read_from(i, Source::Cpu);
+				let lsb = self.read_from(i, Source::Cpu);
 				self.tick_m_cycles(1);
-				let msb = self.memory_mapper_mut().read_from(i + 1, Source::Cpu);
+				let msb = self.read_from(i + 1, Source::Cpu);
 				u16::from_le_bytes([lsb, msb])
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state().read(reg),
@@ -118,9 +116,9 @@ pub trait SM83<M: SourcedMemoryMapper> {
 			ValueRefU16::Mem(i) => {
 				let [lsb, msb] = u16::to_be_bytes(value);
 				self.tick_m_cycles(1);
-				self.memory_mapper_mut().write_from(i + 1, lsb, Source::Cpu);
+				self.write_from(i + 1, lsb, Source::Cpu);
 				self.tick_m_cycles(1);
-				self.memory_mapper_mut().write_from(i, msb, Source::Cpu);
+				self.write_from(i, msb, Source::Cpu);
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state_mut().write(reg, value),
 			ValueRefU16::Raw(_) => unreachable!(),
@@ -185,8 +183,6 @@ pub trait SM83<M: SourcedMemoryMapper> {
 	}
 	fn cpu_state(&self) -> &CPUState;
 	fn cpu_state_mut(&mut self) -> &mut CPUState;
-	fn memory_mapper_mut(&mut self) -> &mut M;
-	fn memory_mapper(&self) -> &M;
 
 	fn clear_flag(&mut self, flag: u8) {
 		self.cpu_state_mut().clear_flag(flag)
