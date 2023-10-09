@@ -221,10 +221,6 @@ impl PixelFIFO for PPU {
 
 		self.step_sprite_fifo();
 		self.push_pixel();
-
-		if self.fifo_bg.len() <= 8 {
-			self.populate_bg_fifo();
-		}
 	}
 
 	/// Tries to push a pixel to the LCD
@@ -232,6 +228,10 @@ impl PixelFIFO for PPU {
 		let Some(bg) = self.fifo_bg.pop_front() else {
 			return;
 		};
+
+		if self.fifo_bg.len() <= 8 {
+			self.populate_bg_fifo();
+		}
 
 		let x = self.current_pixel;
 		let y = self.registers.ly;
