@@ -121,11 +121,11 @@ impl PixelFIFO for PPU {
 	///
 	/// If this is true, the window should be drawn for the remainder of the current scanline
 	fn in_window(&self) -> bool {
+		let x_inside = self.current_pixel + 7 >= self.registers.wx;
+		let y_inside = self.registers.ly >= self.registers.wy;
 		let wn_enabled = self.registers.lcdc.win_enabled();
-		let wn_in_view =
-			self.current_pixel + 7 >= self.registers.wx && self.registers.ly >= self.registers.wy;
 
-		wn_in_view && wn_enabled
+		y_inside && x_inside && wn_enabled
 	}
 
 	/// Start drawing the window
@@ -242,14 +242,12 @@ impl PixelFIFO for PPU {
 			let bg_over = (!fg.background_priority || bg.background_priority) && bg.color != 0;
 			let bg_over = bg_over && self.registers.lcdc.bg_enabled();
 			let bg_over = bg_over || fg.color == 0;
-
-			if bg_over {
-				self.lcd
-					.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
+			let pixel = if bg_over {
+				self.bg_color.get_color(bg.palette, bg.color)
 			} else {
-				self.lcd
-					.put_pixel(x, y, self.obj_color.get_color(fg.palette, fg.color));
-			}
+				self.obj_color.get_color(fg.palette, fg.color)
+			};
+			self.lcd.put_pixel(x, y, pixel);
 		} else {
 			self.lcd
 				.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
