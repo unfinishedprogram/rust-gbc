@@ -1,7 +1,7 @@
 use crate::components::{
 	run_controller::{self, RunController},
-	show_cpu_info, show_ppu_info, CheckpointManager, LinearMemoryView, Logs, MemoryImage,
-	MemoryView, RomLoader, Screen,
+	show_system_info, CheckpointManager, LinearMemoryView, MemoryImage, MemoryView, RomLoader,
+	Screen,
 };
 use egui::{CentralPanel, SidePanel, Style, TextStyle, TopBottomPanel, Window};
 
@@ -75,17 +75,13 @@ impl eframe::App for Debugger {
 
 		let screen_buffer = self.gameboy.ppu.lcd.front_buffer();
 
-		SidePanel::right("right").show(ctx, |ui| {
-			Logs::draw(ui);
-		});
+		SidePanel::right("right").show(ctx, |ui| show_system_info(&self.gameboy, ui));
 
 		CentralPanel::default().show(ctx, |ui| self.screen.draw(ui, screen_buffer));
 
 		Window::new("Instructions").show(ctx, |ui| self.linear_memory_view.draw(&self.gameboy, ui));
 		Window::new("Memory").show(ctx, |ui| self.memory_view.draw(&self.gameboy, ui));
 		Window::new("MemImage").show(ctx, |ui| self.memory_image.draw(&self.gameboy, ui));
-		Window::new("CPU State").show(ctx, |ui| show_cpu_info(&self.gameboy, ui));
-		Window::new("PPU State").show(ctx, |ui| show_ppu_info(&self.gameboy, ui));
 
 		Window::new("Checkpoints").show(ctx, |ui| {
 			self.checkpoint_manager.draw(&mut self.gameboy, ui)
