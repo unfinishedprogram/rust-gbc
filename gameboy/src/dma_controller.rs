@@ -111,7 +111,7 @@ impl DMAController {
 		None
 	}
 
-	// Each step  might return a transfer, this transfer must be performed by the caller
+	// Each step might return a transfer, this transfer must be performed by the caller
 	pub fn step(&mut self) -> Option<TransferRequest> {
 		if self.hdma5 & BIT_7 == 0 {
 			log::info!(

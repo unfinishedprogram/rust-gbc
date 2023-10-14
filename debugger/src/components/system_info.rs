@@ -1,8 +1,12 @@
 use egui::Ui;
 use egui_extras::{Column, TableBuilder};
-use gameboy::Gameboy;
+use gameboy::{
+	io_registers::{IE, IF},
+	Gameboy,
+};
 use sm83::{
 	flags::{cpu, Flags},
+	memory_mapper::MemoryMapper,
 	registers::Addressable,
 	Interrupt, SM83,
 };
@@ -11,8 +15,8 @@ use crate::bool;
 
 fn interrupt_info(gb: &Gameboy, ui: &mut Ui) {
 	ui.label(bool!("IME:{}", gb.cpu_state().ime()));
-	ui.label(format!("IE:{:08b}", gb.cpu_state().interrupt_enable));
-	ui.label(format!("IR:{:08b}", gb.cpu_state().interrupt_request));
+	ui.label(format!("IE:{:08b}", gb.read(IE)));
+	ui.label(format!("IF:{:08b}", gb.read(IF)));
 	ui.separator();
 
 	use Interrupt::*;
@@ -29,7 +33,7 @@ fn interrupt_info(gb: &Gameboy, ui: &mut Ui) {
 				ui.label("IE");
 			});
 			row.col(|ui| {
-				ui.label("IR");
+				ui.label("IF");
 			});
 		})
 		.body(|body| {
@@ -40,13 +44,13 @@ fn interrupt_info(gb: &Gameboy, ui: &mut Ui) {
 				row.col(|ui| {
 					ui.label(bool!(
 						"{}",
-						gb.cpu_state().interrupt_enable & interrupt_labels[index] as u8 != 0
+						gb.read(IE) & interrupt_labels[index] as u8 != 0
 					));
 				});
 				row.col(|ui| {
 					ui.label(bool!(
 						"{}",
-						gb.cpu_state().interrupt_request & interrupt_labels[index] as u8 != 0
+						gb.read(IF) & interrupt_labels[index] as u8 != 0
 					));
 				});
 			})
@@ -56,7 +60,7 @@ fn interrupt_info(gb: &Gameboy, ui: &mut Ui) {
 fn cpu_info(gb: &Gameboy, ui: &mut Ui) {
 	let cpu = &gb.cpu_state;
 	use sm83::registers::{CPURegister16::*, CPURegister8::*};
-
+	ui.label(format!("Speed: {:?}", gb.mode.get_speed()));
 	ui.label(bool!("Halted:{}", cpu.halted));
 	ui.label(bool!("Booting:{}", gb.booting));
 

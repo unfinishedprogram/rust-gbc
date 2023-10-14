@@ -166,7 +166,6 @@ impl IORegisters for Gameboy {
 			HDMA2 => 0xFF,
 			HDMA3 => 0xFF,
 			HDMA4 => 0xFF,
-			//HDMA
 			HDMA5 => self.dma_controller.read_hdma5(),
 
 			SVBK => {
@@ -208,7 +207,7 @@ impl IORegisters for Gameboy {
 
 			// Interrupt requests
 			IF => self.cpu_state.interrupt_request | 0xE0,
-			IE => self.cpu_state.interrupt_enable | 0xE0,
+			IE => self.cpu_state.interrupt_enable,
 
 			0xFF03 => 0xFF,
 			0xFF08..0xFF0F => 0xFF,
@@ -254,7 +253,7 @@ impl IORegisters for Gameboy {
 			}
 
 			// Timer
-			DIV => self.timer.set_div(value, self.mode.get_speed()),
+			DIV => self.timer.set_div(value),
 			TAC => self.timer.set_tac(value),
 			TIMA => self.timer.set_tima(value),
 			TMA => self.timer.set_tma(value),
@@ -301,7 +300,7 @@ impl IORegisters for Gameboy {
 			}
 
 			IF => self.cpu_state.interrupt_request = value & 0b00011111,
-			IE => self.cpu_state.interrupt_enable = value & 0b00011111,
+			IE => self.cpu_state.interrupt_enable = value,
 			DMA => {
 				self.io_register_state[DMA] = value;
 				self.oam_dma.start_oam_dma(value);

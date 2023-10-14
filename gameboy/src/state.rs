@@ -138,11 +138,7 @@ impl Gameboy {
 			self.tick_t_states(t_states);
 
 			if self.speed_switch_delay == 0 {
-				self.timer.step(
-					1,
-					self.mode.get_speed(),
-					&mut self.cpu_state.interrupt_request,
-				);
+				self.timer.step(&mut self.cpu_state.interrupt_request);
 			}
 		}
 	}
@@ -276,7 +272,7 @@ impl SM83 for Gameboy {
 				// STOP is a 1 byte opcode
 				// HALT mode is entered
 				// DIV is reset
-				self.timer.set_div(0, self.mode.get_speed());
+				self.timer.set_div(0);
 				self.cpu_state.halted = true;
 			}
 		} else if speed_switch_pending {
@@ -284,7 +280,7 @@ impl SM83 for Gameboy {
 				self.next_byte();
 			}
 
-			self.timer.set_div(0, self.mode.get_speed());
+			self.timer.set_div(0);
 
 			let switched = if let Mode::GBC(state) = &mut self.mode {
 				state.perform_speed_switch()
@@ -300,7 +296,7 @@ impl SM83 for Gameboy {
 			if !interrupt_pending {
 				self.next_byte();
 			}
-			self.timer.set_div(0, self.mode.get_speed());
+			self.timer.set_div(0);
 		}
 	}
 }
