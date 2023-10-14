@@ -3,7 +3,6 @@ use gameboy::Gameboy;
 use sm83::{
 	memory_mapper::MemoryMapper,
 	registers::{Addressable, CPURegister16},
-	SM83,
 };
 
 pub struct MemoryImage {
@@ -133,7 +132,7 @@ impl MemoryImage {
 	pub fn render_img(&mut self, gameboy: &Gameboy) {
 		for i in 0..u16::MAX {
 			let color = AddressRange::from(i).color();
-			let opacity = gameboy.memory_mapper().read(i) as f32 / 255.0;
+			let opacity = gameboy.read(i) as f32 / 255.0;
 			self.image.pixels[i as usize] = cheap_multiply_color(color, opacity);
 		}
 		self.image.pixels[gameboy.cpu_state.read(CPURegister16::PC) as usize] = Color32::RED;

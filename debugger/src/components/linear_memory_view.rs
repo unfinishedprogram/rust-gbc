@@ -2,9 +2,10 @@ use egui::style::Spacing;
 use egui::{Align, Rgba, Style, Ui, Vec2};
 use egui_extras::{Column, TableBuilder};
 use gameboy::Gameboy;
+use sm83::instruction::Fetch;
 use sm83::memory_mapper::MemoryMapper;
 use sm83::registers::{Addressable, CPURegister16};
-use sm83::{Instruction, SM83};
+use sm83::Instruction;
 
 use crate::memory_map::get_addr_info;
 
@@ -24,7 +25,7 @@ pub fn generate_instructions(gb: &Gameboy) -> Vec<CompiledEntry> {
 	gb.cpu_state.write(CPURegister16::PC, 0);
 	while gb.cpu_state.read(CPURegister16::PC) < 0xFFFF {
 		let pc = gb.cpu_state.read(CPURegister16::PC);
-		let instruction = gb.fetch_next_instruction();
+		let instruction = gb.fetch();
 		let mut bytes = vec![];
 		let new_pc = gb.cpu_state.read(CPURegister16::PC);
 
