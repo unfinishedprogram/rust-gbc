@@ -288,9 +288,7 @@ impl SM83 for Gameboy {
 				false
 			};
 			if switched {
-				self.speed_switch_delay = 2050;
-				// self.speed_switch_delay = 32 * 1024;
-				// self.speed_switch_delay = 1025 * 2;
+				self.speed_switch_delay = (128 * 1024 - 76) / 4;
 			}
 		} else {
 			if !interrupt_pending {

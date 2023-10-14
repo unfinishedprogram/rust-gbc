@@ -82,3 +82,6 @@ test result: FAILED. 1531 passed; 1744 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Improve HDMA handling -->
 test result: FAILED. 1540 passed; 1735 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.19s
+
+<!-- Fixed speed switch delay + timer improvements -->
+test result: FAILED. 1548 passed; 1727 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.97s
