@@ -3,7 +3,7 @@ use egui::Ui;
 pub enum Action {
 	StepFrame,
 	NextInterrupt,
-	PPUStateChange,
+	SkipBios,
 	HDMAStart,
 	OAMDmaStart,
 	Step(u64),
@@ -55,8 +55,8 @@ impl RunController {
 				action = Some(Action::NextInterrupt);
 			}
 
-			if ui.button("PPUStateChange").clicked() {
-				action = Some(Action::PPUStateChange);
+			if ui.button("SkipBios").clicked() {
+				action = Some(Action::SkipBios);
 			}
 
 			if ui.button("HDMAStart").clicked() {

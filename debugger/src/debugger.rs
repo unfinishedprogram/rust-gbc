@@ -55,7 +55,11 @@ impl eframe::App for Debugger {
 								self.gameboy.step();
 							}
 						}
-						run_controller::Action::PPUStateChange => todo!(),
+						run_controller::Action::SkipBios => {
+							while self.gameboy.booting {
+								self.gameboy.step();
+							}
+						}
 						run_controller::Action::HDMAStart => {
 							let mut steps = 0;
 							while self.gameboy.dma_controller.read_hdma5() & 0b10000000 != 0
