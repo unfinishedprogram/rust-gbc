@@ -86,7 +86,7 @@ impl Default for Gameboy {
 			w_ram: WorkRam::Dmg(Box::<WorkRamDataDMG>::default()),
 			hram: [0; 0x80],
 			serial_output: vec![],
-			raw_joyp_input: 0,
+			raw_joyp_input: 0xFF,
 			t_states: 0,
 			speed_switch_delay: 0,
 		};
