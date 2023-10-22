@@ -27,6 +27,6 @@ impl JoypadInput {
 			}
 		});
 
-		return &self.controller_state;
+		&self.controller_state
 	}
 }
