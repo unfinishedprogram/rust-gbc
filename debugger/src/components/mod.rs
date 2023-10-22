@@ -1,3 +1,4 @@
+mod joypad;
 mod linear_memory_view;
 mod logs;
 mod macro_helpers;
@@ -11,6 +12,7 @@ mod timeline;
 mod validated_input;
 
 // pub use breakpoint_manager::BreakpointManager;
+pub use joypad::JoypadInput;
 pub use linear_memory_view::LinearMemoryView;
 pub use logs::Logs;
 pub use memory_image::MemoryImage;

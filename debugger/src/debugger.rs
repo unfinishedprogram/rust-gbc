@@ -1,11 +1,11 @@
 use crate::components::{
 	run_controller::{self, RunController},
-	show_system_info, CheckpointManager, LinearMemoryView, MemoryImage, MemoryView, RomLoader,
-	Screen,
+	show_system_info, CheckpointManager, JoypadInput, LinearMemoryView, MemoryImage, MemoryView,
+	RomLoader, Screen,
 };
-use egui::{CentralPanel, Key, SidePanel, Style, TextStyle, TopBottomPanel, Window};
+use egui::{CentralPanel, SidePanel, Style, TextStyle, TopBottomPanel, Window};
 
-use gameboy::{controller::ControllerState, Gameboy};
+use gameboy::Gameboy;
 
 #[derive(Default)]
 pub struct Debugger {
@@ -18,7 +18,7 @@ pub struct Debugger {
 	rom_loader: RomLoader,
 	memory_image: MemoryImage,
 	checkpoint_manager: CheckpointManager,
-	controller_state: ControllerState,
+	joypad: JoypadInput,
 }
 
 impl Debugger {
@@ -29,26 +29,7 @@ impl Debugger {
 
 impl eframe::App for Debugger {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		ctx.input(|input| {
-			let events = input.events.clone();
-			for event in events {
-				if let egui::Event::Key { key, pressed, .. } = event {
-					match key {
-						Key::ArrowDown => self.controller_state.down = pressed,
-						Key::ArrowLeft => self.controller_state.left = pressed,
-						Key::ArrowRight => self.controller_state.right = pressed,
-						Key::ArrowUp => self.controller_state.up = pressed,
-						Key::Z => self.controller_state.a = pressed,
-						Key::X => self.controller_state.b = pressed,
-						Key::Space => self.controller_state.select = pressed,
-						Key::Enter => self.controller_state.start = pressed,
-						_ => {}
-					}
-				}
-			}
-		});
-
-		self.gameboy.set_controller_state(&self.controller_state);
+		self.gameboy.set_controller_state(self.joypad.update(ctx));
 
 		ctx.set_style(Style {
 			override_text_style: Some(TextStyle::Monospace),
