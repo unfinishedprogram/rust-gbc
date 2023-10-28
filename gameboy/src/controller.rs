@@ -1,4 +1,4 @@
-use std::ops::AddAssign;
+use std::ops::BitOrAssign;
 
 use serde::{Deserialize, Serialize};
 
@@ -14,8 +14,8 @@ pub struct ControllerState {
 	pub down: bool,
 }
 
-impl AddAssign for ControllerState {
-	fn add_assign(&mut self, rhs: Self) {
+impl BitOrAssign for ControllerState {
+	fn bitor_assign(&mut self, rhs: Self) {
 		self.a |= rhs.a;
 		self.b |= rhs.b;
 		self.select |= rhs.select;
