@@ -42,7 +42,7 @@ impl MemoryMapper for Gameboy {
 		if self.booting {
 			match self.mode {
 				Mode::DMG => {
-					if matches!(addr, 0..=0x100) {
+					if matches!(addr, 0..0x100) {
 						return self.boot_rom[addr as usize];
 					}
 				}
@@ -55,7 +55,9 @@ impl MemoryMapper for Gameboy {
 		}
 		match addr {
 			0x0000..0x8000 => {
-				let Some(rom) = &self.cartridge_state else { return 0xFF };
+				let Some(rom) = &self.cartridge_state else {
+					return 0xFF;
+				};
 				rom.read(addr)
 			} // Cartridge Rom
 			0x8000..0xA000 => match self.get_vram_bank() {
@@ -63,19 +65,19 @@ impl MemoryMapper for Gameboy {
 				VRAMBank::Bank1 => self.ppu.v_ram_bank_1[(addr - 0x8000) as usize],
 			}, //  VRAM
 			0xA000..0xC000 => {
-				let Some(rom) = &self.cartridge_state else { return 0xFF };
+				let Some(rom) = &self.cartridge_state else {
+					return 0xFF;
+				};
 				rom.read(addr)
 			} //  Cartage RAM
-			0xC000..0xD000 => self.w_ram.get_bank(0)[(addr - 0xC000) as usize], // Internal RAM
-			0xD000..0xE000 => {
-				self.w_ram.get_bank(self.w_ram.get_bank_number())[(addr - 0xD000) as usize]
-			} // Switchable RAM in CGB mode
-			0xE000..0xFE00 => self.read(addr - 0xE000 + 0xC000),                // Mirror, should not be used
-			0xFE00..0xFEA0 => self.ppu.oam[(addr - 0xFE00) as usize],           // Object Attribute Map
-			0xFEA0..0xFF00 => 0xFF,                                             // Unusable
-			0xFF00..0xFF80 => self.read_io(addr),                               // IO Registers
-			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize],              // HRAM
-			0xFFFF => self.cpu_state.interrupt_enable,                          // Interrupt enable
+			0xC000..0xD000 => self.w_ram.get_low_bank()[(addr - 0xC000) as usize], // Internal RAM
+			0xD000..0xE000 => self.w_ram.get_high_bank()[(addr - 0xD000) as usize], // Switchable RAM in CGB mode
+			0xE000..0xFE00 => self.read(addr - 0xE000 + 0xC000), // Mirror, should not be used
+			0xFE00..0xFEA0 => self.ppu.oam[(addr - 0xFE00) as usize], // Object Attribute Map
+			0xFEA0..0xFF00 => 0xFF,                              // Unusable
+			0xFF00..0xFF80 => self.read_io(addr),                // IO Registers
+			0xFF80..0xFFFF => self.hram[(addr - 0xFF80) as usize], // HRAM
+			0xFFFF => self.cpu_state.interrupt_enable,           // Interrupt enable
 		}
 	}
 
@@ -98,11 +100,8 @@ impl MemoryMapper for Gameboy {
 					rom.write(addr, value);
 				}
 			}
-			0xC000..0xD000 => self.w_ram.get_bank_mut(0)[(addr - 0xC000) as usize] = value, // Internal RAM
-			0xD000..0xE000 => {
-				let bank = self.w_ram.get_bank_number();
-				self.w_ram.get_bank_mut(bank)[(addr - 0xD000) as usize] = value
-			} // Switchable RAM in CGB mode
+			0xC000..0xD000 => self.w_ram.get_low_bank_mut()[(addr - 0xC000) as usize] = value, // Internal RAM
+			0xD000..0xE000 => self.w_ram.get_high_bank_mut()[(addr - 0xD000) as usize] = value, // Switchable RAM in CGB mode
 			0xE000..0xFE00 => self.write(addr - 0xE000 + 0xC000, value), // Mirror, should not be used
 			0xFE00..0xFEA0 => {
 				self.ppu.oam[(addr - 0xFE00) as usize] = value;
