@@ -6,9 +6,9 @@
 
 pub mod cartridge;
 pub mod cgb;
-pub mod controller;
 mod dma_controller;
 pub mod io_registers;
+pub mod joypad;
 pub mod lcd;
 pub mod memory_mapper;
 mod oam_dma;

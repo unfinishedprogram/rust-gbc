@@ -13,8 +13,8 @@ use crate::{
 
 use super::{
 	cartridge::memory_bank_controller::Cartridge,
-	controller::ControllerState,
 	io_registers::IORegisterState,
+	joypad::JoypadState,
 	ppu::{PPUMode, PPU},
 	save_state::{RomSource, SaveState},
 	timer::Timer,
@@ -180,7 +180,7 @@ impl Gameboy {
 		}
 	}
 
-	pub fn set_controller_state(&mut self, state: &ControllerState) {
+	pub fn set_controller_state(&mut self, state: &JoypadState) {
 		self.raw_joyp_input = state.as_byte();
 
 		if ((self.raw_joyp_input) ^ state.as_byte()) & state.as_byte() != 0 {

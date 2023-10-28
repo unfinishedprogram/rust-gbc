@@ -7,7 +7,7 @@ use gloo::{
 use wasm_bindgen::JsCast;
 use web_sys::Gamepad;
 
-use gameboy::controller::ControllerState;
+use gameboy::joypad::JoypadState;
 
 #[derive(Default)]
 struct InputStateInner {
@@ -31,10 +31,10 @@ impl InputState {
 			.ok()
 	}
 
-	pub fn get_controller_state(&self) -> ControllerState {
+	pub fn get_controller_state(&self) -> JoypadState {
 		let mut state = {
 			let keys = &self.inner.borrow().keys;
-			ControllerState {
+			JoypadState {
 				a: keys.contains("z"),
 				b: keys.contains("x"),
 				select: keys.contains("Tab"),
@@ -48,7 +48,7 @@ impl InputState {
 
 		if let Some(dom) = window().get("controller_state") {
 			if let Some(json) = dom.as_string() {
-				if let Ok(dom_state) = serde_json::from_str::<ControllerState>(&json) {
+				if let Ok(dom_state) = serde_json::from_str::<JoypadState>(&json) {
 					state |= dom_state;
 				}
 			}
@@ -90,7 +90,7 @@ impl Default for InputState {
 	}
 }
 
-pub fn gamepad_to_controller_state(gp: &Gamepad) -> ControllerState {
+pub fn gamepad_to_controller_state(gp: &Gamepad) -> JoypadState {
 	let buttons: Vec<bool> = gp
 		.buttons()
 		.iter()
@@ -104,7 +104,7 @@ pub fn gamepad_to_controller_state(gp: &Gamepad) -> ControllerState {
 
 	let axis: Vec<f64> = gp.axes().iter().map(|v| v.as_f64().unwrap()).collect();
 
-	ControllerState {
+	JoypadState {
 		a: buttons[0] || buttons[3],
 		b: buttons[2] || buttons[1],
 		select: buttons[8],

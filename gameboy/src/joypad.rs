@@ -3,7 +3,7 @@ use std::ops::BitOrAssign;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Default)]
-pub struct ControllerState {
+pub struct JoypadState {
 	pub a: bool,
 	pub b: bool,
 	pub select: bool,
@@ -14,7 +14,7 @@ pub struct ControllerState {
 	pub down: bool,
 }
 
-impl BitOrAssign for ControllerState {
+impl BitOrAssign for JoypadState {
 	fn bitor_assign(&mut self, rhs: Self) {
 		self.a |= rhs.a;
 		self.b |= rhs.b;
@@ -27,7 +27,7 @@ impl BitOrAssign for ControllerState {
 	}
 }
 
-impl ControllerState {
+impl JoypadState {
 	pub fn as_byte(&self) -> u8 {
 		![
 			self.a,

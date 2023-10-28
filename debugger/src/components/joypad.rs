@@ -1,13 +1,13 @@
 use egui::{Context, Key};
-use gameboy::controller::ControllerState;
+use gameboy::joypad::JoypadState;
 
 #[derive(Default)]
 pub struct JoypadInput {
-	controller_state: ControllerState,
+	controller_state: JoypadState,
 }
 
 impl JoypadInput {
-	pub fn update(&mut self, ctx: &Context) -> &ControllerState {
+	pub fn update(&mut self, ctx: &Context) -> &JoypadState {
 		ctx.input(|input| {
 			let events = input.events.clone();
 			for event in events {
