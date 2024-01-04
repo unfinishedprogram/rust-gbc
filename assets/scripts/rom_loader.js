@@ -4,14 +4,13 @@ import * as wasm from "/application.js"
 async function get_available_roms() {
     const res = await fetch("./roms.json");
     const json = await res.json();
-    const dirs = json["Dir"][1];
-
-    const games = dirs.filter(dir => dir["Dir"][0] == ("roms/games"))[0]["Dir"][1];
+    const dirs = json.dir.entries;
+    const games = dirs.filter(({dir}) => dir.path == "roms/games")[0].dir.entries;
 
     console.log(games);
     return games.map(game => {
-        let name = game.File[0];
-        let path = game.File[1];
+        let name = game.file.path.split("/").pop().replace(".gbc", "").replace(".gb", "");
+        let path = game.file.path;
         return { name, path };
     })
 }
