@@ -16,7 +16,7 @@ pub mod save_state;
 mod state;
 mod timer;
 mod util;
-mod work_ram;
+pub mod work_ram;
 pub use state::{Gameboy, Mode};
 
 #[cfg(test)]

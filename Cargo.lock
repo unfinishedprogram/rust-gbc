@@ -727,6 +727,7 @@ dependencies = [
  "ehttp",
  "gameboy",
  "hex_fmt",
+ "lazy_static",
  "serde",
  "serde_json",
  "sm83",

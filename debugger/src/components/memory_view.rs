@@ -3,9 +3,12 @@ use std::str::from_utf8;
 use egui::style::Spacing;
 use egui::{Rgba, Style, Ui, Vec2};
 use egui_extras::{Column, TableBuilder};
+use gameboy::work_ram::BankedWorkRam;
 use gameboy::Gameboy;
 use sm83::memory_mapper::MemoryMapper;
 use sm83::registers::{Addressable, CPURegister16};
+
+use super::util::{hex_str_u16, hex_str_u8};
 
 #[derive(Default)]
 pub struct MemoryView {
@@ -15,6 +18,8 @@ pub struct MemoryView {
 
 impl MemoryView {
 	pub fn draw(&mut self, gameboy: &Gameboy, ui: &mut Ui) {
+		let pc = gameboy.cpu_state.read(CPURegister16::PC);
+
 		ui.horizontal(|ui| {
 			ui.set_min_height(260.0);
 			ui.set_style(Style {
@@ -29,7 +34,7 @@ impl MemoryView {
 
 				let addr = self.selected.unwrap_or_default();
 				let value = gameboy.read(addr);
-				ui.monospace(format!("Addr   :{:04X}", addr));
+				ui.monospace(format!("Addr   :{addr:04X}"));
 				ui.monospace(format!("Base16 :{value:02X}"));
 				ui.monospace(format!("Base10 :{value:}"));
 				ui.monospace(format!("Binary :{value:08b}"));
@@ -63,18 +68,14 @@ impl MemoryView {
 				.body(|body| {
 					body.rows(20.0, 0x10000 / 0x10, |index, mut row| {
 						row.col(|ui| {
-							ui.monospace(format!("{:04X}", index * 16));
+							ui.monospace(hex_str_u16((index * 16) as u16));
 						});
 
 						for i in 0..0x10 {
 							row.col(|ui| {
 								let addr = (index * 16 + i) as u16;
-								let color = if gameboy.cpu_state.read(CPURegister16::PC) == addr {
-									Rgba::RED
-								} else {
-									Rgba::WHITE
-								};
-								ui.colored_label(color, format!("{:02X}", gameboy.read(addr)));
+								let color = if pc == addr { Rgba::RED } else { Rgba::WHITE };
+								ui.colored_label(color, hex_str_u8(gameboy.read(addr)));
 							});
 						}
 					});

@@ -9,6 +9,7 @@ pub mod run_controller;
 mod screen;
 mod system_info;
 mod timeline;
+mod util;
 mod validated_input;
 
 // pub use breakpoint_manager::BreakpointManager;

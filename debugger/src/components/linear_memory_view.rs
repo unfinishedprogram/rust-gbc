@@ -48,8 +48,6 @@ impl LinearMemoryView {
 			.instructions
 			.get_or_insert_with(|| generate_instructions(gameboy));
 
-		ui.set_min_height(260.0);
-
 		ui.horizontal(|ui| {
 			if ui.button("Decompile").clicked() {
 				*instructions = generate_instructions(gameboy);
