@@ -11,9 +11,9 @@ use super::{
 #[derive(Clone, Serialize, Deserialize, Default, Copy)]
 pub struct Pixel {
 	/// a value between 0 and 3
-	color: u8,
+	pub color: u8,
 	/// on CGB a value between 0 and 7 and on DMG this only applies to sprites
-	palette: u8,
+	pub palette: u8,
 	// on CGB this is the OAM index for the sprite and on DMG this doesn't exist
 	sprite_priority: u16,
 	// holds the value of the OBJ-to-BG Priority bit
@@ -243,14 +243,13 @@ impl PixelFIFO for PPU {
 			let bg_over = bg_over && self.registers.lcdc.bg_enabled();
 			let bg_over = bg_over || fg.color == 0;
 			let pixel = if bg_over {
-				self.bg_color.get_color(bg.palette, bg.color)
+				self.bg_color.color_of(bg)
 			} else {
-				self.obj_color.get_color(fg.palette, fg.color)
+				self.obj_color.color_of(fg)
 			};
 			self.lcd.put_pixel(x, y, pixel);
 		} else {
-			self.lcd
-				.put_pixel(x, y, self.bg_color.get_color(bg.palette, bg.color));
+			self.lcd.put_pixel(x, y, self.bg_color.color_of(bg));
 		};
 	}
 

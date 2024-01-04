@@ -1,7 +1,7 @@
 use crate::components::{
 	run_controller::{self, RunController},
 	show_system_info, CheckpointManager, JoypadInput, LinearMemoryView, MemoryImage, MemoryView,
-	RomLoader, Screen,
+	RomLoader, Screen, VramView,
 };
 use egui::{CentralPanel, SidePanel, Style, TextStyle, TopBottomPanel, Window};
 
@@ -19,6 +19,7 @@ pub struct Debugger {
 	memory_image: MemoryImage,
 	checkpoint_manager: CheckpointManager,
 	joypad: JoypadInput,
+	vram_view: VramView,
 }
 
 impl Debugger {
@@ -89,6 +90,7 @@ impl eframe::App for Debugger {
 		Window::new("Instructions").show(ctx, |ui| self.linear_memory_view.draw(&self.gameboy, ui));
 		Window::new("Memory").show(ctx, |ui| self.memory_view.draw(&self.gameboy, ui));
 		Window::new("MemImage").show(ctx, |ui| self.memory_image.draw(&self.gameboy, ui));
+		Window::new("VramView").show(ctx, |ui| self.vram_view.draw(&self.gameboy, ui));
 
 		Window::new("Checkpoints").show(ctx, |ui| {
 			self.checkpoint_manager.draw(&mut self.gameboy, ui)

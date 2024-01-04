@@ -163,7 +163,7 @@ impl MemoryImage {
 			ui.vertical(MemoryImage::legend);
 			ui.add(Image::new(
 				texture.id(),
-				Vec2::new(160.0 * 4.0, 144.0 * 4.0),
+				Vec2::new(255.0 * 2.0, 255.0 * 2.0),
 			));
 		});
 	}

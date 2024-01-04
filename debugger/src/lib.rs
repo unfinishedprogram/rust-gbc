@@ -7,6 +7,7 @@ mod memory_map;
 pub use debugger::Debugger;
 
 pub fn run_debugger() {
+	wasm_logger::init(wasm_logger::Config::default());
 	console_error_panic_hook::set_once();
 	tracing_wasm::set_as_global_default();
 

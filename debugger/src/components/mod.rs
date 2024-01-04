@@ -11,6 +11,7 @@ mod system_info;
 mod timeline;
 mod util;
 mod validated_input;
+mod vram_view;
 
 // pub use breakpoint_manager::BreakpointManager;
 pub use joypad::JoypadInput;
@@ -22,3 +23,4 @@ pub use rom_loader::RomLoader;
 pub use screen::Screen;
 pub use system_info::show_system_info;
 pub use timeline::{CheckpointManager, TStates};
+pub use vram_view::VramView;

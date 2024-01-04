@@ -733,6 +733,7 @@ dependencies = [
  "sm83",
  "tracing-wasm",
  "wasm-bindgen-futures",
+ "wasm-logger",
 ]
 
 [[package]]

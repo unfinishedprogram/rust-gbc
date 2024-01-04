@@ -25,7 +25,6 @@ impl SourcedMemoryMapper for Gameboy {
 		if is_accessible(self, addr, source) {
 			self.read(addr)
 		} else {
-			log::warn!("BLOCKED READ: {addr:04X}");
 			0xFF
 		}
 	}

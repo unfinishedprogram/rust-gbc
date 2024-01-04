@@ -31,11 +31,10 @@ pub fn step_oam_dma(gb: &mut Gameboy) {
 
 impl OamDmaState {
 	pub fn start_oam_dma(&mut self, value: u8) {
-		log::warn!("OAM DMA REQUEST");
-
 		let value = if value > 0xDF { value - 0x20 } else { value };
 		let real_addr = (value as u16) << 8;
 
+		log::warn!("OAM DMA request from {:04X}", real_addr);
 		self.dma_addr = real_addr;
 		self.start_delay = 2;
 	}

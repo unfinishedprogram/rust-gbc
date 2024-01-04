@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{lcd::Color, util::bits::BIT_7};
 
+use super::renderer::Pixel;
+
 /// Handles reading and writing of color pallette data for CGB mode
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ColorRamController {
@@ -77,5 +79,9 @@ impl ColorRamController {
 
 	pub fn get_color(&self, pallette: u8, color: u8) -> Color {
 		self.colors[(pallette * 4 + color) as usize]
+	}
+
+	pub fn color_of(&self, pixel: Pixel) -> Color {
+		self.get_color(pixel.palette, pixel.color)
 	}
 }

@@ -1,15 +1,14 @@
 mod color_ram;
 mod lcdc;
-mod renderer;
+pub mod renderer;
 mod sprite;
 mod stat;
-mod tile_data;
+pub mod tile_data;
 
 use crate::{lcd::GameboyLCD, ppu::renderer::PixelFIFO, util::BigArray};
 use sm83::Interrupt;
 use std::collections::VecDeque;
 
-use log::debug;
 use serde::{Deserialize, Serialize};
 
 use self::{
@@ -177,7 +176,6 @@ impl PPU {
 
 		self.update_stat_irq(interrupt_register);
 		if let PPUMode::VBlank = mode {
-			debug!("{:} VBlank", self.ran_cycles - self.last_frame);
 			*interrupt_register |= Interrupt::VBlank.flag_bit();
 		}
 
@@ -224,7 +222,6 @@ impl PPU {
 
 					self.frame += 1;
 					self.lcd.swap_buffers();
-					debug!("Cycle:{:}", self.ran_cycles - self.last_frame);
 					self.last_frame = self.ran_cycles;
 
 					self.set_mode(PPUMode::OamScan, interrupt_register)
