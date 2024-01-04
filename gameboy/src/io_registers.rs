@@ -1,12 +1,10 @@
 use std::ops::{Index, IndexMut};
 
 use serde::{Deserialize, Serialize};
+use sm83::Interrupt;
 
 use crate::{
-	flags::{INTERRUPT_REQUEST, INT_SERIAL},
-	memory_mapper::Source,
-	memory_mapper::SourcedMemoryMapper,
-	state::GameboyMode,
+	state::Mode,
 	util::{bits::*, BigArray},
 	work_ram::BankedWorkRam,
 	Gameboy,
@@ -132,21 +130,20 @@ impl IORegisters for Gameboy {
 		match addr {
 			// PPU
 			LCDC => self.ppu.read_lcdc(),
-
-			SCY => self.ppu.scy,
-			SCX => self.ppu.scx,
-			LYC => self.ppu.lyc,
-			BGP => self.ppu.bgp,
-			OBP0 => self.ppu.obp0,
-			OBP1 => self.ppu.obp1,
-			WY => self.ppu.wy,
-			WX => self.ppu.wx,
+			SCY => self.ppu.registers.scy,
+			SCX => self.ppu.registers.scx,
+			LYC => self.ppu.registers.lyc,
+			BGP => self.ppu.registers.bgp,
+			OBP0 => self.ppu.registers.obp0,
+			OBP1 => self.ppu.registers.obp1,
+			WY => self.ppu.registers.wy,
+			WX => self.ppu.registers.wx,
 			LY => self.ppu.get_ly(),
-			STAT => self.ppu.stat.bits(),
+			STAT => self.ppu.registers.stat.read(),
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
-				if let GameboyMode::GBC(_) = &self.mode {
+				if let Mode::GBC(_) = &self.mode {
 					match addr {
 						BGPI => self.ppu.bg_color.read_spec(),
 						BGPD => self.ppu.bg_color.read_data(),
@@ -165,48 +162,62 @@ impl IORegisters for Gameboy {
 			TIMA => self.timer.get_tima(),
 			TMA => self.timer.get_tma(),
 
-			//HDMA
+			HDMA1 => 0xFF,
+			HDMA2 => 0xFF,
+			HDMA3 => 0xFF,
+			HDMA4 => 0xFF,
 			HDMA5 => self.dma_controller.read_hdma5(),
 
 			SVBK => {
-				if let GameboyMode::GBC(_) = &self.mode {
+				if let Mode::GBC(_) = &self.mode {
 					self.w_ram.get_bank_number()
 				} else {
 					0xFF
 				}
 			}
 			VBK => {
-				if let GameboyMode::GBC(_) = &self.mode {
-					self.w_ram.get_bank_number()
+				if let Mode::GBC(_) = &self.mode {
+					match self.get_vram_bank() {
+						crate::ppu::VRAMBank::Bank0 => 0,
+						crate::ppu::VRAMBank::Bank1 => 1,
+					}
 				} else {
 					0xFF
 				}
 			}
 			KEY1 => {
-				if let GameboyMode::GBC(state) = &self.mode {
+				if let Mode::GBC(state) = &self.mode {
 					state.read_key1()
 				} else {
 					0xFF
 				}
 			}
 			JOYP => {
-				if self.io_register_state[JOYP] & BIT_4 == BIT_4 {
-					(self.raw_joyp_input & 0b1111) | 0b11000000
-				} else if self.io_register_state[addr] & BIT_5 == BIT_5 {
-					((self.raw_joyp_input >> 4) & 0b1111) | 0b11000000
-				} else {
-					0b11001111
+				let mut res = 0b11000000;
+
+				if self.io_register_state[JOYP] & BIT_4 == 0 {
+					res |= (self.raw_joyp_input >> 4) & 0b1111;
 				}
+				if self.io_register_state[addr] & BIT_5 == 0 {
+					res |= self.raw_joyp_input & 0b1111;
+				}
+
+				res
 			}
 
 			// Interrupt requests
-			IF => {
-				self.io_register_state[IF]
-					| self.ppu.interrupt_requests
-					| self.timer.interrupt_requests
-					| 0xE0
-			}
-			IE => self.io_register_state[IE] | 0xE0,
+			IF => self.cpu_state.interrupt_request | 0xE0,
+			IE => self.cpu_state.interrupt_enable,
+
+			0xFF03 => 0xFF,
+			0xFF08..0xFF0F => 0xFF,
+			0xFF15 => 0xFF,
+			0xFF1F => 0xFF,
+			0xFF27..0xFF30 => 0xFF,
+			0xFF4E => 0xFF,
+			0xFF57..0xFF68 => 0xFF,
+			0xFF71..0xFF72 => 0xFF,
+			0xFF78..0xFF80 => 0xFF,
 			_ => self.io_register_state[addr],
 		}
 	}
@@ -214,17 +225,23 @@ impl IORegisters for Gameboy {
 	fn write_io(&mut self, addr: u16, value: u8) {
 		match addr {
 			// PPU
-			LCDC => self.ppu.write_lcdc(value),
+			LCDC => self
+				.ppu
+				.write_lcdc(value, &mut self.cpu_state.interrupt_request),
 
-			SCY => self.ppu.scy = value,
-			SCX => self.ppu.scx = value,
-			LYC => self.ppu.set_lyc(value),
-			BGP => self.ppu.bgp = value,
-			OBP0 => self.ppu.obp0 = value,
-			OBP1 => self.ppu.obp1 = value,
-			WY => self.ppu.wy = value,
-			WX => self.ppu.wx = value,
-			STAT => self.ppu.write_stat(value),
+			SCY => self.ppu.registers.scy = value,
+			SCX => self.ppu.registers.scx = value,
+			LYC => self
+				.ppu
+				.set_lyc(value, &mut self.cpu_state.interrupt_request),
+			BGP => self.ppu.registers.bgp = value,
+			OBP0 => self.ppu.registers.obp0 = value,
+			OBP1 => self.ppu.registers.obp1 = value,
+			WY => self.ppu.registers.wy = value,
+			WX => self.ppu.registers.wx = value,
+			STAT => self
+				.ppu
+				.write_stat(value, &mut self.cpu_state.interrupt_request),
 			HDMA1 => self.dma_controller.write_source_high(value),
 			HDMA2 => self.dma_controller.write_source_low(value),
 			HDMA3 => self.dma_controller.write_destination_high(value),
@@ -243,7 +260,7 @@ impl IORegisters for Gameboy {
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
-				if let GameboyMode::GBC(_) = &mut self.mode {
+				if let Mode::GBC(_) = &mut self.mode {
 					match addr {
 						BGPI => self.ppu.bg_color.write_spec(value),
 						BGPD => self.ppu.bg_color.write_data(value),
@@ -257,12 +274,12 @@ impl IORegisters for Gameboy {
 				self.w_ram.set_bank_number(value);
 			}
 			VBK => {
-				if let GameboyMode::GBC(state) = &mut self.mode {
+				if let Mode::GBC(state) = &mut self.mode {
 					state.set_vram_bank(value);
 				};
 			}
 			KEY1 => {
-				if let GameboyMode::GBC(state) = &mut self.mode {
+				if let Mode::GBC(state) = &mut self.mode {
 					state.write_key1(value);
 				};
 			}
@@ -278,31 +295,15 @@ impl IORegisters for Gameboy {
 				if value == 0x81 {
 					self.io_register_state[SC] = 0x01;
 					self.io_register_state[SB] = 0xFF;
-					self.request_interrupt(INT_SERIAL);
+					self.request_interrupt(Interrupt::Serial);
 				}
 			}
 
-			IF => {
-				self.io_register_state[INTERRUPT_REQUEST] = value & 0b00011111;
-				self.ppu.interrupt_requests = value & 0b00011111;
-				self.timer.interrupt_requests = value & 0b00011111;
-			}
-
-			IE => self.io_register_state[IE] = value & 0b00011111,
+			IF => self.cpu_state.interrupt_request = value & 0b00011111,
+			IE => self.cpu_state.interrupt_enable = value,
 			DMA => {
 				self.io_register_state[DMA] = value;
-
-				// Indexing into HRAM should use work-ram instead.
-				let value = if value > 0xDF { value - 0x20 } else { value };
-
-				let mut oam_data = vec![0; 0xA0];
-				let real_addr = (value as u16) << 8;
-
-				(0..0xA0).for_each(|i| {
-					oam_data[i] = self.read_from(real_addr + i as u16, Source::Raw);
-				});
-
-				self.oam_dma.start_oam_dma(oam_data);
+				self.oam_dma.start_oam_dma(value);
 			}
 
 			_ => self.io_register_state[addr] = value,

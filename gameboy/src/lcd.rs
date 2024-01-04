@@ -1,71 +1,77 @@
 use serde::{Deserialize, Serialize};
 
-pub trait LCDDisplay {
-	fn get_size(&self) -> (u8, u8);
-	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8, u8));
-}
+pub type Color = (u8, u8, u8, u8);
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct LCD {
-	buffers: Vec<Vec<u8>>,
-	current_buffer: usize,
+pub struct GameboyLCD {
+	buffer_front: Vec<u8>,
+	buffer_back: Vec<u8>,
+	pub sync_mode: SyncMode,
+
 	pub frame: u64,
 	pub scale: f32,
 }
 
-impl PartialEq for LCD {
-	fn eq(&self, other: &Self) -> bool {
-		self.frame == other.frame
-	}
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub enum SyncMode {
+	DoubleBuffered,
+	None,
 }
 
-impl LCDDisplay for LCD {
-	fn get_size(&self) -> (u8, u8) {
+impl GameboyLCD {
+	pub fn size(&self) -> (u8, u8) {
 		(160, 144)
 	}
 
-	fn put_pixel(&mut self, x: u8, y: u8, color: (u8, u8, u8, u8)) {
-		let (width, height) = self.get_size();
-		if x >= width || y >= height {
-			return;
-		}
+	pub fn put_pixel(&mut self, x: u8, y: u8, color: Color) {
+		let (width, _) = self.size();
+
+		let y = y as usize;
+		let x = x as usize;
+		let width = width as usize;
 
 		let (r, g, b, a) = color;
 
-		let index: usize = y as usize * width as usize + x as usize;
+		let index = (y * width + x) * 4;
 
-		let image = &mut self.buffers[self.current_buffer];
+		let image = self.get_back_buffer_mut();
 
-		image[index * 4] = r;
-		image[index * 4 + 1] = g;
-		image[index * 4 + 2] = b;
-		image[index * 4 + 3] = a;
-	}
-}
-
-impl LCD {
-	pub fn new() -> Self {
-		let buffers = vec![vec![100; 160 * 144 * 4], vec![255; 160 * 144 * 4]];
-		Self {
-			frame: 0,
-			scale: 3.0,
-			current_buffer: 0,
-			buffers,
-		}
+		image[index..index + 4].copy_from_slice(&[r, g, b, a])
 	}
 
 	pub fn swap_buffers(&mut self) {
 		self.frame += 1;
-		self.current_buffer ^= 1;
+		match self.sync_mode {
+			SyncMode::DoubleBuffered => {
+				std::mem::swap(&mut self.buffer_front, &mut self.buffer_back)
+			}
+			SyncMode::None => {}
+		}
 	}
 
-	pub fn get_current_as_bytes(&self) -> &[u8] {
-		&self.buffers[self.current_buffer ^ 1]
+	fn get_back_buffer_mut(&mut self) -> &mut [u8] {
+		return self.buffer_back.as_mut_slice();
+	}
+
+	pub fn front_buffer(&self) -> &[u8] {
+		match self.sync_mode {
+			SyncMode::DoubleBuffered => &self.buffer_front,
+			SyncMode::None => &self.buffer_back,
+		}
+		.as_slice()
 	}
 }
 
-impl Default for LCD {
+impl Default for GameboyLCD {
 	fn default() -> Self {
-		Self::new()
+		let buffer_front = vec![100; 160 * 144 * 4];
+		let buffer_back = vec![100; 160 * 144 * 4];
+		Self {
+			buffer_front,
+			buffer_back,
+			sync_mode: SyncMode::None,
+			frame: 0,
+			scale: 3.0,
+		}
 	}
 }

@@ -2,47 +2,78 @@ use serde::{Deserialize, Serialize};
 
 use crate::util::BigArray;
 
+const BANK_SIZE: usize = 0x1000;
+
 #[derive(Clone, Serialize, Deserialize)]
 pub enum WorkRam {
-	CGB(Box<WorkRamDataCGB>),
-	DMG(Box<WorkRamDataDMG>),
+	Cgb(Box<WorkRamDataCGB>),
+	Dmg(Box<WorkRamDataDMG>),
+}
+
+impl WorkRam {
+	fn inner(&self) -> &dyn BankedWorkRam {
+		match self {
+			WorkRam::Cgb(state) => state.as_ref(),
+			WorkRam::Dmg(state) => state.as_ref(),
+		}
+	}
+
+	fn inner_mut(&mut self) -> &mut dyn BankedWorkRam {
+		match self {
+			WorkRam::Cgb(state) => state.as_mut(),
+			WorkRam::Dmg(state) => state.as_mut(),
+		}
+	}
+}
+
+impl<'a> From<&'a WorkRam> for &'a dyn BankedWorkRam {
+	fn from(wram: &'a WorkRam) -> Self {
+		wram.inner()
+	}
+}
+
+impl<'a> From<&'a mut WorkRam> for &'a mut dyn BankedWorkRam {
+	fn from(wram: &'a mut WorkRam) -> Self {
+		wram.inner_mut()
+	}
 }
 
 pub trait BankedWorkRam {
-	fn set_bank_number(&mut self, _bank: u8);
-	fn get_bank_number(&self) -> u8;
+	fn set_bank_number(&mut self, _bank: u8) {}
+	fn get_bank_number(&self) -> u8 {
+		1
+	}
 
-	fn get_bank(&self, bank: u8) -> &[u8; 0x1000];
-	fn get_bank_mut(&mut self, bank: u8) -> &mut [u8; 0x1000];
+	fn get_high_bank(&self) -> &[u8; BANK_SIZE];
+	fn get_low_bank(&self) -> &[u8; BANK_SIZE];
+
+	fn get_high_bank_mut(&mut self) -> &mut [u8; BANK_SIZE];
+	fn get_low_bank_mut(&mut self) -> &mut [u8; BANK_SIZE];
 }
 
 impl BankedWorkRam for WorkRam {
-	fn get_bank_number(&self) -> u8 {
-		match self {
-			WorkRam::CGB(state) => state.bank,
-			WorkRam::DMG(_) => 1,
-		}
-	}
-
-	fn get_bank(&self, bank: u8) -> &[u8; 0x1000] {
-		match self {
-			WorkRam::CGB(state) => state.get_bank(bank),
-			WorkRam::DMG(state) => state.get_bank(bank),
-		}
-	}
-
-	fn get_bank_mut(&mut self, bank: u8) -> &mut [u8; 0x1000] {
-		match self {
-			WorkRam::CGB(state) => state.get_bank_mut(bank),
-			WorkRam::DMG(state) => state.get_bank_mut(bank),
-		}
-	}
-
 	fn set_bank_number(&mut self, bank: u8) {
-		match self {
-			WorkRam::CGB(state) => state.set_bank_number(bank),
-			WorkRam::DMG(state) => state.set_bank_number(bank),
-		}
+		self.inner_mut().set_bank_number(bank);
+	}
+
+	fn get_bank_number(&self) -> u8 {
+		self.inner().get_bank_number()
+	}
+
+	fn get_high_bank(&self) -> &[u8; BANK_SIZE] {
+		self.inner().get_high_bank()
+	}
+
+	fn get_low_bank(&self) -> &[u8; BANK_SIZE] {
+		self.inner().get_low_bank()
+	}
+
+	fn get_high_bank_mut(&mut self) -> &mut [u8; BANK_SIZE] {
+		self.inner_mut().get_high_bank_mut()
+	}
+
+	fn get_low_bank_mut(&mut self) -> &mut [u8; BANK_SIZE] {
+		self.inner_mut().get_low_bank_mut()
 	}
 }
 
@@ -51,36 +82,36 @@ pub struct WorkRamDataCGB {
 	bank: u8,
 
 	#[serde(with = "BigArray")]
-	bank_0: [u8; 0x1000],
+	bank_0: [u8; BANK_SIZE],
 	#[serde(with = "BigArray")]
-	bank_1: [u8; 0x1000],
+	bank_1: [u8; BANK_SIZE],
 	#[serde(with = "BigArray")]
-	bank_2: [u8; 0x1000],
+	bank_2: [u8; BANK_SIZE],
 	#[serde(with = "BigArray")]
-	bank_3: [u8; 0x1000],
+	bank_3: [u8; BANK_SIZE],
 	#[serde(with = "BigArray")]
-	bank_4: [u8; 0x1000],
+	bank_4: [u8; BANK_SIZE],
 	#[serde(with = "BigArray")]
-	bank_5: [u8; 0x1000],
+	bank_5: [u8; BANK_SIZE],
 	#[serde(with = "BigArray")]
-	bank_6: [u8; 0x1000],
+	bank_6: [u8; BANK_SIZE],
 	#[serde(with = "BigArray")]
-	bank_7: [u8; 0x1000],
+	bank_7: [u8; BANK_SIZE],
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct WorkRamDataDMG {
 	#[serde(with = "BigArray")]
-	bank_0: [u8; 0x1000],
+	bank_0: [u8; BANK_SIZE],
 	#[serde(with = "BigArray")]
-	bank_1: [u8; 0x1000],
+	bank_1: [u8; BANK_SIZE],
 }
 
 impl Default for WorkRamDataDMG {
 	fn default() -> Self {
 		Self {
-			bank_0: [0; 0x1000],
-			bank_1: [0; 0x1000],
+			bank_0: [0; BANK_SIZE],
+			bank_1: [0; BANK_SIZE],
 		}
 	}
 }
@@ -89,53 +120,55 @@ impl Default for WorkRamDataCGB {
 	fn default() -> Self {
 		Self {
 			bank: 1,
-			bank_0: [0; 0x1000],
-			bank_1: [0; 0x1000],
-			bank_2: [0; 0x1000],
-			bank_3: [0; 0x1000],
-			bank_4: [0; 0x1000],
-			bank_5: [0; 0x1000],
-			bank_6: [0; 0x1000],
-			bank_7: [0; 0x1000],
+			bank_0: [0; BANK_SIZE],
+			bank_1: [0; BANK_SIZE],
+			bank_2: [0; BANK_SIZE],
+			bank_3: [0; BANK_SIZE],
+			bank_4: [0; BANK_SIZE],
+			bank_5: [0; BANK_SIZE],
+			bank_6: [0; BANK_SIZE],
+			bank_7: [0; BANK_SIZE],
 		}
 	}
 }
 
 impl BankedWorkRam for WorkRamDataDMG {
-	fn get_bank_number(&self) -> u8 {
-		1
-	}
-	fn set_bank_number(&mut self, _bank: u8) {}
-	fn get_bank(&self, bank: u8) -> &[u8; 0x1000] {
-		let bank = bank & 1;
-		if bank == 0 {
-			&self.bank_0
-		} else {
-			&self.bank_1
-		}
+	fn get_low_bank(&self) -> &[u8; BANK_SIZE] {
+		&self.bank_0
 	}
 
-	fn get_bank_mut(&mut self, bank: u8) -> &mut [u8; 0x1000] {
-		if bank & 1 == 1 {
-			&mut self.bank_1
-		} else {
-			&mut self.bank_0
-		}
+	fn get_high_bank(&self) -> &[u8; BANK_SIZE] {
+		&self.bank_1
+	}
+
+	fn get_low_bank_mut(&mut self) -> &mut [u8; BANK_SIZE] {
+		&mut self.bank_0
+	}
+
+	fn get_high_bank_mut(&mut self) -> &mut [u8; BANK_SIZE] {
+		&mut self.bank_1
 	}
 }
 
 impl BankedWorkRam for WorkRamDataCGB {
 	fn set_bank_number(&mut self, bank: u8) {
-		self.bank = (bank) & 3;
-		self.bank = self.bank.max(1);
+		self.bank = ((bank) & 0b111).max(1);
 	}
 
 	fn get_bank_number(&self) -> u8 {
 		self.bank
 	}
 
-	fn get_bank(&self, bank: u8) -> &[u8; 0x1000] {
-		match bank {
+	fn get_low_bank(&self) -> &[u8; BANK_SIZE] {
+		&self.bank_0
+	}
+
+	fn get_low_bank_mut(&mut self) -> &mut [u8; BANK_SIZE] {
+		&mut self.bank_0
+	}
+
+	fn get_high_bank(&self) -> &[u8; BANK_SIZE] {
+		match self.get_bank_number() {
 			0 => &self.bank_0,
 			1 => &self.bank_1,
 			2 => &self.bank_2,
@@ -148,8 +181,8 @@ impl BankedWorkRam for WorkRamDataCGB {
 		}
 	}
 
-	fn get_bank_mut(&mut self, bank: u8) -> &mut [u8; 0x1000] {
-		match bank {
+	fn get_high_bank_mut(&mut self) -> &mut [u8; BANK_SIZE] {
+		match self.get_bank_number() {
 			0 => &mut self.bank_0,
 			1 => &mut self.bank_1,
 			2 => &mut self.bank_2,

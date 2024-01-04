@@ -1,4 +1,4 @@
-use crate::cpu::flags::{C, Z};
+use sm83::flags::cpu::{C, Z};
 
 use super::util::instruction_timing::expect_instr_timing;
 
@@ -20,7 +20,7 @@ fn individual_instruction_timing() {
 	expect_instr_timing("DEC C", &[13], 1, 1, 0);
 	expect_instr_timing("LD C,u8", &[14], 1, 2, 0);
 	expect_instr_timing("RRCA", &[15], 1, 1, 0);
-	expect_instr_timing("STOP", &[16], 1, 1, 0);
+	expect_instr_timing("STOP", &[16], 1, 2, 0);
 	expect_instr_timing("LD DE,u16", &[17], 1, 3, 0);
 	expect_instr_timing("LD (DE),A", &[18], 1, 2, 0);
 	expect_instr_timing("INC DE", &[19], 1, 2, 0);

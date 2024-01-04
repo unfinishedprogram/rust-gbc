@@ -7,14 +7,6 @@ pub const BIT_5: u8 = 0b00100000;
 pub const BIT_6: u8 = 0b01000000;
 pub const BIT_7: u8 = 0b10000000;
 
-#[inline(always)]
-pub fn bit(bit: u8) -> u8 {
-	match bit {
-		0..8 => 1 << bit,
-		_ => unreachable!("bit must be in the range 0..8"),
-	}
-}
-
 pub fn interleave(a: u8, b: u8) -> u16 {
 	let a = a as u16;
 	let b = b as u16;

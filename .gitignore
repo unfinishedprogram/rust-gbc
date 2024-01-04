@@ -4,3 +4,4 @@
 *.log
 /dist
 /roms/test/gambatte
+/test_data

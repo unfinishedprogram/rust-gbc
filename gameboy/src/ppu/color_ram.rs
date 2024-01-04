@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::util::bits::BIT_7;
+use crate::{lcd::Color, util::bits::BIT_7};
 
-type Color = (u8, u8, u8, u8);
 /// Handles reading and writing of color pallette data for CGB mode
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ColorRamController {
@@ -62,7 +61,7 @@ impl ColorRamController {
 		}
 	}
 
-	pub fn update_color(&mut self, index: usize) {
+	fn update_color(&mut self, index: usize) {
 		let color = self.data[index];
 
 		let r = color & 0b11111;

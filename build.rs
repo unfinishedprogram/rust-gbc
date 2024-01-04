@@ -5,11 +5,11 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum Entry {
-	File(String, String),
-	Dir(String, Vec<Entry>),
+	File { path: String },
+	Dir { path: String, entries: Vec<Entry> },
 }
 
 fn compare_dir_entry(a: &DirEntry, b: &DirEntry) -> Ordering {
@@ -31,12 +31,14 @@ fn recursive_dir_parse(root: &str) -> Result<Entry, Error> {
 			let entries = recursive_dir_parse(file.path().to_str().unwrap())?;
 			dir_listing.push(entries);
 		} else {
-			let name = file.file_name().into_string().unwrap();
 			let path = file.path().to_string_lossy().into_owned();
-			dir_listing.push(Entry::File(name, path));
+			dir_listing.push(Entry::File { path });
 		}
 	}
-	Ok(Entry::Dir(root.into(), dir_listing))
+	Ok(Entry::Dir {
+		path: root.into(),
+		entries: dir_listing,
+	})
 }
 
 fn main() -> Result<(), Error> {

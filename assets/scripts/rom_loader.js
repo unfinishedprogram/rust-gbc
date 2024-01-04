@@ -1,4 +1,4 @@
-import * as wasm from "/gbc-emu.js"
+import * as wasm from "/application.js"
 
 
 async function get_available_roms() {

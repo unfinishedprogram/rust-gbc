@@ -10,7 +10,7 @@ pub struct CGBState {
 	wram_bank: usize,
 	vram_bank: VRAMBank,
 	speed: Speed,
-	prepare_speed_switch: bool,
+	pub prepare_speed_switch: bool,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize, Default, Debug)]
@@ -43,11 +43,7 @@ impl Default for CGBState {
 
 impl CGBState {
 	pub fn set_vram_bank(&mut self, bank: u8) {
-		self.vram_bank = if (bank) & 1 == 1 {
-			VRAMBank::Bank1
-		} else {
-			VRAMBank::Bank0
-		};
+		self.vram_bank = VRAMBank::from(bank)
 	}
 
 	pub fn get_vram_bank(&self) -> VRAMBank {
@@ -69,9 +65,13 @@ impl CGBState {
 		switch_bit | speed_bit
 	}
 
-	pub fn perform_speed_switch(&mut self) {
+	pub fn perform_speed_switch(&mut self) -> bool {
 		if self.prepare_speed_switch {
 			self.speed = !self.speed;
+			self.prepare_speed_switch = false;
+			true
+		} else {
+			false
 		}
 	}
 

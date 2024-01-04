@@ -1,46 +1,46 @@
 use serde::{Deserialize, Serialize};
+use sm83::memory_mapper::MemoryMapper;
 
-use crate::ppu::PPU;
+use crate::Gameboy;
 
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct OamDmaState {
-	oam_accessible: bool,
-	cycles_remaining: u32,
 	start_delay: u32,
-	dma_request: Option<Vec<u8>>,
+	dma_cycle: u16,
+	dma_active: bool,
+	dma_addr: u16,
 }
 
-const OAM_DMA_DURATION: u32 = 159;
-
-impl OamDmaState {
-	pub fn step(&mut self, m_cycles: u32, ppu: &mut PPU) {
-		if self.start_delay != 0 {
-			self.start_delay = self.start_delay.saturating_sub(m_cycles);
+pub fn step_oam_dma(gb: &mut Gameboy) {
+	if gb.oam_dma.start_delay > 0 {
+		gb.oam_dma.start_delay = gb.oam_dma.start_delay.saturating_sub(1);
+		if gb.oam_dma.start_delay == 0 {
+			gb.oam_dma.dma_active = true;
+			gb.oam_dma.dma_cycle = 0;
 		}
+	} else if gb.oam_dma.dma_active && gb.oam_dma.dma_cycle < 160 {
+		let val = gb.read(gb.oam_dma.dma_addr + gb.oam_dma.dma_cycle);
+		gb.ppu.oam[gb.oam_dma.dma_cycle as usize] = val;
+		gb.oam_dma.dma_cycle += 1;
 
-		if self.cycles_remaining == 0 {
-			self.oam_accessible = true;
-		} else {
-			self.cycles_remaining = self.cycles_remaining.saturating_sub(m_cycles);
-		}
-
-		if self.start_delay == 0 {
-			if let Some(data) = self.dma_request.take() {
-				for (i, data) in data.iter().enumerate() {
-					ppu.oam[i] = *data;
-				}
-				self.cycles_remaining = OAM_DMA_DURATION;
-				self.oam_accessible = false;
-			}
+		if gb.oam_dma.dma_cycle == 160 {
+			gb.oam_dma.dma_active = false;
 		}
 	}
+}
 
-	pub fn start_oam_dma(&mut self, data: Vec<u8>) {
-		self.dma_request = Some(data);
+impl OamDmaState {
+	pub fn start_oam_dma(&mut self, value: u8) {
+		log::warn!("OAM DMA REQUEST");
+
+		let value = if value > 0xDF { value - 0x20 } else { value };
+		let real_addr = (value as u16) << 8;
+
+		self.dma_addr = real_addr;
 		self.start_delay = 2;
 	}
 
 	pub fn oam_is_accessible(&self) -> bool {
-		self.oam_accessible
+		!self.dma_active
 	}
 }
