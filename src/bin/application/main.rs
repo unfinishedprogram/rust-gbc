@@ -35,6 +35,7 @@ fn main() {
 	wasm_logger::init(wasm_logger::Config::default());
 	console_error_panic_hook::set_once();
 	tracing_wasm::set_as_global_default();
+	log::set_max_level(log::LevelFilter::Error);
 	setup_listeners();
 	APPLICATION.with_borrow_mut(|app| {
 		app.load_rom(include_bytes!("../../../roms/games/BirdDemo.gbc"), None);
