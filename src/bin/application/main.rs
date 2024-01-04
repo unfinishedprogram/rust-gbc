@@ -37,10 +37,7 @@ fn main() {
 	tracing_wasm::set_as_global_default();
 	setup_listeners();
 	APPLICATION.with_borrow_mut(|app| {
-		app.load_rom(
-			include_bytes!("../../../test_data/blargg/cpu_instrs/individual/04-op r,imm.gb"),
-			None,
-		);
+		app.load_rom(include_bytes!("../../../roms/games/BirdDemo.gbc"), None);
 		app.start();
 	});
 }
