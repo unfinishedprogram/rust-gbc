@@ -3,7 +3,6 @@ use std::str::from_utf8;
 use egui::style::Spacing;
 use egui::{Rgba, Style, Ui, Vec2};
 use egui_extras::{Column, TableBuilder};
-use gameboy::work_ram::BankedWorkRam;
 use gameboy::Gameboy;
 use sm83::memory_mapper::MemoryMapper;
 use sm83::registers::{Addressable, CPURegister16};
