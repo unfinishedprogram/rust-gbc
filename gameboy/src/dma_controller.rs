@@ -4,21 +4,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::util::bits::BIT_7;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct TransferRequest {
 	pub from: u16,
 	pub to: u16,
-	pub bytes: u16,
-}
-
-impl Debug for TransferRequest {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(
-			f,
-			"{:X} -> {:X}, size:{:X}",
-			&self.from, &self.to, &self.bytes
-		)
-	}
+	pub rows: u16,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -78,35 +68,37 @@ impl DMAController {
 	}
 
 	pub fn write_hdma5(&mut self, value: u8) -> Option<TransferRequest> {
-		log::info!("Wrote to HDMA");
+		log::info!("Wrote to HDMA: {value:04X}");
 
-		if self.hdma5 != 0xFF {
-			if value & BIT_7 == BIT_7 {
-				// Pause HDMA
-				self.hdma5 = value | 0x80;
-			} else {
-				// Restart HDMA
-				self.hdma5 = value | 0xF7;
-			}
-			return None;
-		}
+		let transfer_active = self.hdma5 & BIT_7 == 0;
 
 		// HDMA Active
-		if self.hdma5 & BIT_7 == 0 {
-			self.hdma5 |= 0x80;
-			log::info!("transfer paused");
-		} else {
-			let bytes = (((value & 0x7F) as u16) + 1) * 0x10;
-			self.hdma5 = 0xFF;
+		if transfer_active {
+			if value & BIT_7 == 0 {
+				// Terminate HDMA
+				log::info!("Write to HDMA caused pause");
+				self.hdma5 |= 0x80;
+				return None;
+			}
+		}
+
+		if value & BIT_7 == 0 {
+			let rows = ((value & 0x7F) as u16) + 1;
 			let req = Some(TransferRequest {
 				from: self.get_source(),
 				to: self.get_destination(),
-				bytes,
+				rows,
 			});
 
-			self.source += bytes;
-			self.destination += bytes;
+			self.hdma5 = 0xFF;
+			self.source += rows * 16;
+			self.destination += rows * 16;
+
 			return req;
+		} else {
+			let rows = value & 0x7F;
+			self.hdma5 = rows;
+			log::info!("HBlank DMA Transfer Requested");
 		}
 		None
 	}
@@ -115,7 +107,7 @@ impl DMAController {
 	pub fn step(&mut self) -> Option<TransferRequest> {
 		if self.hdma5 & BIT_7 == 0 {
 			log::info!(
-				"Src:{:X}, Dest:{:X}, HDMA5:{:X}",
+				"STEPPING DMA Src:{:X}, Dest:{:X}, HDMA5:{:X}",
 				self.get_source(),
 				self.get_destination(),
 				self.read_hdma5()
@@ -124,7 +116,7 @@ impl DMAController {
 			let request = TransferRequest {
 				from: self.get_source(),
 				to: self.get_destination(),
-				bytes: 0x10,
+				rows: 1,
 			};
 
 			self.source += 0x10;

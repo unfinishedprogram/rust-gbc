@@ -145,17 +145,26 @@ impl Gameboy {
 
 	pub fn handle_transfer(&mut self, request: TransferRequest) {
 		log::info!("[{:X}]:{request:?}", self.t_states / 4);
-		let TransferRequest { from, to, bytes } = request;
-		for i in 0..bytes {
-			self.write(to + i, self.read(from + i));
-		}
+		let TransferRequest { from, to, rows } = request;
 
-		let speed_div = match self.mode.get_speed() {
-			Speed::Normal => 2,
-			Speed::Double => 1,
+		let mut src = from;
+		let mut dest = to;
+
+		let speed_mul = match self.mode.get_speed() {
+			Speed::Normal => 1,
+			Speed::Double => 2,
 		};
 
-		self.tick_m_cycles(bytes as u32 / speed_div);
+		for _ in 0..rows {
+			for j in 0..16 {
+				self.write(dest + j, self.read(src + j));
+				if j & 1 == 1 {
+					self.tick_m_cycles(speed_mul);
+				}
+			}
+			src += 16;
+			dest += 16;
+		}
 	}
 
 	fn tick_t_states(&mut self, t_states: u32) {
