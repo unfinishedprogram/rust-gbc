@@ -45,9 +45,9 @@ pub const LY: u16 = 0xFF44;
 pub const LYC: u16 = 0xFF45;
 pub const DMA: u16 = 0xFF46;
 
-pub const BGP: u16 = 0xFF47; // Background Pallette data non CGB mode only
-pub const OBP0: u16 = 0xFF48; // Object Palette 0 Data data non CGB mode only
-pub const OBP1: u16 = 0xFF49; // Object Palette 1 Data data non CGB mode only
+pub const BGP: u16 = 0xFF47; // Background Pallette data DMG mode only
+pub const OBP0: u16 = 0xFF48; // Object Palette 0 Data data DMG mode only
+pub const OBP1: u16 = 0xFF49; // Object Palette 1 Data data DMG mode only
 
 pub const WY: u16 = 0xFF4A;
 pub const WX: u16 = 0xFF4B;

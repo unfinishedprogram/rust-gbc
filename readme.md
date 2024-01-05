@@ -17,7 +17,7 @@ Ordered by sales numbers from [Wikipedia](https://en.wikipedia.org/wiki/List_of_
 |   | Game                                                      | Notes |
 |--:|-----------------------------------------------------------|-------|
 | ❓ | Pokémon Red / Green / Blue / Yellow                       |       |
-| ❓ | Tetris                                                    |       |
+| ✅ | Tetris                                                    |       |
 | ❓ | Pokémon Gold / Silver / Crystal                           |       |
 | ❓ | Super Mario Land                                          |       |
 | ❓ | Super Mario Land 2: 6 Golden Coins                        |       |

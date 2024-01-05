@@ -1,4 +1,5 @@
 mod color_ram;
+pub mod dmg_palette;
 mod lcdc;
 pub mod renderer;
 mod sprite;
@@ -12,7 +13,8 @@ use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 
 use self::{
-	color_ram::ColorRamController, lcdc::Lcdc, renderer::Pixel, sprite::Sprite, stat::Stat,
+	color_ram::ColorRamController, dmg_palette::DMGPalette, lcdc::Lcdc, renderer::Pixel,
+	sprite::Sprite, stat::Stat,
 };
 
 #[derive(Clone, Copy, Serialize, Deserialize, Default)]
@@ -95,6 +97,7 @@ pub struct PPU {
 	pub obj_color: ColorRamController,
 
 	pub frame: u64,
+	pub dmg_pallette: DMGPalette,
 
 	stat_irq: bool,
 	fetcher_mode: FetcherMode,
@@ -279,6 +282,7 @@ impl Default for PPU {
 			fifo_pixel: 0,
 			fifo_bg: VecDeque::with_capacity(16),
 			fifo_obj: VecDeque::with_capacity(16),
+			dmg_pallette: Default::default(),
 		}
 	}
 }

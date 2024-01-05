@@ -185,6 +185,10 @@ impl Gameboy {
 
 	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
 		if let Ok(cart) = Cartridge::try_new(rom, source) {
+			match cart.2.cgb {
+				true => self.set_gb_mode(Mode::GBC(CGBState::default())),
+				false => self.set_gb_mode(Mode::DMG),
+			}
 			self.cartridge_state = Some(cart);
 		}
 	}

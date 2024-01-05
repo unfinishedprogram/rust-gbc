@@ -37,7 +37,17 @@ impl TileAttributes {
 	}
 
 	#[inline]
-	pub fn palette_number(self) -> u8 {
+	pub fn cgb_palette(self) -> u8 {
 		self.byte & 0b111
+	}
+
+	#[inline]
+	pub fn dmg_palette(self) -> u8 {
+		(self.byte & BIT_4) >> 3
+	}
+
+	#[inline]
+	pub fn byte(self) -> u8 {
+		self.byte
 	}
 }

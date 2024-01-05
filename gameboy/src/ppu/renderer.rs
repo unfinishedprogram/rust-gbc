@@ -60,6 +60,40 @@ pub trait PixelFIFO {
 	fn draw_sprite(&mut self, sprite: Sprite);
 }
 
+impl PPU {
+	// Returns the background color assigned to a given pixel
+	// In CGB mode, this means accessing color ram
+	// In DMG mode, this means accessing the background pallette
+	fn bg_color(&self, pixel: Pixel) -> (u8, u8, u8, u8) {
+		// Bottom two bits of BGP represent the color_id
+		let color_id = (self.registers.bgp >> (pixel.color * 2)) & 0b11;
+
+		match self.gb_mode {
+			GBMode::CGB => self.bg_color.color_of(pixel),
+			GBMode::DMG => self.dmg_pallette.color_of(color_id),
+		}
+	}
+
+	// Returns the foreground color assigned to a given pixel
+	// In CGB mode, this means accessing color ram
+	// In DMG mode, this means accessing the background pallette
+	fn obj_color(&self, pixel: Pixel) -> (u8, u8, u8, u8) {
+		match self.gb_mode {
+			GBMode::CGB => self.obj_color.color_of(pixel),
+			GBMode::DMG => {
+				let palette = match pixel.palette & 1 {
+					0 => self.registers.obp0,
+					1 => self.registers.obp1,
+					_ => unreachable!(),
+				};
+				let color_id = (palette >> (pixel.color * 2)) & 0b11;
+
+				self.dmg_pallette.color_of(color_id)
+			}
+		}
+	}
+}
+
 impl PixelFIFO for PPU {
 	/// Pushes OBJ Pixels onto the fifo.
 	///
@@ -243,13 +277,13 @@ impl PixelFIFO for PPU {
 			let bg_over = bg_over && self.registers.lcdc.bg_enabled();
 			let bg_over = bg_over || fg.color == 0;
 			let pixel = if bg_over {
-				self.bg_color.color_of(bg)
+				self.bg_color(bg)
 			} else {
-				self.obj_color.color_of(fg)
+				self.obj_color(fg)
 			};
 			self.lcd.put_pixel(x, y, pixel);
 		} else {
-			self.lcd.put_pixel(x, y, self.bg_color.color_of(bg));
+			self.lcd.put_pixel(x, y, self.bg_color(bg));
 		};
 	}
 
@@ -267,11 +301,16 @@ impl PixelFIFO for PPU {
 
 				let horizontal_flip = attributes.horizontal_flip();
 
+				let palette_number = match self.gb_mode {
+					GBMode::DMG => attributes.dmg_palette(),
+					GBMode::CGB => attributes.cgb_palette(),
+				};
+
 				(
 					row,
 					horizontal_flip,
 					attributes.bg_priority(),
-					attributes.palette_number(),
+					palette_number,
 					attributes.v_ram_bank(),
 				)
 			} else {
