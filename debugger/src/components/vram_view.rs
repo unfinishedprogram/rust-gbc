@@ -1,9 +1,6 @@
 use egui::{Color32, ColorImage, ComboBox, Image, TextureHandle, TextureOptions, Ui, Vec2};
 use gameboy::{
-	ppu::{
-		renderer::PixelFIFO,
-		tile_data::{TileAttributes, TileData},
-	},
+	ppu::{renderer::PixelFIFO, tile_data::TileData},
 	Gameboy,
 };
 
@@ -68,7 +65,7 @@ impl VramView {
 		}
 	}
 
-	fn draw_info(ui: &mut Ui, gameboy: &Gameboy) {
+	fn draw_info(ui: &mut Ui, _gameboy: &Gameboy) {
 		ui.vertical(|ui| {
 			ui.label("Info Goes Here");
 		});

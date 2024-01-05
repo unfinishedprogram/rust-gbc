@@ -11,15 +11,25 @@ use gameboy::Gameboy;
 pub struct Debugger {
 	gameboy: Gameboy,
 	screen: Screen,
-	// breakpoint_manager: BreakpointManager,
 	run_controller: RunController,
-	linear_memory_view: LinearMemoryView,
-	memory_view: MemoryView,
 	rom_loader: RomLoader,
-	memory_image: MemoryImage,
-	checkpoint_manager: CheckpointManager,
 	joypad: JoypadInput,
+
+	// Debugging Windows
+	checkpoint_manager: CheckpointManager,
+	checkpoint_manager_enabled: bool,
+
+	memory_image: MemoryImage,
+	memory_image_enabled: bool,
+
 	vram_view: VramView,
+	vram_view_enabled: bool,
+
+	memory_view: MemoryView,
+	memory_view_enabled: bool,
+
+	linear_memory_view: LinearMemoryView,
+	linear_memory_view_enabled: bool,
 }
 
 impl Debugger {
@@ -77,7 +87,13 @@ impl eframe::App for Debugger {
 					}
 				}
 
-				self.rom_loader.draw(ui, &mut self.gameboy)
+				self.rom_loader.draw(ui, &mut self.gameboy);
+
+				ui.checkbox(&mut self.checkpoint_manager_enabled, "Checkpoint Manager");
+				ui.checkbox(&mut self.memory_image_enabled, "Memory Image");
+				ui.checkbox(&mut self.vram_view_enabled, "Vram View");
+				ui.checkbox(&mut self.memory_view_enabled, "Memory View");
+				ui.checkbox(&mut self.linear_memory_view_enabled, "Instruction View");
 			});
 		});
 
@@ -87,14 +103,27 @@ impl eframe::App for Debugger {
 
 		CentralPanel::default().show(ctx, |ui| self.screen.draw(ui, screen_buffer));
 
-		Window::new("Instructions").show(ctx, |ui| self.linear_memory_view.draw(&self.gameboy, ui));
-		Window::new("Memory").show(ctx, |ui| self.memory_view.draw(&self.gameboy, ui));
-		Window::new("MemImage").show(ctx, |ui| self.memory_image.draw(&self.gameboy, ui));
-		Window::new("VramView").show(ctx, |ui| self.vram_view.draw(&self.gameboy, ui));
+		if self.linear_memory_view_enabled {
+			Window::new("Instructions")
+				.show(ctx, |ui| self.linear_memory_view.draw(&self.gameboy, ui));
+		}
 
-		Window::new("Checkpoints").show(ctx, |ui| {
-			self.checkpoint_manager.draw(&mut self.gameboy, ui)
-		});
+		if self.memory_view_enabled {
+			Window::new("Memory").show(ctx, |ui| self.memory_view.draw(&self.gameboy, ui));
+		}
+		if self.memory_image_enabled {
+			Window::new("MemImage").show(ctx, |ui| self.memory_image.draw(&self.gameboy, ui));
+		}
+
+		if self.vram_view_enabled {
+			Window::new("VramView").show(ctx, |ui| self.vram_view.draw(&self.gameboy, ui));
+		}
+
+		if self.checkpoint_manager_enabled {
+			Window::new("Checkpoints").show(ctx, |ui| {
+				self.checkpoint_manager.draw(&mut self.gameboy, ui)
+			});
+		}
 
 		ctx.request_repaint();
 	}
