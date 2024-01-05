@@ -6,7 +6,7 @@ use crate::{
 	io_registers::JOYP,
 	lcd::Color,
 	oam_dma::{step_oam_dma, OamDmaState},
-	ppu::VRAMBank,
+	ppu::{self, VRAMBank},
 	util::BigArray,
 	work_ram::{BankedWorkRam, WorkRam, WorkRamDataCGB, WorkRamDataDMG},
 };
@@ -66,7 +66,7 @@ impl Default for Gameboy {
 	fn default() -> Self {
 		let mut cpu_state = CPUState::default();
 
-		let mut emulator = Self {
+		let mut emulator: Gameboy = Self {
 			dma_controller: DMAController::default(),
 			color_scheme_dmg: (
 				(0xFF, 0xFF, 0xFF, 0xFF),
@@ -232,6 +232,12 @@ impl Gameboy {
 			Mode::GBC(_) => WorkRam::Cgb(Box::<WorkRamDataCGB>::default()),
 			Mode::DMG => WorkRam::Dmg(Box::<WorkRamDataDMG>::default()),
 		};
+
+		self.ppu.gb_mode = match mode {
+			Mode::GBC(_) => ppu::GBMode::CGB,
+			Mode::DMG => ppu::GBMode::DMG,
+		};
+
 		self.mode = mode;
 	}
 

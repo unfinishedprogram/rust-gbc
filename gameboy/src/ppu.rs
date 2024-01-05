@@ -22,6 +22,13 @@ pub enum FetcherMode {
 	Window,
 }
 
+#[derive(Clone, Copy, Serialize, Deserialize, Default)]
+pub enum GBMode {
+	#[default]
+	DMG,
+	CGB,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum PPUMode {
 	HBlank = 0,
@@ -64,6 +71,7 @@ pub struct Registers {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct PPU {
+	pub gb_mode: GBMode,
 	pub cycle: u64,
 	ran_cycles: u64,
 	last_frame: u64,
@@ -250,6 +258,7 @@ impl PPU {
 impl Default for PPU {
 	fn default() -> Self {
 		Self {
+			gb_mode: Default::default(),
 			stat_irq: false,
 			last_frame: 0,
 			ran_cycles: 0,

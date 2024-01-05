@@ -5,7 +5,7 @@ use crate::util::bits::*;
 use super::{
 	sprite::Sprite,
 	tile_data::{TileAttributes, TileData},
-	FetcherMode, VRAMBank, PPU,
+	FetcherMode, GBMode, VRAMBank, PPU,
 };
 
 #[derive(Clone, Serialize, Deserialize, Default, Copy)]
@@ -329,13 +329,16 @@ impl PixelFIFO for PPU {
 		let data_addr = self.v_ram_bank_0[tile_index as usize];
 
 		// Tile attributes come from second v-ram bank in CGB mode
-		let attributes = self.v_ram_bank_1[tile_index as usize];
+		let attributes = match self.gb_mode {
+			GBMode::DMG => None,
+			GBMode::CGB => Some(TileAttributes::new(self.v_ram_bank_1[tile_index as usize])),
+		};
 
 		let index = match self.registers.lcdc.addressing_mode() {
 			AddressingMode::Signed => 16 * data_addr as i32,
 			AddressingMode::Unsigned => 0x1000 + 16 * (data_addr as i8) as i32,
 		} as u16;
 
-		TileData(index, Some(TileAttributes::new(attributes)))
+		TileData(index, attributes)
 	}
 }
