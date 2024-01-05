@@ -30,10 +30,6 @@ pub struct Lcdc {
 }
 
 impl Lcdc {
-	pub fn display_enabled(&self) -> bool {
-		self.flags.contains(Flags::DISPLAY_ENABLE)
-	}
-
 	pub fn read(&self) -> u8 {
 		self.flags.bits
 	}
@@ -79,5 +75,9 @@ impl Lcdc {
 
 	pub fn bg_enabled(&self) -> bool {
 		self.flags.contains(Flags::BG_DISPLAY_ENABLE)
+	}
+
+	pub fn display_enabled(&self) -> bool {
+		self.flags.contains(Flags::DISPLAY_ENABLE)
 	}
 }

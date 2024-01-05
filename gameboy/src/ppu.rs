@@ -6,7 +6,11 @@ mod sprite;
 mod stat;
 pub mod tile_data;
 
-use crate::{lcd::GameboyLCD, ppu::renderer::PixelFIFO, util::BigArray};
+use crate::{
+	lcd::GameboyLCD,
+	ppu::renderer::PixelFIFO,
+	util::{bits::BIT_7, BigArray},
+};
 use sm83::Interrupt;
 use std::collections::VecDeque;
 
@@ -31,7 +35,7 @@ pub enum GBMode {
 	CGB,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub enum PPUMode {
 	HBlank = 0,
 	VBlank = 1,
@@ -99,6 +103,8 @@ pub struct PPU {
 	pub frame: u64,
 	pub dmg_pallette: DMGPalette,
 
+	mode: PPUMode,
+
 	stat_irq: bool,
 	fetcher_mode: FetcherMode,
 	current_pixel: u8,
@@ -114,11 +120,18 @@ pub struct PPU {
 
 impl PPU {
 	pub fn write_lcdc(&mut self, value: u8, interrupt_register: &mut u8) {
-		if !self.is_enabled() {
-			self.disable_display(interrupt_register);
+		if value & BIT_7 == 0 && self.is_enabled() {
+			self.set_ly(0, interrupt_register);
 		}
+
+		if value & BIT_7 != 0 && !self.is_enabled() {
+			self.current_pixel = 0;
+			self.set_mode(PPUMode::HBlank, interrupt_register);
+			self.registers.stat.set_lyc_eq_ly(true);
+			self.update_lyc(interrupt_register)
+		}
+
 		self.registers.lcdc.write(value);
-		self.update_lyc(interrupt_register)
 	}
 
 	pub fn read_lcdc(&self) -> u8 {
@@ -126,10 +139,6 @@ impl PPU {
 	}
 
 	pub fn update_lyc(&mut self, interrupt_register: &mut u8) {
-		if !self.is_enabled() {
-			return;
-		}
-
 		self.registers
 			.stat
 			.set_lyc_eq_ly(self.registers.ly == self.registers.lyc);
@@ -138,7 +147,10 @@ impl PPU {
 	}
 
 	pub fn update_stat_irq(&mut self, interrupt_register: &mut u8) {
-		let mode_int = self.registers.stat.int_enable(self.mode());
+		let mode_int = self.registers.stat.int_enable(self.mode);
+		let mode_int =
+			mode_int || (self.registers.stat.int_enable(PPUMode::OamScan) && self.get_ly() == 144);
+
 		let lyc_int = self.registers.stat.lyc_eq_ly() && self.registers.stat.lyc_eq_ly_ie();
 		let new_value = mode_int || lyc_int;
 
@@ -151,7 +163,7 @@ impl PPU {
 	}
 
 	pub fn mode(&self) -> PPUMode {
-		self.registers.stat.ppu_mode()
+		self.mode
 	}
 
 	pub fn get_ly(&self) -> u8 {
@@ -167,9 +179,21 @@ impl PPU {
 		self.update_lyc(interrupt_register);
 	}
 
-	pub fn write_stat(&mut self, value: u8, interrupt_register: &mut u8) {
-		self.registers.stat.write(value);
-		self.update_stat_irq(interrupt_register)
+	pub fn write_stat(&mut self, value: u8, _interrupt_register: &mut u8) {
+		let new_stat = Stat::from_bits_truncate(value);
+		self.registers.stat = (self.registers.stat & Stat::LYC_EQ_LY)
+			| (new_stat & Stat::H_BLANK_IE)
+			| (new_stat & Stat::V_BLANK_IE)
+			| (new_stat & Stat::OAM_IE)
+			| (new_stat & Stat::LYC_EQ_LY_IE);
+	}
+
+	pub fn read_stat(&self) -> u8 {
+		if !self.is_enabled() {
+			Stat::UNUSED.bits()
+		} else {
+			self.mode as u8 | self.registers.stat.bits() | Stat::UNUSED.bits()
+		}
 	}
 
 	pub fn set_ly(&mut self, value: u8, interrupt_register: &mut u8) {
@@ -178,7 +202,7 @@ impl PPU {
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) -> Option<PPUMode> {
-		self.registers.stat.set_ppu_mode(mode);
+		self.mode = mode;
 
 		// Don't trigger any interrupts if the screen is disabled
 		if !self.is_enabled() {
@@ -193,12 +217,6 @@ impl PPU {
 		Some(mode)
 	}
 
-	fn disable_display(&mut self, interrupt_register: &mut u8) {
-		self.set_ly(0, interrupt_register);
-		self.current_pixel = 0;
-		self.set_mode(PPUMode::HBlank, interrupt_register);
-	}
-
 	pub fn step_ppu(&mut self, interrupt_register: &mut u8) -> Option<PPUMode> {
 		if !self.is_enabled() {
 			return None;
@@ -210,7 +228,7 @@ impl PPU {
 			return None;
 		}
 
-		match self.mode() {
+		match self.mode {
 			PPUMode::HBlank => {
 				self.set_ly(self.get_ly() + 1, interrupt_register);
 				if self.get_ly() < 144 {
@@ -270,6 +288,7 @@ impl Default for PPU {
 			v_ram_bank_1: [0; 0x2000],
 			oam: [0; 0xA0],
 			cycle: 0,
+			mode: PPUMode::OamScan,
 			lcd: Default::default(),
 			registers: Registers::default(),
 			bg_color: Default::default(),
