@@ -38,7 +38,7 @@ fn main() {
 	log::set_max_level(log::LevelFilter::Error);
 	setup_listeners();
 	APPLICATION.with_borrow_mut(|app| {
-		app.load_rom(include_bytes!("../../../roms/games/BirdDemo.gbc"), None);
+		app.load_rom(include_bytes!("../../../roms/demo/BirdDemo.gbc"), None);
 		app.start();
 	});
 }
