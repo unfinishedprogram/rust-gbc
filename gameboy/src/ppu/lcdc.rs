@@ -59,10 +59,12 @@ impl Lcdc {
 	}
 
 	pub fn tile_map_offset(&self, mode: FetcherMode) -> u16 {
-		if self.flags.contains(match mode {
+		let flag = match mode {
 			FetcherMode::Window => Flags::WINDOW_TILE_MAP_DISPLAY_SELECT,
 			FetcherMode::Background => Flags::BG_TILE_MAP_DISPLAY_SELECT,
-		}) {
+		};
+
+		if self.flags.contains(flag) {
 			0x1C00
 		} else {
 			0x1800
