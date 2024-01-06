@@ -180,11 +180,17 @@ impl VramView {
 					ui.selectable_value(&mut self.vram_bank, SelectedBank::Bank1, "Bank 1");
 				});
 
-			ui.label("Background Palettes");
-			VramView::draw_color_palettes(ui, gameboy, true);
+			ui.horizontal(|ui| {
+				ui.vertical(|ui| {
+					ui.label("Background Palettes");
+					VramView::draw_color_palettes(ui, gameboy, true);
+				});
+				ui.vertical(|ui| {
+					ui.label("OBJ Palettes");
+					VramView::draw_color_palettes(ui, gameboy, false);
+				});
+			});
 
-			ui.label("OBJ Palettes");
-			VramView::draw_color_palettes(ui, gameboy, false);
 			ui.separator();
 
 			// Tile Data
