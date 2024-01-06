@@ -132,6 +132,42 @@ impl VramView {
 		VramView::render_win_bg_map(&mut self.win_map, gameboy, FetcherMode::Window);
 	}
 
+	fn draw_color_palettes(ui: &mut Ui, gameboy: &Gameboy, bg: bool) {
+		const SCALE: f32 = 10.0;
+
+		let color_ram = if bg {
+			&gameboy.ppu.bg_color
+		} else {
+			&gameboy.ppu.obj_color
+		};
+
+		let draw_palette = |palette: u8, ui: &mut Ui| {
+			let mut img_data: [u8; 16] = [255; 16];
+
+			for color in 0..4 {
+				let (r, g, b, a) = color_ram.get_color(palette, color);
+				img_data[color as usize * 4 + 0] = r;
+				img_data[color as usize * 4 + 1] = g;
+				img_data[color as usize * 4 + 2] = b;
+				img_data[color as usize * 4 + 3] = a;
+			}
+
+			let img = ColorImage::from_rgba_premultiplied([4, 1], &img_data);
+
+			let texture = ui.ctx().load_texture(
+				&format!("palette_{}", palette),
+				img,
+				TextureOptions::NEAREST,
+			);
+
+			ui.image(texture.id(), [4.0 * SCALE, 1.0 * SCALE]);
+		};
+
+		for palette in 0..8 {
+			draw_palette(palette, ui);
+		}
+	}
+
 	pub fn draw(&mut self, gameboy: &Gameboy, ui: &mut Ui) {
 		self.render_images(gameboy);
 
@@ -144,6 +180,11 @@ impl VramView {
 					ui.selectable_value(&mut self.vram_bank, SelectedBank::Bank1, "Bank 1");
 				});
 
+			ui.label("Background Palettes");
+			VramView::draw_color_palettes(ui, gameboy, true);
+
+			ui.label("OBJ Palettes");
+			VramView::draw_color_palettes(ui, gameboy, false);
 			ui.separator();
 
 			// Tile Data

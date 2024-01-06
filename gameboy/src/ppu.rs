@@ -97,8 +97,8 @@ pub struct PPU {
 
 	pub registers: Registers,
 
-	pub(crate) bg_color: ColorRamController,
-	pub(crate) obj_color: ColorRamController,
+	pub bg_color: ColorRamController,
+	pub obj_color: ColorRamController,
 
 	pub frame: u64,
 	pub dmg_pallette: DMGPalette,
