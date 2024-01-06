@@ -25,6 +25,40 @@ impl TileImage {
 			image: ColorImage::new(size, color),
 		}
 	}
+
+	// x, y position is in tiles, not pixels
+	fn draw_tile_data(&mut self, gb: &Gameboy, tile_data: TileData, x: u16, y: u16) {
+		let img_width: usize = self.image.width();
+
+		for row in 0..8 {
+			let tile_row = gb.ppu.get_tile_row(tile_data, row, 40);
+			for pixel_index in 0..8 {
+				let pixel = tile_row[pixel_index];
+				let color = gb.ppu.bg_color(pixel);
+				let color = Color32::from_rgba_premultiplied(color.0, color.1, color.2, color.3);
+				let x = x * 8 + pixel_index as u16;
+				let y = y * 8 + row as u16;
+				self.image.pixels[y as usize * img_width + x as usize] = color;
+			}
+		}
+	}
+
+	fn draw(&mut self, ui: &mut Ui) {
+		let texture = self.texture.get_or_insert_with(|| {
+			ui.ctx()
+				.load_texture(self.name, self.image.clone(), TextureOptions::NEAREST)
+		});
+
+		texture.set(self.image.clone(), TextureOptions::NEAREST);
+
+		ui.vertical(|ui| {
+			ui.label(self.name);
+			ui.add(Image::new(
+				texture.id(),
+				Vec2::new(self.image.width() as f32, self.image.height() as f32).mul(2.0),
+			));
+		});
+	}
 }
 
 #[derive(Default, Debug, PartialEq)]
@@ -59,8 +93,6 @@ impl Default for VramView {
 
 impl VramView {
 	fn render_win_bg_map(img_out: &mut TileImage, gb: &Gameboy, mode: FetcherMode) {
-		let get_tile_row = |tile_data, row| gb.ppu.get_tile_row(tile_data, row, 40);
-
 		let addr_offset = gb.ppu.registers.lcdc.tile_map_offset(mode);
 
 		for y in 0..32 {
@@ -75,62 +107,22 @@ impl VramView {
 					AddressingMode::Unsigned => 0x1000 + 16 * (index_byte as i8) as i32,
 				} as u16;
 
-				for row in 0..8 {
-					let tile_data = TileData(index, Some(attributes));
-					let tile_row = get_tile_row(tile_data, row);
-					for pixel_index in 0..8 {
-						let pixel = tile_row[pixel_index];
-						let color = gb.ppu.bg_color(pixel);
-						let color =
-							Color32::from_rgba_premultiplied(color.0, color.1, color.2, color.3);
-						let x = x * 8 + pixel_index as u16;
-						let y = y * 8 + row as u16;
-						img_out.image.pixels[y as usize * 256 + x as usize] = color;
-					}
-				}
+				let tile_data = TileData(index, Some(attributes));
+				img_out.draw_tile_data(gb, tile_data, x, y);
 			}
 		}
 	}
 
 	fn render_tile_map(img_out: &mut TileImage, gb: &Gameboy, bank: u8) {
-		let get_tile_row = |tile_data, row| gb.ppu.get_tile_row(tile_data, row, 40);
-
 		for y in 0..24 {
 			for x in 0..16 {
 				let index = x + y * 16;
 				let tile_index = index * 16;
-				for row in 0..8 {
-					let tile_data = TileData(tile_index, Some(TileAttributes::new(bank << 3)));
-					let tile_row = get_tile_row(tile_data, row);
-					for pixel_index in 0..8 {
-						let pixel = tile_row[pixel_index];
-						let color = gb.ppu.bg_color(pixel);
-						let color =
-							Color32::from_rgba_premultiplied(color.0, color.1, color.2, color.3);
-						let x = x * 8 + pixel_index as u16;
-						let y = y * 8 + row as u16;
-						img_out.image.pixels[y as usize * 128 + x as usize] = color;
-					}
-				}
+				let tile_data = TileData(tile_index, Some(TileAttributes::new(bank << 3)));
+
+				img_out.draw_tile_data(gb, tile_data, x, y);
 			}
 		}
-	}
-
-	fn draw_tile_image(ui: &mut Ui, img: &mut TileImage) {
-		let texture = img.texture.get_or_insert_with(|| {
-			ui.ctx()
-				.load_texture(img.name, img.image.clone(), TextureOptions::NEAREST)
-		});
-
-		texture.set(img.image.clone(), TextureOptions::NEAREST);
-
-		ui.vertical(|ui| {
-			ui.label(img.name);
-			ui.add(Image::new(
-				texture.id(),
-				Vec2::new(img.image.width() as f32, img.image.height() as f32).mul(2.0),
-			));
-		});
 	}
 
 	fn render_images(&mut self, gameboy: &Gameboy) {
@@ -156,14 +148,14 @@ impl VramView {
 
 			// Tile Data
 			ui.horizontal(|ui| {
-				VramView::draw_tile_image(ui, &mut self.tiles_bank_0);
-				VramView::draw_tile_image(ui, &mut self.tiles_bank_1);
+				self.tiles_bank_0.draw(ui);
+				self.tiles_bank_1.draw(ui);
 			});
 
 			// BG/Window TileMaps
 			ui.horizontal(|ui| {
-				VramView::draw_tile_image(ui, &mut self.bg_map);
-				VramView::draw_tile_image(ui, &mut self.win_map);
+				self.bg_map.draw(ui);
+				self.win_map.draw(ui);
 			});
 		});
 	}

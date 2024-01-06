@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::VRAMBank;
 use crate::util::bits::*;
 
+#[derive(Clone, Copy)]
 pub struct TileData(pub u16, pub Option<TileAttributes>);
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
