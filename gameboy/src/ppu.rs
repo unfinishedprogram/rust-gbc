@@ -97,8 +97,8 @@ pub struct PPU {
 
 	pub registers: Registers,
 
-	pub bg_color: ColorRamController,
-	pub obj_color: ColorRamController,
+	pub(crate) bg_color: ColorRamController,
+	pub(crate) obj_color: ColorRamController,
 
 	pub frame: u64,
 	pub dmg_pallette: DMGPalette,
@@ -264,8 +264,6 @@ impl PPU {
 			PPUMode::Draw => {
 				self.step_fifo();
 				if self.current_pixel == 160 {
-					self.current_pixel = 0;
-					self.current_tile = 0;
 					self.cycle += 204;
 					self.set_mode(PPUMode::HBlank, interrupt_register)
 				} else {

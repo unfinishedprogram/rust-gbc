@@ -64,7 +64,7 @@ impl PPU {
 	// Returns the background color assigned to a given pixel
 	// In CGB mode, this means accessing color ram
 	// In DMG mode, this means accessing the background pallette
-	fn bg_color(&self, pixel: Pixel) -> (u8, u8, u8, u8) {
+	pub fn bg_color(&self, pixel: Pixel) -> (u8, u8, u8, u8) {
 		// Bottom two bits of BGP represent the color_id
 		let color_id = (self.registers.bgp >> (pixel.color * 2)) & 0b11;
 
@@ -77,7 +77,7 @@ impl PPU {
 	// Returns the foreground color assigned to a given pixel
 	// In CGB mode, this means accessing color ram
 	// In DMG mode, this means accessing the background pallette
-	fn obj_color(&self, pixel: Pixel) -> (u8, u8, u8, u8) {
+	pub fn obj_color(&self, pixel: Pixel) -> (u8, u8, u8, u8) {
 		match self.gb_mode {
 			GBMode::CGB => self.obj_color.color_of(pixel),
 			GBMode::DMG => {
@@ -178,6 +178,7 @@ impl PixelFIFO for PPU {
 	/// resets the fetcher mode to fetch background tiles
 	fn start_scanline(&mut self) {
 		self.fetcher_mode = FetcherMode::Background;
+		self.current_pixel = 0;
 		self.fifo_bg.clear();
 		self.current_tile = self.registers.scx / 8;
 		self.sprites = self.fetch_scanline_sprites();
