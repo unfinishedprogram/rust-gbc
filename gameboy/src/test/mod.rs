@@ -5,3 +5,4 @@ mod blarggs;
 mod gambatte;
 mod instr_timing;
 mod mooneye;
+mod same_suite;

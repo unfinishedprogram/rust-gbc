@@ -4,17 +4,8 @@ use test_generator::test_resources;
 use super::util::{rom_loader::init_emulator_with_rom_dmg, success_code::test_fib_success_code};
 use crate::test::util::rom_loader::init_emulator_with_rom_cgb;
 
-#[test_resources("../test_data/mooneye-test-suite/**/*.gb")]
-fn mooneye_test(rom: &str) {
-	if rom.contains("mgb")
-		|| rom.contains("sgb")
-		|| rom.contains("sgb2")
-		|| rom.contains("agb")
-		|| rom.contains("ags")
-	{
-		return;
-	}
-
+#[test_resources("../test_data/same-suite/**/*.gb")]
+fn same_suite_test(rom: &str) {
 	let mut state = if rom.contains("dmg") {
 		init_emulator_with_rom_dmg(rom)
 	} else {
