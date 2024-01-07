@@ -218,6 +218,10 @@ impl PPU {
 	}
 
 	pub fn step_ppu(&mut self, interrupt_register: &mut u8) -> Option<PPUMode> {
+		const V_BLANK_LINE_CYCLES: u64 = 455;
+		const OAM_SCAN_CYCLES: u64 = 79;
+		const H_BLANK_CYCLES: u64 = 204;
+
 		if !self.is_enabled() {
 			return None;
 		}
@@ -232,22 +236,22 @@ impl PPU {
 			PPUMode::HBlank => {
 				self.set_ly(self.get_ly() + 1, interrupt_register);
 				if self.get_ly() < 144 {
-					self.cycle += 79;
+					self.cycle += OAM_SCAN_CYCLES;
 					self.set_mode(PPUMode::OamScan, interrupt_register)
 				} else {
-					self.cycle += 455;
+					self.cycle += V_BLANK_LINE_CYCLES;
 					self.window_line = 255;
 					self.set_mode(PPUMode::VBlank, interrupt_register)
 				}
 			}
 			PPUMode::VBlank => {
 				if self.get_ly() < 153 {
-					self.cycle += 455;
+					self.cycle += V_BLANK_LINE_CYCLES;
 					self.set_ly(self.get_ly() + 1, interrupt_register);
 					None
 				} else {
 					self.set_ly(0, interrupt_register);
-					self.cycle += 79;
+					self.cycle += OAM_SCAN_CYCLES;
 
 					self.frame += 1;
 					self.lcd.swap_buffers();
@@ -264,7 +268,7 @@ impl PPU {
 			PPUMode::Draw => {
 				self.step_fifo();
 				if self.current_pixel == 160 {
-					self.cycle += 204;
+					self.cycle += H_BLANK_CYCLES;
 					self.set_mode(PPUMode::HBlank, interrupt_register)
 				} else {
 					None

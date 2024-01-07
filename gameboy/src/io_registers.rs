@@ -166,7 +166,10 @@ impl IORegisters for Gameboy {
 			HDMA2 => 0xFF,
 			HDMA3 => 0xFF,
 			HDMA4 => 0xFF,
-			HDMA5 => self.dma_controller.read_hdma5(),
+			HDMA5 => match self.mode {
+				Mode::DMG => 0xFF,
+				Mode::GBC(_) => self.dma_controller.read_hdma5(),
+			},
 
 			SVBK => {
 				if let Mode::GBC(_) = &self.mode {
