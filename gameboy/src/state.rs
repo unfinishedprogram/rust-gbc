@@ -119,26 +119,30 @@ impl Gameboy {
 		}
 	}
 
+	// Steps a single cycle
 	pub fn step(&mut self) -> Option<Instruction> {
 		if self.speed_switch_delay > 0 {
 			self.tick_m_cycles(1);
-			return None;
+			None
+		} else {
+			self.step_cpu()
 		}
-		self.step_cpu()
 	}
 
 	pub fn tick_m_cycles(&mut self, m_cycles: u32) {
 		for _ in 0..m_cycles {
 			self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
-			step_oam_dma(self);
 
-			let t_states = match self.mode.get_speed() {
-				Speed::Normal => 4,
-				Speed::Double => 2,
+			let t_states: u32 = match (self.mode.get_speed(), self.speed_switch_delay) {
+				(Speed::Double, 0) => 2,
+				(Speed::Normal, _) => 4,
+				(_, _) => 4,
 			};
 
 			self.tick_t_states(t_states);
+			step_oam_dma(self);
 
+			// Only step the timer if we aren't in a speed switch
 			if self.speed_switch_delay == 0 {
 				self.timer.step(&mut self.cpu_state.interrupt_request);
 			}
@@ -173,8 +177,11 @@ impl Gameboy {
 		for _ in 0..t_states {
 			let mode = self.ppu.step_ppu(&mut self.cpu_state.interrupt_request);
 			if let Some(PPUMode::HBlank) = mode {
-				if let Some(request) = self.dma_controller.step() {
-					self.handle_transfer(request)
+				// HDMA is not processed during speed switch
+				if !self.speed_switch_delay > 0 {
+					if let Some(request) = self.dma_controller.step() {
+						self.handle_transfer(request)
+					}
 				}
 			}
 		}
@@ -321,7 +328,7 @@ impl SM83 for Gameboy {
 				false
 			};
 			if switched {
-				self.speed_switch_delay = (128 * 1024 - 76) / 4;
+				self.speed_switch_delay = 128 * 1024 / 4;
 			}
 		} else {
 			if !interrupt_pending {
