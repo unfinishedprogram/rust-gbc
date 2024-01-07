@@ -263,9 +263,9 @@ impl IORegisters for Gameboy {
 				if let Mode::GBC(_) = &mut self.mode {
 					match addr {
 						BGPI => self.ppu.bg_color.write_spec(value),
-						BGPD => self.ppu.bg_color.write_data(value),
+						BGPD => self.ppu.bg_color.write_data(value, self.ppu.mode()),
 						OBPI => self.ppu.obj_color.write_spec(value),
-						OBPD => self.ppu.obj_color.write_data(value),
+						OBPD => self.ppu.obj_color.write_data(value, self.ppu.mode()),
 						_ => unreachable!("{addr}"),
 					}
 				}

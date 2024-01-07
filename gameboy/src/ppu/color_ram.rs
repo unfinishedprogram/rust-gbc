@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{lcd::Color, util::bits::BIT_7};
 
-use super::renderer::Pixel;
+use super::{renderer::Pixel, PPUMode};
 
 /// Handles reading and writing of color pallette data for CGB mode
 #[derive(Clone, Serialize, Deserialize)]
@@ -27,7 +27,7 @@ impl Default for ColorRamController {
 impl ColorRamController {
 	pub fn write_spec(&mut self, value: u8) {
 		self.increment = value & BIT_7 == BIT_7;
-		self.index = value as usize & 0b00111111;
+		self.index = value as usize % 64;
 	}
 
 	pub fn read_spec(&self) -> u8 {
@@ -46,17 +46,22 @@ impl ColorRamController {
 		}
 	}
 
-	pub fn write_data(&mut self, value: u8) {
-		let cur = &mut self.data[self.index / 2];
+	pub fn write_data(&mut self, value: u8, ppu_mode: PPUMode) {
+		// Writes to color ram data are blocked during mode 3
+		if !matches!(ppu_mode, PPUMode::Draw) {
+			let cur = &mut self.data[self.index >> 1];
 
-		match self.index & 1 {
-			0 => *cur = (*cur & 0xFF00) | (value as u16),
-			1 => *cur = (*cur & 0x00FF) | ((value as u16) << 8),
-			_ => unreachable!(),
+			match self.index & 1 {
+				0 => *cur = (*cur & 0xFF00) | (value as u16),
+				1 => *cur = (*cur & 0x00FF) | ((value as u16) << 8),
+				_ => unreachable!(),
+			}
+
+			self.update_color(self.index >> 1);
 		}
-		self.update_color(self.index / 2);
 
 		// Only increment on writes, not reads
+		// This increment happens regardless of the current PPU mode
 		if self.increment {
 			self.index += 1;
 			self.index &= 0b00111111;
