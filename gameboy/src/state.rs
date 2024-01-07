@@ -41,6 +41,7 @@ impl Mode {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Gameboy {
+	debug_break: bool,
 	pub mode: Mode,
 	pub cpu_state: CPUState,
 	pub ppu: PPU,
@@ -67,6 +68,7 @@ impl Default for Gameboy {
 		let mut cpu_state = CPUState::default();
 
 		let mut emulator: Gameboy = Self {
+			debug_break: false,
 			dma_controller: DMAController::default(),
 			color_scheme_dmg: (
 				(0xFF, 0xFF, 0xFF, 0xFF),
@@ -254,6 +256,18 @@ impl Gameboy {
 			Mode::DMG => VRAMBank::Bank0,
 			Mode::GBC(state) => state.get_vram_bank(),
 		}
+	}
+
+	pub fn debug_break(&mut self) {
+		self.debug_break = true;
+	}
+
+	pub fn consume_debug_break(&mut self) -> bool {
+		if self.debug_break {
+			self.debug_break = false;
+			return true;
+		}
+		return false;
 	}
 }
 

@@ -19,5 +19,8 @@ mod util;
 pub mod work_ram;
 pub use state::{Gameboy, Mode};
 
+// Re-export the sm83 crate for debugging
+pub use sm83;
+
 #[cfg(test)]
 pub mod test;
