@@ -104,7 +104,9 @@ fn ppu_info(gb: &Gameboy, ui: &mut Ui) {
 	let oam = gb.oam_dma.oam_is_accessible();
 
 	ui.monospace(format!("Mode: {:?}", ppu.mode()));
-	ui.monospace(format!("LY: {:?}", ppu.get_ly()));
+	ui.monospace(format!("LY : {:?}", ppu.get_ly()));
+	ui.monospace(format!("LYC: {:?}", ppu.registers.lyc));
+	ui.monospace(format!("STAT: {:08b}", ppu.read_stat()));
 	ui.monospace(format!("LCDC: {:08b}", ppu.read_lcdc()));
 	ui.monospace(bool!("Enabled: {}", ppu.is_enabled()));
 	ui.monospace(bool!("OAM Dma: {}", !oam));

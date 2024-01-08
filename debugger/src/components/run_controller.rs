@@ -19,7 +19,7 @@ pub enum RunningState {
 
 #[derive(Default)]
 pub struct RunController {
-	state: RunningState,
+	pub state: RunningState,
 	cycles_per_frame: u64,
 }
 

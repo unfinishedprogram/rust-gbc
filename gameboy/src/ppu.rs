@@ -127,8 +127,6 @@ impl PPU {
 		if value & BIT_7 != 0 && !self.is_enabled() {
 			self.current_pixel = 0;
 			self.set_mode(PPUMode::HBlank, interrupt_register);
-			self.registers.stat.set_lyc_eq_ly(true);
-			self.update_lyc(interrupt_register)
 		}
 
 		self.registers.lcdc.write(value);
