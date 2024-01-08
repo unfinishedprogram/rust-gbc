@@ -1,9 +1,4 @@
-use std::{cell::RefCell, collections::HashSet, rc::Rc};
-
-use gloo::{
-	events::EventListener,
-	utils::{document_element, window},
-};
+use gloo::utils::window;
 use wasm_bindgen::JsCast;
 use web_sys::Gamepad;
 
