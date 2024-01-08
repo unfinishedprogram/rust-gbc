@@ -1,5 +1,5 @@
 import * as wasm from "/application.js"
-import { configure_keybindings } from "./controller_input.mjs";
+import { configure_keybindings } from "./controller_input.js";
 
 console.log(wasm);
 
