@@ -184,3 +184,10 @@ main[data-menu-open] {
 	top: 0;
 	left: 0;
 }
+
+#keybinding_dialog {
+	background-color: black;
+	border: 1px solid white;
+	border-radius: 0.25rem;
+	box-shadow: 0px 0.5rem 1rem rgba(0, 0, 0, 0.5);
+}

@@ -12,6 +12,7 @@
 	<script type="module" src="assets/scripts/menu.js"></script>
 	<script type="module" src="assets/scripts/rom_loader.js"></script>
 	<script type="module" src="assets/scripts/collapsable.js"></script>
+	<script type="module" src="assets/scripts/controller_input.mjs"></script>
 
 	<link rel="stylesheet" href="assets/style/collapsible.css">
 
@@ -22,6 +23,51 @@
 
 <body>
 	<span id="fps"></span>
+	<dialog id="keybinding_dialog">
+		<form method="dialog">
+			<table>
+				<tbody>
+					<tr class="a">
+						<td><button id="a">A</button></td>
+						<td class="current"></td>
+					</tr>
+					<tr class="b">
+						<td><button id="b">B</button></td>
+						<td class="current"></td>
+					</tr>
+					<tr class="start">
+						<td><button id="start">Start</button></td>
+						<td class="current"></td>
+					</tr>
+					<tr class="select">
+						<td><button id="select">Select</button></td>
+						<td class="current"></td>
+					</tr>
+					<tr class="up">
+						<td><button id="up">Up</button></td>
+						<td class="current"></td>
+					</tr>
+					<tr class="down">
+						<td><button id="down">Down</button></td>
+						<td class="current"></td>
+					</tr>
+					<tr class="left">
+						<td><button id="left">Left</button></td>
+						<td class="current"></td>
+					</tr>
+					<tr class="right">
+						<td><button id="right">Right</button></td>
+						<td class="current"></td>
+					</tr>
+				</tbody>
+			</table>
+			<div>
+				<button id="cancel" type="reset"
+					onclick='document.getElementById("keybinding_dialog").close()'>Cancel</button>
+				<button type="submit">Apply</button>
+			</div>
+		</form>
+	</dialog>
 	<main id="main">
 		<canvas width="160" height="144" id="screen"></canvas>
 

@@ -1,5 +1,5 @@
 import * as wasm from "/application.js"
-
+import { configure_keybindings } from "./controller_input.mjs";
 
 console.log(wasm);
 
@@ -34,9 +34,11 @@ load.innerText = "Load";
 load.onclick = () => wasm.load_save_state(0);
 menu_content.appendChild(load);
 
-let save_states = {
 
-}
+let edit_keybindings = document.createElement("button");
+edit_keybindings.innerText = "Edit Keybindings";
+edit_keybindings.onclick = () => configure_keybindings();
+menu_content.appendChild(edit_keybindings);
 
 menu_toggle.addEventListener("click", () => {
     menu.toggle_open();

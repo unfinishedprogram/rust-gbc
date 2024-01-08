@@ -10,15 +10,7 @@ use web_sys::Gamepad;
 use gameboy::joypad::JoypadState;
 
 #[derive(Default)]
-struct InputStateInner {
-	keys: HashSet<String>,
-}
-
-pub struct InputState {
-	inner: Rc<RefCell<InputStateInner>>,
-	_key_down: EventListener,
-	_key_up: EventListener,
-}
+pub struct InputState {}
 
 impl InputState {
 	fn get_gamepad(&self) -> Option<Gamepad> {
@@ -32,20 +24,7 @@ impl InputState {
 	}
 
 	pub fn get_controller_state(&self) -> JoypadState {
-		let mut state = {
-			let keys = &self.inner.borrow().keys;
-			JoypadState {
-				a: keys.contains("z"),
-				b: keys.contains("x"),
-				select: keys.contains("Tab"),
-				start: keys.contains("Enter"),
-				right: keys.contains("ArrowRight"),
-				left: keys.contains("ArrowLeft"),
-				up: keys.contains("ArrowUp"),
-				down: keys.contains("ArrowDown"),
-			}
-		};
-
+		let mut state = JoypadState::default();
 		if let Some(dom) = window().get("controller_state") {
 			if let Some(json) = dom.as_string() {
 				if let Ok(dom_state) = serde_json::from_str::<JoypadState>(&json) {
@@ -59,34 +38,6 @@ impl InputState {
 		}
 
 		state
-	}
-}
-
-impl Default for InputState {
-	fn default() -> Self {
-		let inner = Rc::new(RefCell::new(InputStateInner::default()));
-
-		let key_down = {
-			let inner = inner.clone();
-			EventListener::new(&document_element(), "keydown", move |e| {
-				let event = e.dyn_ref::<web_sys::KeyboardEvent>().unwrap();
-				inner.borrow_mut().keys.insert(event.key());
-			})
-		};
-
-		let key_up = {
-			let inner = inner.clone();
-			EventListener::new(&document_element(), "keyup", move |e| {
-				let event = e.dyn_ref::<web_sys::KeyboardEvent>().unwrap();
-				inner.borrow_mut().keys.remove(&event.key());
-			})
-		};
-
-		Self {
-			_key_down: key_down,
-			_key_up: key_up,
-			inner,
-		}
 	}
 }
 
