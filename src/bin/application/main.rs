@@ -37,8 +37,5 @@ fn main() {
 	tracing_wasm::set_as_global_default();
 	log::set_max_level(log::LevelFilter::Error);
 	setup_listeners();
-	APPLICATION.with_borrow_mut(|app| {
-		app.load_rom(include_bytes!("../../../roms/demo/BirdDemo.gbc"), None);
-		app.start();
-	});
+	APPLICATION.with_borrow_mut(|app| app.start());
 }

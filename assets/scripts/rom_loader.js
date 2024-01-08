@@ -5,7 +5,7 @@ async function get_available_roms() {
     const res = await fetch("./roms.json");
     const json = await res.json();
     const dirs = json.dir.entries;
-    const games = dirs.filter(({dir}) => dir.path == "roms/games")[0].dir.entries;
+    const games = dirs.filter(({ dir }) => dir.path == "roms/games")[0].dir.entries;
 
     console.log(games);
     return games.map(game => {
@@ -32,3 +32,13 @@ get_available_roms().then(roms => {
         ...roms.map(make_rom_button)
     )
 })
+
+function load_rom_if_in_query_params() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const rom = urlParams.get('rom');
+    if (rom) {
+        load_rom({ name: rom, path: rom });
+    }
+}
+
+load_rom_if_in_query_params();
