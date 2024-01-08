@@ -3,7 +3,7 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::{cartridge::memory_bank_controller::Cartridge, Gameboy};
-use chrono::NaiveDateTime;
+use std::time::SystemTime;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum RomSource {
@@ -20,7 +20,7 @@ pub struct SaveState {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SaveStateEntry {
-	pub date: NaiveDateTime,
+	pub date: SystemTime,
 	pub game_title: String,
 }
 
@@ -52,7 +52,7 @@ impl TryFrom<&Gameboy> for SaveState {
 			.ok_or(SaveError::InvalidGame)?;
 
 		let game_title = info.title.clone();
-		let date = chrono::offset::Utc::now().naive_utc();
+		let date = std::time::SystemTime::now();
 
 		Ok(Self {
 			rom_source: info.rom_source.clone(),
@@ -64,11 +64,6 @@ impl TryFrom<&Gameboy> for SaveState {
 
 impl Display for SaveStateEntry {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(
-			f,
-			"[{}] : {}",
-			self.date.format("%Y-%m-%d %H:%M"),
-			self.game_title
-		)
+		write!(f, "[{:?}] : {}", self.date, self.game_title)
 	}
 }

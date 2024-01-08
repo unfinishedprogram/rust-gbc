@@ -4,12 +4,31 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.65.0"
 
+[profile.test]
+opt-level = 3
+
+[profile.dev]
+opt-level = 3
+
+[build-dependencies]
+serde = { version = "1.0.150", features = ["derive"] }
+serde_json = "1.0.89"
+
+[workspace]
+members = ["gameboy", "sm83", "debugger"]
+
+[profile.release]
+lto = true
+opt-level = "s"
+panic = "abort"
+debug = true
+
+
 [dependencies]
 gameboy = { path = "gameboy" }
 gb-debug = { path = "debugger" }
 log = "0.4.17"
 serde = { version = "1.0.150", features = ["derive"] }
-chrono = { version = "0.4.23", features = ["serde"] }
 gloo = "0.8.0"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3.64", features = [
@@ -170,16 +189,4 @@ lazy_static = "1.4.0"
 tracing-wasm = "0.2.1"
 console_error_panic_hook = "0.1.7"
 wasm-logger = "0.2.0"
-
-[profile.test]
-opt-level = 3
-
-[profile.dev]
-opt-level = 3
-
-[build-dependencies]
-serde = { version = "1.0.150", features = ["derive"] }
-serde_json = "1.0.89"
-
-[workspace]
-members = ["gameboy", "sm83", "debugger"]
+wee_alloc = "0.4.5"
