@@ -73,13 +73,11 @@ impl DMAController {
 		let transfer_active = self.hdma5 & BIT_7 == 0;
 
 		// HDMA Active
-		if transfer_active {
-			if value & BIT_7 == 0 {
-				// Terminate HDMA
-				log::info!("Write to HDMA caused pause");
-				self.hdma5 |= 0x80;
-				return None;
-			}
+		if transfer_active && value & BIT_7 == 0 {
+			// Terminate HDMA
+			log::info!("Write to HDMA caused pause");
+			self.hdma5 |= 0x80;
+			return None;
 		}
 
 		if value & BIT_7 == 0 {

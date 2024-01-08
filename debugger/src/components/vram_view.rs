@@ -32,10 +32,9 @@ impl TileImage {
 
 		for row in 0..8 {
 			let tile_row = gb.ppu.get_tile_row(tile_data, row, 40);
-			for pixel_index in 0..8 {
-				let pixel = tile_row[pixel_index];
-				let color = gb.ppu.bg_color(pixel);
-				let color = Color32::from_rgba_premultiplied(color.0, color.1, color.2, color.3);
+			for (pixel_index, pixel) in tile_row.into_iter().enumerate() {
+				let (r, g, b, a) = gb.ppu.bg_color(pixel);
+				let color = Color32::from_rgba_premultiplied(r, g, b, a);
 				let x = x * 8 + pixel_index as u16;
 				let y = y * 8 + row as u16;
 				self.image.pixels[y as usize * img_width + x as usize] = color;
@@ -146,19 +145,14 @@ impl VramView {
 
 			for color in 0..4 {
 				let (r, g, b, a) = color_ram.get_color(palette, color);
-				img_data[color as usize * 4 + 0] = r;
-				img_data[color as usize * 4 + 1] = g;
-				img_data[color as usize * 4 + 2] = b;
-				img_data[color as usize * 4 + 3] = a;
+				img_data[color as usize..(color as usize + 4)].copy_from_slice(&[r, g, b, a]);
 			}
 
 			let img = ColorImage::from_rgba_premultiplied([4, 1], &img_data);
 
-			let texture = ui.ctx().load_texture(
-				&format!("palette_{}", palette),
-				img,
-				TextureOptions::NEAREST,
-			);
+			let texture =
+				ui.ctx()
+					.load_texture(format!("palette_{palette}"), img, TextureOptions::NEAREST);
 
 			ui.image(texture.id(), [4.0 * SCALE, 1.0 * SCALE]);
 		};

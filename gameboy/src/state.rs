@@ -274,7 +274,7 @@ impl Gameboy {
 			self.debug_break = false;
 			return true;
 		}
-		return false;
+		false
 	}
 }
 
