@@ -2,9 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
 	cgb::{CGBState, Speed},
-	dma_controller::{DMAController, TransferRequest},
+	dma_controller::{DMAController, DMATransferRequest},
 	io_registers::JOYP,
-	lcd::Color,
 	oam_dma::{step_oam_dma, OamDmaState},
 	ppu::{self, VRAMBank},
 	util::BigArray,
@@ -59,7 +58,6 @@ pub struct Gameboy {
 	pub dma_controller: DMAController,
 	pub oam_dma: OamDmaState,
 	pub t_states: u64,
-	pub color_scheme_dmg: (Color, Color, Color, Color),
 	pub speed_switch_delay: u32,
 }
 
@@ -70,12 +68,6 @@ impl Default for Gameboy {
 		let mut emulator: Gameboy = Self {
 			debug_break: false,
 			dma_controller: DMAController::default(),
-			color_scheme_dmg: (
-				(0xFF, 0xFF, 0xFF, 0xFF),
-				(0xAA, 0xAA, 0xAA, 0xFF),
-				(0x55, 0x55, 0x55, 0xFF),
-				(0x00, 0x00, 0x00, 0xFF),
-			),
 			oam_dma: Default::default(),
 			cpu_state: CPUState::default(),
 			ppu: PPU::default(),
@@ -149,9 +141,9 @@ impl Gameboy {
 		}
 	}
 
-	pub fn handle_transfer(&mut self, request: TransferRequest) {
+	pub fn handle_dma_transfer(&mut self, request: DMATransferRequest) {
 		log::info!("[{:X}]:{request:?}", self.t_states / 4);
-		let TransferRequest { from, to, rows } = request;
+		let DMATransferRequest { from, to, rows } = request;
 
 		let mut src = from;
 		let mut dest = to;
@@ -180,7 +172,7 @@ impl Gameboy {
 				// HDMA is not processed during speed switch
 				if !self.speed_switch_delay > 0 {
 					if let Some(request) = self.dma_controller.step() {
-						self.handle_transfer(request)
+						self.handle_dma_transfer(request)
 					}
 				}
 			}

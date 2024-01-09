@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::util::bits::BIT_7;
 
 #[derive(Clone, Copy, Debug)]
-pub struct TransferRequest {
+pub struct DMATransferRequest {
 	pub from: u16,
 	pub to: u16,
 	pub rows: u16,
@@ -67,7 +67,7 @@ impl DMAController {
 		self.destination
 	}
 
-	pub fn write_hdma5(&mut self, value: u8) -> Option<TransferRequest> {
+	pub fn write_hdma5(&mut self, value: u8) -> Option<DMATransferRequest> {
 		log::info!("Wrote to HDMA: {value:04X}");
 
 		let transfer_active = self.hdma5 & BIT_7 == 0;
@@ -82,7 +82,7 @@ impl DMAController {
 
 		if value & BIT_7 == 0 {
 			let rows = ((value & 0x7F) as u16) + 1;
-			let req = Some(TransferRequest {
+			let req = Some(DMATransferRequest {
 				from: self.get_source(),
 				to: self.get_destination(),
 				rows,
@@ -102,7 +102,7 @@ impl DMAController {
 	}
 
 	// Each step might return a transfer, this transfer must be performed by the caller
-	pub fn step(&mut self) -> Option<TransferRequest> {
+	pub fn step(&mut self) -> Option<DMATransferRequest> {
 		if self.hdma5 & BIT_7 == 0 {
 			log::info!(
 				"STEPPING DMA Src:{:X}, Dest:{:X}, HDMA5:{:X}",
@@ -111,7 +111,7 @@ impl DMAController {
 				self.read_hdma5()
 			);
 
-			let request = TransferRequest {
+			let request = DMATransferRequest {
 				from: self.get_source(),
 				to: self.get_destination(),
 				rows: 1,
