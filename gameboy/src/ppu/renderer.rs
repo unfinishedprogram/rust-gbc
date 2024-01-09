@@ -169,6 +169,8 @@ impl PixelFIFO for PPU {
 		self.fetcher_mode = FetcherMode::Window;
 		self.current_tile = 0;
 		self.window_line = self.window_line.wrapping_add(1);
+		// 6 dot penalty when transitioning fetching mode
+		self.cycle += 6;
 		self.populate_bg_fifo();
 	}
 
@@ -232,6 +234,14 @@ impl PixelFIFO for PPU {
 		let local_y = local_y & 7;
 
 		let data = TileData(tile_addr, Some(attributes));
+
+		if sprite.x == 0 {
+			self.cycle += 11;
+		} else {
+			// TODO: Implement full OBJ penalty algorithm
+			self.cycle += 6;
+		}
+
 		self.push_sprite_pixels(self.get_tile_row(data, local_y, sprite.addr));
 	}
 

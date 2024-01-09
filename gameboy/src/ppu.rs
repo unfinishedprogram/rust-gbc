@@ -262,7 +262,6 @@ impl PPU {
 			PPUMode::OamScan => {
 				self.cycle += 11;
 				self.start_scanline();
-				// Apply scx penalty
 				self.set_mode(PPUMode::Draw, interrupt_register)
 			}
 			PPUMode::Draw => {
