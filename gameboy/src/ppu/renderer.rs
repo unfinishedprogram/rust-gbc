@@ -187,6 +187,7 @@ impl PixelFIFO for PPU {
 		self.populate_bg_fifo();
 		for _ in 0..self.registers.scx % 8 {
 			self.fifo_bg.pop_front();
+			self.cycle += 1;
 		}
 
 		for i in 0..8 {

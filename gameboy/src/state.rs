@@ -167,7 +167,7 @@ impl Gameboy {
 
 	fn tick_t_states(&mut self, t_states: u32) {
 		for _ in 0..t_states {
-			let mode = self.ppu.step_ppu(&mut self.cpu_state.interrupt_request);
+			let mode = self.ppu.step(&mut self.cpu_state.interrupt_request);
 			if let Some(PPUMode::HBlank) = mode {
 				// HDMA is not processed during speed switch
 				if !self.speed_switch_delay > 0 {

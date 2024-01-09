@@ -81,6 +81,7 @@ pub struct PPU {
 	pub cycle: u64,
 	ran_cycles: u64,
 	last_frame: u64,
+	scanline_cycle_start: u64,
 
 	#[serde(with = "BigArray")]
 	pub v_ram_bank_0: [u8; 0x2000],
@@ -202,7 +203,7 @@ impl PPU {
 	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) -> Option<PPUMode> {
 		self.mode = mode;
 
-		// Don't trigger any interrupts if the screen is disabled
+		// Don't trigger any interrupts or HDMA transfers if the screen is disabled
 		if !self.is_enabled() {
 			return None;
 		}
@@ -215,17 +216,16 @@ impl PPU {
 		Some(mode)
 	}
 
-	pub fn step_ppu(&mut self, interrupt_register: &mut u8) -> Option<PPUMode> {
-		const V_BLANK_LINE_CYCLES: u64 = 455;
+	pub fn step(&mut self, interrupt_register: &mut u8) -> Option<PPUMode> {
+		const SCANLINE_CYCLES: u64 = 455;
 		const OAM_SCAN_CYCLES: u64 = 79;
-		const H_BLANK_CYCLES: u64 = 204;
 
 		if !self.is_enabled() {
 			return None;
 		}
 
 		self.ran_cycles += 1;
-		if self.cycle != 0 {
+		if self.cycle > 0 {
 			self.cycle -= 1;
 			return None;
 		}
@@ -235,16 +235,17 @@ impl PPU {
 				self.set_ly(self.get_ly() + 1, interrupt_register);
 				if self.get_ly() < 144 {
 					self.cycle += OAM_SCAN_CYCLES;
+					self.scanline_cycle_start = self.ran_cycles;
 					self.set_mode(PPUMode::OamScan, interrupt_register)
 				} else {
-					self.cycle += V_BLANK_LINE_CYCLES;
+					self.cycle += SCANLINE_CYCLES;
 					self.window_line = 255;
 					self.set_mode(PPUMode::VBlank, interrupt_register)
 				}
 			}
 			PPUMode::VBlank => {
 				if self.get_ly() < 153 {
-					self.cycle += V_BLANK_LINE_CYCLES;
+					self.cycle += SCANLINE_CYCLES;
 					self.set_ly(self.get_ly() + 1, interrupt_register);
 					None
 				} else {
@@ -254,19 +255,23 @@ impl PPU {
 					self.frame += 1;
 					self.lcd.swap_buffers();
 					self.last_frame = self.ran_cycles;
-
+					self.scanline_cycle_start = self.ran_cycles;
 					self.set_mode(PPUMode::OamScan, interrupt_register)
 				}
 			}
 			PPUMode::OamScan => {
 				self.cycle += 11;
 				self.start_scanline();
+				// Apply scx penalty
 				self.set_mode(PPUMode::Draw, interrupt_register)
 			}
 			PPUMode::Draw => {
 				self.step_fifo();
 				if self.current_pixel == 160 {
-					self.cycle += H_BLANK_CYCLES;
+					// HBlank duration varies based on how long OAM and Draw modes took
+					let ran_cycles = self.ran_cycles - self.scanline_cycle_start;
+					let remaining = SCANLINE_CYCLES - ran_cycles;
+					self.cycle += remaining;
 					self.set_mode(PPUMode::HBlank, interrupt_register)
 				} else {
 					None
@@ -302,6 +307,7 @@ impl Default for PPU {
 			fifo_bg: VecDeque::with_capacity(16),
 			fifo_obj: VecDeque::with_capacity(16),
 			dmg_pallette: Default::default(),
+			scanline_cycle_start: 0,
 		}
 	}
 }
