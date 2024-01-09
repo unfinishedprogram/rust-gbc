@@ -143,7 +143,17 @@ impl Gameboy {
 
 	pub fn handle_dma_transfer(&mut self, request: DMATransferRequest) {
 		log::info!("[{:X}]:{request:?}", self.t_states / 4);
-		let DMATransferRequest { from, to, rows } = request;
+		let DMATransferRequest {
+			from,
+			to,
+			rows,
+			gdma,
+		} = request;
+
+		// Preparation time, same in both speeds
+		if gdma {
+			self.tick_t_states(2);
+		}
 
 		let mut src = from;
 		let mut dest = to;

@@ -6,6 +6,7 @@ use crate::util::bits::BIT_7;
 
 #[derive(Clone, Copy, Debug)]
 pub struct DMATransferRequest {
+	pub gdma: bool,
 	pub from: u16,
 	pub to: u16,
 	pub rows: u16,
@@ -60,7 +61,11 @@ impl DMAController {
 	}
 
 	pub fn get_source(&self) -> u16 {
-		self.source
+		// test result: FAILED. 251 passed; 427 failed; 0 ignored; 0 measured; 2722 filtered out; finished in 1.40s
+		match self.source {
+			(0xE000..=0xFFFF) => self.source - 0xE000 + 0xA000,
+			_ => self.source,
+		}
 	}
 
 	pub fn get_destination(&self) -> u16 {
@@ -70,35 +75,39 @@ impl DMAController {
 	pub fn write_hdma5(&mut self, value: u8) -> Option<DMATransferRequest> {
 		log::info!("Wrote to HDMA: {value:04X}");
 
+		let new_bit_7 = value & BIT_7 != 0;
 		let transfer_active = self.hdma5 & BIT_7 == 0;
 
-		// HDMA Active
-		if transfer_active && value & BIT_7 == 0 {
-			// Terminate HDMA
-			log::info!("Write to HDMA caused pause");
-			self.hdma5 |= 0x80;
+		if transfer_active {
+			if new_bit_7 {
+				self.hdma5 = value & 0x7F;
+			} else {
+				// Terminate HDMA
+				log::info!("Write to HDMA caused pause");
+				self.hdma5 = BIT_7 | 0x80;
+				return None;
+			}
 			return None;
 		}
 
 		if value & BIT_7 == 0 {
 			let rows = ((value & 0x7F) as u16) + 1;
 			let req = Some(DMATransferRequest {
+				gdma: true,
 				from: self.get_source(),
 				to: self.get_destination(),
 				rows,
 			});
-
 			self.hdma5 = 0xFF;
 			self.source += rows * 16;
 			self.destination += rows * 16;
-
-			return req;
+			req
 		} else {
 			let rows = value & 0x7F;
 			self.hdma5 = rows;
 			log::info!("HBlank DMA Transfer Requested");
+			self.step()
 		}
-		None
 	}
 
 	// Each step might return a transfer, this transfer must be performed by the caller
@@ -112,6 +121,7 @@ impl DMAController {
 			);
 
 			let request = DMATransferRequest {
+				gdma: false,
 				from: self.get_source(),
 				to: self.get_destination(),
 				rows: 1,
