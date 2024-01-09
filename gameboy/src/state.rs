@@ -288,11 +288,10 @@ impl SM83 for Gameboy {
 
 		let interrupt_pending = self.cpu_state.interrupt_pending();
 		let has_joyp_input = self.read(JOYP) & 0b1111 != 0;
-		let Some(speed_switch_pending) = (match &self.mode {
-			Mode::GBC(state) => Some(state.prepare_speed_switch),
-			Mode::DMG => None,
-		}) else {
-			return;
+
+		let speed_switch_pending = match &self.mode {
+			Mode::GBC(state) => state.prepare_speed_switch,
+			Mode::DMG => false,
 		};
 
 		if has_joyp_input {
