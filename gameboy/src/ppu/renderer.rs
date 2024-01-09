@@ -359,7 +359,15 @@ impl PixelFIFO for PPU {
 		let tile_map_offset = self.registers.lcdc.tile_map_offset(self.fetcher_mode);
 
 		let map_index = tile_x as u16 + tile_y as u16 * 32 + tile_map_offset;
-		let tile_row = (self.registers.ly.wrapping_add(self.registers.scy)) % 8;
+
+		// SCY does not affect the window
+		let scy_pixel_offset = match self.fetcher_mode {
+			FetcherMode::Background => self.registers.scy,
+			FetcherMode::Window => 0,
+		};
+
+		let tile_row = (self.registers.ly.wrapping_add(scy_pixel_offset)) % 8;
+
 		let pixels = self.get_tile_row(self.get_tile_data(map_index), tile_row, 0);
 		self.fifo_bg.extend(pixels.iter());
 	}

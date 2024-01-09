@@ -61,10 +61,6 @@ impl eframe::App for Debugger {
 						run_controller::Action::Step(cycles) => {
 							for _ in 0..cycles {
 								self.gameboy.step();
-								if self.gameboy.cpu_state.read(CPURegister16::PC) == 0x749f {
-									self.run_controller.state = run_controller::RunningState::Broke;
-									break;
-								}
 							}
 						}
 						run_controller::Action::NextInterrupt => {
