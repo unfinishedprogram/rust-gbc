@@ -1,7 +1,7 @@
 use gloo::{file::callbacks::FileReader, net::http::Request, timers::callback::Interval};
+use std::{cell::RefCell, collections::VecDeque, fmt::Display};
 
-use std::{cell::RefCell, fmt::Display};
-
+use super::animation_frame::AnimationFrame;
 use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
@@ -17,9 +17,29 @@ thread_local! {
 	pub static APPLICATION: RefCell<Application> = RefCell::new(Application::default());
 }
 
+pub enum PlayingHandle {
+	AnimationFrame(AnimationFrame),
+	Interval(Interval),
+}
+
 pub enum RunningState {
-	Playing(Interval),
+	Playing(PlayingHandle),
 	Paused,
+}
+
+fn performance_now() -> f64 {
+	gloo::utils::window().performance().unwrap().now()
+}
+
+fn update_fps(fps: f64) {
+	let fps_text = format!("FPS: {:.2}", fps);
+	let fps_element = web_sys::window()
+		.unwrap()
+		.document()
+		.unwrap()
+		.get_element_by_id("fps")
+		.unwrap();
+	fps_element.set_inner_html(&fps_text);
 }
 
 impl Display for RunningState {
@@ -40,12 +60,12 @@ pub struct Application {
 	frame_counts: Vec<u64>,
 	frame_times: Vec<f64>,
 	speed_multiplier: f64,
+	frames: VecDeque<f64>,
 }
 
 impl Default for Application {
 	fn default() -> Self {
 		let emulator_state = Gameboy::default();
-
 		Self {
 			frame_counts: vec![0; 30],
 			frame_times: vec![0.0; 30],
@@ -54,8 +74,16 @@ impl Default for Application {
 			running_state: RunningState::Paused,
 			emulator_state,
 			speed_multiplier: 1.0,
+			frames: VecDeque::with_capacity(30),
 		}
 	}
+}
+
+fn step_single(_time: f64) {
+	APPLICATION.with_borrow_mut(|app| {
+		app.step_lcd_frame();
+		app.update_frame_time();
+	});
 }
 
 impl Application {
@@ -103,27 +131,76 @@ impl Application {
 		gloo::console::log!(frames as f64 / (time / 1000.0));
 	}
 
-	pub fn step_emulator(&mut self, delta: f64) {
+	pub fn step_emulator(&mut self, multiplier: f64) {
 		let start = self.emulator_state.t_states;
 
-		while self.emulator_state.t_states - start < (1.5 * delta * 1_048_576.0 * 4.0) as u64 {
+		while self.emulator_state.t_states - start < (multiplier * 1_048_576.0 * 4.0) as u64 {
+			let frame = self.emulator_state.ppu.frame;
 			self.emulator_state.step();
+			if self.emulator_state.ppu.frame != frame {
+				self.frames.push_back(performance_now());
+			}
 		}
 	}
 
-	pub fn step_frame(&mut self) {
+	fn update_frame_time(&mut self) {
+		let look_behind_frames = 60;
+
+		if self.frames.len() < 2 {
+			return;
+		}
+
+		while self.frames.len() > look_behind_frames {
+			self.frames.pop_front();
+		}
+
+		let start = self.frames.front().unwrap();
+		let end = self.frames.back().unwrap();
+		let ms_for_lookbehind = end - start;
+		let fps = look_behind_frames as f64 / (ms_for_lookbehind / 1000.0);
+		update_fps(fps);
+	}
+
+	// Should be synched using request_animation_frame
+	// Better responsiveness / no-frame tearing
+	pub fn step_lcd_frame(&mut self) {
 		let controller_state = self.input_state.get_controller_state();
 		self.emulator_state.set_controller_state(&controller_state);
-		self.step_emulator(0.015 * self.speed_multiplier);
-		// self.step_fast(15.0);
+
+		let iters = if self.speed_multiplier > 1.0 {
+			self.speed_multiplier.round() as i32
+		} else {
+			1
+		};
+
+		for _ in 0..iters {
+			let mut steps = 0;
+			let start_frame = self.emulator_state.ppu.frame;
+			while steps < 1_000_0000 {
+				steps += 1;
+				self.emulator_state.step();
+				if self.emulator_state.ppu.frame != start_frame {
+					self.frames.push_back(performance_now());
+					break;
+				}
+			}
+		}
+
+		self.render_screen()
+	}
+
+	// Should be called at a fixed interval
+	// Potentially more accurate, and allows for monitor refresh-rates ~= 60hz
+	pub fn step_frame_cycles(&mut self) {
+		let controller_state = self.input_state.get_controller_state();
+		self.emulator_state.set_controller_state(&controller_state);
+		self.step_emulator(0.016 * self.speed_multiplier);
 		self.render_screen()
 	}
 
 	pub fn start(&mut self) {
-		let interval = Interval::new(15, || {
-			APPLICATION.with_borrow_mut(|app| app.step_frame());
-		});
-		self.running_state = RunningState::Playing(interval);
+		let animation_frame = AnimationFrame::new(&step_single as &'static dyn Fn(f64));
+		self.running_state = RunningState::Playing(PlayingHandle::AnimationFrame(animation_frame));
 	}
 
 	pub fn stop(&mut self) {

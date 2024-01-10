@@ -21,7 +21,6 @@
 </head>
 
 <body>
-	<span id="fps"></span>
 	<dialog id="keybinding_dialog">
 		<form method="dialog">
 			<table>
@@ -85,7 +84,6 @@
 				</svg>
 			</button>
 			<div id="menu_content">
-				<div id="debug_info"></div>
 				<button id="step">Step</button>
 				<button id="toggle_play">Pause</button>
 
@@ -103,6 +101,12 @@
 					<label>Save states</label>
 					<div class="content" id="save_states_container">
 						This is some content in save states
+					</div>
+				</div>
+				<div class="collapsible">
+					<label>Debug Info</label>
+					<div class="content">
+						<span id="fps"></span>
 					</div>
 				</div>
 			</div>

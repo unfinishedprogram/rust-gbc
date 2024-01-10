@@ -6,7 +6,6 @@ use crate::components::{
 use egui::{CentralPanel, SidePanel, Style, TextStyle, TopBottomPanel, Window};
 
 use gameboy::Gameboy;
-use sm83::registers::{Addressable, CPURegister16};
 
 #[derive(Default)]
 pub struct Debugger {

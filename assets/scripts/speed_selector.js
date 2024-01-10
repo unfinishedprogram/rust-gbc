@@ -3,13 +3,16 @@ import * as wasm from "/application.js"
 let speed_index = 3;
 
 const speed_options = [
-    ["1/8x", 0.125],
-    ["1/4x", 0.25],
-    ["1/2x", 0.5],
-    ["1x", 1.0],
-    ["2x", 2.0],
-    ["4x", 4.0],
-    ["8x", 8.0],
+    ["1/8x", 1 / 8],
+    ["1/4x", 1 / 4],
+    ["1/2x", 1 / 2],
+    ["1x", 1],
+    ["2x", 2],
+    ["4x", 4],
+    ["8x", 8],
+    ["16x", 16],
+    ["32x", 32],
+    ["64x", 64],
 ];
 
 const speed_label = document.createElement("span");
