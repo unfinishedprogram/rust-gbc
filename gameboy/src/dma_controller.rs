@@ -106,7 +106,8 @@ impl DMAController {
 			let rows = value & 0x7F;
 			self.hdma5 = rows;
 			log::info!("HBlank DMA Transfer Requested");
-			self.step()
+			// TOOD: Implement HBLANK DMA when screen is off
+			None
 		}
 	}
 

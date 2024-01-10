@@ -59,3 +59,6 @@ test result: FAILED. 1570 passed; 1705 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Made H-Blank timing based on OAM and Draw timing -->
 test result: FAILED. 1596 passed; 1804 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.97s
+
+<!-- Improved HDMA handling -->
+test result: FAILED. 1606 passed; 1794 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.76s
