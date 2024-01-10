@@ -3,6 +3,7 @@
 #![feature(test)]
 #![feature(async_closure)]
 
+mod apu;
 pub mod cartridge;
 pub mod cgb;
 mod dma_controller;
