@@ -22,3 +22,8 @@ pub fn interleave(a: u8, b: u8) -> u16 {
 
 	b << 1 | a
 }
+
+#[inline]
+pub fn falling_edge(from: u8, to: u8, mask: u8) -> bool {
+	from & mask == mask && to & mask != mask
+}
