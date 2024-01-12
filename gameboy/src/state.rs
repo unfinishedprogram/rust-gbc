@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
+	apu::APU,
 	cgb::{CGBState, Speed},
 	dma_controller::{DMAController, DMATransferRequest},
 	io_registers::JOYP,
@@ -44,6 +45,7 @@ pub struct Gameboy {
 	pub mode: Mode,
 	pub cpu_state: CPUState,
 	pub ppu: PPU,
+	pub apu: APU,
 	pub cartridge_state: Option<Cartridge>,
 	pub w_ram: WorkRam,
 
@@ -67,6 +69,7 @@ impl Default for Gameboy {
 
 		let mut emulator: Gameboy = Self {
 			debug_break: false,
+			apu: Default::default(),
 			dma_controller: DMAController::default(),
 			oam_dma: Default::default(),
 			cpu_state: CPUState::default(),
@@ -137,6 +140,8 @@ impl Gameboy {
 			// Only step the timer if we aren't in a speed switch
 			if self.speed_switch_delay == 0 {
 				self.timer.step(&mut self.cpu_state.interrupt_request);
+				self.apu
+					.step_t_state(self.timer.get_div(), self.mode.get_speed())
 			}
 		}
 	}
@@ -178,6 +183,7 @@ impl Gameboy {
 	fn tick_t_states(&mut self, t_states: u32) {
 		for _ in 0..t_states {
 			let mode = self.ppu.step(&mut self.cpu_state.interrupt_request);
+
 			if let Some(PPUMode::HBlank) = mode {
 				// HDMA is not processed during speed switch
 				if !self.speed_switch_delay > 0 {

@@ -4,6 +4,7 @@
 #![feature(async_closure)]
 
 mod apu;
+mod audio;
 pub mod cartridge;
 pub mod cgb;
 mod dma_controller;
