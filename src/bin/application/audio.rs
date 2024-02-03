@@ -39,6 +39,8 @@ pub struct AudioHandler {
 	audio_buffer: VecDeque<(f32, f32)>,
 	running: bool,
 	cb: js_sys::Function,
+
+	deltas: VecDeque<f64>,
 }
 
 // TODO: improve this
@@ -77,6 +79,7 @@ impl AudioHandler {
 		Ok(Self {
 			running: true,
 			audio_buffer: VecDeque::new(),
+			deltas: VecDeque::new(),
 			min_buffer_size,
 			ctx,
 			source_node,
@@ -86,6 +89,7 @@ impl AudioHandler {
 	}
 
 	pub fn pull_samples(&mut self, gb_audio: &mut gameboy::audio::Audio, delta_ms: f64) {
+		let delta_ms = self.sample_delta(delta_ms);
 		let delta_seconds = delta_ms / 1000.0;
 		let samples = (self.sample_rate() as f64 * delta_seconds) as usize;
 		self.audio_buffer.extend(gb_audio.pull_samples(samples));
@@ -115,5 +119,16 @@ impl AudioHandler {
 
 	pub fn sample_rate(&self) -> f32 {
 		self.ctx.sample_rate()
+	}
+}
+
+impl AudioHandler {
+	fn sample_delta(&mut self, delta: f64) -> f64 {
+		self.deltas.push_front(delta);
+		if self.deltas.len() > 64 {
+			self.deltas.pop_back();
+		}
+
+		self.deltas.iter().sum::<f64>() / self.deltas.len() as f64
 	}
 }
