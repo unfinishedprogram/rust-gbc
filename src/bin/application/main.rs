@@ -1,5 +1,6 @@
 pub mod animation_frame;
 pub mod app;
+pub mod audio;
 pub mod events;
 pub mod input;
 pub mod screen;

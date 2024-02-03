@@ -7,6 +7,7 @@ use crate::{
 	io_registers::JOYP,
 	oam_dma::{step_oam_dma, OamDmaState},
 	ppu::{self, VRAMBank},
+	audio::Audio,
 	util::BigArray,
 	work_ram::{BankedWorkRam, WorkRam, WorkRamDataCGB, WorkRamDataDMG},
 };
@@ -61,6 +62,7 @@ pub struct Gameboy {
 	pub oam_dma: OamDmaState,
 	pub t_states: u64,
 	pub speed_switch_delay: u32,
+	pub audio: Audio,
 }
 
 impl Default for Gameboy {
@@ -86,6 +88,7 @@ impl Default for Gameboy {
 			raw_joyp_input: 0xFF,
 			t_states: 0,
 			speed_switch_delay: 0,
+			audio: Audio::default(),
 		};
 		emulator.set_gb_mode(Mode::GBC(CGBState::default()));
 		emulator
@@ -140,8 +143,6 @@ impl Gameboy {
 			// Only step the timer if we aren't in a speed switch
 			if self.speed_switch_delay == 0 {
 				self.timer.step(&mut self.cpu_state.interrupt_request);
-				self.apu
-					.step_t_state(self.timer.get_div(), self.mode.get_speed())
 			}
 		}
 	}
@@ -182,6 +183,9 @@ impl Gameboy {
 
 	fn tick_t_states(&mut self, t_states: u32) {
 		for _ in 0..t_states {
+			self.apu
+				.step_t_state(self.timer.get_div(), self.mode.get_speed());
+			self.audio.step(&mut self.apu, 1);
 			let mode = self.ppu.step(&mut self.cpu_state.interrupt_request);
 
 			if let Some(PPUMode::HBlank) = mode {

@@ -95,7 +95,7 @@ impl APU {
 	// Ticked on the falling edge of the div register's 5th bit (6th bit in double speed mode)
 	// This should tick at 512hz
 	fn step_frame_sequencer(&mut self) {
-		self.frame_sequencer += 1;
+		self.frame_sequencer = self.frame_sequencer.wrapping_add(1);
 		match self.frame_sequencer & 7 {
 			0 | 4 => self.tick_length_ctr(),
 			2 | 6 => {
@@ -122,13 +122,13 @@ impl APU {
 		(left, right)
 	}
 
-	fn sample_mixer(&self) -> (f32, f32) {
+	fn sample_mixer(&mut self) -> (f32, f32) {
 		let noise = self.noise.sample();
 
 		(noise, noise)
 	}
 
-	fn sample(&self) -> (f32, f32) {
+	pub fn sample(&mut self) -> (f32, f32) {
 		let (v_left, v_right) = self.master_volume();
 		let (left, right) = self.sample_mixer();
 

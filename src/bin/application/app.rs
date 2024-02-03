@@ -3,14 +3,18 @@ use std::{cell::RefCell, collections::VecDeque, fmt::Display};
 
 use super::animation_frame::AnimationFrame;
 use wasm_bindgen::Clamped;
-use web_sys::ImageData;
+use web_sys::{AudioProcessingEvent, ImageData};
 
 use gameboy::{
 	save_state::{RomSource, SaveState},
 	Gameboy, Mode,
 };
 
-use crate::{input::InputState, screen};
+use crate::{
+	audio::{self, AudioHandler},
+	input::InputState,
+	screen,
+};
 use screen::get_screen_ctx;
 
 thread_local! {
@@ -56,6 +60,8 @@ pub struct Application {
 	pub _file_reader: Option<FileReader>,
 	pub emulator_state: Gameboy,
 	pub running_state: RunningState,
+	pub previous_frame_time: f64,
+	pub audio: Option<AudioHandler>,
 	input_state: InputState,
 	frame_counts: Vec<u64>,
 	frame_times: Vec<f64>,
@@ -67,6 +73,8 @@ impl Default for Application {
 	fn default() -> Self {
 		let emulator_state = Gameboy::default();
 		Self {
+			previous_frame_time: 0.0,
+			audio: None,
 			frame_counts: vec![0; 30],
 			frame_times: vec![0.0; 30],
 			_file_reader: None,
@@ -79,9 +87,9 @@ impl Default for Application {
 	}
 }
 
-fn step_single(_time: f64) {
+fn step_single(elapsed: f64) {
 	APPLICATION.with_borrow_mut(|app| {
-		app.step_lcd_frame();
+		app.step_lcd_frame(elapsed);
 		app.update_frame_time();
 	});
 }
@@ -163,7 +171,11 @@ impl Application {
 
 	// Should be synched using request_animation_frame
 	// Better responsiveness / no-frame tearing
-	pub fn step_lcd_frame(&mut self) {
+	pub fn step_lcd_frame(&mut self, elapsed: f64) {
+		// We clamp to avoid issues when tabbing out and back in to the tab
+		let delta_t = (elapsed - self.previous_frame_time).min(32.0);
+		self.previous_frame_time = elapsed;
+
 		let controller_state = self.input_state.get_controller_state();
 		self.emulator_state.set_controller_state(&controller_state);
 
@@ -183,6 +195,17 @@ impl Application {
 					self.frames.push_back(performance_now());
 					break;
 				}
+			}
+		}
+
+		if let Some(audio) = &mut self.audio {
+			audio.pull_samples(&mut self.emulator_state.audio, delta_t);
+		} else {
+			if let Ok(mut audio) = audio::AudioHandler::new(1024.0 * 60.0, 4096 * 8) {
+				audio.play();
+				self.audio = Some(audio);
+			} else {
+				log::error!("Failed to create audio context");
 			}
 		}
 

@@ -17,6 +17,7 @@ pub struct Noise {
 
 	frequency_timer: Timer,
 	length_counter: LengthCounter,
+	acc: u32,
 }
 
 impl Noise {
@@ -29,6 +30,7 @@ impl Noise {
 			devisor_code: 0,
 			frequency_timer: Timer::new(0),
 			length_counter: LengthCounter::default(),
+			acc: 0,
 		};
 		res.frequency_timer.period = res.timer_period();
 		res
@@ -132,8 +134,13 @@ impl Channel for Noise {
 		self.enabled
 	}
 
-	fn sample(&self) -> f32 {
-		let dac_input = (!self.lfsr.shift_register | 1) as u8 * self.volume_envelope.volume;
-		((dac_input as f32) / 7.5) - 1.0
+	fn sample(&mut self) -> f32 {
+		let frequency = 1;
+		let volume = 50.;
+		self.acc = self.acc.wrapping_add(frequency);
+		(self.acc as f32 / 512.).sin() * (volume / 100.) * 15.0
+
+		// let dac_input = (!self.lfsr.shift_register | 1) as u8 * self.volume_envelope.volume;
+		// ((dac_input as f32) / 7.5) - 1.0
 	}
 }

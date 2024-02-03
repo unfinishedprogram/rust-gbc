@@ -1,36 +1,47 @@
+use serde::{Deserialize, Serialize};
+
+use crate::apu::APU;
+use std::collections::VecDeque;
+
 // Manages audio buffers and synchronization
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct Audio {
-	// Number of samples per buffer per channel
-	buffer_size: usize,
-	// Number of samples per second
-	sample_rate: usize,
-
-	// Size is double buffer size because we have two channels
-	buffer: Vec<f32>,
-
-	current_t_states: usize,
-
-	t_states_per_buffer: f64,
-}
-
-impl Default for Audio {
-	fn default() -> Self {
-		Self {
-			buffer_size: 1024,
-			sample_rate: 44100,
-		}
-	}
+	raw_samples: VecDeque<(f32, f32)>,
+	t_states: usize,
+	current_sample: usize,
+	last_pull_sample: usize,
 }
 
 impl Audio {
-	pub fn step(&mut self, apu: &APU, t_states: usize) {
-		let (left, right) = apu.sample();
+	pub fn step(&mut self, apu: &mut APU, t_states: usize) {
+		for _ in 0..t_states {
+			self.step_single(apu);
+		}
 	}
 
-	pub fn new(buffer_size: usize, sample_rate: usize) -> Self {
-		Self {
-			buffer_size,
-			sample_rate,
+	fn step_single(&mut self, apu: &mut APU) {
+		let (left, right) = apu.sample();
+		self.raw_samples.push_back((left, right));
+	}
+
+	// This is expected to happen once per frame
+	pub fn pull_samples(&mut self, samples: usize) -> Vec<(f32, f32)> {
+		let mut res = Vec::with_capacity(samples);
+
+		let raw_samples = self.raw_samples.len();
+		let ratio = raw_samples as f64 / samples as f64;
+
+		// Resample buffer to the requested size
+		for i in 0..samples {
+			let raw_index = (i as f64 * ratio).floor() as usize;
+			res.push(self.raw_samples[raw_index]);
 		}
+
+		self.raw_samples.clear();
+		res
+	}
+
+	pub fn buffered_samples(&self) -> usize {
+		self.raw_samples.len()
 	}
 }
