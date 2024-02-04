@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	apu::APU,
+	apu::Apu,
+	audio::Audio,
 	cgb::{CGBState, Speed},
 	dma_controller::{DMAController, DMATransferRequest},
 	io_registers::JOYP,
 	oam_dma::{step_oam_dma, OamDmaState},
 	ppu::{self, VRAMBank},
-	audio::Audio,
 	util::BigArray,
 	work_ram::{BankedWorkRam, WorkRam, WorkRamDataCGB, WorkRamDataDMG},
 };
@@ -46,7 +46,7 @@ pub struct Gameboy {
 	pub mode: Mode,
 	pub cpu_state: CPUState,
 	pub ppu: PPU,
-	pub apu: APU,
+	pub apu: Apu,
 	pub cartridge_state: Option<Cartridge>,
 	pub w_ram: WorkRam,
 

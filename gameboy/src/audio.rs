@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::apu::APU;
+use crate::apu::Apu;
 use std::collections::VecDeque;
 
 // Manages audio buffers and synchronization
@@ -13,13 +13,13 @@ pub struct Audio {
 }
 
 impl Audio {
-	pub fn step(&mut self, apu: &mut APU, t_states: usize) {
+	pub fn step(&mut self, apu: &mut Apu, t_states: usize) {
 		for _ in 0..t_states {
 			self.step_single(apu);
 		}
 	}
 
-	fn step_single(&mut self, apu: &mut APU) {
+	fn step_single(&mut self, apu: &mut Apu) {
 		let (left, right) = apu.sample();
 		self.raw_samples.push_back((left, right));
 	}

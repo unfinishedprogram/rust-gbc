@@ -19,7 +19,7 @@ use self::{channel::Channel, noise::Noise};
 // Audio Processing Unit
 // https://gbdev.io/pandocs/Audio_details.html#audio-details
 #[derive(Clone, Serialize, Deserialize)]
-pub struct APU {
+pub struct Apu {
 	prev_div: u8,
 	frame_sequencer: u8,
 
@@ -28,6 +28,7 @@ pub struct APU {
 	// wave: Wave,
 	noise: Noise,
 
+	// Master Volume
 	nr50: u8,
 	nr51: u8,
 }
@@ -74,7 +75,7 @@ struct Wave {
 
 // TODO: Implement PCM registers CGB only
 
-impl APU {
+impl Apu {
 	pub fn step_t_state(&mut self, div: u8, speed: Speed) {
 		let increment_clock = {
 			let div_bit_mask = match speed {
@@ -110,6 +111,7 @@ impl APU {
 	}
 
 	fn tick_sweep(&self) {}
+
 	fn tick_length_ctr(&mut self) {
 		self.noise.tick_length_ctr()
 	}
@@ -141,7 +143,7 @@ impl APU {
 	}
 }
 
-impl Default for APU {
+impl Default for Apu {
 	fn default() -> Self {
 		Self {
 			prev_div: 0,
@@ -158,7 +160,7 @@ impl Default for APU {
 	}
 }
 
-impl MemoryMapper for APU {
+impl MemoryMapper for Apu {
 	fn read(&self, addr: u16) -> u8 {
 		// Unused lookup table
 		// NRx0 NRx1 NRx2 NRx3 NRx4
@@ -228,8 +230,10 @@ impl MemoryMapper for APU {
 			0xFF25 => self.nr51, // NR51
 
 			// 0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30],
-			_ => 0xFF,
-			_ => unreachable!(),
+			_ => {
+				log::error!("Apu read from unhandled address: {:#X}", addr);
+				0xFF
+			}
 		};
 
 		value | unused_mask
@@ -264,8 +268,7 @@ impl MemoryMapper for APU {
 			0xFF25 => self.nr51 = value, // NR51
 
 			// 0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30] = value,
-			_ => {}
-			_ => unreachable!(),
+			_ => log::error!("Apu write to unhandled address: {:#X}", addr),
 		}
 	}
 }
