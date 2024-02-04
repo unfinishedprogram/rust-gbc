@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::VecDeque, fmt::Display};
 
 use super::animation_frame::AnimationFrame;
 use wasm_bindgen::Clamped;
-use web_sys::{AudioProcessingEvent, ImageData};
+use web_sys::ImageData;
 
 use gameboy::{
 	save_state::{RomSource, SaveState},
@@ -201,7 +201,7 @@ impl Application {
 		if let Some(audio) = &mut self.audio {
 			audio.pull_samples(&mut self.emulator_state.audio, delta_t);
 		} else {
-			if let Ok(mut audio) = audio::AudioHandler::new(1024.0 * 60.0, 4096 * 8) {
+			if let Ok(mut audio) = audio::AudioHandler::new() {
 				audio.play();
 				self.audio = Some(audio);
 			} else {

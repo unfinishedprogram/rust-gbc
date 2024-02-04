@@ -1,15 +1,17 @@
 use std::collections::VecDeque;
 
 use crate::APPLICATION;
-use js_sys::Function;
+
+#[allow(unused_imports)]
 use tracing_wasm::set_as_global_default;
+
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::AudioProcessingEvent;
 
 pub fn audio_cb(evt: AudioProcessingEvent) {
 	APPLICATION.with_borrow_mut(|app| {
 		if let Some(audio) = app.audio.as_mut() {
-			let mut buffer = evt.output_buffer().unwrap();
+			let buffer = evt.output_buffer().unwrap();
 
 			let mut left = vec![0.0; buffer.length() as usize];
 			let mut right = vec![0.0; buffer.length() as usize];
@@ -24,8 +26,8 @@ pub fn audio_cb(evt: AudioProcessingEvent) {
 				}
 			}
 
-			buffer.copy_to_channel(&left, 0);
-			buffer.copy_to_channel(&right, 1);
+			buffer.copy_to_channel(&left, 0).unwrap();
+			buffer.copy_to_channel(&right, 1).unwrap();
 		};
 	})
 }
@@ -33,12 +35,8 @@ pub fn audio_cb(evt: AudioProcessingEvent) {
 pub struct AudioHandler {
 	ctx: web_sys::AudioContext,
 	source_node: web_sys::ConstantSourceNode,
-	script_node: web_sys::ScriptProcessorNode,
-
-	min_buffer_size: usize,
 	audio_buffer: VecDeque<(f32, f32)>,
 	running: bool,
-	cb: js_sys::Function,
 
 	deltas: VecDeque<f64>,
 }
@@ -56,7 +54,7 @@ pub fn audio_callback_as_js_func() -> js_sys::Function {
 }
 
 impl AudioHandler {
-	pub fn new(sample_rate: f32, min_buffer_size: usize) -> Result<Self, JsValue> {
+	pub fn new() -> Result<Self, JsValue> {
 		let ctx =
 			web_sys::AudioContext::new_with_context_options(&web_sys::AudioContextOptions::new())?;
 
@@ -80,11 +78,8 @@ impl AudioHandler {
 			running: true,
 			audio_buffer: VecDeque::new(),
 			deltas: VecDeque::new(),
-			min_buffer_size,
 			ctx,
 			source_node,
-			script_node,
-			cb,
 		})
 	}
 
