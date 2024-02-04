@@ -55,6 +55,12 @@ impl Noise {
 	}
 }
 
+impl Default for Noise {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl Channel for Noise {
 	fn write_nrx0(&mut self, _value: u8) {}
 	fn read_nrx0(&self) -> u8 {

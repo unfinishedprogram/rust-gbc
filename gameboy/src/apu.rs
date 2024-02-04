@@ -3,6 +3,7 @@ mod frame_sequencer;
 mod length_counter;
 mod lfsr;
 mod noise;
+mod square;
 mod timer;
 mod volume_envelope;
 
@@ -15,7 +16,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use timer::Timer;
 
-use self::{channel::Channel, frame_sequencer::FrameSequencer, noise::Noise};
+use self::{channel::Channel, frame_sequencer::FrameSequencer, noise::Noise, square::Square};
 
 // Audio Processing Unit
 // https://gbdev.io/pandocs/Audio_details.html#audio-details
@@ -24,34 +25,14 @@ pub struct Apu {
 	prev_div: u8,
 	frame_sequencer: FrameSequencer,
 
-	// square1: Square,
-	// square2: Square,
+	square1: Square,
+	square2: Square,
 	// wave: Wave,
 	noise: Noise,
 
 	// Master Volume
 	nr50: u8,
 	nr51: u8,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-struct ChannelRegisters {
-	nrx0: u8,
-	nrx1: u8,
-	nrx2: u8,
-	nrx3: u8,
-	nrx4: u8,
-	timer: Timer,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-struct Square {
-	nrx0: u8,
-	nrx1: u8,
-	nrx2: u8,
-	nrx3: u8,
-	nrx4: u8,
-	timer: Timer,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -90,7 +71,10 @@ impl Apu {
 			res
 		};
 
+		self.square1.tick();
+		self.square2.tick();
 		self.noise.tick();
+
 		if increment_clock {
 			self.step_frame_sequencer();
 		}
@@ -115,10 +99,14 @@ impl Apu {
 	fn tick_sweep(&mut self) {}
 
 	fn tick_length_ctr(&mut self) {
-		self.noise.tick_length_ctr()
+		self.square1.tick_length_ctr();
+		self.square2.tick_length_ctr();
+		self.noise.tick_length_ctr();
 	}
 	fn tick_vol_env(&mut self) {
-		self.noise.tick_vol_env()
+		self.square1.tick_vol_env();
+		self.square2.tick_vol_env();
+		self.noise.tick_vol_env();
 	}
 
 	fn master_volume(&self) -> (f32, f32) {
@@ -133,8 +121,12 @@ impl Apu {
 
 	fn sample_mixer(&mut self) -> (f32, f32) {
 		let noise = self.noise.sample();
+		let square1 = self.square1.sample();
+		let square2 = self.square2.sample();
 
-		(noise, noise)
+		let sample = noise + square1 + square2;
+
+		(sample, sample)
 	}
 
 	pub fn sample(&mut self) -> (f32, f32) {
@@ -151,8 +143,8 @@ impl Default for Apu {
 			prev_div: 0,
 			frame_sequencer: FrameSequencer::default(),
 
-			// square1: Square::default(),
-			// square2: Square::default(),
+			square1: Square::default(),
+			square2: Square::default(),
 			// wave: Wave::default(),
 			noise: Noise::new(),
 
@@ -201,21 +193,21 @@ impl MemoryMapper for Apu {
 			0xFF24 => 0x00,
 			0xFF25 => 0x00,
 
-			_ => unreachable!(),
+			_ => 0x00,
 		};
 
 		let value = match addr {
-			// 0xFF10 => self.square1.nrx0,
-			// 0xFF11 => self.square1.nrx1,
-			// 0xFF12 => self.square1.nrx2,
-			// 0xFF13 => self.square1.nrx3,
-			// 0xFF14 => self.square1.nrx4,
+			0xFF10 => self.square1.read_nrx0(),
+			0xFF11 => self.square1.read_nrx1(),
+			0xFF12 => self.square1.read_nrx2(),
+			0xFF13 => self.square1.read_nrx3(),
+			0xFF14 => self.square1.read_nrx4(),
 
-			// 0xFF15 => self.square2.nrx0, // Unused
-			// 0xFF16 => self.square2.nrx1,
-			// 0xFF17 => self.square2.nrx2,
-			// 0xFF18 => self.square2.nrx3,
-			// 0xFF19 => self.square2.nrx4,
+			0xFF15 => self.square2.read_nrx0(), // Unused
+			0xFF16 => self.square2.read_nrx1(),
+			0xFF17 => self.square2.read_nrx2(),
+			0xFF18 => self.square2.read_nrx3(),
+			0xFF19 => self.square2.read_nrx4(),
 
 			// 0xFF1A => self.wave.nrx0,
 			// 0xFF1B => self.wave.nrx1,
@@ -243,17 +235,17 @@ impl MemoryMapper for Apu {
 
 	fn write(&mut self, addr: u16, value: u8) {
 		match addr {
-			// 0xFF10 => self.square1.nrx0 = value,
-			// 0xFF11 => self.square1.nrx1 = value,
-			// 0xFF12 => self.square1.nrx2 = value,
-			// 0xFF13 => self.square1.nrx3 = value,
-			// 0xFF14 => self.square1.nrx4 = value,
+			0xFF10 => self.square1.write_nrx0(value),
+			0xFF11 => self.square1.write_nrx1(value),
+			0xFF12 => self.square1.write_nrx2(value),
+			0xFF13 => self.square1.write_nrx3(value),
+			0xFF14 => self.square1.write_nrx4(value),
 
-			// 0xFF15 => self.square2.nrx0 = value, // Unused
-			// 0xFF16 => self.square2.nrx1 = value,
-			// 0xFF17 => self.square2.nrx2 = value,
-			// 0xFF18 => self.square2.nrx3 = value,
-			// 0xFF19 => self.square2.nrx4 = value,
+			0xFF15 => self.square2.write_nrx0(value),
+			0xFF16 => self.square2.write_nrx1(value),
+			0xFF17 => self.square2.write_nrx2(value),
+			0xFF18 => self.square2.write_nrx3(value),
+			0xFF19 => self.square2.write_nrx4(value),
 
 			// 0xFF1A => self.wave.nrx0 = value,
 			// 0xFF1B => self.wave.nrx1 = value,
