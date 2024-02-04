@@ -20,7 +20,7 @@ pub trait Channel {
 	fn tick_length_ctr(&mut self);
 	fn tick_vol_env(&mut self);
 
-	fn sample(&mut self) -> f32;
+	fn sample(&self) -> u8;
 	fn enabled(&self) -> bool;
 
 	fn reset(&mut self);

@@ -105,11 +105,10 @@ impl Channel for Square {
 		}
 	}
 
-	fn sample(&mut self) -> f32 {
+	fn sample(&self) -> u8 {
 		let volume = self.volume_envelope.volume;
 		let duty = (Self::DUTY[self.duty_index as usize] & (1 << self.duty_cycle) != 0) as u8;
-		let dac_input = duty * volume;
-		(dac_input as f32 / 15.0) * 2.0
+		duty * volume
 	}
 
 	fn enabled(&self) -> bool {

@@ -123,10 +123,15 @@ impl Apu {
 		(left, right)
 	}
 
+	fn dac(sample: u8) -> f32 {
+		sample as f32 / 15.0
+		// (sample as f32 - 7.0) / 15.0
+	}
+
 	fn sample_mixer(&mut self) -> (f32, f32) {
-		let square1 = self.square1.sample();
-		let square2 = self.square2.sample();
-		let noise = self.noise.sample();
+		let square1 = Self::dac(self.square1.sample());
+		let square2 = Self::dac(self.square2.sample());
+		let noise = Self::dac(self.noise.sample());
 
 		let (sq1_l, sq1_r) = self.channel_enabled_lr(0);
 		let (sq2_l, sq2_r) = self.channel_enabled_lr(1);
@@ -164,6 +169,14 @@ impl Apu {
 		let noise = (self.noise.enabled() as u8) << 3;
 
 		p_on | square1 | square2 | wave | noise
+	}
+
+	fn read_pcm_12(&self) -> u8 {
+		(self.square2.sample() << 4) | self.square1.sample()
+	}
+
+	fn read_pcm_34(&self) -> u8 {
+		self.noise.sample() << 4
 	}
 }
 
@@ -254,6 +267,9 @@ impl MemoryMapper for Apu {
 			0xFF24 => self.nr50,        // NR50
 			0xFF25 => self.nr51,        // NR51
 			0xFF26 => self.read_nr53(), // NR52
+
+			0xFF76 => self.read_pcm_12(),
+			0xFF77 => self.read_pcm_34(),
 
 			// 0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30],
 			_ => {

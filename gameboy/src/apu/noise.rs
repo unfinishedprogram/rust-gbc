@@ -148,11 +148,9 @@ impl Channel for Noise {
 		self.enabled
 	}
 
-	fn sample(&mut self) -> f32 {
+	fn sample(&self) -> u8 {
 		let volume = self.volume_envelope.volume;
-
-		let dac_input = (!self.lfsr.shift_register & 1) as u8 * volume;
-		(dac_input as f32 / 15.0) * 2.0
+		(!self.lfsr.shift_register & 1) as u8 * volume
 	}
 
 	fn reset(&mut self) {
