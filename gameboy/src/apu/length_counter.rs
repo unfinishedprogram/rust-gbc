@@ -9,7 +9,7 @@ pub struct LengthCounter {
 impl LengthCounter {
 	// Enables and loads length
 	pub fn reload(&mut self, length: u8) {
-		self.length = length;
+		self.length = 64 - length;
 	}
 
 	// 256hz ticked by the frame-sequencer

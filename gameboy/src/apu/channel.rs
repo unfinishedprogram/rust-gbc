@@ -16,9 +16,9 @@ pub trait Channel {
 
 	fn tick(&mut self);
 
-	fn tick_sweep(&mut self) {}
-	fn tick_length_ctr(&mut self) {}
-	fn tick_vol_env(&mut self) {}
+	fn tick_sweep(&mut self);
+	fn tick_length_ctr(&mut self);
+	fn tick_vol_env(&mut self);
 
 	fn sample(&mut self) -> f32;
 	fn enabled(&self) -> bool;

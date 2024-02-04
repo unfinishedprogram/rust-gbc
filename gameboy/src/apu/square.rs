@@ -1,7 +1,8 @@
 use crate::util::bits::{BIT_6, BIT_7};
 
 use super::{
-	channel::Channel, length_counter::LengthCounter, timer::Timer, volume_envelope::VolumeEnvelope,
+	channel::Channel, length_counter::LengthCounter, sweep::Sweep, timer::Timer,
+	volume_envelope::VolumeEnvelope,
 };
 
 use serde::{Deserialize, Serialize};
@@ -20,6 +21,8 @@ pub struct Square {
 
 	duty_cycle: u8,
 	duty_index: u8,
+
+	sweep: Sweep,
 }
 
 impl Square {
@@ -31,12 +34,17 @@ impl Square {
 }
 
 impl Channel for Square {
-	fn write_nrx0(&mut self, _value: u8) {
-		if self.sweeper {}
+	fn write_nrx0(&mut self, value: u8) {
+		if self.sweeper {
+			self.sweep.write_byte(value);
+		}
 	}
 	fn read_nrx0(&self) -> u8 {
-		if self.sweeper {}
-		0
+		if self.sweeper {
+			self.sweep.read_byte()
+		} else {
+			0
+		}
 	}
 
 	fn write_nrx1(&mut self, value: u8) {
@@ -73,6 +81,9 @@ impl Channel for Square {
 		self.length_counter.enabled = value & BIT_6 == BIT_6;
 		if trigger {
 			self.enabled = true;
+			if self.sweeper {
+				self.sweep.trigger(self.frequency);
+			}
 		}
 
 		let frequency_msb = value & 0b111;
@@ -112,5 +123,27 @@ impl Channel for Square {
 		self.length_counter.enabled = false;
 		self.length_counter.length = 0;
 		self.enabled = false;
+	}
+
+	fn tick_sweep(&mut self) {
+		if self.sweeper {
+			let (disable, new_freq) = self.sweep.tick();
+
+			if disable {
+				self.enabled = false;
+			}
+
+			if let Some(new_freq) = new_freq {
+				self.frequency = new_freq;
+			}
+		}
+	}
+
+	fn tick_length_ctr(&mut self) {
+		self.length_counter.tick();
+	}
+
+	fn tick_vol_env(&mut self) {
+		self.volume_envelope.tick();
 	}
 }

@@ -4,6 +4,7 @@ mod length_counter;
 mod lfsr;
 mod noise;
 mod square;
+mod sweep;
 mod timer;
 mod volume_envelope;
 
@@ -90,7 +91,9 @@ impl Apu {
 		}
 	}
 
-	fn tick_sweep(&mut self) {}
+	fn tick_sweep(&mut self) {
+		self.square1.tick_sweep();
+	}
 
 	fn tick_length_ctr(&mut self) {
 		self.square1.tick_length_ctr();
@@ -132,7 +135,7 @@ impl Apu {
 		let left = (sq1_l * square1) + (sq2_l * square2) + (n_l * noise);
 		let right = (sq1_r * square1) + (sq2_r * square2) + (n_r * noise);
 
-		(left, right)
+		(left / 4.0, right / 4.0)
 	}
 
 	pub fn sample(&mut self) -> (f32, f32) {

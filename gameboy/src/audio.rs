@@ -22,6 +22,9 @@ impl Audio {
 	fn step_single(&mut self, apu: &mut Apu) {
 		let (left, right) = apu.sample();
 		self.raw_samples.push_back((left, right));
+		if self.raw_samples.len() > 80_000 {
+			self.raw_samples.pop_front();
+		}
 	}
 
 	// This is expected to happen once per frame

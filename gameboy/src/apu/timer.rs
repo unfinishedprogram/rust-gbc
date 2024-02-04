@@ -26,15 +26,6 @@ impl Timer {
 
 		self.counter -= 1;
 		false
-
-		// let overflow;
-		// (self.counter, overflow) = self.counter.overflowing_sub(1);
-		// if self.counter == 0 || overflow {
-		// 	self.reload();
-		// 	true
-		// } else {
-		// 	false
-		// }
 	}
 
 	pub fn set_period(&mut self, period: u16) {

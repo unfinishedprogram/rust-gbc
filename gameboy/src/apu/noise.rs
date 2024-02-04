@@ -117,19 +117,15 @@ impl Channel for Noise {
 
 			self.frequency_timer.reload();
 			self.volume_envelope.reload();
+			self.lfsr.reset();
 		}
 
 		log::error!("Wrote to the nrx4 of the noise channel: {:#04X}", value);
 	}
 	fn read_nrx4(&self) -> u8 {
-		0b1100_0000
-
-		// let trigger_bit = if self.length_counter.enabled {
-		// 	BIT_7
-		// } else {
-		// 	0
-		// };
-		// let length_enable_bit = if self.length_load == 0 { 0 } else { BIT_6 };
+		let length_enable = (self.length_counter.enabled as u8) << 6;
+		let trigger = (self.enabled as u8) << 7;
+		length_enable | trigger
 	}
 
 	fn tick_length_ctr(&mut self) {
@@ -166,4 +162,6 @@ impl Channel for Noise {
 		self.length_counter.length = 0;
 		self.enabled = false;
 	}
+
+	fn tick_sweep(&mut self) {}
 }
