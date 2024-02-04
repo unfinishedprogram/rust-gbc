@@ -32,7 +32,7 @@ impl Noise {
 			length_counter: LengthCounter::default(),
 			acc: 0,
 		};
-		res.frequency_timer.period = res.timer_period();
+		res.frequency_timer.set_period(res.timer_period());
 		res
 	}
 
@@ -63,13 +63,21 @@ impl Channel for Noise {
 
 	fn write_nrx1(&mut self, value: u8) {
 		self.length_counter.reload(value & 0b0011_1111);
+		log::error!(
+			"Wrote to the length_counter of the noise channel: {:#04X}",
+			value
+		);
 	}
 	fn read_nrx1(&self) -> u8 {
 		self.length_counter.length
 	}
 
 	fn write_nrx2(&mut self, value: u8) {
-		self.volume_envelope.write_byte(value)
+		self.volume_envelope.write_byte(value);
+		log::error!(
+			"Wrote to the volume envelope of the noise channel: {:#04X}",
+			value
+		);
 	}
 	fn read_nrx2(&self) -> u8 {
 		self.volume_envelope.read_byte()
@@ -79,10 +87,12 @@ impl Channel for Noise {
 		self.clock_shift = (value >> 4) & 0b1111;
 		self.devisor_code = value & 0b111;
 
-		self.frequency_timer.period = self.timer_period();
+		self.frequency_timer.set_period(self.timer_period());
 
 		self.lfsr.width = if value & BIT_3 == BIT_3 { 6 } else { 14 };
 		self.lfsr.reset();
+
+		log::error!("Wrote to the lfsr of the noise channel: {:#04X}", value);
 	}
 	fn read_nrx3(&self) -> u8 {
 		let lfsr_mode = if self.lfsr.width == 6 { 0 } else { BIT_3 };
@@ -102,6 +112,8 @@ impl Channel for Noise {
 			self.frequency_timer.reload();
 			self.volume_envelope.reload();
 		}
+
+		log::error!("Wrote to the nrx4 of the noise channel: {:#04X}", value);
 	}
 	fn read_nrx4(&self) -> u8 {
 		0b1100_0000
@@ -135,12 +147,9 @@ impl Channel for Noise {
 	}
 
 	fn sample(&mut self) -> f32 {
-		let frequency = 1;
-		let volume = 50.;
-		self.acc = self.acc.wrapping_add(frequency);
-		(self.acc as f32 / 512.).sin() * (volume / 100.) * 15.0
+		let volume = self.volume_envelope.volume;
 
-		// let dac_input = (!self.lfsr.shift_register | 1) as u8 * self.volume_envelope.volume;
-		// ((dac_input as f32) / 7.5) - 1.0
+		let dac_input = (!self.lfsr.shift_register & 1) as u8 * volume;
+		(dac_input as f32 / 15.0) * 2.0
 	}
 }

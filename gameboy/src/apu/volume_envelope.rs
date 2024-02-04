@@ -42,24 +42,22 @@ impl Default for VolumeEnvelope {
 // Envelope Function
 impl VolumeEnvelope {
 	pub fn read_byte(&self) -> u8 {
-		(self.initial_volume << 4) | ((self.timer.period as u8) << 3) | (self.direction as u8)
+		(self.initial_volume << 4) | ((self.timer.get_period() as u8) << 3) | (self.direction as u8)
 	}
 
 	pub fn write_byte(&mut self, value: u8) {
 		self.initial_volume = value & 0b11110000 >> 4;
-		self.timer.period = (value & 0b111) as u16;
+		self.timer.set_period((value & 0b111) as u16);
 		self.direction = if value & BIT_3 == BIT_3 {
 			Direction::Increase
 		} else {
 			Direction::Decrease
 		};
+		self.reload()
 	}
 
 	pub fn tick(&mut self) {
 		if self.timer.tick() {
-			if self.timer.period == 0 {
-				return;
-			}
 			let new_volume = self.volume.wrapping_add_signed(self.direction.into());
 			if new_volume <= 0xF {
 				self.volume = new_volume;
@@ -68,6 +66,6 @@ impl VolumeEnvelope {
 	}
 
 	pub fn reload(&mut self) {
-		self.timer.counter = 0;
+		self.timer.reload()
 	}
 }

@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Timer {
-	pub counter: u16,
-	pub period: u16,
+	counter: u16,
+	period: u16,
 }
 
 impl Timer {
@@ -15,13 +15,35 @@ impl Timer {
 	}
 
 	pub fn tick(&mut self) -> bool {
-		self.counter -= 1;
+		if self.period == 0 {
+			return false;
+		}
+
 		if self.counter == 0 {
 			self.reload();
-			true
-		} else {
-			false
+			return true;
 		}
+
+		self.counter -= 1;
+		false
+
+		// let overflow;
+		// (self.counter, overflow) = self.counter.overflowing_sub(1);
+		// if self.counter == 0 || overflow {
+		// 	self.reload();
+		// 	true
+		// } else {
+		// 	false
+		// }
+	}
+
+	pub fn set_period(&mut self, period: u16) {
+		self.period = period;
+		self.reload();
+	}
+
+	pub fn get_period(&self) -> u16 {
+		self.period
 	}
 
 	pub fn reload(&mut self) {

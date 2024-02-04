@@ -87,6 +87,7 @@ impl APU {
 			res
 		};
 
+		self.noise.tick();
 		if increment_clock {
 			self.step_frame_sequencer();
 		}
@@ -109,8 +110,12 @@ impl APU {
 	}
 
 	fn tick_sweep(&self) {}
-	fn tick_length_ctr(&self) {}
-	fn tick_vol_env(&self) {}
+	fn tick_length_ctr(&mut self) {
+		self.noise.tick_length_ctr()
+	}
+	fn tick_vol_env(&mut self) {
+		self.noise.tick_vol_env()
+	}
 
 	fn master_volume(&self) -> (f32, f32) {
 		let left = self.nr50 & 0b111;
