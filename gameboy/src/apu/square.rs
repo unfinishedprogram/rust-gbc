@@ -104,4 +104,13 @@ impl Channel for Square {
 	fn enabled(&self) -> bool {
 		self.enabled
 	}
+
+	fn reset(&mut self) {
+		self.duty_cycle = 0;
+		self.duty_index = 0;
+		self.volume_envelope.write_byte(0);
+		self.length_counter.enabled = false;
+		self.length_counter.length = 0;
+		self.enabled = false;
+	}
 }

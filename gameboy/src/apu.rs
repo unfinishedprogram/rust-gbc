@@ -14,7 +14,6 @@ use crate::{
 };
 
 use serde::{Deserialize, Serialize};
-use timer::Timer;
 
 use self::{channel::Channel, frame_sequencer::FrameSequencer, noise::Noise, square::Square};
 
@@ -33,17 +32,7 @@ pub struct Apu {
 	// Master Volume
 	nr50: u8,
 	nr51: u8,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-struct Wave {
-	nrx0: u8,
-	nrx1: u8,
-	nrx2: u8,
-	nrx3: u8,
-	nrx4: u8,
-	wave_ram: [u8; 0x10],
-	timer: Timer,
+	power_on: bool,
 }
 
 // There are 4 sound channels each with a generator and a DAC
@@ -59,6 +48,11 @@ struct Wave {
 
 impl Apu {
 	pub fn step_t_state(&mut self, div: u8, speed: Speed) {
+		if !self.power_on {
+			self.prev_div = div;
+			return;
+		}
+
 		// 512hz timer
 		let increment_clock = {
 			let div_bit_mask = match speed {
@@ -119,14 +113,26 @@ impl Apu {
 		(left, right)
 	}
 
+	fn channel_enabled_lr(&self, channel_idx: u8) -> (f32, f32) {
+		let left = ((self.nr51 & (1 << channel_idx) != 0) as u8) as f32;
+		let right = ((self.nr51 & (1 << (channel_idx + 4)) != 0) as u8) as f32;
+
+		(left, right)
+	}
+
 	fn sample_mixer(&mut self) -> (f32, f32) {
-		let noise = self.noise.sample();
 		let square1 = self.square1.sample();
 		let square2 = self.square2.sample();
+		let noise = self.noise.sample();
 
-		let sample = noise + square1 + square2;
+		let (sq1_l, sq1_r) = self.channel_enabled_lr(0);
+		let (sq2_l, sq2_r) = self.channel_enabled_lr(1);
+		let (n_l, n_r) = self.channel_enabled_lr(3);
 
-		(sample, sample)
+		let left = (sq1_l * square1) + (sq2_l * square2) + (n_l * noise);
+		let right = (sq1_r * square1) + (sq2_r * square2) + (n_r * noise);
+
+		(left, right)
 	}
 
 	pub fn sample(&mut self) -> (f32, f32) {
@@ -135,11 +141,33 @@ impl Apu {
 
 		(left * v_left, right * v_right)
 	}
+
+	fn set_power_on(&mut self, state: bool) {
+		self.power_on = state;
+		if !state {
+			self.square1.reset();
+			self.square2.reset();
+			self.noise.reset();
+			self.nr50 = 0;
+			self.nr51 = 0;
+		}
+	}
+
+	fn read_nr53(&self) -> u8 {
+		let p_on = (self.power_on as u8) << 7;
+		let square1 = self.square1.enabled() as u8;
+		let square2 = (self.square2.enabled() as u8) << 1;
+		let wave = 0;
+		let noise = (self.noise.enabled() as u8) << 3;
+
+		p_on | square1 | square2 | wave | noise
+	}
 }
 
 impl Default for Apu {
 	fn default() -> Self {
 		Self {
+			power_on: false,
 			prev_div: 0,
 			frame_sequencer: FrameSequencer::default(),
 
@@ -220,8 +248,9 @@ impl MemoryMapper for Apu {
 			0xFF22 => self.noise.read_nrx3(),
 			0xFF23 => self.noise.read_nrx4(),
 
-			0xFF24 => self.nr50, // NR50
-			0xFF25 => self.nr51, // NR51
+			0xFF24 => self.nr50,        // NR50
+			0xFF25 => self.nr51,        // NR51
+			0xFF26 => self.read_nr53(), // NR52
 
 			// 0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30],
 			_ => {
@@ -234,6 +263,10 @@ impl MemoryMapper for Apu {
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
+		if !self.power_on && addr != 0xFF26 {
+			return;
+		}
+
 		match addr {
 			0xFF10 => self.square1.write_nrx0(value),
 			0xFF11 => self.square1.write_nrx1(value),
@@ -258,8 +291,9 @@ impl MemoryMapper for Apu {
 			0xFF22 => self.noise.write_nrx3(value),
 			0xFF23 => self.noise.write_nrx4(value),
 
-			0xFF24 => self.nr50 = value, // NR50
-			0xFF25 => self.nr51 = value, // NR51
+			0xFF24 => self.nr50 = value,                           // NR50
+			0xFF25 => self.nr51 = value,                           // NR51
+			0xFF26 => self.set_power_on(value & 0b1000_0000 != 0), // NR52
 
 			// 0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30] = value,
 			_ => log::error!("Apu write to unhandled address: {:#X}", addr),

@@ -158,4 +158,12 @@ impl Channel for Noise {
 		let dac_input = (!self.lfsr.shift_register & 1) as u8 * volume;
 		(dac_input as f32 / 15.0) * 2.0
 	}
+
+	fn reset(&mut self) {
+		self.lfsr.reset();
+		self.volume_envelope.write_byte(0);
+		self.length_counter.enabled = false;
+		self.length_counter.length = 0;
+		self.enabled = false;
+	}
 }

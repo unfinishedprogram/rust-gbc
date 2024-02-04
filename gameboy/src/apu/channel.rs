@@ -22,4 +22,6 @@ pub trait Channel {
 
 	fn sample(&mut self) -> f32;
 	fn enabled(&self) -> bool;
+
+	fn reset(&mut self);
 }
