@@ -46,7 +46,7 @@ impl VolumeEnvelope {
 	}
 
 	pub fn write_byte(&mut self, value: u8) {
-		self.initial_volume = value & 0b11110000 >> 4;
+		self.initial_volume = value >> 4;
 		self.timer.set_period((value & 0b111) as u16);
 		self.direction = if value & BIT_3 == BIT_3 {
 			Direction::Increase
@@ -66,6 +66,7 @@ impl VolumeEnvelope {
 	}
 
 	pub fn reload(&mut self) {
+		self.volume = self.initial_volume;
 		self.timer.reload()
 	}
 }

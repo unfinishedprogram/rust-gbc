@@ -112,9 +112,7 @@ impl Apu {
 		}
 	}
 
-	fn tick_sweep(&mut self) {
-		todo!()
-	}
+	fn tick_sweep(&mut self) {}
 
 	fn tick_length_ctr(&mut self) {
 		self.noise.tick_length_ctr()
