@@ -1,4 +1,5 @@
 mod channel;
+mod frame_sequencer;
 mod length_counter;
 mod lfsr;
 mod noise;
@@ -14,14 +15,14 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use timer::Timer;
 
-use self::{channel::Channel, noise::Noise};
+use self::{channel::Channel, frame_sequencer::FrameSequencer, noise::Noise};
 
 // Audio Processing Unit
 // https://gbdev.io/pandocs/Audio_details.html#audio-details
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Apu {
 	prev_div: u8,
-	frame_sequencer: u8,
+	frame_sequencer: FrameSequencer,
 
 	// square1: Square,
 	// square2: Square,
@@ -77,6 +78,7 @@ struct Wave {
 
 impl Apu {
 	pub fn step_t_state(&mut self, div: u8, speed: Speed) {
+		// 512hz timer
 		let increment_clock = {
 			let div_bit_mask = match speed {
 				Speed::Normal => BIT_5,
@@ -97,20 +99,22 @@ impl Apu {
 	// Ticked on the falling edge of the div register's 5th bit (6th bit in double speed mode)
 	// This should tick at 512hz
 	fn step_frame_sequencer(&mut self) {
-		self.frame_sequencer = self.frame_sequencer.wrapping_add(1);
-		match self.frame_sequencer & 7 {
-			0 | 4 => self.tick_length_ctr(),
-			2 | 6 => {
-				self.tick_length_ctr();
-				self.tick_sweep();
+		if let Some(res) = self.frame_sequencer.tick() {
+			use frame_sequencer::TickResult as R;
+			match res {
+				R::LengthCtrl => self.tick_length_ctr(),
+				R::VolumeEnv => self.tick_vol_env(),
+				R::LengthCtrlAndSweep => {
+					self.tick_length_ctr();
+					self.tick_sweep();
+				}
 			}
-			7 => self.tick_vol_env(),
-			1 | 3 | 5 => {}
-			0x8..=u8::MAX => unreachable!(),
 		}
 	}
 
-	fn tick_sweep(&self) {}
+	fn tick_sweep(&mut self) {
+		todo!()
+	}
 
 	fn tick_length_ctr(&mut self) {
 		self.noise.tick_length_ctr()
@@ -147,7 +151,7 @@ impl Default for Apu {
 	fn default() -> Self {
 		Self {
 			prev_div: 0,
-			frame_sequencer: 0,
+			frame_sequencer: FrameSequencer::default(),
 
 			// square1: Square::default(),
 			// square2: Square::default(),
