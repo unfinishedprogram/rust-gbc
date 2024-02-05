@@ -34,6 +34,7 @@ pub struct Apu {
 	nr50: u8,
 	nr51: u8,
 	power_on: bool,
+	last_sample: (f32, f32),
 }
 
 // There are 4 sound channels each with a generator and a DAC
@@ -44,8 +45,6 @@ pub struct Apu {
 // into two analog outputs (Left and Right). Thus, the analog range of those outputs is 4× that of each channel, -4 to 4.
 // Then these final outputs are scaled based on NR50 and output to the speakers.
 // NOTE: this scaling can never silence a non-silent input.
-
-// TODO: Implement PCM registers CGB only
 
 impl Apu {
 	pub fn step_t_state(&mut self, div: u8, speed: Speed) {
@@ -125,7 +124,6 @@ impl Apu {
 
 	fn dac(sample: u8) -> f32 {
 		sample as f32 / 15.0
-		// (sample as f32 - 7.0) / 15.0
 	}
 
 	fn sample_mixer(&mut self) -> (f32, f32) {
@@ -139,6 +137,15 @@ impl Apu {
 
 		let left = (sq1_l * square1) + (sq2_l * square2) + (n_l * noise);
 		let right = (sq1_r * square1) + (sq2_r * square2) + (n_r * noise);
+
+		let (last_left, last_right) = self.last_sample;
+
+		// Apply a low-pass filter to the output
+		let factor = 16.0;
+		let left = (left + last_left * (factor - 1.0)) / factor;
+		let right = (right + last_right * (factor - 1.0)) / factor;
+
+		self.last_sample = (left, right);
 
 		(left / 4.0, right / 4.0)
 	}
@@ -183,6 +190,7 @@ impl Apu {
 impl Default for Apu {
 	fn default() -> Self {
 		Self {
+			last_sample: (0.0, 0.0),
 			power_on: false,
 			prev_div: 0,
 			frame_sequencer: FrameSequencer::default(),

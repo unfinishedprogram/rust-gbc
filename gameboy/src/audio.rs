@@ -4,12 +4,25 @@ use crate::apu::Apu;
 use std::collections::VecDeque;
 
 // Manages audio buffers and synchronization
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Audio {
 	raw_samples: VecDeque<(f32, f32)>,
 	t_states: usize,
 	current_sample: usize,
 	last_pull_sample: usize,
+	sample_countdown: usize,
+}
+
+impl Default for Audio {
+	fn default() -> Self {
+		Audio {
+			raw_samples: VecDeque::new(),
+			t_states: 0,
+			current_sample: 0,
+			last_pull_sample: 0,
+			sample_countdown: 4,
+		}
+	}
 }
 
 impl Audio {
@@ -20,10 +33,14 @@ impl Audio {
 	}
 
 	fn step_single(&mut self, apu: &mut Apu) {
-		let (left, right) = apu.sample();
-		self.raw_samples.push_back((left, right));
-		if self.raw_samples.len() > 80_000 {
-			self.raw_samples.pop_front();
+		self.sample_countdown -= 1;
+		if self.sample_countdown == 0 {
+			self.sample_countdown = 4;
+			let (left, right) = apu.sample();
+			self.raw_samples.push_back((left, right));
+			if self.raw_samples.len() > 80_000 {
+				self.raw_samples.pop_front();
+			}
 		}
 	}
 
@@ -37,6 +54,9 @@ impl Audio {
 		// Resample buffer to the requested size
 		for i in 0..samples {
 			let raw_index = (i as f64 * ratio).floor() as usize;
+			if raw_index >= raw_samples {
+				break;
+			}
 			res.push(self.raw_samples[raw_index]);
 		}
 
