@@ -48,12 +48,10 @@ impl Channel for Square {
 	}
 
 	fn write_nrx1(&mut self, value: u8) {
-		// NR11 FF11 DDLL LLLL Duty, Length load (64-L)
 		self.length_counter.reload(value & 0b0011_1111)
 	}
 
 	fn read_nrx1(&self) -> u8 {
-		// NR11 FF11 DDLL LLLL Duty, Length load (64-L)
 		self.length_counter.length
 	}
 
@@ -105,10 +103,12 @@ impl Channel for Square {
 		}
 	}
 
+	fn volume(&self) -> u8 {
+		self.volume_envelope.volume
+	}
+
 	fn sample(&self) -> u8 {
-		let volume = self.volume_envelope.volume;
-		let duty = (Self::DUTY[self.duty_index as usize] & (1 << self.duty_cycle) != 0) as u8;
-		duty * volume
+		(Self::DUTY[self.duty_index as usize] & (1 << self.duty_cycle) != 0) as u8
 	}
 
 	fn enabled(&self) -> bool {

@@ -69,10 +69,6 @@ impl Channel for Noise {
 
 	fn write_nrx1(&mut self, value: u8) {
 		self.length_counter.reload(value & 0b0011_1111);
-		log::error!(
-			"Wrote to the length_counter of the noise channel: {:#04X}",
-			value
-		);
 	}
 	fn read_nrx1(&self) -> u8 {
 		self.length_counter.length
@@ -80,10 +76,6 @@ impl Channel for Noise {
 
 	fn write_nrx2(&mut self, value: u8) {
 		self.volume_envelope.write_byte(value);
-		log::error!(
-			"Wrote to the volume envelope of the noise channel: {:#04X}",
-			value
-		);
 	}
 	fn read_nrx2(&self) -> u8 {
 		self.volume_envelope.read_byte()
@@ -97,8 +89,6 @@ impl Channel for Noise {
 
 		self.lfsr.width = if value & BIT_3 == BIT_3 { 6 } else { 14 };
 		self.lfsr.reset();
-
-		log::error!("Wrote to the lfsr of the noise channel: {:#04X}", value);
 	}
 	fn read_nrx3(&self) -> u8 {
 		let lfsr_mode = if self.lfsr.width == 6 { 0 } else { BIT_3 };
@@ -119,8 +109,6 @@ impl Channel for Noise {
 			self.volume_envelope.reload();
 			self.lfsr.reset();
 		}
-
-		log::error!("Wrote to the nrx4 of the noise channel: {:#04X}", value);
 	}
 	fn read_nrx4(&self) -> u8 {
 		let length_enable = (self.length_counter.enabled as u8) << 6;
@@ -149,8 +137,7 @@ impl Channel for Noise {
 	}
 
 	fn sample(&self) -> u8 {
-		let volume = self.volume_envelope.volume;
-		(!self.lfsr.shift_register & 1) as u8 * volume
+		(!self.lfsr.shift_register & 1) as u8
 	}
 
 	fn reset(&mut self) {
@@ -159,6 +146,10 @@ impl Channel for Noise {
 		self.length_counter.enabled = false;
 		self.length_counter.length = 0;
 		self.enabled = false;
+	}
+
+	fn volume(&self) -> u8 {
+		self.volume_envelope.volume
 	}
 
 	fn tick_sweep(&mut self) {}

@@ -25,6 +25,7 @@ impl Sweep {
 	// Returns true if the channel should be disabled
 	fn calculate(&mut self) -> bool {
 		let new_freq = self.shadow_frequency >> self.shift;
+
 		if self.negate {
 			self.shadow_frequency -= new_freq;
 		} else {
@@ -33,34 +34,43 @@ impl Sweep {
 		self.shadow_frequency > 2047
 	}
 
+	fn next_shadow_freq(&self) -> u16 {
+		let freq_diff = self.shadow_frequency >> self.shift;
+
+		if self.negate {
+			self.shadow_frequency.wrapping_sub(freq_diff)
+		} else {
+			self.shadow_frequency.wrapping_add(freq_diff)
+		}
+	}
+
 	// If it returns true, disable the channel
 	// The new frequency should be written back to the source
 	// Clocked at 128hz by the frame sequencer
 	pub fn tick(&mut self) -> (bool, Option<u16>) {
-		if !self.enabled || self.timer.get_period() == 0 {
+		if !self.enabled {
 			return (false, None);
 		}
 
 		if self.timer.tick() && self.shift != 0 {
-			let overflow = self.calculate();
-			if !overflow {
-				if self.calculate() {
-					return (true, Some(self.shadow_frequency));
-				} else {
-					return (false, Some(self.shadow_frequency));
-				}
+			let new_freq = self.next_shadow_freq();
+			if new_freq > 2047 {
+				(true, None)
 			} else {
-				return (true, None);
+				self.shadow_frequency = new_freq;
+				let new_new_freq = self.next_shadow_freq();
+				let disable_channel = new_new_freq > 2047;
+				(disable_channel, Some(new_freq))
 			}
+		} else {
+			(false, None)
 		}
-
-		(false, None)
 	}
 
 	pub fn write_byte(&mut self, value: u8) {
-		self.timer.set_period(((value >> 4) & 0b111) as u16);
-		self.negate = (value >> 3) & 1 == 1;
-		self.shift = value & 0b111;
+		self.timer.set_period((value & 0b1110000) as u16 >> 4);
+		self.negate = value & 0b1000 != 0;
+		self.shift = value & 0b0111;
 	}
 
 	pub fn read_byte(&self) -> u8 {

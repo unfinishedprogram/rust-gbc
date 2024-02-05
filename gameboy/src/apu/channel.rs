@@ -20,8 +20,20 @@ pub trait Channel {
 	fn tick_length_ctr(&mut self);
 	fn tick_vol_env(&mut self);
 
+	fn volume(&self) -> u8;
 	fn sample(&self) -> u8;
 	fn enabled(&self) -> bool;
 
 	fn reset(&mut self);
+
+	fn sample_with_volume(&self) -> f32 {
+		if !self.enabled() {
+			return 0.0;
+		}
+
+		let sample = (self.sample() * 2) as f32 - 1.0;
+		let volume = self.volume() as f32 / 15.0;
+
+		sample * volume
+	}
 }

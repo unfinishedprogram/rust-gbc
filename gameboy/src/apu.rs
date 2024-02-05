@@ -122,14 +122,10 @@ impl Apu {
 		(left, right)
 	}
 
-	fn dac(sample: u8) -> f32 {
-		sample as f32 / 15.0
-	}
-
 	fn sample_mixer(&mut self) -> (f32, f32) {
-		let square1 = Self::dac(self.square1.sample());
-		let square2 = Self::dac(self.square2.sample());
-		let noise = Self::dac(self.noise.sample());
+		let square1 = self.square1.sample_with_volume();
+		let square2 = self.square2.sample_with_volume();
+		let noise = self.noise.sample_with_volume();
 
 		let (sq1_l, sq1_r) = self.channel_enabled_lr(0);
 		let (sq2_l, sq2_r) = self.channel_enabled_lr(1);
