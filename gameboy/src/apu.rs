@@ -7,6 +7,7 @@ mod square;
 mod sweep;
 mod timer;
 mod volume_envelope;
+mod wave;
 
 use crate::{
 	cgb::Speed,
@@ -16,18 +17,20 @@ use crate::{
 
 use serde::{Deserialize, Serialize};
 
-use self::{channel::Channel, frame_sequencer::FrameSequencer, noise::Noise, square::Square};
+use self::{
+	channel::Channel, frame_sequencer::FrameSequencer, noise::Noise, square::Square, wave::Wave,
+};
 
 // Audio Processing Unit
 // https://gbdev.io/pandocs/Audio_details.html#audio-details
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Apu {
 	prev_div: u8,
 	frame_sequencer: FrameSequencer,
 
 	square1: Square,
 	square2: Square,
-	// wave: Wave,
+	wave: Wave,
 	noise: Noise,
 
 	// Master Volume
@@ -67,6 +70,7 @@ impl Apu {
 
 		self.square1.tick();
 		self.square2.tick();
+		self.wave.tick();
 		self.noise.tick();
 
 		if increment_clock {
@@ -97,11 +101,13 @@ impl Apu {
 	fn tick_length_ctr(&mut self) {
 		self.square1.tick_length_ctr();
 		self.square2.tick_length_ctr();
+		self.wave.tick_length_ctr();
 		self.noise.tick_length_ctr();
 	}
 	fn tick_vol_env(&mut self) {
 		self.square1.tick_vol_env();
 		self.square2.tick_vol_env();
+		self.wave.tick_vol_env();
 		self.noise.tick_vol_env();
 	}
 
@@ -125,14 +131,16 @@ impl Apu {
 	fn sample_mixer(&mut self) -> (f32, f32) {
 		let square1 = self.square1.sample_with_volume();
 		let square2 = self.square2.sample_with_volume();
+		let wave = self.wave.sample_with_volume();
 		let noise = self.noise.sample_with_volume();
 
 		let (sq1_l, sq1_r) = self.channel_enabled_lr(0);
 		let (sq2_l, sq2_r) = self.channel_enabled_lr(1);
+		let (w_l, w_r) = self.channel_enabled_lr(2);
 		let (n_l, n_r) = self.channel_enabled_lr(3);
 
-		let left = (sq1_l * square1) + (sq2_l * square2) + (n_l * noise);
-		let right = (sq1_r * square1) + (sq2_r * square2) + (n_r * noise);
+		let left = (sq1_l * square1) + (sq2_l * square2) + (n_l * noise) + (w_l * wave);
+		let right = (sq1_r * square1) + (sq2_r * square2) + (n_r * noise) + (w_r * wave);
 
 		let (last_left, last_right) = self.last_sample;
 
@@ -168,7 +176,7 @@ impl Apu {
 		let p_on = (self.power_on as u8) << 7;
 		let square1 = self.square1.enabled() as u8;
 		let square2 = (self.square2.enabled() as u8) << 1;
-		let wave = 0;
+		let wave = (self.wave.enabled() as u8) << 2;
 		let noise = (self.noise.enabled() as u8) << 3;
 
 		p_on | square1 | square2 | wave | noise
@@ -180,25 +188,6 @@ impl Apu {
 
 	fn read_pcm_34(&self) -> u8 {
 		self.noise.sample() << 4
-	}
-}
-
-impl Default for Apu {
-	fn default() -> Self {
-		Self {
-			last_sample: (0.0, 0.0),
-			power_on: false,
-			prev_div: 0,
-			frame_sequencer: FrameSequencer::default(),
-
-			square1: Square::default(),
-			square2: Square::default(),
-			// wave: Wave::default(),
-			noise: Noise::new(),
-
-			nr50: 0,
-			nr51: 0,
-		}
 	}
 }
 
@@ -257,11 +246,11 @@ impl MemoryMapper for Apu {
 			0xFF18 => self.square2.read_nrx3(),
 			0xFF19 => self.square2.read_nrx4(),
 
-			// 0xFF1A => self.wave.nrx0,
-			// 0xFF1B => self.wave.nrx1,
-			// 0xFF1C => self.wave.nrx2,
-			// 0xFF1D => self.wave.nrx3,
-			// 0xFF1E => self.wave.nrx4,
+			0xFF1A => self.wave.read_nrx0(),
+			0xFF1B => self.wave.read_nrx1(),
+			0xFF1C => self.wave.read_nrx2(),
+			0xFF1D => self.wave.read_nrx3(),
+			0xFF1E => self.wave.read_nrx4(),
 			0xFF1F => self.noise.read_nrx0(), // Unused
 			0xFF20 => self.noise.read_nrx1(),
 			0xFF21 => self.noise.read_nrx2(),
@@ -303,11 +292,12 @@ impl MemoryMapper for Apu {
 			0xFF18 => self.square2.write_nrx3(value),
 			0xFF19 => self.square2.write_nrx4(value),
 
-			// 0xFF1A => self.wave.nrx0 = value,
-			// 0xFF1B => self.wave.nrx1 = value,
-			// 0xFF1C => self.wave.nrx2 = value,
-			// 0xFF1D => self.wave.nrx3 = value,
-			// 0xFF1E => self.wave.nrx4 = value,
+			0xFF1A => self.wave.write_nrx0(value),
+			0xFF1B => self.wave.write_nrx1(value),
+			0xFF1C => self.wave.write_nrx2(value),
+			0xFF1D => self.wave.write_nrx3(value),
+			0xFF1E => self.wave.write_nrx4(value),
+
 			0xFF1F => self.noise.write_nrx0(value), // Unused
 			0xFF20 => self.noise.write_nrx1(value),
 			0xFF21 => self.noise.write_nrx2(value),
@@ -318,7 +308,7 @@ impl MemoryMapper for Apu {
 			0xFF25 => self.nr51 = value,                           // NR51
 			0xFF26 => self.set_power_on(value & 0b1000_0000 != 0), // NR52
 
-			// 0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30] = value,
+			0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30] = value,
 			_ => log::error!("Apu write to unhandled address: {:#X}", addr),
 		}
 	}

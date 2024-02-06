@@ -21,21 +21,6 @@ pub struct Noise {
 }
 
 impl Noise {
-	pub fn new() -> Self {
-		let mut res = Self {
-			lfsr: Lfsr::default(),
-			volume_envelope: VolumeEnvelope::default(),
-			enabled: false,
-			clock_shift: 0,
-			devisor_code: 0,
-			frequency_timer: Timer::new(0),
-			length_counter: LengthCounter::default(),
-			acc: 0,
-		};
-		res.frequency_timer.set_period(res.timer_period());
-		res
-	}
-
 	fn timer_period(&self) -> u16 {
 		self.divisor() << self.clock_shift
 	}
@@ -57,7 +42,18 @@ impl Noise {
 
 impl Default for Noise {
 	fn default() -> Self {
-		Self::new()
+		let mut res = Self {
+			lfsr: Lfsr::default(),
+			volume_envelope: VolumeEnvelope::default(),
+			enabled: false,
+			clock_shift: 0,
+			devisor_code: 0,
+			frequency_timer: Timer::new(0),
+			length_counter: LengthCounter::default(),
+			acc: 0,
+		};
+		res.frequency_timer.set_period(res.timer_period());
+		res
 	}
 }
 
