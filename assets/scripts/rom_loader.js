@@ -23,6 +23,11 @@ function make_rom_button(rom) {
 }
 
 async function load_rom({ name, path }) {
+    window.history.pushState('rust-gbc', `${name}`, `?rom=${path}`);
+    await load_rom({ name, path })
+}
+
+async function load_rom_internal({ name, path }) {
     let rom_data = new Uint8Array(await (await fetch(path)).arrayBuffer());
     wasm.load_rom(rom_data, `{"LocalUrl": "${path}"}`);
 }
@@ -37,7 +42,7 @@ function load_rom_if_in_query_params() {
     const urlParams = new URLSearchParams(window.location.search);
     const rom = urlParams.get('rom');
     if (rom) {
-        load_rom({ name: rom, path: rom });
+        load_rom_internal({ name: rom, path: rom });
     }
 }
 
