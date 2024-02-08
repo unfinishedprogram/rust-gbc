@@ -24,7 +24,7 @@ function make_rom_button(rom) {
 
 async function load_rom({ name, path }) {
     window.history.pushState('rust-gbc', `${name}`, `?rom=${path}`);
-    await load_rom({ name, path })
+    await load_rom_internal({ name, path })
 }
 
 async function load_rom_internal({ name, path }) {
