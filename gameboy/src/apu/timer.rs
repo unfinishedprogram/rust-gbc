@@ -14,6 +14,7 @@ impl Timer {
 		}
 	}
 
+	#[must_use]
 	pub fn tick(&mut self) -> bool {
 		if self.period == 0 {
 			return false;

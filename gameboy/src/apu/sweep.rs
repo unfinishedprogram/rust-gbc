@@ -17,21 +17,9 @@ impl Sweep {
 		self.shadow_frequency = frequency;
 		self.enabled = self.shift != 0 || self.timer.get_period() != 0;
 		if self.shift != 0 {
-			self.calculate();
+			// We ignore the second calculate, but it still updates our shadow frequency
+			_ = self.calculate();
 		}
-	}
-
-	// Updates the frequency shadow register
-	// Returns true if the channel should be disabled
-	fn calculate(&mut self) -> bool {
-		let new_freq = self.shadow_frequency >> self.shift;
-
-		if self.negate {
-			self.shadow_frequency -= new_freq;
-		} else {
-			self.shadow_frequency += new_freq;
-		}
-		self.shadow_frequency > 2047
 	}
 
 	fn next_shadow_freq(&self) -> u16 {
@@ -47,6 +35,7 @@ impl Sweep {
 	// If it returns true, disable the channel
 	// The new frequency should be written back to the source
 	// Clocked at 128hz by the frame sequencer
+	#[must_use]
 	pub fn tick(&mut self) -> (bool, Option<u16>) {
 		if !self.enabled {
 			return (false, None);
@@ -71,6 +60,20 @@ impl Sweep {
 		self.timer.set_period(((value & 0b01110000) >> 4) as u16);
 		self.negate = value & 0b1000 != 0;
 		self.shift = value & 0b0111;
+	}
+
+	// Updates the frequency shadow register
+	// Returns true if the channel should be disabled
+	#[must_use]
+	fn calculate(&mut self) -> bool {
+		let new_freq = self.shadow_frequency >> self.shift;
+
+		if self.negate {
+			self.shadow_frequency -= new_freq;
+		} else {
+			self.shadow_frequency += new_freq;
+		}
+		self.shadow_frequency > 2047
 	}
 
 	pub fn read_byte(&self) -> u8 {

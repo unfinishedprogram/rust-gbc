@@ -21,7 +21,7 @@ pub fn audio_cb(evt: AudioProcessingEvent) {
 					left[i] = l;
 					right[i] = r;
 				} else {
-					log::error!("Buffer ran dry");
+					log::warn!("Buffer ran dry");
 					break;
 				}
 			}
@@ -58,7 +58,7 @@ impl AudioHandler {
 		let ctx =
 			web_sys::AudioContext::new_with_context_options(&web_sys::AudioContextOptions::new())?;
 
-		log::error!("Sample rate: {}", ctx.sample_rate());
+		log::info!("Web Audio sample-rate: {}", ctx.sample_rate());
 		let cb = audio_callback_as_js_func();
 
 		// The script node pulls samples from the audio buffer as they are needed

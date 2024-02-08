@@ -12,7 +12,7 @@ mod wave;
 use crate::{
 	cgb::Speed,
 	sm83::memory_mapper::MemoryMapper,
-	util::bits::{falling_edge, BIT_5, BIT_6, BIT_7},
+	util::bits::{falling_edge, BIT_5, BIT_6},
 };
 
 use serde::{Deserialize, Serialize};
@@ -203,11 +203,10 @@ impl Apu {
 		let wave = (self.wave.enabled() as u8) << 2;
 		let noise = (self.noise.enabled() as u8) << 3;
 
-		// log::error!(
-		// 	"Apu read NR52: {:#X}",
-		// 	// p_on |
-		// 	square1 | square2 | wave | noise
-		// );
+		log::debug!(
+			"Apu read NR52: {:#X}",
+			p_on | square1 | square2 | wave | noise
+		);
 
 		p_on | square1 | square2 | wave | noise
 	}
@@ -265,7 +264,7 @@ impl MemoryMapper for Apu {
 			0xFF30..0xFF40 => 0x00, // Wave RAM
 
 			_ => {
-				log::error!("Apu read from address without defined mask: {:#X}", addr);
+				log::warn!("Apu read from address without defined mask: {:#X}", addr);
 				0x00
 			}
 		};
@@ -304,23 +303,23 @@ impl MemoryMapper for Apu {
 
 			0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30],
 			_ => {
-				log::error!("Apu read from unhandled address: {:#X}", addr);
+				log::warn!("Apu read from unhandled address: {:#X}", addr);
 				0x00
 			}
 		};
 
-		// log::error!(
-		// 	"Apu read from address: {:#X}, value: {:#X}",
-		// 	addr,
-		// 	value | unused_mask
-		// )
+		log::debug!(
+			"Apu read from address: {:#X}, value: {:#X}",
+			addr,
+			value | unused_mask
+		);
 
 		value | unused_mask
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
 		if !self.power_on && addr != 0xFF26 {
-			log::error!(
+			log::warn!(
 				"Apu write to disabled apu: {:#X}, value: {:#X}",
 				addr,
 				value
@@ -360,13 +359,13 @@ impl MemoryMapper for Apu {
 
 			0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30] = value,
 
-			_ => log::error!(
+			_ => log::warn!(
 				"Apu write to unhandled address: {:#X}, value: {:#X}",
 				addr,
 				value
 			),
 		}
 
-		log::error!("Apu write to address: {:#X}, value: {:#X}", addr, value);
+		log::debug!("Apu write to address: {:#X}, value: {:#X}", addr, value);
 	}
 }
