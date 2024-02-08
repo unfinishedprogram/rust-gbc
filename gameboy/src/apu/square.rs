@@ -31,6 +31,13 @@ impl Square {
 	fn timer_period(&self) -> u16 {
 		(2048 - self.frequency) * 4
 	}
+
+	pub fn sweeper() -> Self {
+		Self {
+			sweeper: true,
+			..Self::default()
+		}
+	}
 }
 
 impl Channel for Square {
@@ -48,11 +55,12 @@ impl Channel for Square {
 	}
 
 	fn write_nrx1(&mut self, value: u8) {
-		self.length_counter.reload(value & 0b0011_1111)
+		self.length_counter.reload(value & 0b0011_1111);
+		self.duty_index = (value >> 6) & 0b11;
 	}
 
 	fn read_nrx1(&self) -> u8 {
-		self.length_counter.length
+		(self.duty_index << 6) | self.length_counter.read_length()
 	}
 
 	fn write_nrx2(&mut self, value: u8) {
@@ -116,11 +124,14 @@ impl Channel for Square {
 	}
 
 	fn reset(&mut self) {
+		if self.sweeper {
+			self.sweep.write_byte(0);
+		}
 		self.duty_cycle = 0;
 		self.duty_index = 0;
 		self.volume_envelope.write_byte(0);
 		self.length_counter.enabled = false;
-		self.length_counter.length = 0;
+		self.length_counter.reload(0);
 		self.enabled = false;
 	}
 
@@ -139,7 +150,9 @@ impl Channel for Square {
 	}
 
 	fn tick_length_ctr(&mut self) {
-		self.length_counter.tick();
+		if self.length_counter.tick() {
+			self.enabled = false;
+		}
 	}
 
 	fn tick_vol_env(&mut self) {

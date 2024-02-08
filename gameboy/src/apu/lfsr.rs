@@ -12,14 +12,14 @@ impl Default for Lfsr {
 	fn default() -> Self {
 		Self {
 			shift_register: SHIFT_REGISTER_INITIAL,
-			width: 7,
+			width: 14,
 		}
 	}
 }
 
 impl Lfsr {
 	pub fn reset(&mut self) {
-		self.shift_register = SHIFT_REGISTER_INITIAL
+		self.shift_register = SHIFT_REGISTER_INITIAL;
 	}
 
 	pub fn step(&mut self) -> bool {

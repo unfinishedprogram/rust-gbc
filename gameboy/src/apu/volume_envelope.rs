@@ -42,7 +42,11 @@ impl Default for VolumeEnvelope {
 // Envelope Function
 impl VolumeEnvelope {
 	pub fn read_byte(&self) -> u8 {
-		(self.initial_volume << 4) | ((self.timer.get_period() as u8) << 3) | (self.direction as u8)
+		let period = self.timer.get_period() as u8;
+		let direction = (self.direction as u8) << 3;
+		let initial_volume = self.initial_volume << 4;
+
+		initial_volume | period | direction
 	}
 
 	pub fn write_byte(&mut self, value: u8) {

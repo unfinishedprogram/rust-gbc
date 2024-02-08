@@ -68,16 +68,16 @@ impl Sweep {
 	}
 
 	pub fn write_byte(&mut self, value: u8) {
-		self.timer.set_period((value & 0b1110000) as u16 >> 4);
+		self.timer.set_period(((value & 0b01110000) >> 4) as u16);
 		self.negate = value & 0b1000 != 0;
 		self.shift = value & 0b0111;
 	}
 
 	pub fn read_byte(&self) -> u8 {
-		let period = (self.timer.get_period() >> 4) & 0b111;
+		let period = (self.timer.get_period() << 4) as u8;
 		let negate = (self.negate as u8) << 3;
 		let shift = self.shift;
 
-		(period << 4) as u8 | negate | shift
+		period | negate | shift
 	}
 }

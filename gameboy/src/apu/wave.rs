@@ -86,7 +86,7 @@ impl Channel for Wave {
 	}
 
 	fn write_nrx0(&mut self, value: u8) {
-		self.dac_power = value & BIT_7 == 0;
+		self.dac_power = value & BIT_7 != 0;
 	}
 
 	fn write_nrx1(&mut self, value: u8) {
@@ -94,11 +94,11 @@ impl Channel for Wave {
 	}
 
 	fn read_nrx1(&self) -> u8 {
-		self.length_counter.length
+		self.length_counter.read_length()
 	}
 
 	fn write_nrx2(&mut self, value: u8) {
-		self.volume_code = match value >> 5 {
+		self.volume_code = match (value & 0b0110_0000) >> 5 {
 			0 => VolumeCode::Zero,
 			1 => VolumeCode::OneHundred,
 			2 => VolumeCode::Fifty,
@@ -163,13 +163,24 @@ impl Channel for Wave {
 	}
 
 	fn enabled(&self) -> bool {
-		self.enabled
+		self.enabled && self.dac_power
 	}
 
-	fn reset(&mut self) {}
+	fn reset(&mut self) {
+		self.volume_code = VolumeCode::Zero;
+		self.enabled = false;
+		self.dac_power = false;
+		self.frequency = 0;
+		self.frequency_timer.reload();
+		self.position_counter = 0;
+		self.length_counter.enabled = false;
+		self.length_counter.reload(0)
+	}
 
 	fn tick_length_ctr(&mut self) {
-		self.length_counter.tick();
+		if self.length_counter.tick() {
+			self.enabled = false;
+		}
 	}
 
 	fn tick_sweep(&mut self) {}

@@ -12,7 +12,7 @@ mod wave;
 use crate::{
 	cgb::Speed,
 	sm83::memory_mapper::MemoryMapper,
-	util::bits::{falling_edge, BIT_5, BIT_6},
+	util::bits::{falling_edge, BIT_5, BIT_6, BIT_7},
 };
 
 use serde::{Deserialize, Serialize};
@@ -23,7 +23,7 @@ use self::{
 
 // Audio Processing Unit
 // https://gbdev.io/pandocs/Audio_details.html#audio-details
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Apu {
 	prev_div: u8,
 	frame_sequencer: FrameSequencer,
@@ -38,6 +38,25 @@ pub struct Apu {
 	nr51: u8,
 	power_on: bool,
 	last_sample: (f32, f32),
+}
+
+impl Default for Apu {
+	fn default() -> Self {
+		Self {
+			prev_div: 0,
+			frame_sequencer: FrameSequencer::default(),
+
+			square1: Square::sweeper(),
+			square2: Square::default(),
+			wave: Wave::default(),
+			noise: Noise::default(),
+
+			nr50: 0,
+			nr51: 0,
+			power_on: false,
+			last_sample: (0.0, 0.0),
+		}
+	}
 }
 
 // There are 4 sound channels each with a generator and a DAC
@@ -161,23 +180,34 @@ impl Apu {
 		(left * v_left, right * v_right)
 	}
 
-	fn set_power_on(&mut self, state: bool) {
+	fn set_power_state(&mut self, state: bool) {
 		self.power_on = state;
 		if !state {
 			self.square1.reset();
 			self.square2.reset();
+			self.wave.reset();
 			self.noise.reset();
 			self.nr50 = 0;
 			self.nr51 = 0;
 		}
 	}
 
-	fn read_nr53(&self) -> u8 {
+	fn read_nr52(&self) -> u8 {
+		if !self.power_on {
+			return 0;
+		}
+
 		let p_on = (self.power_on as u8) << 7;
 		let square1 = self.square1.enabled() as u8;
 		let square2 = (self.square2.enabled() as u8) << 1;
 		let wave = (self.wave.enabled() as u8) << 2;
 		let noise = (self.noise.enabled() as u8) << 3;
+
+		// log::error!(
+		// 	"Apu read NR52: {:#X}",
+		// 	// p_on |
+		// 	square1 | square2 | wave | noise
+		// );
 
 		p_on | square1 | square2 | wave | noise
 	}
@@ -227,10 +257,17 @@ impl MemoryMapper for Apu {
 			0xFF22 => 0x00,
 			0xFF23 => 0xBF,
 
-			0xFF24 => 0x00,
-			0xFF25 => 0x00,
+			0xFF24 => 0x00, // nr50
+			0xFF25 => 0x00, // nr51
+			0xFF26 => 0x70, // nr52
 
-			_ => 0x00,
+			0xFF27..0xFF30 => 0xFF,
+			0xFF30..0xFF40 => 0x00, // Wave RAM
+
+			_ => {
+				log::error!("Apu read from address without defined mask: {:#X}", addr);
+				0x00
+			}
 		};
 
 		let value = match addr {
@@ -240,7 +277,7 @@ impl MemoryMapper for Apu {
 			0xFF13 => self.square1.read_nrx3(),
 			0xFF14 => self.square1.read_nrx4(),
 
-			0xFF15 => self.square2.read_nrx0(), // Unused
+			0xFF15 => self.square2.read_nrx0(),
 			0xFF16 => self.square2.read_nrx1(),
 			0xFF17 => self.square2.read_nrx2(),
 			0xFF18 => self.square2.read_nrx3(),
@@ -251,7 +288,8 @@ impl MemoryMapper for Apu {
 			0xFF1C => self.wave.read_nrx2(),
 			0xFF1D => self.wave.read_nrx3(),
 			0xFF1E => self.wave.read_nrx4(),
-			0xFF1F => self.noise.read_nrx0(), // Unused
+
+			0xFF1F => self.noise.read_nrx0(),
 			0xFF20 => self.noise.read_nrx1(),
 			0xFF21 => self.noise.read_nrx2(),
 			0xFF22 => self.noise.read_nrx3(),
@@ -259,23 +297,35 @@ impl MemoryMapper for Apu {
 
 			0xFF24 => self.nr50,        // NR50
 			0xFF25 => self.nr51,        // NR51
-			0xFF26 => self.read_nr53(), // NR52
+			0xFF26 => self.read_nr52(), // NR52
 
 			0xFF76 => self.read_pcm_12(),
 			0xFF77 => self.read_pcm_34(),
 
-			// 0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30],
+			0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30],
 			_ => {
 				log::error!("Apu read from unhandled address: {:#X}", addr);
-				0xFF
+				0x00
 			}
 		};
+
+		// log::error!(
+		// 	"Apu read from address: {:#X}, value: {:#X}",
+		// 	addr,
+		// 	value | unused_mask
+		// )
 
 		value | unused_mask
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
 		if !self.power_on && addr != 0xFF26 {
+			log::error!(
+				"Apu write to disabled apu: {:#X}, value: {:#X}",
+				addr,
+				value
+			);
+
 			return;
 		}
 
@@ -304,12 +354,19 @@ impl MemoryMapper for Apu {
 			0xFF22 => self.noise.write_nrx3(value),
 			0xFF23 => self.noise.write_nrx4(value),
 
-			0xFF24 => self.nr50 = value,                           // NR50
-			0xFF25 => self.nr51 = value,                           // NR51
-			0xFF26 => self.set_power_on(value & 0b1000_0000 != 0), // NR52
+			0xFF24 => self.nr50 = value,                              // NR50
+			0xFF25 => self.nr51 = value,                              // NR51
+			0xFF26 => self.set_power_state(value & 0b1000_0000 != 0), // NR52
 
 			0xFF30..0xFF40 => self.wave.wave_ram[addr as usize - 0xFF30] = value,
-			_ => log::error!("Apu write to unhandled address: {:#X}", addr),
+
+			_ => log::error!(
+				"Apu write to unhandled address: {:#X}, value: {:#X}",
+				addr,
+				value
+			),
 		}
+
+		log::error!("Apu write to address: {:#X}, value: {:#X}", addr, value);
 	}
 }

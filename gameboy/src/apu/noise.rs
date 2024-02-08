@@ -67,7 +67,7 @@ impl Channel for Noise {
 		self.length_counter.reload(value & 0b0011_1111);
 	}
 	fn read_nrx1(&self) -> u8 {
-		self.length_counter.length
+		self.length_counter.read_length()
 	}
 
 	fn write_nrx2(&mut self, value: u8) {
@@ -86,8 +86,9 @@ impl Channel for Noise {
 		self.lfsr.width = if value & BIT_3 == BIT_3 { 6 } else { 14 };
 		self.lfsr.reset();
 	}
+
 	fn read_nrx3(&self) -> u8 {
-		let lfsr_mode = if self.lfsr.width == 6 { 0 } else { BIT_3 };
+		let lfsr_mode = if self.lfsr.width == 6 { BIT_3 } else { 0 };
 		self.clock_shift << 4 | lfsr_mode | self.devisor_code
 	}
 
@@ -97,9 +98,7 @@ impl Channel for Noise {
 
 		if trigger {
 			self.enabled = true;
-			if self.length_counter.length == 0 {
-				self.length_counter.length = 64;
-			}
+			self.length_counter.reload(0);
 
 			self.frequency_timer.reload();
 			self.volume_envelope.reload();
@@ -138,9 +137,13 @@ impl Channel for Noise {
 
 	fn reset(&mut self) {
 		self.lfsr.reset();
+		self.lfsr.width = 14;
+		self.clock_shift = 0;
+		self.devisor_code = 0;
+
+		self.length_counter.reload(0);
 		self.volume_envelope.write_byte(0);
 		self.length_counter.enabled = false;
-		self.length_counter.length = 0;
 		self.enabled = false;
 	}
 
