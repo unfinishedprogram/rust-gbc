@@ -62,3 +62,6 @@ test result: FAILED. 1596 passed; 1804 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Improved HDMA handling -->
 test result: FAILED. 1606 passed; 1794 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.76s
+
+<!-- Audio -->
+test result: FAILED. 1628 passed; 1772 failed; 0 ignored; 0 measured; 0 filtered out; finished in 39.28s
