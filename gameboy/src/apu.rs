@@ -12,7 +12,7 @@ mod wave;
 use crate::{
 	cgb::Speed,
 	sm83::memory_mapper::MemoryMapper,
-	util::bits::{falling_edge, BIT_5, BIT_6},
+	util::bits::{falling_edge, BIT_4, BIT_5},
 };
 
 use serde::{Deserialize, Serialize};
@@ -78,8 +78,8 @@ impl Apu {
 		// 512hz timer
 		let increment_clock = {
 			let div_bit_mask = match speed {
-				Speed::Normal => BIT_5,
-				Speed::Double => BIT_6,
+				Speed::Double => BIT_5,
+				Speed::Normal => BIT_4,
 			};
 
 			let res = falling_edge(self.prev_div, div, div_bit_mask);
@@ -87,10 +87,21 @@ impl Apu {
 			res
 		};
 
-		self.square1.tick();
-		self.square2.tick();
-		self.wave.tick();
-		self.noise.tick();
+		if self.square1.enabled() {
+			self.square1.tick();
+		}
+
+		if self.square2.enabled() {
+			self.square2.tick();
+		}
+
+		if self.wave.enabled() {
+			self.wave.tick();
+		}
+
+		if self.noise.enabled() {
+			self.noise.tick();
+		}
 
 		if increment_clock {
 			self.step_frame_sequencer();
@@ -123,6 +134,7 @@ impl Apu {
 		self.wave.tick_length_ctr();
 		self.noise.tick_length_ctr();
 	}
+
 	fn tick_vol_env(&mut self) {
 		self.square1.tick_vol_env();
 		self.square2.tick_vol_env();
@@ -202,11 +214,6 @@ impl Apu {
 		let square2 = (self.square2.enabled() as u8) << 1;
 		let wave = (self.wave.enabled() as u8) << 2;
 		let noise = (self.noise.enabled() as u8) << 3;
-
-		log::debug!(
-			"Apu read NR52: {:#X}",
-			p_on | square1 | square2 | wave | noise
-		);
 
 		p_on | square1 | square2 | wave | noise
 	}
@@ -308,7 +315,7 @@ impl MemoryMapper for Apu {
 			}
 		};
 
-		log::debug!(
+		log::info!(
 			"Apu read from address: {:#X}, value: {:#X}",
 			addr,
 			value | unused_mask
@@ -319,7 +326,7 @@ impl MemoryMapper for Apu {
 
 	fn write(&mut self, addr: u16, value: u8) {
 		if !self.power_on && addr != 0xFF26 {
-			log::warn!(
+			log::info!(
 				"Apu write to disabled apu: {:#X}, value: {:#X}",
 				addr,
 				value

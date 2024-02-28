@@ -38,7 +38,7 @@ fn main() {
 	console_error_panic_hook::set_once();
 	tracing_wasm::set_as_global_default();
 
-	log::set_max_level(log::LevelFilter::Warn);
+	log::set_max_level(log::LevelFilter::Error);
 
 	setup_listeners();
 

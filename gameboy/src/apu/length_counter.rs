@@ -22,14 +22,12 @@ impl LengthCounter {
 		}
 	}
 
-	// Enables and loads length
 	pub fn reload(&mut self, length: u8) {
-		self.length = self.initial - (length & (self.initial - 1));
-		log::info!("Writing to counter length: {:}", self.initial - length);
+		self.length = length % self.initial;
 	}
 
 	pub fn read_length(&self) -> u8 {
-		self.initial - self.length
+		self.length
 	}
 
 	// 256hz ticked by the frame-sequencer
@@ -41,12 +39,8 @@ impl LengthCounter {
 			return false;
 		}
 
-		if self.length - self.initial == 0 {
-			self.enabled = false;
-			return true;
-		}
-		self.length += 1;
-		if self.length - self.initial == 0 {
+		self.length = self.length.wrapping_add(1) & (self.initial - 1);
+		if self.length == 0 {
 			self.enabled = false;
 			true
 		} else {

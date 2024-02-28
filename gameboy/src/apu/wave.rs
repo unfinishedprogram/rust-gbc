@@ -67,7 +67,7 @@ impl Wave {
 
 impl Channel for Wave {
 	fn sample_with_volume(&self) -> f32 {
-		if !self.dac_power || !self.enabled {
+		if !self.enabled() {
 			return 0.0;
 		}
 
