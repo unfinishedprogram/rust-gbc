@@ -1,7 +1,7 @@
 use crate::util::bits::{BIT_3, BIT_6, BIT_7};
 use serde::{Deserialize, Serialize};
 
-use super::{
+use super::super::{
 	channel::Channel, length_counter::LengthCounter, lfsr::Lfsr, timer::Timer,
 	volume_envelope::VolumeEnvelope,
 };
@@ -72,6 +72,9 @@ impl Channel for Noise {
 
 	fn write_nrx2(&mut self, value: u8) {
 		self.volume_envelope.write_byte(value);
+		if self.volume_envelope.volume == 0 {
+			self.enabled = false;
+		}
 	}
 	fn read_nrx2(&self) -> u8 {
 		self.volume_envelope.read_byte()

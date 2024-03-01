@@ -2,24 +2,20 @@ mod channel;
 mod frame_sequencer;
 mod length_counter;
 mod lfsr;
-mod noise;
-mod square;
 mod sweep;
 mod timer;
 mod volume_envelope;
-mod wave;
+use channel::{noise::Noise, square::Square, wave::Wave, Channel};
 
 use crate::{
 	cgb::Speed,
 	sm83::memory_mapper::MemoryMapper,
-	util::bits::{falling_edge, BIT_4, BIT_5},
+	util::bits::{falling_edge, BIT_4, BIT_5, BIT_7},
 };
 
 use serde::{Deserialize, Serialize};
 
-use self::{
-	channel::Channel, frame_sequencer::FrameSequencer, noise::Noise, square::Square, wave::Wave,
-};
+use self::frame_sequencer::FrameSequencer;
 
 // Audio Processing Unit
 // https://gbdev.io/pandocs/Audio_details.html#audio-details
@@ -209,7 +205,7 @@ impl Apu {
 			return 0;
 		}
 
-		let p_on = (self.power_on as u8) << 7;
+		let p_on = BIT_7;
 		let square1 = self.square1.enabled() as u8;
 		let square2 = (self.square2.enabled() as u8) << 1;
 		let wave = (self.wave.enabled() as u8) << 2;

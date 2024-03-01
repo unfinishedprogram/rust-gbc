@@ -1,3 +1,7 @@
+pub mod noise;
+pub mod square;
+pub mod wave;
+
 pub trait Channel {
 	fn write_nrx0(&mut self, value: u8);
 	fn read_nrx0(&self) -> u8;

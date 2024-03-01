@@ -1,11 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 use crate::util::bits::{BIT_6, BIT_7};
 
-use super::{
+use super::super::{
 	channel::Channel, length_counter::LengthCounter, sweep::Sweep, timer::Timer,
 	volume_envelope::VolumeEnvelope,
 };
-
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct Square {
@@ -64,7 +64,10 @@ impl Channel for Square {
 	}
 
 	fn write_nrx2(&mut self, value: u8) {
-		self.volume_envelope.write_byte(value)
+		self.volume_envelope.write_byte(value);
+		if self.volume_envelope.volume == 0 {
+			self.enabled = false;
+		}
 	}
 
 	fn read_nrx2(&self) -> u8 {
@@ -84,6 +87,7 @@ impl Channel for Square {
 
 	fn write_nrx4(&mut self, value: u8) {
 		let trigger = value & BIT_7 == BIT_7;
+
 		self.length_counter.enabled = value & BIT_6 == BIT_6;
 		if trigger {
 			self.enabled = true;

@@ -41,7 +41,7 @@ impl LengthCounter {
 
 		self.length = self.length.wrapping_add(1) & (self.initial - 1);
 		if self.length == 0 {
-			self.enabled = false;
+			// self.enabled = false;
 			true
 		} else {
 			false

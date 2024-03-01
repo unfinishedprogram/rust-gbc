@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::util::bits::{BIT_6, BIT_7};
 
-use super::{channel::Channel, length_counter::LengthCounter, timer::Timer};
+use super::super::{channel::Channel, length_counter::LengthCounter, timer::Timer};
 
 #[repr(u8)]
 #[derive(Copy, Clone, Serialize, Deserialize)]
@@ -155,11 +155,11 @@ impl Channel for Wave {
 	}
 
 	fn volume(&self) -> u8 {
-		0
+		15
 	}
 
 	fn sample(&self) -> u8 {
-		0
+		self.wave_ram[self.position_counter as usize] << self.volume_code.shift_amount()
 	}
 
 	fn enabled(&self) -> bool {
