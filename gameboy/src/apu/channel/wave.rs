@@ -41,7 +41,7 @@ impl Default for Wave {
 	fn default() -> Self {
 		Self {
 			enabled: false,
-			length_counter: LengthCounter::default(),
+			length_counter: LengthCounter::new(0),
 			frequency_timer: Timer::default(),
 			volume_code: VolumeCode::Zero,
 			frequency: 0,
@@ -87,6 +87,9 @@ impl Channel for Wave {
 
 	fn write_nrx0(&mut self, value: u8) {
 		self.dac_power = value & BIT_7 != 0;
+		if !self.dac_power {
+			self.enabled = false;
+		}
 	}
 
 	fn write_nrx1(&mut self, value: u8) {
@@ -126,7 +129,7 @@ impl Channel for Wave {
 		let trigger = value & BIT_7 == BIT_7;
 		self.length_counter.enabled = value & BIT_6 == BIT_6;
 
-		if trigger {
+		if trigger && self.dac_power {
 			self.enabled = true;
 		}
 

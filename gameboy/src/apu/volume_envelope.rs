@@ -4,7 +4,7 @@ use crate::util::bits::BIT_3;
 
 use super::timer::Timer;
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Direction {
 	Decrease = 0,
@@ -72,5 +72,9 @@ impl VolumeEnvelope {
 	pub fn reload(&mut self) {
 		self.volume = self.initial_volume;
 		self.timer.reload()
+	}
+
+	pub fn dac_enabled(&self) -> bool {
+		!(self.initial_volume == 0 && self.direction == Direction::Decrease)
 	}
 }

@@ -72,10 +72,11 @@ impl Channel for Noise {
 
 	fn write_nrx2(&mut self, value: u8) {
 		self.volume_envelope.write_byte(value);
-		if self.volume_envelope.volume == 0 {
+		if !self.volume_envelope.dac_enabled() {
 			self.enabled = false;
 		}
 	}
+
 	fn read_nrx2(&self) -> u8 {
 		self.volume_envelope.read_byte()
 	}
@@ -97,11 +98,10 @@ impl Channel for Noise {
 
 	fn write_nrx4(&mut self, value: u8) {
 		let trigger = value & BIT_7 == BIT_7;
-		self.length_counter.enabled = value & BIT_6 == BIT_6;
 
+		self.length_counter.enabled = value & BIT_6 == BIT_6;
 		if trigger {
 			self.enabled = true;
-			self.length_counter.reload(0);
 
 			self.frequency_timer.reload();
 			self.volume_envelope.reload();
@@ -131,7 +131,7 @@ impl Channel for Noise {
 	}
 
 	fn enabled(&self) -> bool {
-		self.enabled
+		self.enabled && self.volume_envelope.dac_enabled()
 	}
 
 	fn sample(&self) -> u8 {

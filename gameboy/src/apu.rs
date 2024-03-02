@@ -234,6 +234,7 @@ impl MemoryMapper for Apu {
 		// NR4x  $FF  $FF $00  $00  $BF
 		// NR5x  $00  $00 $70
 
+		// Unused register bits are always set to 1
 		let unused_mask: u8 = match addr {
 			0xFF10 => 0x80,
 			0xFF11 => 0x3F,
@@ -272,7 +273,7 @@ impl MemoryMapper for Apu {
 			}
 		};
 
-		let value = match addr {
+		let read_result = match addr {
 			0xFF10 => self.square1.read_nrx0(),
 			0xFF11 => self.square1.read_nrx1(),
 			0xFF12 => self.square1.read_nrx2(),
@@ -314,10 +315,10 @@ impl MemoryMapper for Apu {
 		log::info!(
 			"Apu read from address: {:#X}, value: {:#X}",
 			addr,
-			value | unused_mask
+			read_result | unused_mask
 		);
 
-		value | unused_mask
+		read_result | unused_mask
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
@@ -369,6 +370,6 @@ impl MemoryMapper for Apu {
 			),
 		}
 
-		log::debug!("Apu write to address: {:#X}, value: {:#X}", addr, value);
+		log::info!("Apu write to address: {:#X}, value: {:#X}", addr, value);
 	}
 }

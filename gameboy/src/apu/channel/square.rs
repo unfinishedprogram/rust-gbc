@@ -65,7 +65,7 @@ impl Channel for Square {
 
 	fn write_nrx2(&mut self, value: u8) {
 		self.volume_envelope.write_byte(value);
-		if self.volume_envelope.volume == 0 {
+		if !self.volume_envelope.dac_enabled() {
 			self.enabled = false;
 		}
 	}
@@ -94,12 +94,12 @@ impl Channel for Square {
 			if self.sweeper {
 				self.sweep.trigger(self.frequency);
 			}
-		}
 
-		let frequency_msb = value & 0b111;
-		self.frequency &= 0x00FF;
-		self.frequency |= (frequency_msb as u16) << 8;
-		self.frequency_timer.set_period(self.timer_period());
+			let frequency_msb = value & 0b111;
+			self.frequency &= 0x00FF;
+			self.frequency |= (frequency_msb as u16) << 8;
+			self.frequency_timer.set_period(self.timer_period());
+		}
 	}
 
 	fn read_nrx4(&self) -> u8 {
@@ -124,7 +124,7 @@ impl Channel for Square {
 	}
 
 	fn enabled(&self) -> bool {
-		self.enabled
+		self.enabled && self.volume_envelope.dac_enabled()
 	}
 
 	fn reset(&mut self) {
