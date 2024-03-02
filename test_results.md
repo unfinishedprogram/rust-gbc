@@ -65,3 +65,9 @@ test result: FAILED. 1606 passed; 1794 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Audio -->
 test result: FAILED. 1628 passed; 1772 failed; 0 ignored; 0 measured; 0 filtered out; finished in 39.28s
+
+<!-- Audio length control disables channel -->
+test result: FAILED. 1628 passed; 1772 failed; 0 ignored; 0 measured; 0 filtered out; finished in 47.68s
+
+<!-- Add GB-Microtest suite -->
+test result: FAILED. 1841 passed; 2072 failed; 0 ignored; 0 measured; 0 filtered out; finished in 48.84s
