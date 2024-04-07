@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::util::bits::{BIT_6, BIT_7};
+use crate::{
+	apu::frame_sequencer,
+	util::bits::{BIT_6, BIT_7},
+};
 
 use super::super::{channel::Channel, length_counter::LengthCounter, timer::Timer};
 
@@ -125,9 +128,9 @@ impl Channel for Wave {
 		(self.frequency & 0x00FF) as u8
 	}
 
-	fn write_nrx4(&mut self, value: u8) {
+	fn write_nrx4(&mut self, value: u8, next_frame_sequencer_result: frame_sequencer::TickResult) {
 		let trigger = value & BIT_7 == BIT_7;
-		self.length_counter.enabled = value & BIT_6 == BIT_6;
+		self.length_counter.set_enabled(value & BIT_6 == BIT_6);
 
 		if trigger && self.dac_power {
 			self.enabled = true;
@@ -142,7 +145,7 @@ impl Channel for Wave {
 	fn read_nrx4(&self) -> u8 {
 		let frequency_msb = self.frequency >> 8;
 		let trigger = if self.enabled { BIT_7 } else { 0 };
-		let length = if self.length_counter.enabled {
+		let length = if self.length_counter.enabled() {
 			BIT_6
 		} else {
 			0
@@ -176,7 +179,7 @@ impl Channel for Wave {
 		self.frequency = 0;
 		self.frequency_timer.reload();
 		self.position_counter = 0;
-		self.length_counter.enabled = false;
+		self.length_counter.set_enabled(false);
 		self.length_counter.reload(0)
 	}
 

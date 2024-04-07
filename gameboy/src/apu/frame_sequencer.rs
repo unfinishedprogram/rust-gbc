@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub enum TickResult {
+	None,
 	LengthCtrl,
 	VolumeEnv,
 	LengthCtrlAndSweep,
@@ -12,17 +13,27 @@ pub struct FrameSequencer {
 }
 
 impl FrameSequencer {
-	pub fn tick(&mut self) -> Option<TickResult> {
+	fn value_to_tick_result(value: u8) -> TickResult {
 		use TickResult as R;
-
-		self.value = self.value.wrapping_add(1);
-
-		match self.value & 7 {
-			0 | 4 => Some(R::LengthCtrl),
-			2 | 6 => Some(R::LengthCtrlAndSweep),
-			7 => Some(R::VolumeEnv),
-			1 | 3 | 5 => None,
+		match value & 7 {
+			0 | 4 => R::LengthCtrl,
+			2 | 6 => R::LengthCtrlAndSweep,
+			7 => R::VolumeEnv,
+			1 | 3 | 5 => R::None,
 			0x8..=u8::MAX => unreachable!(),
 		}
+	}
+
+	pub fn next_result(&self) -> TickResult {
+		Self::value_to_tick_result(self.value.wrapping_add(1))
+	}
+
+	pub fn current_result(&self) -> TickResult {
+		Self::value_to_tick_result(self.value)
+	}
+
+	pub fn tick(&mut self) -> TickResult {
+		self.value = self.value.wrapping_add(1);
+		self.current_result()
 	}
 }

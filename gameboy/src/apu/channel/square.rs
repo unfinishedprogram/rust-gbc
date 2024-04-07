@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::util::bits::{BIT_6, BIT_7};
+use crate::{
+	apu::frame_sequencer,
+	util::bits::{BIT_6, BIT_7},
+};
 
 use super::super::{
 	channel::Channel, length_counter::LengthCounter, sweep::Sweep, timer::Timer,
@@ -85,11 +88,18 @@ impl Channel for Square {
 		(self.frequency & 0x00FF) as u8
 	}
 
-	fn write_nrx4(&mut self, value: u8) {
+	fn write_nrx4(&mut self, value: u8, next_frame_sequencer_result: frame_sequencer::TickResult) {
 		let trigger = value & BIT_7 == BIT_7;
+		let length_enable = value & BIT_6 == BIT_6;
 
-		self.length_counter.enabled = value & BIT_6 == BIT_6;
+		// If the channel is triggered, and the frame-sequencer is in the first half of the length period
+		// Then the length counter is clocked
+
+		let length_previously_enabled = self.length_counter.enabled();
+		self.length_counter.set_enabled(length_enable);
+
 		if trigger {
+			self.length_counter.unfreeze();
 			self.enabled = true;
 			if self.sweeper {
 				self.sweep.trigger(self.frequency);
@@ -100,11 +110,25 @@ impl Channel for Square {
 			self.frequency |= (frequency_msb as u16) << 8;
 			self.frequency_timer.set_period(self.timer_period());
 		}
+
+		let in_first_half = match next_frame_sequencer_result {
+			frame_sequencer::TickResult::None => true,
+			frame_sequencer::TickResult::LengthCtrl => false,
+			frame_sequencer::TickResult::VolumeEnv => true,
+			frame_sequencer::TickResult::LengthCtrlAndSweep => false,
+		};
+
+		let mut clock_length_extra = !length_previously_enabled && self.length_counter.enabled();
+		clock_length_extra &= in_first_half;
+
+		if clock_length_extra {
+			self.tick_length_ctr();
+		}
 	}
 
 	fn read_nrx4(&self) -> u8 {
 		let trigger = (self.enabled as u8) << 7;
-		let length_enable = (self.length_counter.enabled as u8) << 6;
+		let length_enable = (self.length_counter.enabled() as u8) << 6;
 		let frequency_msb = (self.frequency >> 8) as u8;
 		trigger | length_enable | frequency_msb
 	}
@@ -134,7 +158,7 @@ impl Channel for Square {
 		self.duty_cycle = 0;
 		self.duty_index = 0;
 		self.volume_envelope.write_byte(0);
-		self.length_counter.enabled = false;
+		self.length_counter.set_enabled(false);
 		self.length_counter.reload(0);
 		self.enabled = false;
 	}

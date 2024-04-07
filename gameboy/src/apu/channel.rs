@@ -1,3 +1,5 @@
+use super::frame_sequencer;
+
 pub mod noise;
 pub mod square;
 pub mod wave;
@@ -15,7 +17,7 @@ pub trait Channel {
 	fn write_nrx3(&mut self, value: u8);
 	fn read_nrx3(&self) -> u8;
 
-	fn write_nrx4(&mut self, value: u8);
+	fn write_nrx4(&mut self, value: u8, next_frame_sequencer_result: frame_sequencer::TickResult);
 	fn read_nrx4(&self) -> u8;
 
 	fn tick(&mut self);

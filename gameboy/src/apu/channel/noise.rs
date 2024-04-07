@@ -1,4 +1,7 @@
-use crate::util::bits::{BIT_3, BIT_6, BIT_7};
+use crate::{
+	apu::frame_sequencer,
+	util::bits::{BIT_3, BIT_6, BIT_7},
+};
 use serde::{Deserialize, Serialize};
 
 use super::super::{
@@ -96,10 +99,10 @@ impl Channel for Noise {
 		self.clock_shift << 4 | lfsr_mode | self.devisor_code
 	}
 
-	fn write_nrx4(&mut self, value: u8) {
+	fn write_nrx4(&mut self, value: u8, next_frame_sequencer_result: frame_sequencer::TickResult) {
 		let trigger = value & BIT_7 == BIT_7;
 
-		self.length_counter.enabled = value & BIT_6 == BIT_6;
+		self.length_counter.set_enabled(value & BIT_6 == BIT_6);
 		if trigger {
 			self.enabled = true;
 
@@ -109,7 +112,7 @@ impl Channel for Noise {
 		}
 	}
 	fn read_nrx4(&self) -> u8 {
-		let length_enable = (self.length_counter.enabled as u8) << 6;
+		let length_enable = (self.length_counter.enabled() as u8) << 6;
 		let trigger = (self.enabled as u8) << 7;
 		length_enable | trigger
 	}
@@ -146,7 +149,7 @@ impl Channel for Noise {
 
 		self.length_counter.reload(0);
 		self.volume_envelope.write_byte(0);
-		self.length_counter.enabled = false;
+		self.length_counter.set_enabled(false);
 		self.enabled = false;
 	}
 

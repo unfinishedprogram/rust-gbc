@@ -107,16 +107,15 @@ impl Apu {
 	// Ticked on the falling edge of the div register's 5th bit (6th bit in double speed mode)
 	// This should tick at 512hz
 	fn step_frame_sequencer(&mut self) {
-		if let Some(res) = self.frame_sequencer.tick() {
-			use frame_sequencer::TickResult as R;
-			match res {
-				R::LengthCtrl => self.tick_length_ctr(),
-				R::VolumeEnv => self.tick_vol_env(),
-				R::LengthCtrlAndSweep => {
-					self.tick_length_ctr();
-					self.tick_sweep();
-				}
+		use frame_sequencer::TickResult as R;
+		match self.frame_sequencer.tick() {
+			R::LengthCtrl => self.tick_length_ctr(),
+			R::VolumeEnv => self.tick_vol_env(),
+			R::LengthCtrlAndSweep => {
+				self.tick_length_ctr();
+				self.tick_sweep();
 			}
+			R::None => {}
 		}
 	}
 
@@ -223,6 +222,35 @@ impl Apu {
 	}
 }
 
+fn print_addr(addr: u16) -> String {
+	match addr {
+		0xFF10 => "nr10".to_string(),
+		0xFF11 => "nr11".to_string(),
+		0xFF12 => "nr12".to_string(),
+		0xFF13 => "nr13".to_string(),
+		0xFF14 => "nr14".to_string(),
+		0xFF15 => "nr20".to_string(),
+		0xFF16 => "nr21".to_string(),
+		0xFF17 => "nr22".to_string(),
+		0xFF18 => "nr23".to_string(),
+		0xFF19 => "nr24".to_string(),
+		0xFF1A => "nr30".to_string(),
+		0xFF1B => "nr31".to_string(),
+		0xFF1C => "nr32".to_string(),
+		0xFF1D => "nr33".to_string(),
+		0xFF1E => "nr34".to_string(),
+		0xFF1F => "nr40".to_string(),
+		0xFF20 => "nr41".to_string(),
+		0xFF21 => "nr42".to_string(),
+		0xFF22 => "nr43".to_string(),
+		0xFF23 => "nr44".to_string(),
+		0xFF24 => "nr50".to_string(),
+		0xFF25 => "nr51".to_string(),
+		0xFF26 => "nr52".to_string(),
+		_ => format!("{:#X}", addr),
+	}
+}
+
 impl MemoryMapper for Apu {
 	fn read(&self, addr: u16) -> u8 {
 		// Unused lookup table
@@ -267,10 +295,7 @@ impl MemoryMapper for Apu {
 			0xFF27..0xFF30 => 0xFF,
 			0xFF30..0xFF40 => 0x00, // Wave RAM
 
-			_ => {
-				log::warn!("Apu read from address without defined mask: {:#X}", addr);
-				0x00
-			}
+			_ => 0x00,
 		};
 
 		let read_result = match addr {
@@ -285,13 +310,11 @@ impl MemoryMapper for Apu {
 			0xFF17 => self.square2.read_nrx2(),
 			0xFF18 => self.square2.read_nrx3(),
 			0xFF19 => self.square2.read_nrx4(),
-
 			0xFF1A => self.wave.read_nrx0(),
 			0xFF1B => self.wave.read_nrx1(),
 			0xFF1C => self.wave.read_nrx2(),
 			0xFF1D => self.wave.read_nrx3(),
 			0xFF1E => self.wave.read_nrx4(),
-
 			0xFF1F => self.noise.read_nrx0(),
 			0xFF20 => self.noise.read_nrx1(),
 			0xFF21 => self.noise.read_nrx2(),
@@ -313,8 +336,8 @@ impl MemoryMapper for Apu {
 		};
 
 		log::info!(
-			"Apu read from address: {:#X}, value: {:#X}",
-			addr,
+			"Apu read from address: {}, value: {:#X}",
+			print_addr(addr),
 			read_result | unused_mask
 		);
 
@@ -324,8 +347,8 @@ impl MemoryMapper for Apu {
 	fn write(&mut self, addr: u16, value: u8) {
 		if !self.power_on && addr != 0xFF26 {
 			log::info!(
-				"Apu write to disabled apu: {:#X}, value: {:#X}",
-				addr,
+				"Apu write to disabled apu: {:}, value: {:#X}",
+				print_addr(addr),
 				value
 			);
 
@@ -337,25 +360,33 @@ impl MemoryMapper for Apu {
 			0xFF11 => self.square1.write_nrx1(value),
 			0xFF12 => self.square1.write_nrx2(value),
 			0xFF13 => self.square1.write_nrx3(value),
-			0xFF14 => self.square1.write_nrx4(value),
+			0xFF14 => self
+				.square1
+				.write_nrx4(value, self.frame_sequencer.next_result()),
 
 			0xFF15 => self.square2.write_nrx0(value),
 			0xFF16 => self.square2.write_nrx1(value),
 			0xFF17 => self.square2.write_nrx2(value),
 			0xFF18 => self.square2.write_nrx3(value),
-			0xFF19 => self.square2.write_nrx4(value),
+			0xFF19 => self
+				.square2
+				.write_nrx4(value, self.frame_sequencer.next_result()),
 
 			0xFF1A => self.wave.write_nrx0(value),
 			0xFF1B => self.wave.write_nrx1(value),
 			0xFF1C => self.wave.write_nrx2(value),
 			0xFF1D => self.wave.write_nrx3(value),
-			0xFF1E => self.wave.write_nrx4(value),
+			0xFF1E => self
+				.wave
+				.write_nrx4(value, self.frame_sequencer.next_result()),
 
 			0xFF1F => self.noise.write_nrx0(value), // Unused
 			0xFF20 => self.noise.write_nrx1(value),
 			0xFF21 => self.noise.write_nrx2(value),
 			0xFF22 => self.noise.write_nrx3(value),
-			0xFF23 => self.noise.write_nrx4(value),
+			0xFF23 => self
+				.noise
+				.write_nrx4(value, self.frame_sequencer.next_result()),
 
 			0xFF24 => self.nr50 = value,                              // NR50
 			0xFF25 => self.nr51 = value,                              // NR51
@@ -370,6 +401,10 @@ impl MemoryMapper for Apu {
 			),
 		}
 
-		log::info!("Apu write to address: {:#X}, value: {:#X}", addr, value);
+		log::info!(
+			"Apu write to address: {}, value: {:#X}",
+			print_addr(addr),
+			value
+		);
 	}
 }
