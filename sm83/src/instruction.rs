@@ -10,7 +10,6 @@ pub use fetch::Fetch;
 #[macro_use]
 pub mod mac_instruction;
 pub mod opcode;
-use crate::Interrupt;
 
 use super::Condition;
 use core::fmt::Debug;
@@ -64,7 +63,7 @@ pub enum Instruction {
 	SET(u8, ValueRefU8),
 	ROT(RotShiftOperation, ValueRefU8),
 
-	INT(Interrupt),
+	INT,
 
 	LD_A_INC_HL,
 	LD_A_DEC_HL,
@@ -171,7 +170,7 @@ impl Debug for Instruction {
 			Self::RES(arg0, arg1) => write!(f, "res {arg0}, {arg1:?}"),
 			Self::SET(arg0, arg1) => write!(f, "set {arg0}, {arg1:?}"),
 			Self::ROT(arg0, arg1) => write!(f, "{arg0:?} {arg1:?}"),
-			Self::INT(arg0) => f.debug_tuple("int").field(arg0).finish(),
+			Self::INT => f.debug_tuple("int").finish(),
 			Self::LD_A_DEC_HL => write!(f, "ld a, [hl-]"),
 			Self::LD_A_INC_HL => write!(f, "ld a, [hl+]"),
 			Self::LD_DEC_HL_A => write!(f, "ld [hl-], a"),

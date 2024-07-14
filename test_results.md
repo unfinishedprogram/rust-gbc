@@ -81,3 +81,6 @@ test result: FAILED. 1827 passed; 2074 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Further cut down on incompatible Mooneye tests -->
 test result: FAILED. 1835 passed; 2066 failed; 0 ignored; 0 measured; 0 filtered out; finished in 46.33s
+
+<!-- Passing ie_push tests -->
+test result: FAILED. 1849 passed; 2052 failed; 0 ignored; 0 measured; 0 filtered out; finished in 52.51s

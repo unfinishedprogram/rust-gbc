@@ -104,7 +104,7 @@ pub trait SM83: SourcedMemoryMapper + Sized {
 				self.tick_m_cycles(1);
 				let lsb = self.read_from(i, Source::Cpu);
 				self.tick_m_cycles(1);
-				let msb = self.read_from(i + 1, Source::Cpu);
+				let msb = self.read_from(i.wrapping_add(1), Source::Cpu);
 				u16::from_le_bytes([lsb, msb])
 			}
 			ValueRefU16::Reg(reg) => self.cpu_state().read(reg),
@@ -117,7 +117,7 @@ pub trait SM83: SourcedMemoryMapper + Sized {
 			ValueRefU16::Mem(i) => {
 				let [lsb, msb] = u16::to_be_bytes(value);
 				self.tick_m_cycles(1);
-				self.write_from(i + 1, lsb, Source::Cpu);
+				self.write_from(i.wrapping_add(1), lsb, Source::Cpu);
 				self.tick_m_cycles(1);
 				self.write_from(i, msb, Source::Cpu);
 			}
@@ -137,8 +137,8 @@ pub trait SM83: SourcedMemoryMapper + Sized {
 	}
 
 	fn get_next_instruction_or_interrupt(&mut self) -> Instruction {
-		if let Some(int) = self.cpu_state_mut().consume_next_interrupt() {
-			Instruction::INT(int)
+		if self.cpu_state().get_pending_interrupt().is_some() {
+			Instruction::INT
 		} else {
 			self.fetch()
 		}

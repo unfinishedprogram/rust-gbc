@@ -25,12 +25,18 @@ impl<T: SM83> Execute for T {
 		let cpu = self;
 		match instruction {
 			NOP => {}
-			INT(interrupt) => {
+			INT => {
 				cpu.tick_m_cycles(2);
 				let current_pc = cpu.read_16(CPURegister16::PC.into());
-				cpu.push(current_pc);
-				cpu.write_16(CPURegister16::PC.into(), interrupt.jump_addr());
-				cpu.tick_m_cycles(1);
+				cpu.push_u8((current_pc >> 8) as u8);
+				if let Some(interrupt) = cpu.cpu_state().get_pending_interrupt() {
+					cpu.write_16(CPURegister16::PC.into(), interrupt.jump_addr());
+					cpu.tick_m_cycles(1);
+					cpu.cpu_state_mut().clear_interrupt_request(interrupt as u8);
+				} else {
+					cpu.write_16(CPURegister16::PC.into(), 0x0);
+				}
+				cpu.push_u8(current_pc as u8);
 				cpu.disable_interrupts();
 			}
 
@@ -122,7 +128,10 @@ impl<T: SM83> Execute for T {
 				let a_val = cpu.read_16(a_ref);
 				let b_val = cpu.read_16(b_ref);
 
-				cpu.set_flag_to(H, (((a_val & 0xFFF) + (b_val & 0xFFF)) & 0x1000) == 0x1000);
+				cpu.set_flag_to(
+					H,
+					(((a_val & 0xFFF).wrapping_add(b_val & 0xFFF)) & 0x1000) == 0x1000,
+				);
 				cpu.clear_flag(N);
 				cpu.set_flag_to(C, a_val.wrapping_add(b_val) < a_val);
 				cpu.write_16(a_ref, a_val.wrapping_add(b_val));

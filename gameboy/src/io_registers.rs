@@ -258,8 +258,8 @@ impl IORegisters for Gameboy {
 			// Timer
 			DIV => self.timer.set_div(value),
 			TAC => self.timer.set_tac(value),
-			TIMA => self.timer.set_tima(value),
-			TMA => self.timer.set_tma(value),
+			TIMA => self.timer.write_tima(value),
+			TMA => self.timer.write_tma(value),
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {

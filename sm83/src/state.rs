@@ -28,7 +28,7 @@ impl Flags for CPUState {
 }
 
 impl CPUState {
-	fn clear_interrupt_request(&mut self, interrupt: u8) {
+	pub fn clear_interrupt_request(&mut self, interrupt: u8) {
 		self.interrupt_request &= !interrupt;
 	}
 
@@ -45,7 +45,7 @@ impl CPUState {
 		self.ie_next = true;
 	}
 
-	pub fn consume_next_interrupt(&mut self) -> Option<Interrupt> {
+	pub fn get_pending_interrupt(&self) -> Option<Interrupt> {
 		if !self.interrupt_master_enable {
 			return None;
 		}
@@ -54,7 +54,6 @@ impl CPUState {
 		if requests != 0 {
 			// Gets the rightmost set bit
 			let index = requests & (!requests + 1);
-			self.clear_interrupt_request(index);
 			index.try_into().ok()
 		} else {
 			None
