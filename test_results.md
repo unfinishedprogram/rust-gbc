@@ -71,3 +71,6 @@ test result: FAILED. 1628 passed; 1772 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Add GB-Microtest suite -->
 test result: FAILED. 1841 passed; 2072 failed; 0 ignored; 0 measured; 0 filtered out; finished in 48.84s
+
+<!-- Remove some Misc tests from Mooneye  -->
+test result: FAILED. 1839 passed; 2062 failed; 0 ignored; 0 measured; 0 filtered out; finished in 43.92s

@@ -4,7 +4,16 @@ use test_generator::test_resources;
 use super::util::{rom_loader::init_emulator_with_rom_dmg, success_code::test_fib_success_code};
 use crate::test::util::rom_loader::init_emulator_with_rom_cgb;
 
-#[test_resources("../test_data/mooneye-test-suite/**/*.gb")]
+#[test_resources("../test_data/mooneye-test-suite/emulator-only/**/*.gb")]
+fn emulator_only(rom: &str) {
+	mooneye_test(rom)
+}
+
+#[test_resources("../test_data/mooneye-test-suite/acceptance/**/*.gb")]
+fn acceptance(rom: &str) {
+	mooneye_test(rom)
+}
+
 fn mooneye_test(rom: &str) {
 	if rom.contains("mgb")
 		|| rom.contains("sgb")
