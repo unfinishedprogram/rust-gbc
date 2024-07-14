@@ -1,5 +1,3 @@
-use core::panic;
-
 use bitflags::bitflags;
 use sm83::{registers::CPURegister8, values::ValueRefU8, Instruction};
 use test_generator::test_resources;
