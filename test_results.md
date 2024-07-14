@@ -74,3 +74,6 @@ test result: FAILED. 1841 passed; 2072 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Remove some Misc tests from Mooneye  -->
 test result: FAILED. 1839 passed; 2062 failed; 0 ignored; 0 measured; 0 filtered out; finished in 43.92s
+
+<!-- Further cut down on incompatible Mooneye tests -->
+test result: FAILED. 1827 passed; 2074 failed; 0 ignored; 0 measured; 0 filtered out; finished in 45.61s
