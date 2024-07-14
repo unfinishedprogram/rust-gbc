@@ -11,7 +11,7 @@ pub enum CartridgeParseError {
 	RamSize,
 	Title,
 }
-
+#[allow(unused)]
 #[derive(Debug)]
 pub struct RawCartridgeHeader {
 	pub rom_source: Option<RomSource>,

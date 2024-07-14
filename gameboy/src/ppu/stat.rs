@@ -6,7 +6,8 @@ use crate::util::bits::*;
 use super::PPUMode;
 
 bitflags! {
-	#[derive(Serialize, Deserialize, Default)]
+	#[derive(Serialize, Deserialize, Default, Clone, Copy, Debug)]
+	#[serde(transparent)]
 	pub struct Stat:u8 {
 		const LYC_EQ_LY = BIT_2;
 		const H_BLANK_IE = BIT_3;
@@ -20,9 +21,9 @@ bitflags! {
 impl Stat {
 	pub fn read(&self, enabled: bool) -> u8 {
 		if enabled {
-			self.bits | Self::UNUSED.bits
+			self.bits() | Self::UNUSED.bits()
 		} else {
-			Self::UNUSED.bits
+			Self::UNUSED.bits()
 		}
 	}
 

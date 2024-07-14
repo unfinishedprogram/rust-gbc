@@ -65,7 +65,9 @@ impl MemoryView {
 					}
 				})
 				.body(|body| {
-					body.rows(20.0, 0x10000 / 0x10, |index, mut row| {
+					body.rows(20.0, 0x10000 / 0x10, |mut row| {
+						let index = row.index();
+
 						row.col(|ui| {
 							ui.monospace(hex_str_u16((index * 16) as u16));
 						});

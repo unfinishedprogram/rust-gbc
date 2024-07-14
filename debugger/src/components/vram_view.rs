@@ -1,6 +1,9 @@
 use std::ops::Mul;
 
-use egui::{Color32, ColorImage, ComboBox, Image, TextureHandle, TextureOptions, Ui, Vec2};
+use egui::{
+	load::SizedTexture, Color32, ColorImage, ComboBox, Image, TextureHandle, TextureOptions, Ui,
+	Vec2,
+};
 use gameboy::{
 	ppu::{
 		renderer::{AddressingMode, PixelFIFO},
@@ -52,10 +55,10 @@ impl TileImage {
 
 		ui.vertical(|ui| {
 			ui.label(self.name);
-			ui.add(Image::new(
-				texture.id(),
+			ui.add(Image::new(SizedTexture::new(
+				texture,
 				Vec2::new(self.image.width() as f32, self.image.height() as f32).mul(2.0),
-			));
+			)));
 		});
 	}
 }
@@ -154,7 +157,7 @@ impl VramView {
 				ui.ctx()
 					.load_texture(format!("palette_{palette}"), img, TextureOptions::NEAREST);
 
-			ui.image(texture.id(), [4.0 * SCALE, 1.0 * SCALE]);
+			ui.image(SizedTexture::new(texture.id(), [4.0 * SCALE, 1.0 * SCALE]));
 		};
 
 		for palette in 0..8 {

@@ -18,7 +18,7 @@ pub fn run_debugger() {
 			.start(
 				"canvas",
 				eframe::WebOptions::default(),
-				Box::new(|cc| Box::new(Debugger::new(cc))),
+				Box::new(|cc| Ok(Box::new(Debugger::new(cc)))),
 			)
 			.await
 			.unwrap();
