@@ -54,7 +54,7 @@ impl TryFrom<char> for HardwareRevision {
 }
 
 fn extract_compat_flags(path: &str) -> HardwareRevision {
-	let name = path.split("/").last().unwrap().split(".gb").next().unwrap();
+	let name = path.split('/').last().unwrap().split(".gb").next().unwrap();
 	let Some(flags_str) = name.split('-').last() else {
 		return HardwareRevision::all();
 	};
@@ -93,10 +93,6 @@ fn acceptance(rom: &str) {
 
 fn mooneye_test(rom: &str) {
 	let flags = extract_compat_flags(rom);
-
-	if !flags.contains(HardwareRevision::CGB) {
-		panic!("Incompatible Test flags: {:?}", flags)
-	}
 
 	let mut state = if flags.contains(HardwareRevision::CGB) {
 		init_emulator_with_rom_cgb(rom)
