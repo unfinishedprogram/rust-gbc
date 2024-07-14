@@ -425,16 +425,6 @@ impl<T: SM83> Execute for T {
 				));
 				let ptr = CPURegister16::HL.into();
 				let ptr_val = cpu.read_16(ptr);
-
-				match ptr {
-					ValueRefU16::Reg(_) => {}
-					_ => {
-						cpu.set_flag(N);
-						cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-						cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
-					}
-				}
-
 				cpu.write_16(ptr, ptr_val.wrapping_sub(1));
 			}
 
@@ -456,15 +446,6 @@ impl<T: SM83> Execute for T {
 
 				let ptr = CPURegister16::HL.into();
 				let ptr_val = cpu.read_16(ptr);
-
-				match ptr {
-					ValueRefU16::Reg(_) => {}
-					_ => {
-						cpu.set_flag(N);
-						cpu.set_flag_to(Z, ptr_val.wrapping_sub(1) == 0);
-						cpu.set_flag_to(H, (((ptr_val & 0xF) - 1) & 0x10) == 0x10);
-					}
-				}
 
 				cpu.write_16(ptr, ptr_val.wrapping_sub(1));
 			}
