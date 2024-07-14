@@ -34,6 +34,17 @@ load.innerText = "Load";
 load.onclick = () => wasm.load_save_state(0);
 menu_content.appendChild(load);
 
+let toggle_vsync = document.createElement("input");
+toggle_vsync.type = "checkbox";
+toggle_vsync.id = "toggle_vsync";
+toggle_vsync.checked = false;
+toggle_vsync.onchange = () => wasm.set_vsync(toggle_vsync.checked);
+
+let toggle_vsync_label = document.createElement("label");
+toggle_vsync_label.htmlFor = "toggle_vsync";
+toggle_vsync_label.innerText = "VSync";
+menu_content.appendChild(toggle_vsync_label);
+menu_content.appendChild(toggle_vsync);
 
 let edit_keybindings = document.createElement("button");
 edit_keybindings.innerText = "Edit Keybindings";
