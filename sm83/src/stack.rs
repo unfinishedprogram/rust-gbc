@@ -1,6 +1,5 @@
 use crate::{
 	registers::{Addressable, CPURegister16},
-	values::ValueRefU16,
 	SM83,
 };
 
@@ -13,6 +12,14 @@ pub trait CPUStack: SM83 {
 		self.cpu_state_mut().write(CPURegister16::SP, next_sp);
 		self.write_8(crate::values::ValueRefU8::Mem(next_sp.into()), value);
 	}
+
+	fn pop_u8(&mut self) -> u8 {
+		let next_sp = self.cpu_state().read(CPURegister16::SP).wrapping_add(1);
+		self.cpu_state_mut().write(CPURegister16::SP, next_sp);
+		self.read_8(crate::values::ValueRefU8::Mem(
+			next_sp.wrapping_sub(1).into(),
+		))
+	}
 }
 
 impl<M: SM83> CPUStack for M {
@@ -22,12 +29,9 @@ impl<M: SM83> CPUStack for M {
 	}
 
 	fn pop(&mut self) -> u16 {
-		let next_sp = self.cpu_state().read(CPURegister16::SP).wrapping_add(2);
+		let low = self.pop_u8() as u16;
+		let high = self.pop_u8() as u16;
 
-		self.cpu_state_mut().write(CPURegister16::SP, next_sp);
-
-		self.read_16(ValueRefU16::Mem(
-			self.cpu_state().read(CPURegister16::SP).wrapping_sub(2),
-		))
+		(high << 8) | low
 	}
 }
