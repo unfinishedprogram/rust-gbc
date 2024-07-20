@@ -128,7 +128,7 @@ impl Channel for Wave {
 		(self.frequency & 0x00FF) as u8
 	}
 
-	fn write_nrx4(&mut self, value: u8, next_frame_sequencer_result: frame_sequencer::TickResult) {
+	fn write_nrx4(&mut self, value: u8, _next_frame_sequencer_result: frame_sequencer::TickResult) {
 		let trigger = value & BIT_7 == BIT_7;
 		self.length_counter.set_enabled(value & BIT_6 == BIT_6);
 

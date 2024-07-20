@@ -1,4 +1,3 @@
-#![feature(exclusive_range_pattern)]
 #![feature(slice_as_chunks)]
 
 pub mod components;

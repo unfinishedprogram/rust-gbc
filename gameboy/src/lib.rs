@@ -1,4 +1,3 @@
-#![feature(exclusive_range_pattern)]
 #![feature(assert_matches)]
 #![feature(test)]
 #![feature(async_closure)]

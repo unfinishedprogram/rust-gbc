@@ -99,7 +99,7 @@ impl Channel for Noise {
 		self.clock_shift << 4 | lfsr_mode | self.devisor_code
 	}
 
-	fn write_nrx4(&mut self, value: u8, next_frame_sequencer_result: frame_sequencer::TickResult) {
+	fn write_nrx4(&mut self, value: u8, _next_frame_sequencer_result: frame_sequencer::TickResult) {
 		let trigger = value & BIT_7 == BIT_7;
 
 		self.length_counter.set_enabled(value & BIT_6 == BIT_6);
