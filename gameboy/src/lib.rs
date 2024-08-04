@@ -1,7 +1,3 @@
-#![feature(assert_matches)]
-#![feature(test)]
-#![feature(async_closure)]
-
 mod apu;
 pub mod audio;
 pub mod cartridge;

@@ -1,5 +1,3 @@
-#![feature(bigint_helper_methods)]
-
 mod bits;
 mod cpu;
 pub mod instruction;

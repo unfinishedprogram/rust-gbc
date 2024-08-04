@@ -9,10 +9,8 @@ impl Screen {
 	pub fn draw(&mut self, ui: &mut Ui, buffer: &[u8]) {
 		// let image = ColorImage::from_rgba_unmultiplied([160, 144], buffer);
 		let buffer = buffer
-			.as_chunks()
-			.0
-			.iter()
-			.map(|&[r, g, b, _]| Color32::from_rgb(r, g, b))
+			.chunks_exact(4)
+			.map(|color| Color32::from_rgb(color[0], color[1], color[2]))
 			.collect();
 
 		let image = ColorImage {
