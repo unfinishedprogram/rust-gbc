@@ -1,8 +1,7 @@
 use crate::{
 	escape_codes::{
-		colors::NUM_CHAR,
 		cursor::{HIDE_CURSOR, RESET_COLORS, SHOW_CURSOR},
-		EscapeCodeSupplier, EscapeCodes, ESC,
+		EscapeCodeSupplier, EscapeCodes, ESC, NUM_CHAR,
 	},
 	img_to_colors::{to_colors, Color, ColorBlock},
 };

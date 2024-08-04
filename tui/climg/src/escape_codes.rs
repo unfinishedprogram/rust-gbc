@@ -1,7 +1,24 @@
-use self::colors::{get_closest_color_code, BG_COLOR, FG_COLOR};
+use lazy_static::lazy_static;
 
-pub mod colors;
 pub mod cursor;
+
+lazy_static! {
+	pub static ref FG_COLOR: [String; 256] = (0..256)
+		.map(|i| format!("{ESC}38;5;{:}m", i))
+		.collect::<Vec<String>>()
+		.try_into()
+		.unwrap();
+	pub static ref BG_COLOR: [String; 256] = (0..256)
+		.map(|i| format!("{ESC}[48;5;{:}m", i))
+		.collect::<Vec<String>>()
+		.try_into()
+		.unwrap();
+	pub static ref NUM_CHAR: [String; 256] = (0..256)
+		.map(|i| format!("{i}"))
+		.collect::<Vec<String>>()
+		.try_into()
+		.unwrap();
+}
 
 type RGBColor = (u8, u8, u8);
 pub static ESC: &str = "\u{1b}[";
@@ -28,8 +45,4 @@ pub fn bg(index: u8) -> &'static str {
 
 pub fn fg(index: u8) -> &'static str {
 	&FG_COLOR[index as usize]
-}
-
-pub fn color_index(r: u8, g: u8, b: u8) -> u8 {
-	get_closest_color_code(r, g, b)
 }
