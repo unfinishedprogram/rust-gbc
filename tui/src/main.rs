@@ -1,6 +1,6 @@
 use std::{
 	io::{stdout, Write},
-	thread::{self, Thread},
+	thread::{self},
 	time::{Duration, Instant},
 };
 
