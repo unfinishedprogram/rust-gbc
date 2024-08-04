@@ -1,5 +1,6 @@
 use std::{
 	io::{stdout, Write},
+	thread::{self, Thread},
 	time::{Duration, Instant},
 };
 
@@ -43,7 +44,7 @@ fn main() {
 	'outer: loop {
 		crossterm::terminal::enable_raw_mode().unwrap();
 
-		let now = Instant::now();
+		let start = Instant::now();
 		while let Ok(true) = crossterm::event::poll(Duration::ZERO) {
 			let event = crossterm::event::read().unwrap();
 			if let crossterm::event::Event::Key(KeyEvent {
@@ -80,16 +81,15 @@ fn main() {
 		while gb.ppu.frame == start_frame {
 			gb.step();
 		}
-
-		let bytes = gb.ppu.lcd.front_buffer();
-
-		render_builder.draw_img(bytes);
+		let screen = gb.ppu.lcd.front_buffer();
+		render_builder.draw_img(screen);
 		let output = render_builder.build();
 		let mut stdout = std::io::stdout();
-		_ = stdout.write_all(output.as_bytes());
+		stdout.write_all(output.as_bytes()).unwrap();
 		stdout.flush().unwrap();
-		// _ = stdout.write_all(output.as_bytes());
-		print!("{:?}, {}", now.elapsed(), output.len());
+		while start.elapsed() < (Duration::from_secs(1) / 60) {
+			thread::sleep(Duration::from_micros(100))
+		}
 	}
 
 	crossterm::terminal::disable_raw_mode().unwrap();
