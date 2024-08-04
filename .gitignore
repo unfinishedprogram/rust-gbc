@@ -5,3 +5,4 @@
 /dist
 /roms/test/gambatte
 /test_data
+Cargo.lock
