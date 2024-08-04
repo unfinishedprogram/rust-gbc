@@ -1,8 +1,9 @@
-#![feature(exclusive_range_pattern)]
 #![feature(assert_matches)]
 #![feature(test)]
 #![feature(async_closure)]
 
+mod apu;
+pub mod audio;
 pub mod cartridge;
 pub mod cgb;
 mod dma_controller;

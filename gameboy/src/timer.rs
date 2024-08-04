@@ -22,11 +22,11 @@ impl Timer {
 		self.system_clock = 0;
 	}
 
-	pub fn set_tima(&mut self, value: u8) {
+	pub fn write_tima(&mut self, value: u8) {
 		self.tima = value;
 	}
 
-	pub fn set_tma(&mut self, value: u8) {
+	pub fn write_tma(&mut self, value: u8) {
 		self.tma = value;
 	}
 
@@ -76,7 +76,7 @@ impl Timer {
 
 		if self.tima_delay > 0 {
 			self.tima_delay -= 1;
-			if self.tima_delay == 0 && self.tima == 0 {
+			if self.tima_delay == 0 {
 				self.tima = self.tma;
 				*interrupt_request |= Interrupt::Timer.flag_bit();
 			}

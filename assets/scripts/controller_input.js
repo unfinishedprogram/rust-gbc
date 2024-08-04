@@ -72,9 +72,6 @@ export function configure_keybindings() {
         new_keybindings[button] = current_keybindings[button];
     }
 
-    console.log(new_keybindings)
-
-
     clear_joypad_state();
 
     let current_key_listener = null;
@@ -139,9 +136,6 @@ function initialize_input() {
     const update_button_state = (event, state) => {
         let fn = state ? button_down : button_up;
 
-        console.log(current_keybindings);
-        console.log(window.controller_state);
-
         for (let button of Object.keys(current_keybindings)) {
             if (current_keybindings[button] == event.key.toLowerCase()) {
                 fn(button)
@@ -153,7 +147,5 @@ function initialize_input() {
     addEventListener("keydown", (event) => update_button_state(event, true));
     addEventListener("keyup", (event) => update_button_state(event, false));
 }
-
-// setInterval(() => console.log(current_keybindings), 100)
 
 initialize_input();

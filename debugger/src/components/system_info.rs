@@ -37,7 +37,8 @@ fn interrupt_info(gb: &Gameboy, ui: &mut Ui) {
 			});
 		})
 		.body(|body| {
-			body.rows(20.0, 5, |index, mut row| {
+			body.rows(20.0, 5, |mut row| {
+				let index = row.index();
 				row.col(|ui| {
 					ui.label(format!("{:?}", interrupt_labels[index]));
 				});

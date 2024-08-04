@@ -2,7 +2,7 @@ use image::{DynamicImage, EncodableLayout};
 
 use test_generator::test_resources;
 
-use crate::test::util::screenshot_test::compare_lcd;
+use crate::{test::util::screenshot_test::compare_lcd, Gameboy, Mode};
 
 use super::util::rom_loader::{init_emulator_with_rom_cgb, init_emulator_with_rom_dmg};
 
@@ -29,14 +29,7 @@ impl BlarggTest {
 		}
 	}
 
-	pub fn run(self) {
-		let (mut state, img) = match self {
-			BlarggTest::Cgb(path, img) => (init_emulator_with_rom_cgb(&path), img),
-			BlarggTest::Dmg(path, img) => (init_emulator_with_rom_dmg(&path), img),
-			BlarggTest::DmgCgb(path, _, img) => (init_emulator_with_rom_cgb(&path), img),
-			BlarggTest::Combined(path, img) => (init_emulator_with_rom_cgb(&path), img),
-		};
-
+	pub fn run_with_img_and_state(mut state: Gameboy, img: DynamicImage) {
 		let img = img.into_rgba8();
 		let expected = img.as_bytes();
 
@@ -51,7 +44,34 @@ impl BlarggTest {
 				return;
 			}
 		}
-		panic!("Images do not match at frame: {}", state.ppu.frame);
+		panic!(
+			"Images do not match at frame: {} as {:?}",
+			state.ppu.frame,
+			if matches!(state.mode, Mode::DMG) {
+				"DMG"
+			} else {
+				"CGB"
+			}
+		);
+	}
+
+	pub fn run(self) {
+		match self {
+			BlarggTest::Cgb(path, img) => {
+				Self::run_with_img_and_state(init_emulator_with_rom_cgb(&path), img);
+			}
+			BlarggTest::Dmg(path, img) => {
+				Self::run_with_img_and_state(init_emulator_with_rom_dmg(&path), img);
+			}
+			BlarggTest::DmgCgb(path, img_dmg, img_cgb) => {
+				Self::run_with_img_and_state(init_emulator_with_rom_dmg(&path), img_dmg);
+				Self::run_with_img_and_state(init_emulator_with_rom_cgb(&path), img_cgb);
+			}
+			BlarggTest::Combined(path, img) => {
+				Self::run_with_img_and_state(init_emulator_with_rom_dmg(&path), img.clone());
+				Self::run_with_img_and_state(init_emulator_with_rom_cgb(&path), img);
+			}
+		};
 	}
 }
 

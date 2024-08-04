@@ -1,10 +1,7 @@
-use std::fs::read;
-
 use sm83::{registers::CPURegister8, values::ValueRefU8, Instruction};
 use test_generator::test_resources;
 
 use super::util::{rom_loader::init_emulator_with_rom_dmg, success_code::test_fib_success_code};
-use crate::Gameboy;
 
 #[test_resources("../test_data/age-test-roms/**/*.gb")]
 fn age_test(src: &str) {

@@ -1,7 +1,6 @@
-use gloo::{file::callbacks::FileReader, net::http::Request, timers::callback::Interval};
+use gloo::{file::callbacks::FileReader, net::http::Request};
 use std::{cell::RefCell, collections::VecDeque, fmt::Display};
 
-use super::animation_frame::AnimationFrame;
 use wasm_bindgen::Clamped;
 use web_sys::ImageData;
 
@@ -10,7 +9,12 @@ use gameboy::{
 	Gameboy, Mode,
 };
 
-use crate::{input::InputState, screen};
+use crate::{
+	audio::{self, AudioHandler},
+	callback::{AnimationFrame, IntervalFrame},
+	input::InputState,
+	screen,
+};
 use screen::get_screen_ctx;
 
 thread_local! {
@@ -19,7 +23,7 @@ thread_local! {
 
 pub enum PlayingHandle {
 	AnimationFrame(AnimationFrame),
-	Interval(Interval),
+	Interval(IntervalFrame),
 }
 
 pub enum RunningState {
@@ -56,17 +60,22 @@ pub struct Application {
 	pub _file_reader: Option<FileReader>,
 	pub emulator_state: Gameboy,
 	pub running_state: RunningState,
+	pub previous_frame_time: f64,
+	pub audio: Option<AudioHandler>,
 	input_state: InputState,
 	frame_counts: Vec<u64>,
 	frame_times: Vec<f64>,
 	speed_multiplier: f64,
 	frames: VecDeque<f64>,
+	v_sync: bool,
 }
 
 impl Default for Application {
 	fn default() -> Self {
 		let emulator_state = Gameboy::default();
 		Self {
+			previous_frame_time: 0.0,
+			audio: None,
 			frame_counts: vec![0; 30],
 			frame_times: vec![0.0; 30],
 			_file_reader: None,
@@ -75,13 +84,15 @@ impl Default for Application {
 			emulator_state,
 			speed_multiplier: 1.0,
 			frames: VecDeque::with_capacity(30),
+			v_sync: false,
 		}
 	}
 }
 
-fn step_single(_time: f64) {
+fn step_single(elapsed: f64) {
 	APPLICATION.with_borrow_mut(|app| {
-		app.step_lcd_frame();
+		log::error!("Step single: {}", elapsed);
+		app.step_lcd_frame(elapsed);
 		app.update_frame_time();
 	});
 }
@@ -163,7 +174,11 @@ impl Application {
 
 	// Should be synched using request_animation_frame
 	// Better responsiveness / no-frame tearing
-	pub fn step_lcd_frame(&mut self) {
+	pub fn step_lcd_frame(&mut self, elapsed: f64) {
+		// We clamp to avoid issues when tabbing out and back in to the tab
+		let delta_t = (elapsed - self.previous_frame_time).min(32.0);
+		self.previous_frame_time = elapsed;
+
 		let controller_state = self.input_state.get_controller_state();
 		self.emulator_state.set_controller_state(&controller_state);
 
@@ -176,12 +191,26 @@ impl Application {
 		for _ in 0..iters {
 			let mut steps = 0;
 			let start_frame = self.emulator_state.ppu.frame;
-			while steps < 1_000_0000 {
+			while steps < 10_000_000 {
 				steps += 1;
 				self.emulator_state.step();
 				if self.emulator_state.ppu.frame != start_frame {
 					self.frames.push_back(performance_now());
 					break;
+				}
+			}
+		}
+
+		if let Some(audio) = &mut self.audio {
+			audio.pull_samples(&mut self.emulator_state.audio, delta_t);
+		} else {
+			match audio::AudioHandler::new() {
+				Ok(mut audio) => {
+					audio.play();
+					self.audio = Some(audio);
+				}
+				Err(err) => {
+					log::error!("Failed to create audio context: {:?}", err);
 				}
 			}
 		}
@@ -199,8 +228,17 @@ impl Application {
 	}
 
 	pub fn start(&mut self) {
-		let animation_frame = AnimationFrame::new(&step_single as &'static dyn Fn(f64));
-		self.running_state = RunningState::Playing(PlayingHandle::AnimationFrame(animation_frame));
+		let handle = match self.v_sync {
+			true => PlayingHandle::AnimationFrame(AnimationFrame::new(
+				&step_single as &'static dyn Fn(f64),
+			)),
+			false => PlayingHandle::Interval(IntervalFrame::new(
+				15,
+				&step_single as &'static dyn Fn(f64),
+			)),
+		};
+
+		self.running_state = RunningState::Playing(handle);
 	}
 
 	pub fn stop(&mut self) {
@@ -253,5 +291,11 @@ impl Application {
 
 	pub fn set_speed(&mut self, multiplier: f64) {
 		self.speed_multiplier = multiplier;
+	}
+
+	pub fn set_v_sync(&mut self, value: bool) {
+		self.v_sync = value;
+		self.toggle_play();
+		self.toggle_play();
 	}
 }

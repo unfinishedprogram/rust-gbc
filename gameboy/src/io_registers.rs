@@ -1,7 +1,7 @@
 use std::ops::{Index, IndexMut};
 
 use serde::{Deserialize, Serialize};
-use sm83::Interrupt;
+use sm83::{memory_mapper::MemoryMapper, Interrupt};
 
 use crate::{
 	state::Mode,
@@ -212,11 +212,11 @@ impl IORegisters for Gameboy {
 			IF => self.cpu_state.interrupt_request | 0xE0,
 			IE => self.cpu_state.interrupt_enable,
 
+			// APU
+			0xFF10..0xFF40 => self.apu.read(addr),
+
 			0xFF03 => 0xFF,
 			0xFF08..0xFF0F => 0xFF,
-			0xFF15 => 0xFF,
-			0xFF1F => 0xFF,
-			0xFF27..0xFF30 => 0xFF,
 			0xFF4E => 0xFF,
 			0xFF57..0xFF68 => 0xFF,
 			0xFF71..0xFF72 => 0xFF,
@@ -258,8 +258,8 @@ impl IORegisters for Gameboy {
 			// Timer
 			DIV => self.timer.set_div(value),
 			TAC => self.timer.set_tac(value),
-			TIMA => self.timer.set_tima(value),
-			TMA => self.timer.set_tma(value),
+			TIMA => self.timer.write_tima(value),
+			TMA => self.timer.write_tma(value),
 
 			// Gameboy Color only pallettes
 			0xFF68..=0xFF6B => {
@@ -308,6 +308,8 @@ impl IORegisters for Gameboy {
 				self.io_register_state[DMA] = value;
 				self.oam_dma.start_oam_dma(value);
 			}
+			// APU
+			0xFF10..0xFF40 => self.apu.write(addr, value),
 
 			_ => self.io_register_state[addr] = value,
 		}

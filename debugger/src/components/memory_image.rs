@@ -1,4 +1,6 @@
-use egui::{Color32, ColorImage, Image, Rgba, TextureHandle, TextureOptions, Ui, Vec2};
+use egui::{
+	load::SizedTexture, Color32, ColorImage, Image, Rgba, TextureHandle, TextureOptions, Ui,
+};
 use gameboy::Gameboy;
 use sm83::{
 	memory_mapper::MemoryMapper,
@@ -161,10 +163,10 @@ impl MemoryImage {
 
 		ui.horizontal(|ui| {
 			ui.vertical(MemoryImage::legend);
-			ui.add(Image::new(
-				texture.id(),
-				Vec2::new(255.0 * 2.0, 255.0 * 2.0),
-			));
+			ui.add(Image::new(SizedTexture::new(
+				texture,
+				(255.0 * 2.0, 255.0 * 2.0),
+			)));
 		});
 	}
 }

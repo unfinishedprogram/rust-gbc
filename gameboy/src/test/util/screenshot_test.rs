@@ -6,10 +6,5 @@ pub fn compare_lcd(a: &[u8], b: &[u8]) -> bool {
 		b.len()
 	);
 
-	for (a, b) in a.iter().zip(b.iter()) {
-		if a != b {
-			return false;
-		}
-	}
-	true
+	a.iter().zip(b.iter()).all(|(a, b)| a == b)
 }

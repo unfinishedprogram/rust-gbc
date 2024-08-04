@@ -87,7 +87,8 @@ impl LinearMemoryView {
 		.column(Column::remainder())
 		.vscroll(true)
 		.body(|body| {
-			body.rows(20.0, instructions.len(), |index, mut row| {
+			body.rows(20.0, instructions.len(), |mut row| {
+				let index = row.index();
 				let (addr, inst, bytes) = &instructions[index];
 				let color = if pc == *addr { Rgba::RED } else { Rgba::WHITE };
 

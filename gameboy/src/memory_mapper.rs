@@ -12,7 +12,7 @@ fn is_accessible(gb: &Gameboy, addr: u16, source: Source) -> bool {
 	match (gb.oam_dma.oam_is_accessible(), gb.ppu.mode(), addr, source) {
 		(_, _, _, Source::Raw) => true,
 		(_, _, DMA, _) => true,
-		(_, _, 0xFF80..0xFFFF, Source::Cpu) => true,
+		(_, _, 0xFF80..=0xFFFF, Source::Cpu) => true,
 		(false, _, 0xFE00..=0xFE9F, Source::Cpu) => false,
 		(_, PPUMode::Draw | PPUMode::OamScan, 0xFE00..=0xFE9F, Source::Cpu) => false,
 		(_, PPUMode::Draw, 0x8000..0xA000, Source::Cpu) => false,

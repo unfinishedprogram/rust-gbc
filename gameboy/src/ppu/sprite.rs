@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use std::{cmp::PartialOrd, option::Option};
-
 use super::tile_data::TileAttributes;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Sprite {

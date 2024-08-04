@@ -9,7 +9,7 @@ use super::{
 };
 
 bitflags! {
-	#[derive(Default, Serialize, Deserialize)]
+	#[derive(Default, Serialize, Deserialize, Clone, Copy, Debug)]
 	struct Flags: u8 {
 		const BG_DISPLAY_ENABLE = BIT_0;
 		const OBJ_DISPLAY_ENABLE = BIT_1;
@@ -20,7 +20,7 @@ bitflags! {
 		const WINDOW_TILE_MAP_DISPLAY_SELECT = BIT_6;
 		const DISPLAY_ENABLE = BIT_7;
 
-		const WN_BG_ENABLED = Flags::WINDOW_DISPLAY_ENABLE.bits | Flags::BG_DISPLAY_ENABLE.bits;
+		const WN_BG_ENABLED = Flags::WINDOW_DISPLAY_ENABLE.bits() | Flags::BG_DISPLAY_ENABLE.bits();
 	}
 }
 
@@ -31,7 +31,7 @@ pub struct Lcdc {
 
 impl Lcdc {
 	pub fn read(&self) -> u8 {
-		self.flags.bits
+		self.flags.bits()
 	}
 
 	pub fn write(&mut self, value: u8) {
