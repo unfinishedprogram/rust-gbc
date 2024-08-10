@@ -1,1 +1,1 @@
-trunk build --release application.html
+trunk build --release index.html
