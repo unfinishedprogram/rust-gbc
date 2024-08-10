@@ -91,7 +91,6 @@ impl Default for Application {
 
 fn step_single(elapsed: f64) {
 	APPLICATION.with_borrow_mut(|app| {
-		log::error!("Step single: {}", elapsed);
 		app.step_lcd_frame(elapsed);
 		app.update_frame_time();
 	});
