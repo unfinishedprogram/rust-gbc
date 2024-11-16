@@ -2,7 +2,7 @@ use serde::Deserialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use web_sys::{window, Storage};
 
-use gameboy::save_state::{SaveError, SaveManager, SaveState};
+use gameboy::save_state::{RomSource, SaveError, SaveManager, SaveState};
 
 use crate::app::{Application, APPLICATION};
 
@@ -16,11 +16,11 @@ impl WebSaveManager {
 		let storage = WebSaveManager::get_storage()?;
 
 		let Ok(Some(item)) = storage.get_item(key) else {
-			return Err(SaveError::NoSource)
+			return Err(SaveError::NoSource);
 		};
 
 		let Ok(item) = serde_json::from_str::<T>(&item) else {
-			return Err(SaveError::Deserialization)
+			return Err(SaveError::Deserialization);
 		};
 
 		Ok(item)
@@ -30,11 +30,11 @@ impl WebSaveManager {
 		use SaveError::*;
 
 		let Some(window) = window() else {
-			return Err(NoSource)
+			return Err(NoSource);
 		};
 
 		let Ok(Some(storage)) = window.local_storage() else {
-			return Err(NoSource)
+			return Err(NoSource);
 		};
 
 		Ok(storage)
@@ -96,9 +96,12 @@ impl SaveManager for WebSaveManager {
 #[wasm_bindgen]
 pub async fn load_save_state(slot: usize) {
 	if let Ok(save) = WebSaveManager::load_save_state(slot) {
-		let rom = Application::load_rom_from_source(save.rom_source.clone())
-			.await
-			.unwrap();
+		let path = save.rom_source.clone().map(|source| match source {
+			RomSource::LocalUrl(path) => path,
+			RomSource::ExternalUrl(path) => path,
+		});
+
+		let rom = Application::load_rom_from_source(path).await.unwrap();
 		APPLICATION.with_borrow_mut(move |app| {
 			app.load_save_state_with_rom(&rom, save);
 			app.start();
