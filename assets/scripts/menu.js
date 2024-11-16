@@ -1,4 +1,4 @@
-import * as wasm from "/application.js"
+import * as wasm from "/application.js";
 import { configure_keybindings } from "./controller_input.js";
 
 console.log(wasm);
@@ -7,21 +7,21 @@ const main_element = document.querySelector("#main");
 const menu_toggle = document.querySelector("#toggle_menu");
 
 const menu = {
-    open: false,
-    element: document.querySelector("#menu"),
-    animate_open_element: document.querySelector("#animate_open"),
-    animate_close_element: document.querySelector("#animate_close"),
-    toggle_open: function () {
-        if (this.open) {
-            main_element.removeAttribute("data-menu-open")
-            this.animate_close_element.beginElement();
-        } else {
-            main_element.setAttribute("data-menu-open", "")
-            this.animate_open_element.beginElement();
-        }
-        this.open = !this.open;
+  open: false,
+  element: document.querySelector("#menu"),
+  animate_open_element: document.querySelector("#animate_open"),
+  animate_close_element: document.querySelector("#animate_close"),
+  toggle_open: function () {
+    if (this.open) {
+      main_element.removeAttribute("data-menu-open");
+      this.animate_close_element.beginElement();
+    } else {
+      main_element.setAttribute("data-menu-open", "");
+      this.animate_open_element.beginElement();
     }
-}
+    this.open = !this.open;
+  },
+};
 const menu_content = document.querySelector("#menu_content");
 
 let save = document.createElement("button");
@@ -52,5 +52,16 @@ edit_keybindings.onclick = () => configure_keybindings();
 menu_content.appendChild(edit_keybindings);
 
 menu_toggle.addEventListener("click", () => {
-    menu.toggle_open();
-})
+  menu.toggle_open();
+});
+
+let toggle_play_elm = document.querySelector("#toggle_play");
+toggle_play_elm.addEventListener("click", () => {
+  let playing = wasm.toggle_play();
+  toggle_play_elm.innerHTML = playing ? "Pause" : "Play";
+});
+
+let step_single_elm = document.querySelector("#step");
+step_single_elm.addEventListener("click", () => {
+  wasm.step_single();
+});

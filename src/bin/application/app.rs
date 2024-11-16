@@ -59,7 +59,7 @@ pub struct Application {
 	// Keeps file reader state, should never be used internal only
 	pub _file_reader: Option<FileReader>,
 	pub emulator_state: Gameboy,
-	pub running_state: RunningState,
+	running_state: RunningState,
 	pub previous_frame_time: f64,
 	pub audio: Option<AudioHandler>,
 	input_state: InputState,
@@ -137,8 +137,6 @@ impl Application {
 		} else {
 			"".to_owned()
 		};
-
-		gloo::console::log!(frames as f64 / (time / 1000.0));
 	}
 
 	pub fn step_emulator(&mut self, multiplier: f64) {
@@ -203,13 +201,19 @@ impl Application {
 		if let Some(audio) = &mut self.audio {
 			audio.pull_samples(&mut self.emulator_state.audio, delta_t);
 		} else {
-			match audio::AudioHandler::new() {
-				Ok(mut audio) => {
-					audio.play();
-					self.audio = Some(audio);
-				}
-				Err(err) => {
-					log::error!("Failed to create audio context: {:?}", err);
+			if self.input_state.get_controller_state().as_byte() != 255 {
+				log::error!(
+					"Audio not initialized {:?}",
+					self.input_state.get_controller_state().as_byte()
+				);
+				match audio::AudioHandler::new() {
+					Ok(mut audio) => {
+						audio.play();
+						self.audio = Some(audio);
+					}
+					Err(err) => {
+						log::error!("Failed to create audio context: {:?}", err);
+					}
 				}
 			}
 		}
@@ -244,13 +248,18 @@ impl Application {
 		self.running_state = RunningState::Paused;
 	}
 
-	pub fn toggle_play(&mut self) {
+	pub fn toggle_play(&mut self) -> bool {
 		use RunningState::*;
 
 		match self.running_state {
 			Playing(_) => self.stop(),
 			Paused => self.start(),
 		};
+
+		match self.running_state {
+			Playing(_) => true,
+			Paused => false,
+		}
 	}
 
 	pub fn step_single(&mut self) {

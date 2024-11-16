@@ -58,7 +58,6 @@ impl AudioHandler {
 		let ctx =
 			web_sys::AudioContext::new_with_context_options(&web_sys::AudioContextOptions::new())?;
 
-		log::info!("Web Audio sample-rate: {}", ctx.sample_rate());
 		let cb = audio_callback_as_js_func();
 
 		// The script node pulls samples from the audio buffer as they are needed
