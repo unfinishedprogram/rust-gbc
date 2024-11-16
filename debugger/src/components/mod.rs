@@ -1,3 +1,4 @@
+mod audio_visualizer;
 mod joypad;
 mod linear_memory_view;
 mod macro_helpers;
@@ -13,6 +14,7 @@ mod validated_input;
 mod vram_view;
 
 // pub use breakpoint_manager::BreakpointManager;
+pub use audio_visualizer::AudioVisualizer;
 pub use joypad::JoypadInput;
 pub use linear_memory_view::LinearMemoryView;
 pub use memory_image::MemoryImage;

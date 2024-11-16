@@ -1,7 +1,7 @@
 use crate::components::{
 	run_controller::{self, RunController},
-	show_system_info, CheckpointManager, JoypadInput, LinearMemoryView, MemoryImage, MemoryView,
-	RomLoader, Screen, VramView,
+	show_system_info, AudioVisualizer, CheckpointManager, JoypadInput, LinearMemoryView,
+	MemoryImage, MemoryView, RomLoader, Screen, VramView,
 };
 use egui::{CentralPanel, SidePanel, Style, TextStyle, TopBottomPanel, Window};
 
@@ -30,6 +30,9 @@ pub struct Debugger {
 
 	linear_memory_view: LinearMemoryView,
 	linear_memory_view_enabled: bool,
+
+	audio_visualizer: AudioVisualizer,
+	audio_visualizer_enabled: bool,
 }
 
 impl Debugger {
@@ -94,6 +97,7 @@ impl eframe::App for Debugger {
 				ui.checkbox(&mut self.vram_view_enabled, "Vram View");
 				ui.checkbox(&mut self.memory_view_enabled, "Memory View");
 				ui.checkbox(&mut self.linear_memory_view_enabled, "Instruction View");
+				ui.checkbox(&mut self.audio_visualizer_enabled, "Audio Visualizer");
 			});
 		});
 
@@ -123,6 +127,11 @@ impl eframe::App for Debugger {
 			Window::new("Checkpoints").show(ctx, |ui| {
 				self.checkpoint_manager.draw(&mut self.gameboy, ui)
 			});
+		}
+
+		if self.audio_visualizer_enabled {
+			Window::new("Audio Visualizer")
+				.show(ctx, |ui| self.audio_visualizer.draw(&mut self.gameboy, ui));
 		}
 
 		ctx.request_repaint();
