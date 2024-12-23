@@ -155,6 +155,7 @@ impl Channel for Square {
 		if self.sweeper {
 			self.sweep.write_byte(0);
 		}
+		self.frequency = 0;
 		self.duty_cycle = 0;
 		self.duty_index = 0;
 		self.volume_envelope.write_byte(0);
