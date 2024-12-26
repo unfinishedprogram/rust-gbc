@@ -139,11 +139,6 @@ impl Gameboy {
 
 			self.tick_t_states(t_states);
 			step_oam_dma(self);
-
-			// Only step the timer if we aren't in a speed switch
-			if self.speed_switch_delay == 0 {
-				self.timer.step(&mut self.cpu_state.interrupt_request);
-			}
 		}
 	}
 
@@ -183,6 +178,10 @@ impl Gameboy {
 
 	fn tick_t_states(&mut self, t_states: u32) {
 		for _ in 0..t_states {
+			// Only step the timer if we aren't in a speed switch
+			if self.speed_switch_delay == 0 {
+				self.timer.step(&mut self.cpu_state.interrupt_request);
+			}
 			self.apu
 				.step_t_state(self.timer.get_div(), self.mode.get_speed());
 			self.audio.step(&mut self.apu, 1);

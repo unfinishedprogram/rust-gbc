@@ -64,7 +64,14 @@ impl Timer {
 		}
 	}
 
-	fn step_clock(&mut self, interrupt_request: &mut u8) {
+	fn increment_tima(&mut self) {
+		self.tima = self.tima.wrapping_add(1);
+		if self.tima == 0 {
+			self.tima_delay = 4;
+		}
+	}
+
+	pub fn step(&mut self, interrupt_request: &mut u8) {
 		let from = self.system_clock;
 		self.system_clock = self.system_clock.wrapping_add(1);
 		let to = self.system_clock;
@@ -80,19 +87,6 @@ impl Timer {
 				self.tima = self.tma;
 				*interrupt_request |= Interrupt::Timer.flag_bit();
 			}
-		}
-	}
-
-	fn increment_tima(&mut self) {
-		self.tima = self.tima.wrapping_add(1);
-		if self.tima == 0 {
-			self.tima_delay = 4;
-		}
-	}
-
-	pub fn step(&mut self, interrupt_request: &mut u8) {
-		for _ in 0..4 {
-			self.step_clock(interrupt_request);
 		}
 	}
 }
