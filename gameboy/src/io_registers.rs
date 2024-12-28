@@ -62,7 +62,6 @@ pub const JOYP: u16 = 0xFF00;
 pub const DISABLE_BOOT: u16 = 0xFF50;
 
 /// CGB Registers
-
 pub const VBK: u16 = 0xFF4F; //  VRAM bank
 pub const RP: u16 = 0xFF56; // Infra-red comms port
 
