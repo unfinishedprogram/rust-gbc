@@ -14,7 +14,8 @@ fn is_gbc_compatible_test(path: &str) -> bool {
 
 	let flags_str = name.split('-').last().unwrap();
 
-	flags_str.contains("G") || flags_str.contains("cgb")
+	flags_str.contains("C") && flags_str.chars().all(char::is_uppercase)
+		|| flags_str.contains("cgb")
 }
 
 fn mooneye_test(rom: &str) {
