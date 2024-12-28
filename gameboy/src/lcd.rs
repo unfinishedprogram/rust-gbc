@@ -50,7 +50,7 @@ impl GameboyLCD {
 	}
 
 	fn get_back_buffer_mut(&mut self) -> &mut [u8] {
-		return self.buffer_back.as_mut_slice();
+		self.buffer_back.as_mut_slice()
 	}
 
 	pub fn front_buffer(&self) -> &[u8] {
