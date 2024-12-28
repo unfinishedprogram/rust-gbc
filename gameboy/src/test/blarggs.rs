@@ -1,5 +1,5 @@
-use super::util::rom_loader::{init_emulator_with_rom_cgb, init_emulator_with_rom_dmg};
-use crate::{test::util::screenshot_test::compare_lcd, Gameboy, Mode};
+use super::util::rom_loader::init_emulator_with_rom;
+use crate::{test::util::screenshot_test::compare_lcd, Gameboy};
 use image::{EncodableLayout, RgbaImage};
 use std::fs::create_dir_all;
 
@@ -24,15 +24,7 @@ pub fn execute_blargg_test(name: &str, mut state: Gameboy, img: RgbaImage) {
 
 	save_failed_image_result(name, &actual, &img);
 
-	panic!(
-		"Images do not match at frame: {} as {:?}",
-		state.ppu.frame,
-		if matches!(state.mode, Mode::DMG) {
-			"DMG"
-		} else {
-			"CGB"
-		}
-	);
+	panic!("Images do not match at frame: {}", state.ppu.frame);
 }
 
 fn save_failed_image_result(name: &str, actual: &RgbaImage, expected: &RgbaImage) {
@@ -54,19 +46,9 @@ fn load_test_data(name: &str, img_postfix: &str) -> (String, String) {
 	(rom_path, img_path)
 }
 
-fn run_test_dmg(name: &str, postfix: &str) {
+fn run_blarggs(name: &str, postfix: &str) {
 	let (rom_path, img_path) = load_test_data(name, postfix);
-	let gb = init_emulator_with_rom_dmg(&rom_path);
-	execute_blargg_test(
-		&format!("{}-DMG", name),
-		gb,
-		image::open(img_path).unwrap().into_rgba8(),
-	)
-}
-
-fn run_test_cgb(name: &str, postfix: &str) {
-	let (rom_path, img_path) = load_test_data(name, postfix);
-	let gb = init_emulator_with_rom_cgb(&rom_path);
+	let gb = init_emulator_with_rom(&rom_path);
 	execute_blargg_test(
 		&format!("{}-CGB", name),
 		gb,
@@ -75,61 +57,31 @@ fn run_test_cgb(name: &str, postfix: &str) {
 }
 
 #[test]
-fn dmg_sound() {
-	run_test_cgb("dmg_sound", "-dmg");
-}
-
-#[test]
 fn cgb_sound() {
-	run_test_cgb("cgb_sound", "-cgb");
+	run_blarggs("cgb_sound", "-dmg-cgb");
 }
 
 #[test]
-fn dmg_cpu_instrs() {
-	run_test_dmg("cpu_instrs", "-dmg-cgb");
+fn cpu_instrs() {
+	run_blarggs("cpu_instrs", "-dmg-cgb");
 }
 
 #[test]
-fn cgb_cpu_instrs() {
-	run_test_cgb("cpu_instrs", "-dmg-cgb");
+fn instr_timing() {
+	run_blarggs("instr_timing", "-dmg-cgb");
 }
 
 #[test]
-fn dmg_instr_timing() {
-	run_test_dmg("instr_timing", "-dmg-cgb");
+fn interrupt_time() {
+	run_blarggs("interrupt_time", "-cgb");
 }
 
 #[test]
-fn cgb_instr_timing() {
-	run_test_cgb("instr_timing", "-dmg-cgb");
+fn mem_timing() {
+	run_blarggs("mem_timing", "-dmg-cgb");
 }
 
 #[test]
-fn dmg_interrupt_time() {
-	run_test_dmg("instr_timing", "-dmg");
-}
-
-#[test]
-fn cgb_interrupt_time() {
-	run_test_cgb("instr_timing", "-cgb");
-}
-
-#[test]
-fn dmg_mem_timing() {
-	run_test_dmg("mem_timing", "-dmg-cgb");
-}
-
-#[test]
-fn cgb_mem_timing() {
-	run_test_cgb("mem_timing", "-dmg-cgb");
-}
-
-#[test]
-fn dmg_oam_bug() {
-	run_test_dmg("oam_bug", "-dmg");
-}
-
-#[test]
-fn cgb_oam_bug() {
-	run_test_cgb("oam_bug", "-cgb");
+fn oam_bug() {
+	run_blarggs("oam_bug", "-cgb");
 }

@@ -93,3 +93,6 @@ test result: FAILED. 1858 passed; 2047 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Support Audio Gambatte tests -->
 test result: FAILED. 1918 passed; 1987 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.37s
+
+<!-- Only test GCB mode for blarggs -->
+test result: FAILED. 1915 passed; 1984 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.96s
