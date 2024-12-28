@@ -15,11 +15,15 @@ pub struct Timer {
 impl Timer {
 	pub fn set_div(&mut self, _: u8) {
 		// Detect falling edge for timer
-		let bit = self.tac_freq() >> 1;
-		if (self.system_clock & bit) == bit {
+		if self.current_output_clock() {
 			self.increment_tima();
 		}
 		self.system_clock = 0;
+	}
+
+	fn current_output_clock(&self) -> bool {
+		let bit = self.tac_freq() >> 1;
+		(self.system_clock & bit) == bit
 	}
 
 	pub fn write_tima(&mut self, value: u8) {
@@ -31,6 +35,11 @@ impl Timer {
 	}
 
 	pub fn set_tac(&mut self, value: u8) {
+		let tac_enable = value & BIT_2 != 0;
+		if tac_enable & !self.tac_enabled() && self.current_output_clock() {
+			self.increment_tima();
+		}
+
 		self.tac = value;
 	}
 

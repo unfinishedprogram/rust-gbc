@@ -96,3 +96,6 @@ test result: FAILED. 1918 passed; 1987 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Only test GCB mode for blarggs -->
 test result: FAILED. 1915 passed; 1984 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.96s
+
+<!-- Obscure Reset Behavior for Timer -->
+test result: FAILED. 1913 passed; 1986 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.26s
