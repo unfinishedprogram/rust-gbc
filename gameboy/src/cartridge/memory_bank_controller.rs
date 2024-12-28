@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sm83::memory_mapper::MemoryMapper;
 
-use crate::cartridge::mbc3;
-
 use super::{mbc1::MBC1State, mbc2::MBC2State, mbc3::MBC3State, mbc5::MBC5State, Cartridge};
 
 pub trait MemoryBankController: Default + Clone {
@@ -34,75 +32,11 @@ impl MemoryMapper for Cartridge {
 				0x4000..0x8000 => data.rom_banks[1][(addr as usize) - 0x4000],
 				_ => 0xFF,
 			},
-			MBC1(state) => match addr {
-				0..0x4000 => {
-					data.rom_banks[state.get_zero_rom_bank() as usize % data.rom_banks.len()]
-						[addr as usize]
-				}
-				0x4000..0x8000 => {
-					let bank = state.get_rom_bank() % data.rom_banks.len() as u16;
-					data.rom_banks[bank as usize][(addr - 0x4000) as usize]
-				}
-				0xA000..0xC000 => {
-					if data.ram_banks.is_empty() || !state.ram_enabled {
-						return 0xFF;
-					}
-					let bank = state.get_ram_bank() % data.ram_banks.len() as u16;
-					data.ram_banks[bank as usize][(addr - 0xA000) as usize]
-				}
-
-				_ => unreachable!(),
-			},
-			MBC2(state) => match addr {
-				0..0x4000 => data.rom_banks[0][addr as usize],
-				0x4000..0x8000 => {
-					let bank = state.rom_bank;
-					data.rom_banks[bank as usize % data.rom_banks.len()][(addr - 0x4000) as usize]
-				}
-				0xA000..0xC000 => {
-					let local_addr = ((addr - 0xA000) % 512) as usize;
-					if state.ram_enabled {
-						state.ram_data[local_addr] | 0xF0
-					} else {
-						0xFF
-					}
-				}
-				_ => unreachable!(),
-			},
-			MBC3(state) => match addr {
-				0..0x4000 => data.rom_banks[0][addr as usize],
-				0x4000..0x8000 => {
-					let bank = state.get_rom_bank();
-					data.rom_banks[bank][(addr - 0x4000) as usize]
-				}
-				0xA000..0xC000 => match state.banking_mode {
-					mbc3::BankingMode::Ram => {
-						data.ram_banks[state.ram_bank][(addr - 0xA000) as usize]
-					}
-					mbc3::BankingMode::Rtc => 0,
-				},
-				_ => unreachable!(),
-			},
-			MMM01 => todo!(),
-			MBC5(state) => match addr {
-				0..0x4000 => data.rom_banks[0][addr as usize],
-				0x4000..0x8000 => {
-					let bank = state.get_rom_bank() as usize % data.rom_banks.len();
-					data.rom_banks[bank][(addr - 0x4000) as usize]
-				}
-				0xA000..0xC000 => {
-					if data.ram_banks.is_empty() || !state.ram_enabled {
-						return 0xFF;
-					}
-					let bank = state.get_ram_bank() as usize % data.ram_banks.len();
-					data.ram_banks[bank][(addr - 0xA000) as usize]
-				}
-				_ => unreachable!(),
-			},
-			MBC6 => todo!(),
-			MBC7 => todo!(),
-			HUC3 => todo!(),
-			HUC1 => todo!(),
+			MBC1(state) => state.read(data, addr),
+			MBC2(state) => state.read(data, addr),
+			MBC3(state) => state.read(data, addr),
+			MBC5(state) => state.read(data, addr),
+			_ => todo!(),
 		}
 	}
 
@@ -113,58 +47,10 @@ impl MemoryMapper for Cartridge {
 
 		match mbc {
 			ROM => {}
-			MBC1(state) => match addr {
-				0..0x2000 => state.set_ram_enable(value),
-				0x2000..0x4000 => state.set_rom_bank(value),
-				0x4000..0x6000 => state.set_ram_bank(value),
-				0x6000..0x8000 => state.set_banking_mode(value),
-				0xA000..0xC000 => {
-					if data.ram_banks.is_empty() || !state.ram_enabled {
-						return;
-					}
-					let bank = state.get_ram_bank() % data.ram_banks.len() as u16;
-					data.ram_banks[bank as usize][(addr - 0xA000) as usize] = value;
-				}
-				_ => unreachable!(),
-			},
-			MBC2(state) => match addr {
-				0x0000..0x4000 => state.set_register(addr, value),
-				0xA000..0xC000 => {
-					let local_addr = ((addr - 0xA000) % 512) as usize;
-					if state.ram_enabled {
-						state.ram_data[local_addr] = value | 0xF0
-					}
-				}
-				_ => {}
-			},
-			MBC3(state) => match addr {
-				0..0x2000 => state.ram_enabled = value == 0x0A,
-				0x2000..0x4000 => state.rom_bank = value as usize,
-				0x4000..0x6000 => state.write_register(value),
-				0x6000..0x8000 => {}
-				0xA000..0xC000 => match state.banking_mode {
-					mbc3::BankingMode::Ram => {
-						data.ram_banks[state.ram_bank][(addr - 0xA000) as usize] = value
-					}
-					mbc3::BankingMode::Rtc => {}
-				},
-				_ => {}
-			},
-			MBC5(state) => match addr {
-				0..0x2000 => state.set_ram_enable(value),
-				0x2000..0x3000 => state.set_rom_bank(value),
-				0x3000..0x4000 => state.set_rom_bank_upper(value),
-				0x4000..0x6000 => state.set_ram_bank(value),
-				0x6000..0x8000 => {}
-				0xA000..0xC000 => {
-					if data.ram_banks.is_empty() || !state.ram_enabled {
-						return;
-					}
-					let bank = state.get_ram_bank() % data.ram_banks.len() as u16;
-					data.ram_banks[bank as usize][(addr - 0xA000) as usize] = value;
-				}
-				_ => unreachable!(),
-			},
+			MBC1(state) => state.write(data, addr, value),
+			MBC2(state) => state.write(data, addr, value),
+			MBC3(state) => state.write(data, addr, value),
+			MBC5(state) => state.write(data, addr, value),
 			_ => todo!(),
 		}
 	}
