@@ -98,18 +98,19 @@ impl Channel for Square {
 		let length_previously_enabled = self.length_counter.enabled();
 		self.length_counter.set_enabled(length_enable);
 
+		let frequency_msb = value & 0b111;
+		self.frequency &= 0x00FF;
+		self.frequency |= (frequency_msb as u16) << 8;
+
 		if trigger {
 			self.length_counter.unfreeze();
 			self.enabled = true;
 			if self.sweeper {
 				self.sweep.trigger(self.frequency);
 			}
-
-			let frequency_msb = value & 0b111;
-			self.frequency &= 0x00FF;
-			self.frequency |= (frequency_msb as u16) << 8;
-			self.frequency_timer.set_period(self.timer_period());
 		}
+
+		self.frequency_timer.set_period(self.timer_period());
 
 		let in_first_half = match next_frame_sequencer_result {
 			frame_sequencer::TickResult::None => true,
