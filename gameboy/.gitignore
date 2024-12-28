@@ -1,3 +1,4 @@
 Cargo.lock
 /target
 src/test/roms
+failed_results
