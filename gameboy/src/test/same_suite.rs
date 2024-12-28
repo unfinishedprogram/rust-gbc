@@ -12,7 +12,7 @@ fn same_suite_test(rom: &str) {
 		init_emulator_with_rom_cgb(rom)
 	};
 
-	for _ in 0..1_048_576 * 100 {
+	for _ in 0..1_048_576 * 10 {
 		if let Some(Instruction::LD_8(
 			ValueRefU8::Reg(CPURegister8::B),
 			ValueRefU8::Reg(CPURegister8::B),
