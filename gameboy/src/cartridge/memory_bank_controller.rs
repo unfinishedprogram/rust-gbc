@@ -25,17 +25,17 @@ pub enum Mbc {
 impl MemoryMapper for Cartridge {
 	fn read(&self, addr: u16) -> u8 {
 		use Mbc::*;
-		let Cartridge(data, mbc, _info) = self;
-		match mbc {
+
+		match &self.mbc {
 			ROM => match addr {
-				0..0x4000 => data.rom_banks[0][addr as usize],
-				0x4000..0x8000 => data.rom_banks[1][(addr as usize) - 0x4000],
+				0..0x4000 => self.data.rom_banks[0][addr as usize],
+				0x4000..0x8000 => self.data.rom_banks[1][(addr as usize) - 0x4000],
 				_ => 0xFF,
 			},
-			MBC1(state) => state.read(data, addr),
-			MBC2(state) => state.read(data, addr),
-			MBC3(state) => state.read(data, addr),
-			MBC5(state) => state.read(data, addr),
+			MBC1(state) => state.read(&self.data, addr),
+			MBC2(state) => state.read(&self.data, addr),
+			MBC3(state) => state.read(&self.data, addr),
+			MBC5(state) => state.read(&self.data, addr),
 			_ => todo!(),
 		}
 	}
@@ -43,14 +43,12 @@ impl MemoryMapper for Cartridge {
 	fn write(&mut self, addr: u16, value: u8) {
 		use Mbc::*;
 
-		let Cartridge(data, mbc, _info) = self;
-
-		match mbc {
+		match &mut self.mbc {
 			ROM => {}
-			MBC1(state) => state.write(data, addr, value),
-			MBC2(state) => state.write(data, addr, value),
-			MBC3(state) => state.write(data, addr, value),
-			MBC5(state) => state.write(data, addr, value),
+			MBC1(state) => state.write(&mut self.data, addr, value),
+			MBC2(state) => state.write(&mut self.data, addr, value),
+			MBC3(state) => state.write(&mut self.data, addr, value),
+			MBC5(state) => state.write(&mut self.data, addr, value),
 			_ => todo!(),
 		}
 	}

@@ -230,14 +230,12 @@ impl Gameboy {
 			return self;
 		};
 
-		let Cartridge(data, _, info) = cart;
-
-		if info.title != new_cart.2.title {
+		if cart.info.title != new_cart.info.title {
 			return self;
 		}
 
-		new_cart.0.rom_banks = data.rom_banks.clone();
-		new_cart.0.loaded = true;
+		new_cart.data.rom_banks = cart.data.rom_banks.clone();
+		new_cart.data.loaded = true;
 
 		new_state
 	}

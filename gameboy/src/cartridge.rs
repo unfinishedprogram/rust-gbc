@@ -18,7 +18,11 @@ mod mbc5;
 pub mod memory_bank_controller;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct Cartridge(pub CartridgeData, pub Mbc, pub CartridgeInfo);
+pub struct Cartridge {
+	pub data: CartridgeData,
+	pub mbc: Mbc,
+	pub info: CartridgeInfo,
+}
 
 impl Cartridge {
 	pub fn try_new(value: &[u8], source: Option<RomSource>) -> Result<Self, CartridgeParseError> {
@@ -42,6 +46,6 @@ impl Cartridge {
 			_ => Err(CartridgeParseError::MBCType),
 		}?;
 
-		Ok(Cartridge(data, mbc, info))
+		Ok(Cartridge { data, mbc, info })
 	}
 }

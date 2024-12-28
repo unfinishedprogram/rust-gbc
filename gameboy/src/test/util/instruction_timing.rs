@@ -23,7 +23,7 @@ pub fn get_cycles_taken(instrs: &[u8], steps: usize, flag: u8) -> u64 {
 
 	if let Some(cart) = &mut state.cartridge_state {
 		for (i, instr) in instrs.iter().enumerate() {
-			cart.0.rom_banks[0][0x100 + i] = *instr;
+			cart.data.rom_banks[0][0x100 + i] = *instr;
 		}
 	}
 

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{cartridge::Cartridge, Gameboy};
+use crate::Gameboy;
 use std::time::SystemTime;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -46,10 +46,11 @@ impl TryFrom<&Gameboy> for SaveState {
 	fn try_from(value: &Gameboy) -> Result<Self, SaveError> {
 		let data = serde_json::to_string(value).or(Err(SaveError::Serialization))?;
 
-		let Cartridge(_, _, info) = &value
+		let info = &value
 			.cartridge_state
 			.as_ref()
-			.ok_or(SaveError::InvalidGame)?;
+			.ok_or(SaveError::InvalidGame)?
+			.info;
 
 		let game_title = info.title.clone();
 		let date = std::time::SystemTime::now();
