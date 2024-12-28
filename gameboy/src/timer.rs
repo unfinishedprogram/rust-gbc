@@ -10,6 +10,7 @@ pub struct Timer {
 	tma: u8,
 	tac: u8,
 	tima_delay: u8,
+	tima_write_delay: u8,
 }
 
 impl Timer {
@@ -27,6 +28,9 @@ impl Timer {
 	}
 
 	pub fn write_tima(&mut self, value: u8) {
+		if self.tima_delay > 0 {
+			self.tima_delay = 0;
+		}
 		self.tima = value;
 	}
 
@@ -90,12 +94,20 @@ impl Timer {
 			self.increment_tima();
 		}
 
+		if self.tima_write_delay > 0 {
+			self.tima_write_delay -= 1;
+		}
+
 		if self.tima_delay > 0 {
 			self.tima_delay -= 1;
 			if self.tima_delay == 0 {
-				self.tima = self.tma;
+				self.tima_write_delay = 4;
 				*interrupt_request |= Interrupt::Timer.flag_bit();
 			}
+		}
+
+		if self.tima_write_delay > 0 {
+			self.tima = self.tma;
 		}
 	}
 }
