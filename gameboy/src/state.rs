@@ -81,7 +81,7 @@ impl Default for Gameboy {
 			boot_rom: include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
 			booting: true,
 			cartridge_state: None,
-			mode: Mode::DMG,
+			mode: Mode::GBC(CGBState::default()),
 			w_ram: WorkRam::Dmg(Box::<WorkRamDataDMG>::default()),
 			hram: [0; 0x80],
 			serial_output: vec![],
@@ -205,10 +205,6 @@ impl Gameboy {
 
 	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
 		if let Ok(cart) = Cartridge::try_new(rom, source) {
-			match cart.2.cgb {
-				true => self.set_gb_mode(Mode::GBC(CGBState::default())),
-				false => self.set_gb_mode(Mode::DMG),
-			}
 			self.cartridge_state = Some(cart);
 		}
 	}
