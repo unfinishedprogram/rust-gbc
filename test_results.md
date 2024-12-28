@@ -90,3 +90,6 @@ test result: FAILED. 1852 passed; 2053 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Disable non GCB mooneye tests -->
 test result: FAILED. 1858 passed; 2047 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.00s
+
+<!-- Support Audio Gambatte tests -->
+test result: FAILED. 1918 passed; 1987 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.37s
