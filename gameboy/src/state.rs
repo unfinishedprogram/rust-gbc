@@ -13,7 +13,7 @@ use crate::{
 };
 
 use super::{
-	cartridge::memory_bank_controller::Cartridge,
+	cartridge::Cartridge,
 	io_registers::IORegisterState,
 	joypad::JoypadState,
 	ppu::{PPUMode, PPU},

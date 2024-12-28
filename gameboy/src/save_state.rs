@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{cartridge::memory_bank_controller::Cartridge, Gameboy};
+use crate::{cartridge::Cartridge, Gameboy};
 use std::time::SystemTime;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
