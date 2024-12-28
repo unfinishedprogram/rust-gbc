@@ -20,7 +20,7 @@ pub fn interleave(a: u8, b: u8) -> u16 {
 	let a = (a ^ (a << 1)) & 0x5555;
 	let b = (b ^ (b << 1)) & 0x5555;
 
-	b << 1 | a
+	(b << 1) | a
 }
 
 #[inline]

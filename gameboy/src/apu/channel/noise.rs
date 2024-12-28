@@ -96,7 +96,7 @@ impl Channel for Noise {
 
 	fn read_nrx3(&self) -> u8 {
 		let lfsr_mode = if self.lfsr.width == 6 { BIT_3 } else { 0 };
-		self.clock_shift << 4 | lfsr_mode | self.devisor_code
+		(self.clock_shift << 4) | lfsr_mode | self.devisor_code
 	}
 
 	fn write_nrx4(&mut self, value: u8, _next_frame_sequencer_result: frame_sequencer::TickResult) {

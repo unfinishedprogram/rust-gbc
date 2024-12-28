@@ -19,7 +19,7 @@ impl Default for MBC2State {
 
 impl MBC2State {
 	pub fn set_register(&mut self, addr: u16, value: u8) {
-		if addr & 1 << 8 == 0 {
+		if (1 << 8) & addr == 0 {
 			self.ram_enabled = value & 0xF == 0x0A;
 		} else {
 			self.rom_bank = value & 0x0F;

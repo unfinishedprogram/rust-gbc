@@ -57,7 +57,7 @@ impl Sweep {
 	}
 
 	pub fn write_byte(&mut self, value: u8) {
-		self.timer.set_period((value >> 4 & 0b0111) as u16);
+		self.timer.set_period(((value >> 4) & 0b0111) as u16);
 		self.negate = value & 0b1000 != 0;
 		self.shift = value & 0b0111;
 	}

@@ -349,11 +349,11 @@ impl PixelFIFO for PPU {
 		let iter = pixels.iter_mut().enumerate();
 		if horizontal_flip {
 			for (i, pixel) in iter {
-				pixel.color = (interleaved >> (i * 2) & 0b11) as u8
+				pixel.color = ((interleaved >> (i * 2)) & 0b11) as u8
 			}
 		} else {
 			for (i, pixel) in iter {
-				pixel.color = (interleaved >> ((7 - i) * 2) & 0b11) as u8
+				pixel.color = ((interleaved >> ((7 - i) * 2)) & 0b11) as u8
 			}
 		}
 
