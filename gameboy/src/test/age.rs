@@ -1,11 +1,11 @@
 use sm83::{registers::CPURegister8, values::ValueRefU8, Instruction};
 use test_generator::test_resources;
 
-use super::util::{rom_loader::init_emulator_with_rom_dmg, success_code::test_fib_success_code};
+use super::util::{rom_loader::init_emulator_with_rom_cgb, success_code::get_fib_test_result};
 
 #[test_resources("../test_data/age-test-roms/**/*.gb")]
 fn age_test(src: &str) {
-	let mut state = init_emulator_with_rom_dmg(src);
+	let mut state = init_emulator_with_rom_cgb(src);
 
 	for _ in 0..1_048_576 * 100 {
 		if let Some(Instruction::LD_8(
@@ -17,5 +17,5 @@ fn age_test(src: &str) {
 		}
 	}
 
-	test_fib_success_code(&state).unwrap();
+	get_fib_test_result(&state).unwrap();
 }

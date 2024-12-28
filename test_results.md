@@ -87,3 +87,6 @@ test result: FAILED. 1849 passed; 2052 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Don't set GBC/DMG modes on rom load -->
 test result: FAILED. 1852 passed; 2053 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.74s
+
+<!-- Disable non GCB mooneye tests -->
+test result: FAILED. 1858 passed; 2047 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.00s

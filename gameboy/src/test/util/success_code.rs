@@ -10,7 +10,7 @@ pub enum FailureCode {
 
 // Tests for the fibonacci sequence in registers
 // indicating a passing test for mooneye, and same-suite tests
-pub fn test_fib_success_code(gb: &Gameboy) -> Result<(), FailureCode> {
+pub fn get_fib_test_result(gb: &Gameboy) -> Result<(), FailureCode> {
 	let bytes = [
 		gb.cpu_state.read(CPURegister8::B),
 		gb.cpu_state.read(CPURegister8::C),
