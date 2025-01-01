@@ -185,3 +185,12 @@ main[data-menu-open] {
 	border-radius: 0.25rem;
 	box-shadow: 0px 0.5rem 1rem rgba(0, 0, 0, 0.5);
 }
+
+details {
+	padding: 0.25rem 1rem;
+}
+
+details > button {
+	display: flex;
+	flex-direction: column;
+}

@@ -11,10 +11,7 @@
 	<script type="module" src="assets/scripts/hover.js"></script>
 	<script type="module" src="assets/scripts/menu.js"></script>
 	<script type="module" src="assets/scripts/rom_loader.js"></script>
-	<script type="module" src="assets/scripts/collapsable.js"></script>
 	<script type="module" src="assets/scripts/main_app.js"></script>
-
-	<link rel="stylesheet" href="assets/style/collapsible.css">
 
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -88,28 +85,28 @@
 				<button id="step">Step</button>
 				<button id="toggle_play">Pause</button>
 
-				<div class="collapsible">
-					<label>Load a rom</label>
-					<div class="content" id="roms_container">
+				<details>
+					<summary>Load a rom</summary>
+					<div id="roms_container">
 						<label id="rom_upload_button" for="rom_upload_input">
 							<span> Upload a rom </span>
 							<img src="assets/icons/file_upload.svg">
 						</label>
 						<input hidden type="file" id="rom_upload_input" name="rom">
 					</div>
-				</div>
-				<div class="collapsible">
-					<label>Save states</label>
+				</details>
+				<details>
+					<summary>Save states</summary>
 					<div class="content" id="save_states_container">
 						This is some content in save states
 					</div>
-				</div>
-				<div class="collapsible">
-					<label>Debug Info</label>
+				</details>
+				<details>
+					<summary>Debug Info</summary>
 					<div class="content">
 						<span id="fps"></span>
 					</div>
-				</div>
+				</details>
 			</div>
 
 			<!-- <div id="gb_container">
