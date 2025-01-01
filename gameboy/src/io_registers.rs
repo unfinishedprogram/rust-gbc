@@ -290,9 +290,7 @@ impl IORegisters for Gameboy {
 				self.booting = false;
 			}
 			SB => self.io_register_state[SB] = value,
-			JOYP => {
-				self.io_register_state[JOYP] = value & 0b00110000;
-			}
+			JOYP => self.io_register_state[JOYP] = value & 0b00110000,
 			SC => {
 				if value == 0x81 {
 					self.io_register_state[SC] = 0x01;
