@@ -1,10 +1,10 @@
 use std::collections::VecDeque;
 
-use egui::{Color32, Pos2, Sense, Stroke, Ui, Vec2};
+use egui::{Color32, Sense, Stroke, Ui, Vec2};
 use gameboy::Gameboy;
 
 pub struct AudioVisualizer {
-	sample_width: usize,
+	_sample_width: usize,
 	samples: VecDeque<f32>,
 }
 
@@ -19,7 +19,7 @@ impl AudioVisualizer {
 		let width = 1024 * 8;
 
 		AudioVisualizer {
-			sample_width: width,
+			_sample_width: width,
 			samples: VecDeque::from(vec![0.0; width]),
 		}
 	}
