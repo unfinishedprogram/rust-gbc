@@ -39,6 +39,12 @@ impl Debugger {
 	pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
 		Default::default()
 	}
+
+	// Returns true if breakpoint was hit
+	fn step_gb(&mut self) -> bool {
+		self.gameboy.step();
+		self.disassembler.should_break(&self.gameboy)
+	}
 }
 
 impl eframe::App for Debugger {
@@ -52,29 +58,40 @@ impl eframe::App for Debugger {
 
 		TopBottomPanel::top("top").show(ctx, |ui| {
 			ui.horizontal(|ui| {
-				if let Some(action) = self.run_controller.draw(ui) {
+				if let Some(action) = self
+					.run_controller
+					.draw(ui, self.disassembler.should_break(&self.gameboy))
+				{
 					match action {
 						run_controller::Action::StepFrame => {
 							let start = self.gameboy.ppu.frame;
 							while self.gameboy.ppu.frame == start {
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::Step(cycles) => {
 							for _ in 0..cycles {
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::NextInterrupt => {
 							while !(self.gameboy.cpu_state.interrupt_pending()
 								&& (self.gameboy.cpu_state.ime() || self.gameboy.cpu_state.halted))
 							{
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::SkipBios => {
 							while self.gameboy.booting {
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::HDMAStart => {
@@ -83,7 +100,9 @@ impl eframe::App for Debugger {
 								&& steps < 10000000
 							{
 								steps += 1;
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::OAMDmaStart => todo!(),

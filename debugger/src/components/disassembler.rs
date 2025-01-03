@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use egui::style::Spacing;
-use egui::{Align, Rgba, Style, Ui, Vec2};
+use egui::{Align, Button, Color32, Rgba, Stroke, Style, Ui, Vec2};
 use egui_extras::{Column, TableBuilder};
 use gameboy::Gameboy;
 use sm83::instruction::Fetch;
@@ -19,6 +21,7 @@ pub struct DisassembledInstruction {
 pub struct Disassembler {
 	instructions: Option<Vec<DisassembledInstruction>>,
 	keep_pc_in_view: bool,
+	breakpoints: HashMap<u16, bool>,
 }
 
 pub fn generate_instructions(gb: &Gameboy) -> Vec<DisassembledInstruction> {
@@ -96,6 +99,7 @@ impl Disassembler {
 		}
 		.striped(true)
 		.resizable(true)
+		.column(Column::exact(25.0))
 		.column(Column::exact(40.0))
 		.column(Column::remainder())
 		.column(Column::remainder())
@@ -110,6 +114,27 @@ impl Disassembler {
 					bytes,
 				} = &instructions[index];
 				let color = if pc == *addr { Rgba::RED } else { Rgba::WHITE };
+
+				row.col(|ui| {
+					let is_breakpoint = self.breakpoints.contains_key(addr);
+					let text = if is_breakpoint { "🌑" } else { "🌕" };
+
+					if ui
+						.add(
+							Button::new(text)
+								.small()
+								.stroke(Stroke::NONE)
+								.fill(Color32::TRANSPARENT),
+						)
+						.clicked()
+					{
+						if is_breakpoint {
+							self.breakpoints.remove(addr)
+						} else {
+							self.breakpoints.insert(*addr, true)
+						};
+					}
+				});
 
 				row.col(|ui| {
 					ui.colored_label(color, format!("{addr:04X}"));
@@ -128,5 +153,10 @@ impl Disassembler {
 				});
 			});
 		});
+	}
+
+	pub fn should_break(&self, gameboy: &Gameboy) -> bool {
+		let pc = gameboy.cpu_state.read(CPURegister16::PC);
+		self.breakpoints.contains_key(&pc)
 	}
 }
