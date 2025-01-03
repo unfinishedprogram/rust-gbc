@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use sm83::{memory_mapper::MemoryMapper, Interrupt};
 
 use crate::{
+	ppu::GBMode,
 	state::Mode,
 	util::{bits::*, BigArray},
 	work_ram::BankedWorkRam,
@@ -64,6 +65,7 @@ pub const DISABLE_BOOT: u16 = 0xFF50;
 /// CGB Registers
 pub const VBK: u16 = 0xFF4F; //  VRAM bank
 pub const RP: u16 = 0xFF56; // Infra-red comms port
+pub const KEY0: u16 = 0xFF4C; // GBC Compatibility Mode
 
 /// Speed switch
 ///  - Bit 7: Current Speed     (0=Normal, 1=Double) (Read Only)
@@ -187,6 +189,10 @@ impl IORegisters for Gameboy {
 					0xFF
 				}
 			}
+			KEY0 => match self.ppu.gb_mode {
+				GBMode::DMG => BIT_2,
+				GBMode::CGB => 0,
+			},
 			KEY1 => {
 				if let Mode::GBC(state) = &self.mode {
 					state.read_key1()
@@ -278,6 +284,13 @@ impl IORegisters for Gameboy {
 			VBK => {
 				if let Mode::GBC(state) = &mut self.mode {
 					state.set_vram_bank(value);
+				};
+			}
+			KEY0 => {
+				self.ppu.gb_mode = if value & BIT_2 != 0 {
+					GBMode::DMG
+				} else {
+					GBMode::CGB
 				};
 			}
 			KEY1 => {

@@ -31,8 +31,8 @@ pub enum FetcherMode {
 #[derive(Clone, Copy, Serialize, Deserialize, Default)]
 pub enum GBMode {
 	#[default]
-	DMG,
 	CGB,
+	DMG,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
