@@ -87,7 +87,8 @@ pub const OBPI: u16 = 0xFF6A;
 /// FF6B OBJ palette data
 pub const OBPD: u16 = 0xFF6B;
 
-pub const SVBK: u16 = 0xFF70; // WRAM bank
+/// WRAM bank
+pub const SVBK: u16 = 0xFF70;
 
 pub const HDMA1: u16 = 0xFF51;
 pub const HDMA2: u16 = 0xFF52;
