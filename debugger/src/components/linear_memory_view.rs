@@ -23,12 +23,19 @@ pub fn generate_instructions(gb: &Gameboy) -> Vec<CompiledEntry> {
 	let mut instructions = vec![];
 
 	gb.cpu_state.write(CPURegister16::PC, 0);
-	while gb.cpu_state.read(CPURegister16::PC) < 0xFFFF {
+
+	loop {
 		let pc = gb.cpu_state.read(CPURegister16::PC);
 		let instruction = gb.fetch();
-		let mut bytes = vec![];
 		let new_pc = gb.cpu_state.read(CPURegister16::PC);
 
+		if new_pc <= pc {
+			// Detect looping back around to the start of memory
+			// This is likely to cause an infinite loop if not avoided
+			break;
+		}
+
+		let mut bytes = vec![];
 		for addr in pc..new_pc {
 			bytes.push(format!("{:02X}", gb.read(addr)));
 		}
