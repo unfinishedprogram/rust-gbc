@@ -1,7 +1,7 @@
 use crate::components::{
 	run_controller::{self, RunController},
-	show_system_info, AudioVisualizer, CheckpointManager, JoypadInput, LinearMemoryView,
-	MemoryImage, MemoryView, RomLoader, Screen, VramView,
+	show_system_info, AudioVisualizer, CheckpointManager, Disassembler, JoypadInput, MemoryImage,
+	MemoryView, RomLoader, Screen, VramView,
 };
 use egui::{CentralPanel, SidePanel, Style, TextStyle, TopBottomPanel, Window};
 
@@ -28,8 +28,8 @@ pub struct Debugger {
 	memory_view: MemoryView,
 	memory_view_enabled: bool,
 
-	linear_memory_view: LinearMemoryView,
-	linear_memory_view_enabled: bool,
+	disassembler: Disassembler,
+	disassembler_enabled: bool,
 
 	audio_visualizer: AudioVisualizer,
 	audio_visualizer_enabled: bool,
@@ -96,7 +96,7 @@ impl eframe::App for Debugger {
 				ui.checkbox(&mut self.memory_image_enabled, "Memory Image");
 				ui.checkbox(&mut self.vram_view_enabled, "Vram View");
 				ui.checkbox(&mut self.memory_view_enabled, "Memory View");
-				ui.checkbox(&mut self.linear_memory_view_enabled, "Instruction View");
+				ui.checkbox(&mut self.disassembler_enabled, "Instruction View");
 				ui.checkbox(&mut self.audio_visualizer_enabled, "Audio Visualizer");
 			});
 		});
@@ -107,9 +107,8 @@ impl eframe::App for Debugger {
 
 		CentralPanel::default().show(ctx, |ui| self.screen.draw(ui, screen_buffer));
 
-		if self.linear_memory_view_enabled {
-			Window::new("Instructions")
-				.show(ctx, |ui| self.linear_memory_view.draw(&self.gameboy, ui));
+		if self.disassembler_enabled {
+			Window::new("Instructions").show(ctx, |ui| self.disassembler.draw(&self.gameboy, ui));
 		}
 
 		if self.memory_view_enabled {

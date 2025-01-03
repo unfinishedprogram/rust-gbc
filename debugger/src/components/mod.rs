@@ -1,6 +1,6 @@
 mod audio_visualizer;
+mod disassembler;
 mod joypad;
-mod linear_memory_view;
 mod macro_helpers;
 mod memory_image;
 mod memory_view;
@@ -15,8 +15,8 @@ mod vram_view;
 
 // pub use breakpoint_manager::BreakpointManager;
 pub use audio_visualizer::AudioVisualizer;
+pub use disassembler::Disassembler;
 pub use joypad::JoypadInput;
-pub use linear_memory_view::LinearMemoryView;
 pub use memory_image::MemoryImage;
 pub use memory_view::MemoryView;
 pub use rom_loader::RomLoader;
