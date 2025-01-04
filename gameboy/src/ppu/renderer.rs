@@ -56,7 +56,7 @@ pub trait PixelFIFO {
 	fn start_window(&mut self);
 	fn step_sprite_fifo(&mut self);
 	fn push_sprite_pixels(&mut self, pixels: [Pixel; 8]);
-	fn fetch_scanline_sprites(&self) -> Vec<Sprite>;
+	fn fetch_scanline_sprites(&mut self);
 	fn draw_sprite(&mut self, sprite: Sprite);
 }
 
@@ -116,14 +116,14 @@ impl PixelFIFO for PPU {
 		}
 	}
 
-	fn fetch_scanline_sprites(&self) -> Vec<Sprite> {
+	fn fetch_scanline_sprites(&mut self) {
+		self.sprites.clear();
 		let height = match self.registers.lcdc.obj_size() {
 			SpriteHeight::Double => 0,
 			SpriteHeight::Single => 8,
 		};
 
-		let mut sprites: Vec<Sprite> = self
-			.oam
+		self.oam
 			.chunks_exact(4)
 			// Filter out sprites that are invisible due to position
 			// This lets us not construct sprites that wont be drawn
@@ -144,11 +144,10 @@ impl PixelFIFO for PPU {
 				)
 			})
 			.take(10)
-			.collect();
+			.for_each(|it| self.sprites.push(it));
 
 		// Sorting by the x-position means we only need to check a single sprite at a time
-		sprites.sort_by(|a, b| a.x.cmp(&b.x).reverse());
-		sprites
+		self.sprites.sort_by(|a, b| a.x.cmp(&b.x).reverse());
 	}
 
 	/// Checks if the screen pixel currently being drawn is within the window
@@ -183,7 +182,7 @@ impl PixelFIFO for PPU {
 		self.current_pixel = 0;
 		self.fifo_bg.clear();
 		self.current_tile = self.registers.scx / 8;
-		self.sprites = self.fetch_scanline_sprites();
+		self.fetch_scanline_sprites();
 
 		// Account for x-scroll of bg
 		self.populate_bg_fifo();
