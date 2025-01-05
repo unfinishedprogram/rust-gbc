@@ -202,16 +202,18 @@ impl IORegisters for Gameboy {
 				}
 			}
 			JOYP => {
-				let mut res = 0b11000000;
+				let mut state = 0xF;
+				let dpad_state = self.raw_joyp_input >> 4;
+				let button_state = self.raw_joyp_input;
 
 				if self.io_register_state[JOYP] & BIT_4 == 0 {
-					res |= (self.raw_joyp_input >> 4) & 0b1111;
+					state &= dpad_state;
 				}
 				if self.io_register_state[addr] & BIT_5 == 0 {
-					res |= self.raw_joyp_input & 0b1111;
+					state &= button_state;
 				}
 
-				res
+				self.io_register_state[JOYP] & 0xF0 | state
 			}
 
 			// Interrupt requests
@@ -304,7 +306,7 @@ impl IORegisters for Gameboy {
 				self.booting = false;
 			}
 			SB => self.io_register_state[SB] = value,
-			JOYP => self.io_register_state[JOYP] = value & 0b00110000,
+			JOYP => self.io_register_state[JOYP] = (value & 0b0011_0000) | 0b1100_1111,
 			SC => {
 				if value == 0x81 {
 					self.io_register_state[SC] = 0x01;

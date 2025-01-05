@@ -94,6 +94,8 @@ impl Default for Gameboy {
 		emulator
 			.ppu
 			.set_mode(PPUMode::OamScan, &mut cpu_state.interrupt_request);
+
+		emulator.set_controller_state(&JoypadState::default());
 		emulator
 	}
 }
@@ -210,11 +212,11 @@ impl Gameboy {
 	}
 
 	pub fn set_controller_state(&mut self, state: &JoypadState) {
-		self.raw_joyp_input = state.as_byte();
-
 		if ((self.raw_joyp_input) ^ state.as_byte()) & state.as_byte() != 0 {
 			self.request_interrupt(Interrupt::JoyPad);
 		}
+
+		self.raw_joyp_input = state.as_byte();
 	}
 
 	pub fn load_save_state(self, save_state: SaveState) -> Self {
@@ -300,7 +302,9 @@ impl SM83 for Gameboy {
 		// https://gbdev.io/pandocs/Reducing_Power_Consumption.html?highlight=stop#using-the-stop-instruction
 
 		let interrupt_pending = self.cpu_state.interrupt_pending();
-		let has_joyp_input = self.read(JOYP) & 0b1111 != 0;
+		// TODO: Double check that this behavior is correct
+		// Should we instead read the direct raw input?
+		let has_joyp_input = self.read(JOYP) & 0b1111 == 0;
 
 		let speed_switch_pending = match &self.mode {
 			Mode::GBC(state) => state.prepare_speed_switch,
