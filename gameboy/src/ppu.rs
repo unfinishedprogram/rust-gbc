@@ -178,19 +178,14 @@ impl PPU {
 	}
 
 	pub fn write_stat(&mut self, value: u8, _interrupt_register: &mut u8) {
-		let new_stat = Stat::from_bits_truncate(value);
-		self.registers.stat = (self.registers.stat & Stat::LYC_EQ_LY)
-			| (new_stat & Stat::H_BLANK_IE)
-			| (new_stat & Stat::V_BLANK_IE)
-			| (new_stat & Stat::OAM_IE)
-			| (new_stat & Stat::LYC_EQ_LY_IE);
+		self.registers.stat.write(value);
 	}
 
 	pub fn read_stat(&self) -> u8 {
-		if !self.is_enabled() {
-			Stat::UNUSED.bits()
+		if self.is_enabled() {
+			self.registers.stat.read(self.is_enabled()) | self.mode as u8
 		} else {
-			self.mode as u8 | self.registers.stat.bits() | Stat::UNUSED.bits()
+			self.registers.stat.read(self.is_enabled())
 		}
 	}
 

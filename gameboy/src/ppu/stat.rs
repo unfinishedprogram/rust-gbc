@@ -1,30 +1,35 @@
-use bitflags::bitflags;
+use super::PPUMode;
+use crate::util::bits::*;
 use serde::{Deserialize, Serialize};
 
-use crate::util::bits::*;
-
-use super::PPUMode;
-
-bitflags! {
-	#[derive(Serialize, Deserialize, Default, Clone, Copy, Debug)]
-	#[serde(transparent)]
-	pub struct Stat:u8 {
-		const LYC_EQ_LY = BIT_2;
-		const H_BLANK_IE = BIT_3;
-		const V_BLANK_IE = BIT_4;
-		const OAM_IE = BIT_5;
-		const LYC_EQ_LY_IE = BIT_6;
-		const UNUSED = BIT_7;
-	}
-}
+#[derive(Serialize, Deserialize, Default, Clone, Copy, Debug)]
+pub struct Stat(u8);
 
 impl Stat {
+	const MODE_MASK: u8 = BIT_0 | BIT_1;
+	const LYC_EQ_LY: u8 = BIT_2;
+	const H_BLANK_IE: u8 = BIT_3;
+	const V_BLANK_IE: u8 = BIT_4;
+	const OAM_IE: u8 = BIT_5;
+	const LYC_EQ_LY_IE: u8 = BIT_6;
+	const UNUSED: u8 = BIT_7;
+
 	pub fn read(&self, enabled: bool) -> u8 {
 		if enabled {
-			self.bits() | Self::UNUSED.bits()
+			self.0 | Self::UNUSED
 		} else {
-			Self::UNUSED.bits()
+			Self::UNUSED
 		}
+	}
+
+	pub fn write(&mut self, value: u8) {
+		let new_stat = Self(value);
+
+		self.0 = (self.0 & Stat::LYC_EQ_LY)
+			| (new_stat.0 & Stat::H_BLANK_IE)
+			| (new_stat.0 & Stat::V_BLANK_IE)
+			| (new_stat.0 & Stat::OAM_IE)
+			| (new_stat.0 & Stat::LYC_EQ_LY_IE);
 	}
 
 	pub fn int_enable(&self, mode: PPUMode) -> bool {
@@ -47,5 +52,17 @@ impl Stat {
 	// Returns true if an interrupt should be triggered
 	pub fn set_lyc_eq_ly(&mut self, value: bool) {
 		self.set(Self::LYC_EQ_LY, value);
+	}
+
+	fn contains(&self, bit: u8) -> bool {
+		self.0 & bit == bit
+	}
+
+	fn set(&mut self, bit: u8, value: bool) {
+		if value {
+			self.0 |= bit
+		} else {
+			self.0 &= !bit
+		}
 	}
 }

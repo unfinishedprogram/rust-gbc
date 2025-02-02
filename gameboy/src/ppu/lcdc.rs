@@ -1,45 +1,33 @@
-use bitflags::bitflags;
-use serde::{Deserialize, Serialize};
-
-use crate::util::bits::*;
-
 use super::{
 	renderer::{AddressingMode, SpriteHeight},
 	FetcherMode,
 };
-
-bitflags! {
-	#[derive(Default, Serialize, Deserialize, Clone, Copy, Debug)]
-	struct Flags: u8 {
-		const BG_DISPLAY_ENABLE = BIT_0;
-		const OBJ_DISPLAY_ENABLE = BIT_1;
-		const OBJ_SIZE = BIT_2;
-		const BG_TILE_MAP_DISPLAY_SELECT = BIT_3;
-		const BG_AND_WINDOW_TILE_DATA_SELECT = BIT_4;
-		const WINDOW_DISPLAY_ENABLE = BIT_5;
-		const WINDOW_TILE_MAP_DISPLAY_SELECT = BIT_6;
-		const DISPLAY_ENABLE = BIT_7;
-
-		const WN_BG_ENABLED = Flags::WINDOW_DISPLAY_ENABLE.bits() | Flags::BG_DISPLAY_ENABLE.bits();
-	}
-}
+use crate::util::bits::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
-pub struct Lcdc {
-	flags: Flags,
-}
+pub struct Lcdc(u8);
 
 impl Lcdc {
+	const BG_DISPLAY_ENABLE: u8 = BIT_0;
+	const OBJ_DISPLAY_ENABLE: u8 = BIT_1;
+	const OBJ_SIZE: u8 = BIT_2;
+	const BG_TILE_MAP_DISPLAY_SELECT: u8 = BIT_3;
+	const BG_AND_WINDOW_TILE_DATA_SELECT: u8 = BIT_4;
+	const WINDOW_DISPLAY_ENABLE: u8 = BIT_5;
+	const WINDOW_TILE_MAP_DISPLAY_SELECT: u8 = BIT_6;
+	const DISPLAY_ENABLE: u8 = BIT_7;
+
 	pub fn read(&self) -> u8 {
-		self.flags.bits()
+		self.0
 	}
 
 	pub fn write(&mut self, value: u8) {
-		self.flags = Flags::from_bits_truncate(value)
+		self.0 = value;
 	}
 
 	pub fn obj_size(&self) -> SpriteHeight {
-		if self.flags.contains(Flags::OBJ_SIZE) {
+		if self.is_set(Self::OBJ_SIZE) {
 			SpriteHeight::Double
 		} else {
 			SpriteHeight::Single
@@ -47,11 +35,11 @@ impl Lcdc {
 	}
 
 	pub fn obj_enable(&self) -> bool {
-		self.flags.contains(Flags::OBJ_DISPLAY_ENABLE)
+		self.is_set(Self::OBJ_DISPLAY_ENABLE)
 	}
 
 	pub fn addressing_mode(&self) -> AddressingMode {
-		if self.flags.contains(Flags::BG_AND_WINDOW_TILE_DATA_SELECT) {
+		if self.is_set(Self::BG_AND_WINDOW_TILE_DATA_SELECT) {
 			AddressingMode::Signed
 		} else {
 			AddressingMode::Unsigned
@@ -60,11 +48,11 @@ impl Lcdc {
 
 	pub fn tile_map_offset(&self, mode: FetcherMode) -> u16 {
 		let flag = match mode {
-			FetcherMode::Window => Flags::WINDOW_TILE_MAP_DISPLAY_SELECT,
-			FetcherMode::Background => Flags::BG_TILE_MAP_DISPLAY_SELECT,
+			FetcherMode::Window => Self::WINDOW_TILE_MAP_DISPLAY_SELECT,
+			FetcherMode::Background => Self::BG_TILE_MAP_DISPLAY_SELECT,
 		};
 
-		if self.flags.contains(flag) {
+		if self.is_set(flag) {
 			0x1C00
 		} else {
 			0x1800
@@ -72,14 +60,18 @@ impl Lcdc {
 	}
 
 	pub fn win_enabled(&self) -> bool {
-		self.flags.contains(Flags::WN_BG_ENABLED)
+		self.is_set(Self::WINDOW_DISPLAY_ENABLE | Self::BG_DISPLAY_ENABLE)
 	}
 
 	pub fn bg_enabled(&self) -> bool {
-		self.flags.contains(Flags::BG_DISPLAY_ENABLE)
+		self.is_set(Self::BG_DISPLAY_ENABLE)
 	}
 
 	pub fn display_enabled(&self) -> bool {
-		self.flags.contains(Flags::DISPLAY_ENABLE)
+		self.is_set(Self::DISPLAY_ENABLE)
+	}
+
+	fn is_set(&self, bit: u8) -> bool {
+		self.0 & bit == bit
 	}
 }
