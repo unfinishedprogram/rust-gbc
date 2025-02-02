@@ -242,17 +242,13 @@ impl IORegisters for Gameboy {
 
 			SCY => self.ppu.registers.scy = value,
 			SCX => self.ppu.registers.scx = value,
-			LYC => self
-				.ppu
-				.set_lyc(value, &mut self.cpu_state.interrupt_request),
+			LYC => self.ppu.set_lyc(value),
 			BGP => self.ppu.registers.bgp = value,
 			OBP0 => self.ppu.registers.obp0 = value,
 			OBP1 => self.ppu.registers.obp1 = value,
 			WY => self.ppu.registers.wy = value,
 			WX => self.ppu.registers.wx = value,
-			STAT => self
-				.ppu
-				.write_stat(value, &mut self.cpu_state.interrupt_request),
+			STAT => self.ppu.write_stat(value),
 			HDMA1 => self.dma_controller.write_source_high(value),
 			HDMA2 => self.dma_controller.write_source_low(value),
 			HDMA3 => self.dma_controller.write_destination_high(value),

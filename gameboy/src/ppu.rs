@@ -122,7 +122,7 @@ pub struct PPU {
 impl PPU {
 	pub fn write_lcdc(&mut self, value: u8, interrupt_register: &mut u8) {
 		if value & BIT_7 == 0 && self.is_enabled() {
-			self.set_ly(0, interrupt_register);
+			self.set_ly(0);
 		}
 
 		if value & BIT_7 != 0 && !self.is_enabled() {
@@ -173,11 +173,11 @@ impl PPU {
 		self.registers.lcdc.display_enabled()
 	}
 
-	pub fn set_lyc(&mut self, lyc: u8, interrupt_register: &mut u8) {
+	pub fn set_lyc(&mut self, lyc: u8) {
 		self.registers.lyc = lyc;
 	}
 
-	pub fn write_stat(&mut self, value: u8, _interrupt_register: &mut u8) {
+	pub fn write_stat(&mut self, value: u8) {
 		self.registers.stat.write(value);
 	}
 
@@ -189,7 +189,7 @@ impl PPU {
 		}
 	}
 
-	pub fn set_ly(&mut self, value: u8, interrupt_register: &mut u8) {
+	pub fn set_ly(&mut self, value: u8) {
 		self.registers.ly = value;
 	}
 
@@ -227,7 +227,7 @@ impl PPU {
 
 		match self.mode {
 			PPUMode::HBlank => {
-				self.set_ly(self.get_ly() + 1, interrupt_register);
+				self.set_ly(self.get_ly() + 1);
 				if self.get_ly() < 144 {
 					self.cycle += OAM_SCAN_CYCLES;
 					self.scanline_cycle_start = self.ran_cycles;
@@ -241,10 +241,10 @@ impl PPU {
 			PPUMode::VBlank => {
 				if self.get_ly() < 153 {
 					self.cycle += SCANLINE_CYCLES;
-					self.set_ly(self.get_ly() + 1, interrupt_register);
+					self.set_ly(self.get_ly() + 1);
 					None
 				} else {
-					self.set_ly(0, interrupt_register);
+					self.set_ly(0);
 					self.cycle += OAM_SCAN_CYCLES;
 
 					self.frame += 1;
