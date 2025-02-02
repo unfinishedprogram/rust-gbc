@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct Lcdc(u8);
 
+impl_bitlike!(Lcdc);
+
 impl Lcdc {
 	const BG_DISPLAY_ENABLE: u8 = BIT_0;
 	const OBJ_DISPLAY_ENABLE: u8 = BIT_1;
@@ -27,7 +29,7 @@ impl Lcdc {
 	}
 
 	pub fn obj_size(&self) -> SpriteHeight {
-		if self.is_set(Self::OBJ_SIZE) {
+		if self.has(Self::OBJ_SIZE) {
 			SpriteHeight::Double
 		} else {
 			SpriteHeight::Single
@@ -35,11 +37,11 @@ impl Lcdc {
 	}
 
 	pub fn obj_enable(&self) -> bool {
-		self.is_set(Self::OBJ_DISPLAY_ENABLE)
+		self.has(Self::OBJ_DISPLAY_ENABLE)
 	}
 
 	pub fn addressing_mode(&self) -> AddressingMode {
-		if self.is_set(Self::BG_AND_WINDOW_TILE_DATA_SELECT) {
+		if self.has(Self::BG_AND_WINDOW_TILE_DATA_SELECT) {
 			AddressingMode::Signed
 		} else {
 			AddressingMode::Unsigned
@@ -52,7 +54,7 @@ impl Lcdc {
 			FetcherMode::Background => Self::BG_TILE_MAP_DISPLAY_SELECT,
 		};
 
-		if self.is_set(flag) {
+		if self.has(flag) {
 			0x1C00
 		} else {
 			0x1800
@@ -60,18 +62,14 @@ impl Lcdc {
 	}
 
 	pub fn win_enabled(&self) -> bool {
-		self.is_set(Self::WINDOW_DISPLAY_ENABLE | Self::BG_DISPLAY_ENABLE)
+		self.has(Self::WINDOW_DISPLAY_ENABLE | Self::BG_DISPLAY_ENABLE)
 	}
 
 	pub fn bg_enabled(&self) -> bool {
-		self.is_set(Self::BG_DISPLAY_ENABLE)
+		self.has(Self::BG_DISPLAY_ENABLE)
 	}
 
 	pub fn display_enabled(&self) -> bool {
-		self.is_set(Self::DISPLAY_ENABLE)
-	}
-
-	fn is_set(&self, bit: u8) -> bool {
-		self.0 & bit == bit
+		self.has(Self::DISPLAY_ENABLE)
 	}
 }
