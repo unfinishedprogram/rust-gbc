@@ -108,3 +108,6 @@ test result: FAILED. 1924 passed; 1975 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Fix broken interrupts while handling input -->
 test result: FAILED. 1933 passed; 1966 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.03s
+
+<!-- Only check for LYC == LY when PPU clock enabled -->
+test result: FAILED. 1996 passed; 1903 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.97s

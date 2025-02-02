@@ -175,7 +175,6 @@ impl PPU {
 
 	pub fn set_lyc(&mut self, lyc: u8, interrupt_register: &mut u8) {
 		self.registers.lyc = lyc;
-		self.update_lyc(interrupt_register);
 	}
 
 	pub fn write_stat(&mut self, value: u8, _interrupt_register: &mut u8) {
@@ -197,7 +196,6 @@ impl PPU {
 
 	pub fn set_ly(&mut self, value: u8, interrupt_register: &mut u8) {
 		self.registers.ly = value;
-		self.update_lyc(interrupt_register);
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) -> Option<PPUMode> {
@@ -223,6 +221,8 @@ impl PPU {
 		if !self.is_enabled() {
 			return None;
 		}
+
+		self.update_lyc(interrupt_register);
 
 		self.ran_cycles += 1;
 		if self.cycle > 0 {
