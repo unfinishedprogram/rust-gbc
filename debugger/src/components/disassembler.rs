@@ -141,7 +141,7 @@ impl Disassembler {
 				});
 
 				row.col(|ui| {
-					ui.colored_label(color, format!("{:?}", instruction));
+					ui.colored_label(color, format!("{instruction:?}"));
 				});
 
 				row.col(|ui| {

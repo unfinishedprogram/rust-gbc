@@ -1,8 +1,8 @@
 use lazy_static::lazy_static;
 
 lazy_static! {
-	static ref U8_LOOKUP: Vec<String> = (0..=0xFF).map(|i| format!("{:02X}", i)).collect();
-	static ref U16_LOOKUP: Vec<String> = (0..=0xFFFF).map(|i| format!("{:04X}", i)).collect();
+	static ref U8_LOOKUP: Vec<String> = (0..=0xFF).map(|i| format!("{i:02X}")).collect();
+	static ref U16_LOOKUP: Vec<String> = (0..=0xFFFF).map(|i| format!("{i:04X}")).collect();
 }
 
 pub fn hex_str_u8(v: u8) -> &'static str {

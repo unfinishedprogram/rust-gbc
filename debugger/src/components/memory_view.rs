@@ -60,7 +60,7 @@ impl MemoryView {
 
 					for i in 0..0x10 {
 						ui.col(|ui| {
-							ui.monospace(format!("{:0X}", i));
+							ui.monospace(format!("{i:0X}"));
 						});
 					}
 				})

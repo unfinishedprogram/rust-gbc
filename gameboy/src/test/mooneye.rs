@@ -5,14 +5,20 @@ use super::util::success_code::get_fib_test_result;
 use crate::test::util::rom_loader::init_emulator_with_rom_cgb;
 
 fn is_gbc_compatible_test(path: &str) -> bool {
-	let name = path.split('/').last().unwrap().split(".gb").next().unwrap();
+	let name = path
+		.split('/')
+		.next_back()
+		.unwrap()
+		.split(".gb")
+		.next()
+		.unwrap();
 
 	// No hardware specified
 	if !name.contains('-') {
 		return true;
 	}
 
-	let flags_str = name.split('-').last().unwrap();
+	let flags_str = name.split('-').next_back().unwrap();
 
 	flags_str.contains("C") && flags_str.chars().all(char::is_uppercase)
 		|| flags_str.contains("cgb")

@@ -248,7 +248,7 @@ fn print_addr(addr: u16) -> String {
 		0xFF24 => "nr50".to_string(),
 		0xFF25 => "nr51".to_string(),
 		0xFF26 => "nr52".to_string(),
-		_ => format!("{:#X}", addr),
+		_ => format!("{addr:#X}"),
 	}
 }
 

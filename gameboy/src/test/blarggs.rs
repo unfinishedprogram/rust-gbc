@@ -50,7 +50,7 @@ fn run_blarggs(name: &str, postfix: &str) {
 	let (rom_path, img_path) = load_test_data(name, postfix);
 	let gb = init_emulator_with_rom(&rom_path);
 	execute_blargg_test(
-		&format!("{}-CGB", name),
+		&format!("{name}-CGB"),
 		gb,
 		image::open(img_path).unwrap().into_rgba8(),
 	)
