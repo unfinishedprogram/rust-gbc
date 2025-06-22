@@ -1,3 +1,5 @@
+#![feature(iter_map_windows)]
+
 pub mod components;
 mod debugger;
 mod memory_map;

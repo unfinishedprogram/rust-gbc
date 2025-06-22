@@ -24,7 +24,11 @@ pub struct RunController {
 }
 
 impl RunController {
-	pub fn draw(&mut self, ui: &mut Ui) -> Option<Action> {
+	pub fn draw(&mut self, ui: &mut Ui, do_break: bool) -> Option<Action> {
+		if do_break {
+			self.state = RunningState::Broke;
+		}
+
 		ui.horizontal(|ui| {
 			let button_txt = match self.state {
 				RunningState::Paused => "▶",

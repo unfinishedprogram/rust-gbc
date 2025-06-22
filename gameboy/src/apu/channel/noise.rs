@@ -96,7 +96,7 @@ impl Channel for Noise {
 
 	fn read_nrx3(&self) -> u8 {
 		let lfsr_mode = if self.lfsr.width == 6 { BIT_3 } else { 0 };
-		self.clock_shift << 4 | lfsr_mode | self.devisor_code
+		(self.clock_shift << 4) | lfsr_mode | self.devisor_code
 	}
 
 	fn write_nrx4(&mut self, value: u8, _next_frame_sequencer_result: frame_sequencer::TickResult) {
@@ -111,6 +111,7 @@ impl Channel for Noise {
 			self.lfsr.reset();
 		}
 	}
+
 	fn read_nrx4(&self) -> u8 {
 		let length_enable = (self.length_counter.enabled() as u8) << 6;
 		let trigger = (self.enabled as u8) << 7;
@@ -147,7 +148,7 @@ impl Channel for Noise {
 		self.clock_shift = 0;
 		self.devisor_code = 0;
 
-		self.length_counter.reload(0);
+		self.length_counter.reload(1);
 		self.volume_envelope.write_byte(0);
 		self.length_counter.set_enabled(false);
 		self.enabled = false;

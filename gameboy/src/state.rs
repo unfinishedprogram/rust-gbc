@@ -13,7 +13,7 @@ use crate::{
 };
 
 use super::{
-	cartridge::memory_bank_controller::Cartridge,
+	cartridge::Cartridge,
 	io_registers::IORegisterState,
 	joypad::JoypadState,
 	ppu::{PPUMode, PPU},
@@ -81,7 +81,7 @@ impl Default for Gameboy {
 			boot_rom: include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
 			booting: true,
 			cartridge_state: None,
-			mode: Mode::DMG,
+			mode: Mode::GBC(CGBState::default()),
 			w_ram: WorkRam::Dmg(Box::<WorkRamDataDMG>::default()),
 			hram: [0; 0x80],
 			serial_output: vec![],
@@ -94,6 +94,8 @@ impl Default for Gameboy {
 		emulator
 			.ppu
 			.set_mode(PPUMode::OamScan, &mut cpu_state.interrupt_request);
+
+		emulator.set_controller_state(&JoypadState::default());
 		emulator
 	}
 }
@@ -139,11 +141,6 @@ impl Gameboy {
 
 			self.tick_t_states(t_states);
 			step_oam_dma(self);
-
-			// Only step the timer if we aren't in a speed switch
-			if self.speed_switch_delay == 0 {
-				self.timer.step(&mut self.cpu_state.interrupt_request);
-			}
 		}
 	}
 
@@ -183,9 +180,13 @@ impl Gameboy {
 
 	fn tick_t_states(&mut self, t_states: u32) {
 		for _ in 0..t_states {
+			// Only step the timer if we aren't in a speed switch
+			if self.speed_switch_delay == 0 {
+				self.timer.step(&mut self.cpu_state.interrupt_request);
+			}
 			self.apu
 				.step_t_state(self.timer.get_div(), self.mode.get_speed());
-			self.audio.step(&mut self.apu, 1);
+			self.audio.step(&mut self.apu);
 			let mode = self.ppu.step(&mut self.cpu_state.interrupt_request);
 
 			if let Some(PPUMode::HBlank) = mode {
@@ -206,20 +207,16 @@ impl Gameboy {
 
 	pub fn load_rom(&mut self, rom: &[u8], source: Option<RomSource>) {
 		if let Ok(cart) = Cartridge::try_new(rom, source) {
-			match cart.2.cgb {
-				true => self.set_gb_mode(Mode::GBC(CGBState::default())),
-				false => self.set_gb_mode(Mode::DMG),
-			}
 			self.cartridge_state = Some(cart);
 		}
 	}
 
 	pub fn set_controller_state(&mut self, state: &JoypadState) {
-		self.raw_joyp_input = state.as_byte();
-
 		if ((self.raw_joyp_input) ^ state.as_byte()) & state.as_byte() != 0 {
 			self.request_interrupt(Interrupt::JoyPad);
 		}
+
+		self.raw_joyp_input = state.as_byte();
 	}
 
 	pub fn load_save_state(self, save_state: SaveState) -> Self {
@@ -235,14 +232,12 @@ impl Gameboy {
 			return self;
 		};
 
-		let Cartridge(data, _, info) = cart;
-
-		if info.title != new_cart.2.title {
+		if cart.info.title != new_cart.info.title {
 			return self;
 		}
 
-		new_cart.0.rom_banks = data.rom_banks.clone();
-		new_cart.0.loaded = true;
+		new_cart.data.rom_banks = cart.data.rom_banks.clone();
+		new_cart.data.loaded = true;
 
 		new_state
 	}
@@ -307,7 +302,9 @@ impl SM83 for Gameboy {
 		// https://gbdev.io/pandocs/Reducing_Power_Consumption.html?highlight=stop#using-the-stop-instruction
 
 		let interrupt_pending = self.cpu_state.interrupt_pending();
-		let has_joyp_input = self.read(JOYP) & 0b1111 != 0;
+		// TODO: Double check that this behavior is correct
+		// Should we instead read the direct raw input?
+		let has_joyp_input = self.read(JOYP) & 0b1111 == 0;
 
 		let speed_switch_pending = match &self.mode {
 			Mode::GBC(state) => state.prepare_speed_switch,

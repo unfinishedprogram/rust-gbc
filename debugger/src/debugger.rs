@@ -1,7 +1,7 @@
 use crate::components::{
 	run_controller::{self, RunController},
-	show_system_info, CheckpointManager, JoypadInput, LinearMemoryView, MemoryImage, MemoryView,
-	RomLoader, Screen, VramView,
+	show_system_info, AudioVisualizer, CheckpointManager, Disassembler, JoypadInput, MemoryImage,
+	MemoryView, RomLoader, Screen, VramView,
 };
 use egui::{CentralPanel, SidePanel, Style, TextStyle, TopBottomPanel, Window};
 
@@ -28,13 +28,22 @@ pub struct Debugger {
 	memory_view: MemoryView,
 	memory_view_enabled: bool,
 
-	linear_memory_view: LinearMemoryView,
-	linear_memory_view_enabled: bool,
+	disassembler: Disassembler,
+	disassembler_enabled: bool,
+
+	audio_visualizer: AudioVisualizer,
+	audio_visualizer_enabled: bool,
 }
 
 impl Debugger {
 	pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
 		Default::default()
+	}
+
+	// Returns true if breakpoint was hit
+	fn step_gb(&mut self) -> bool {
+		self.gameboy.step();
+		self.disassembler.should_break(&self.gameboy)
 	}
 }
 
@@ -49,29 +58,40 @@ impl eframe::App for Debugger {
 
 		TopBottomPanel::top("top").show(ctx, |ui| {
 			ui.horizontal(|ui| {
-				if let Some(action) = self.run_controller.draw(ui) {
+				if let Some(action) = self
+					.run_controller
+					.draw(ui, self.disassembler.should_break(&self.gameboy))
+				{
 					match action {
 						run_controller::Action::StepFrame => {
 							let start = self.gameboy.ppu.frame;
 							while self.gameboy.ppu.frame == start {
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::Step(cycles) => {
 							for _ in 0..cycles {
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::NextInterrupt => {
 							while !(self.gameboy.cpu_state.interrupt_pending()
 								&& (self.gameboy.cpu_state.ime() || self.gameboy.cpu_state.halted))
 							{
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::SkipBios => {
 							while self.gameboy.booting {
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::HDMAStart => {
@@ -80,7 +100,9 @@ impl eframe::App for Debugger {
 								&& steps < 10000000
 							{
 								steps += 1;
-								self.gameboy.step();
+								if self.step_gb() {
+									break;
+								}
 							}
 						}
 						run_controller::Action::OAMDmaStart => todo!(),
@@ -93,7 +115,8 @@ impl eframe::App for Debugger {
 				ui.checkbox(&mut self.memory_image_enabled, "Memory Image");
 				ui.checkbox(&mut self.vram_view_enabled, "Vram View");
 				ui.checkbox(&mut self.memory_view_enabled, "Memory View");
-				ui.checkbox(&mut self.linear_memory_view_enabled, "Instruction View");
+				ui.checkbox(&mut self.disassembler_enabled, "Instruction View");
+				ui.checkbox(&mut self.audio_visualizer_enabled, "Audio Visualizer");
 			});
 		});
 
@@ -103,9 +126,8 @@ impl eframe::App for Debugger {
 
 		CentralPanel::default().show(ctx, |ui| self.screen.draw(ui, screen_buffer));
 
-		if self.linear_memory_view_enabled {
-			Window::new("Instructions")
-				.show(ctx, |ui| self.linear_memory_view.draw(&self.gameboy, ui));
+		if self.disassembler_enabled {
+			Window::new("Instructions").show(ctx, |ui| self.disassembler.draw(&self.gameboy, ui));
 		}
 
 		if self.memory_view_enabled {
@@ -123,6 +145,11 @@ impl eframe::App for Debugger {
 			Window::new("Checkpoints").show(ctx, |ui| {
 				self.checkpoint_manager.draw(&mut self.gameboy, ui)
 			});
+		}
+
+		if self.audio_visualizer_enabled {
+			Window::new("Audio Visualizer")
+				.show(ctx, |ui| self.audio_visualizer.draw(&mut self.gameboy, ui));
 		}
 
 		ctx.request_repaint();

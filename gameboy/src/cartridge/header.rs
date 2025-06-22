@@ -75,16 +75,16 @@ impl RawCartridgeHeader {
 		RawCartridgeHeader {
 			rom_source,
 			title: rom[0x0134..0x0143].to_vec(),
-			cgb_flag: rom[0x0143],                                          // 0143
-			license_code: ((rom[0x0144] as u16) << 8) | rom[0x0145] as u16, // 0144-0145
-			sgb_flag: rom[0x0146],                                          // 0146
-			cartridge_type: rom[0x0147],                                    // 0147
-			rom_size: rom[0x0148],                                          // 0148
-			ram_size: rom[0x0149],                                          // 0149
-			old_license_code: rom[0x014B],                                  // 014B
-			mask_rom_version_number: rom[0x014C],                           // 014C
-			header_checksum: rom[0x014D],                                   // 014D
-			global_checksum: ((rom[0x014E] as u16) << 8) | rom[0x014F] as u16,
+			cgb_flag: rom[0x0143],                                           // 0143
+			license_code: u16::from_be_bytes([rom[0x0144], rom[0x0145]]),    // 0144-0145
+			sgb_flag: rom[0x0146],                                           // 0146
+			cartridge_type: rom[0x0147],                                     // 0147
+			rom_size: rom[0x0148],                                           // 0148
+			ram_size: rom[0x0149],                                           // 0149
+			old_license_code: rom[0x014B],                                   // 014B
+			mask_rom_version_number: rom[0x014C],                            // 014C
+			header_checksum: rom[0x014D],                                    // 014D
+			global_checksum: u16::from_be_bytes([rom[0x014E], rom[0x014F]]), //014E-014F
 		}
 	}
 }

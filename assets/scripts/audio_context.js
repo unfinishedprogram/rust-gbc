@@ -65,7 +65,7 @@ export default class AudioContext {
       this.audioBuffer = this.audioBuffer.slice(-targetBufferLength);
     }
 
-    console.log(this.audioBuffer.length / this.sampleRate() / 2);
+    // console.log(this.audioBuffer.length / this.sampleRate() / 2);
   }
 
   play() {

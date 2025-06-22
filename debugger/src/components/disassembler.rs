@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use egui::style::Spacing;
-use egui::{Align, Rgba, Style, Ui, Vec2};
+use egui::{Align, Button, Color32, Rgba, Stroke, Style, Ui, Vec2};
 use egui_extras::{Column, TableBuilder};
 use gameboy::Gameboy;
 use sm83::instruction::Fetch;
@@ -9,38 +11,54 @@ use sm83::Instruction;
 
 use crate::memory_map::get_addr_info;
 
-type CompiledEntry = (u16, Instruction, String);
-
-#[derive(Default)]
-pub struct LinearMemoryView {
-	instructions: Option<Vec<CompiledEntry>>,
-	keep_pc_in_view: bool,
+pub struct DisassembledInstruction {
+	addr: u16,
+	instruction: Instruction,
+	bytes: String,
 }
 
-pub fn generate_instructions(gb: &Gameboy) -> Vec<CompiledEntry> {
+#[derive(Default)]
+pub struct Disassembler {
+	instructions: Option<Vec<DisassembledInstruction>>,
+	keep_pc_in_view: bool,
+	breakpoints: HashMap<u16, bool>,
+}
+
+pub fn generate_instructions(gb: &Gameboy) -> Vec<DisassembledInstruction> {
 	let mut gb = gb.clone();
 
 	let mut instructions = vec![];
 
 	gb.cpu_state.write(CPURegister16::PC, 0);
-	while gb.cpu_state.read(CPURegister16::PC) < 0xFFFF {
+
+	loop {
 		let pc = gb.cpu_state.read(CPURegister16::PC);
 		let instruction = gb.fetch();
-		let mut bytes = vec![];
 		let new_pc = gb.cpu_state.read(CPURegister16::PC);
 
+		if new_pc <= pc {
+			// Detect looping back around to the start of memory
+			// This is likely to cause an infinite loop if not avoided
+			break;
+		}
+
+		let mut bytes = vec![];
 		for addr in pc..new_pc {
 			bytes.push(format!("{:02X}", gb.read(addr)));
 		}
 		let bytes = bytes.join(", ");
 
-		instructions.push((pc, instruction, bytes));
+		instructions.push(DisassembledInstruction {
+			addr: pc,
+			instruction,
+			bytes,
+		});
 	}
 
 	instructions
 }
 
-impl LinearMemoryView {
+impl Disassembler {
 	pub fn draw(&mut self, gameboy: &Gameboy, ui: &mut Ui) {
 		let pc = gameboy.cpu_state.read(CPURegister16::PC);
 
@@ -49,7 +67,7 @@ impl LinearMemoryView {
 			.get_or_insert_with(|| generate_instructions(gameboy));
 
 		ui.horizontal(|ui| {
-			if ui.button("Decompile").clicked() {
+			if ui.button("Disassemble").clicked() {
 				*instructions = generate_instructions(gameboy);
 			}
 
@@ -67,7 +85,7 @@ impl LinearMemoryView {
 		ui.separator();
 
 		let mut row = 0;
-		for (index, (addr, _, _)) in instructions.iter().enumerate() {
+		for (index, DisassembledInstruction { addr, .. }) in instructions.iter().enumerate() {
 			if addr >= &pc {
 				row = index;
 				break;
@@ -81,6 +99,7 @@ impl LinearMemoryView {
 		}
 		.striped(true)
 		.resizable(true)
+		.column(Column::exact(25.0))
 		.column(Column::exact(40.0))
 		.column(Column::remainder())
 		.column(Column::remainder())
@@ -89,15 +108,40 @@ impl LinearMemoryView {
 		.body(|body| {
 			body.rows(20.0, instructions.len(), |mut row| {
 				let index = row.index();
-				let (addr, inst, bytes) = &instructions[index];
+				let DisassembledInstruction {
+					addr,
+					instruction,
+					bytes,
+				} = &instructions[index];
 				let color = if pc == *addr { Rgba::RED } else { Rgba::WHITE };
+
+				row.col(|ui| {
+					let is_breakpoint = self.breakpoints.contains_key(addr);
+					let text = if is_breakpoint { "🌑" } else { "🌕" };
+
+					if ui
+						.add(
+							Button::new(text)
+								.small()
+								.stroke(Stroke::NONE)
+								.fill(Color32::TRANSPARENT),
+						)
+						.clicked()
+					{
+						if is_breakpoint {
+							self.breakpoints.remove(addr)
+						} else {
+							self.breakpoints.insert(*addr, true)
+						};
+					}
+				});
 
 				row.col(|ui| {
 					ui.colored_label(color, format!("{addr:04X}"));
 				});
 
 				row.col(|ui| {
-					ui.colored_label(color, format!("{:?}", inst));
+					ui.colored_label(color, format!("{instruction:?}"));
 				});
 
 				row.col(|ui| {
@@ -109,5 +153,10 @@ impl LinearMemoryView {
 				});
 			});
 		});
+	}
+
+	pub fn should_break(&self, gameboy: &Gameboy) -> bool {
+		let pc = gameboy.cpu_state.read(CPURegister16::PC);
+		self.breakpoints.contains_key(&pc)
 	}
 }

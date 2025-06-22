@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use sm83::{memory_mapper::MemoryMapper, Interrupt};
 
 use crate::{
+	ppu::GBMode,
 	state::Mode,
 	util::{bits::*, BigArray},
 	work_ram::BankedWorkRam,
@@ -62,9 +63,9 @@ pub const JOYP: u16 = 0xFF00;
 pub const DISABLE_BOOT: u16 = 0xFF50;
 
 /// CGB Registers
-
 pub const VBK: u16 = 0xFF4F; //  VRAM bank
 pub const RP: u16 = 0xFF56; // Infra-red comms port
+pub const KEY0: u16 = 0xFF4C; // GBC Compatibility Mode
 
 /// Speed switch
 ///  - Bit 7: Current Speed     (0=Normal, 1=Double) (Read Only)
@@ -86,7 +87,8 @@ pub const OBPI: u16 = 0xFF6A;
 /// FF6B OBJ palette data
 pub const OBPD: u16 = 0xFF6B;
 
-pub const SVBK: u16 = 0xFF70; // WRAM bank
+/// WRAM bank
+pub const SVBK: u16 = 0xFF70;
 
 pub const HDMA1: u16 = 0xFF51;
 pub const HDMA2: u16 = 0xFF52;
@@ -188,6 +190,10 @@ impl IORegisters for Gameboy {
 					0xFF
 				}
 			}
+			KEY0 => match self.ppu.gb_mode {
+				GBMode::DMG => BIT_2,
+				GBMode::CGB => 0,
+			},
 			KEY1 => {
 				if let Mode::GBC(state) = &self.mode {
 					state.read_key1()
@@ -196,16 +202,18 @@ impl IORegisters for Gameboy {
 				}
 			}
 			JOYP => {
-				let mut res = 0b11000000;
+				let mut state = 0xF;
+				let dpad_state = self.raw_joyp_input >> 4;
+				let button_state = self.raw_joyp_input;
 
 				if self.io_register_state[JOYP] & BIT_4 == 0 {
-					res |= (self.raw_joyp_input >> 4) & 0b1111;
+					state &= dpad_state;
 				}
 				if self.io_register_state[addr] & BIT_5 == 0 {
-					res |= self.raw_joyp_input & 0b1111;
+					state &= button_state;
 				}
 
-				res
+				self.io_register_state[JOYP] & 0xF0 | state
 			}
 
 			// Interrupt requests
@@ -234,17 +242,13 @@ impl IORegisters for Gameboy {
 
 			SCY => self.ppu.registers.scy = value,
 			SCX => self.ppu.registers.scx = value,
-			LYC => self
-				.ppu
-				.set_lyc(value, &mut self.cpu_state.interrupt_request),
+			LYC => self.ppu.set_lyc(value),
 			BGP => self.ppu.registers.bgp = value,
 			OBP0 => self.ppu.registers.obp0 = value,
 			OBP1 => self.ppu.registers.obp1 = value,
 			WY => self.ppu.registers.wy = value,
 			WX => self.ppu.registers.wx = value,
-			STAT => self
-				.ppu
-				.write_stat(value, &mut self.cpu_state.interrupt_request),
+			STAT => self.ppu.write_stat(value),
 			HDMA1 => self.dma_controller.write_source_high(value),
 			HDMA2 => self.dma_controller.write_source_low(value),
 			HDMA3 => self.dma_controller.write_destination_high(value),
@@ -281,6 +285,13 @@ impl IORegisters for Gameboy {
 					state.set_vram_bank(value);
 				};
 			}
+			KEY0 => {
+				self.ppu.gb_mode = if value & BIT_2 != 0 {
+					GBMode::DMG
+				} else {
+					GBMode::CGB
+				};
+			}
 			KEY1 => {
 				if let Mode::GBC(state) = &mut self.mode {
 					state.write_key1(value);
@@ -291,9 +302,7 @@ impl IORegisters for Gameboy {
 				self.booting = false;
 			}
 			SB => self.io_register_state[SB] = value,
-			JOYP => {
-				self.io_register_state[JOYP] = value & 0b00110000;
-			}
+			JOYP => self.io_register_state[JOYP] = (value & 0b0011_0000) | 0b1100_1111,
 			SC => {
 				if value == 0x81 {
 					self.io_register_state[SC] = 0x01;

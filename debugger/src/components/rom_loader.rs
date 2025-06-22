@@ -28,7 +28,7 @@ thread_local! {
 
 fn recursive_dir(ui: &mut Ui, url: &mut String, entry: &Entry) -> bool {
 	fn file_name(path: &str) -> &str {
-		path.split('/').last().unwrap()
+		path.split('/').next_back().unwrap()
 	}
 	let mut updated = false;
 	match entry {

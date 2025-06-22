@@ -53,7 +53,7 @@ pub struct GambatteTest {
 
 impl GambatteTest {
 	pub fn new(path: String) -> Self {
-		let expected_out: Vec<&str> = path.split("_out").collect();
+		let expected_out: Vec<&str> = path.split("cgb04c_out").collect();
 		let expected_out = expected_out
 			.last()
 			.unwrap()
@@ -69,9 +69,45 @@ impl GambatteTest {
 #[test_resources("../test_data/gambatte/**/*cgb04c_out*.gbc")]
 fn gambatte(resource: &str) {
 	let test = GambatteTest::new(resource.to_string());
-	let output = get_test_output(&test);
 
-	assert_eq!(&output[0..test.expected_out.len()], &test.expected_out);
+	if test.expected_out.contains("audio") {
+		let output = get_test_audio_output(&test);
+
+		let expected_audio = test.expected_out.contains('1');
+
+		assert_eq!(output, expected_audio);
+	} else {
+		let output = get_test_output(&test);
+
+		assert_eq!(&output[0..test.expected_out.len()], &test.expected_out);
+	}
+}
+
+fn get_test_audio_output(test: &GambatteTest) -> bool {
+	let mut state = init_emulator_with_rom_cgb(&test.path);
+	let start = state.ppu.frame;
+
+	let buffered_samples = state.audio.buffered_samples();
+	_ = state.audio.pull_samples(buffered_samples);
+
+	for _ in 0..1_053_360 / 4 {
+		state.step();
+
+		let samples = state.audio.take_raw_samples();
+
+		if samples
+			.into_iter()
+			.any(|(left, right)| left != 0.0 || right != 0.0)
+		{
+			return true;
+		}
+
+		if state.ppu.frame - start >= 15 {
+			break;
+		}
+	}
+
+	false
 }
 
 fn get_test_output(test: &GambatteTest) -> String {

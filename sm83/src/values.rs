@@ -131,6 +131,6 @@ fn format_memref(addr: u16) -> String {
 		0xFF01 => "SB".to_owned(),
 		0xFF02 => "SC".to_owned(),
 		0xFF0F => "IF".to_owned(),
-		addr => format!("{:04X}", addr),
+		addr => format!("{addr:04X}"),
 	}
 }

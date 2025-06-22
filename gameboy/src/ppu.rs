@@ -31,8 +31,8 @@ pub enum FetcherMode {
 #[derive(Clone, Copy, Serialize, Deserialize, Default)]
 pub enum GBMode {
 	#[default]
-	DMG,
 	CGB,
+	DMG,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -122,7 +122,7 @@ pub struct PPU {
 impl PPU {
 	pub fn write_lcdc(&mut self, value: u8, interrupt_register: &mut u8) {
 		if value & BIT_7 == 0 && self.is_enabled() {
-			self.set_ly(0, interrupt_register);
+			self.set_ly(0);
 		}
 
 		if value & BIT_7 != 0 && !self.is_enabled() {
@@ -173,31 +173,24 @@ impl PPU {
 		self.registers.lcdc.display_enabled()
 	}
 
-	pub fn set_lyc(&mut self, lyc: u8, interrupt_register: &mut u8) {
+	pub fn set_lyc(&mut self, lyc: u8) {
 		self.registers.lyc = lyc;
-		self.update_lyc(interrupt_register);
 	}
 
-	pub fn write_stat(&mut self, value: u8, _interrupt_register: &mut u8) {
-		let new_stat = Stat::from_bits_truncate(value);
-		self.registers.stat = (self.registers.stat & Stat::LYC_EQ_LY)
-			| (new_stat & Stat::H_BLANK_IE)
-			| (new_stat & Stat::V_BLANK_IE)
-			| (new_stat & Stat::OAM_IE)
-			| (new_stat & Stat::LYC_EQ_LY_IE);
+	pub fn write_stat(&mut self, value: u8) {
+		self.registers.stat.write(value);
 	}
 
 	pub fn read_stat(&self) -> u8 {
-		if !self.is_enabled() {
-			Stat::UNUSED.bits()
+		if self.is_enabled() {
+			self.registers.stat.read(self.is_enabled()) | self.mode as u8
 		} else {
-			self.mode as u8 | self.registers.stat.bits() | Stat::UNUSED.bits()
+			self.registers.stat.read(self.is_enabled())
 		}
 	}
 
-	pub fn set_ly(&mut self, value: u8, interrupt_register: &mut u8) {
+	pub fn set_ly(&mut self, value: u8) {
 		self.registers.ly = value;
-		self.update_lyc(interrupt_register);
 	}
 
 	pub fn set_mode(&mut self, mode: PPUMode, interrupt_register: &mut u8) -> Option<PPUMode> {
@@ -224,6 +217,8 @@ impl PPU {
 			return None;
 		}
 
+		self.update_lyc(interrupt_register);
+
 		self.ran_cycles += 1;
 		if self.cycle > 0 {
 			self.cycle -= 1;
@@ -232,7 +227,7 @@ impl PPU {
 
 		match self.mode {
 			PPUMode::HBlank => {
-				self.set_ly(self.get_ly() + 1, interrupt_register);
+				self.set_ly(self.get_ly() + 1);
 				if self.get_ly() < 144 {
 					self.cycle += OAM_SCAN_CYCLES;
 					self.scanline_cycle_start = self.ran_cycles;
@@ -246,10 +241,10 @@ impl PPU {
 			PPUMode::VBlank => {
 				if self.get_ly() < 153 {
 					self.cycle += SCANLINE_CYCLES;
-					self.set_ly(self.get_ly() + 1, interrupt_register);
+					self.set_ly(self.get_ly() + 1);
 					None
 				} else {
-					self.set_ly(0, interrupt_register);
+					self.set_ly(0);
 					self.cycle += OAM_SCAN_CYCLES;
 
 					self.frame += 1;

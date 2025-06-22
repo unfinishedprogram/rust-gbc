@@ -10,19 +10,27 @@ pub struct Timer {
 	tma: u8,
 	tac: u8,
 	tima_delay: u8,
+	tima_write_delay: u8,
 }
 
 impl Timer {
 	pub fn set_div(&mut self, _: u8) {
 		// Detect falling edge for timer
-		let bit = self.tac_freq() >> 1;
-		if (self.system_clock & bit) == bit {
+		if self.current_output_clock() {
 			self.increment_tima();
 		}
 		self.system_clock = 0;
 	}
 
+	fn current_output_clock(&self) -> bool {
+		let bit = self.tac_freq() >> 1;
+		(self.system_clock & bit) == bit
+	}
+
 	pub fn write_tima(&mut self, value: u8) {
+		if self.tima_delay > 0 {
+			self.tima_delay = 0;
+		}
 		self.tima = value;
 	}
 
@@ -31,6 +39,11 @@ impl Timer {
 	}
 
 	pub fn set_tac(&mut self, value: u8) {
+		let tac_enable = value & BIT_2 != 0;
+		if tac_enable & !self.tac_enabled() && self.current_output_clock() {
+			self.increment_tima();
+		}
+
 		self.tac = value;
 	}
 
@@ -64,7 +77,14 @@ impl Timer {
 		}
 	}
 
-	fn step_clock(&mut self, interrupt_request: &mut u8) {
+	fn increment_tima(&mut self) {
+		self.tima = self.tima.wrapping_add(1);
+		if self.tima == 0 {
+			self.tima_delay = 4;
+		}
+	}
+
+	pub fn step(&mut self, interrupt_request: &mut u8) {
 		let from = self.system_clock;
 		self.system_clock = self.system_clock.wrapping_add(1);
 		let to = self.system_clock;
@@ -74,25 +94,20 @@ impl Timer {
 			self.increment_tima();
 		}
 
+		if self.tima_write_delay > 0 {
+			self.tima_write_delay -= 1;
+		}
+
 		if self.tima_delay > 0 {
 			self.tima_delay -= 1;
 			if self.tima_delay == 0 {
-				self.tima = self.tma;
+				self.tima_write_delay = 4;
 				*interrupt_request |= Interrupt::Timer.flag_bit();
 			}
 		}
-	}
 
-	fn increment_tima(&mut self) {
-		self.tima = self.tima.wrapping_add(1);
-		if self.tima == 0 {
-			self.tima_delay = 4;
-		}
-	}
-
-	pub fn step(&mut self, interrupt_request: &mut u8) {
-		for _ in 0..4 {
-			self.step_clock(interrupt_request);
+		if self.tima_write_delay > 0 {
+			self.tima = self.tma;
 		}
 	}
 }

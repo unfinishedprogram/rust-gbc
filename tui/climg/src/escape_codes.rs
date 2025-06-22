@@ -4,12 +4,12 @@ pub mod cursor;
 
 lazy_static! {
 	pub static ref FG_COLOR: [String; 256] = (0..256)
-		.map(|i| format!("{ESC}38;5;{:}m", i))
+		.map(|i| format!("{ESC}38;5;{i:}m"))
 		.collect::<Vec<String>>()
 		.try_into()
 		.unwrap();
 	pub static ref BG_COLOR: [String; 256] = (0..256)
-		.map(|i| format!("{ESC}[48;5;{:}m", i))
+		.map(|i| format!("{ESC}[48;5;{i:}m"))
 		.collect::<Vec<String>>()
 		.try_into()
 		.unwrap();

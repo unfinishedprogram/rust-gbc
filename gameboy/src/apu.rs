@@ -9,6 +9,7 @@ use channel::{noise::Noise, square::Square, wave::Wave, Channel};
 
 use crate::{
 	cgb::Speed,
+	io_registers::NR52,
 	sm83::memory_mapper::MemoryMapper,
 	util::bits::{falling_edge, BIT_4, BIT_5, BIT_7},
 };
@@ -247,7 +248,7 @@ fn print_addr(addr: u16) -> String {
 		0xFF24 => "nr50".to_string(),
 		0xFF25 => "nr51".to_string(),
 		0xFF26 => "nr52".to_string(),
-		_ => format!("{:#X}", addr),
+		_ => format!("{addr:#X}"),
 	}
 }
 
@@ -345,7 +346,7 @@ impl MemoryMapper for Apu {
 	}
 
 	fn write(&mut self, addr: u16, value: u8) {
-		if !self.power_on && addr != 0xFF26 {
+		if !self.power_on && addr != NR52 {
 			log::info!(
 				"Apu write to disabled apu: {:}, value: {:#X}",
 				print_addr(addr),

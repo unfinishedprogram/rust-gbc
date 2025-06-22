@@ -42,7 +42,7 @@ pub fn main() {
 
 		let instruction = gb.step();
 		if let Some(instruction) = instruction {
-			let inst = format!("{:?}", instruction);
+			let inst = format!("{instruction:?}");
 			println!("{pc:04X} {inst:<19} {rs}");
 		}
 	}

@@ -84,3 +84,30 @@ test result: FAILED. 1835 passed; 2066 failed; 0 ignored; 0 measured; 0 filtered
 
 <!-- Passing ie_push tests -->
 test result: FAILED. 1849 passed; 2052 failed; 0 ignored; 0 measured; 0 filtered out; finished in 52.51s
+
+<!-- Don't set GBC/DMG modes on rom load -->
+test result: FAILED. 1852 passed; 2053 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.74s
+
+<!-- Disable non GCB mooneye tests -->
+test result: FAILED. 1858 passed; 2047 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.00s
+
+<!-- Support Audio Gambatte tests -->
+test result: FAILED. 1918 passed; 1987 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.37s
+
+<!-- Only test GCB mode for blarggs -->
+test result: FAILED. 1915 passed; 1984 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.96s
+
+<!-- Obscure Reset Behavior for Timer -->
+test result: FAILED. 1913 passed; 1986 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.26s
+
+<!-- Sub cycle timer timer TIMA writes -->
+test result: FAILED. 1920 passed; 1979 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.84s
+
+<!-- Fix mooneye not filtering GBC tests properly -->
+test result: FAILED. 1924 passed; 1975 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.54s
+
+<!-- Fix broken interrupts while handling input -->
+test result: FAILED. 1933 passed; 1966 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.03s
+
+<!-- Only check for LYC == LY when PPU clock enabled -->
+test result: FAILED. 1996 passed; 1903 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.97s
