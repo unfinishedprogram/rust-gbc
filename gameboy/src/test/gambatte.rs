@@ -93,8 +93,7 @@ fn get_test_audio_output(test: &GambatteTest) -> bool {
 	for _ in 0..1_053_360 / 4 {
 		state.step();
 
-		let buffered_samples = state.audio.buffered_samples();
-		let samples = state.audio.pull_samples(buffered_samples);
+		let samples = state.audio.take_raw_samples();
 
 		if samples
 			.into_iter()

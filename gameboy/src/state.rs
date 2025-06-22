@@ -186,7 +186,7 @@ impl Gameboy {
 			}
 			self.apu
 				.step_t_state(self.timer.get_div(), self.mode.get_speed());
-			self.audio.step(&mut self.apu, 1);
+			self.audio.step(&mut self.apu);
 			let mode = self.ppu.step(&mut self.cpu_state.interrupt_request);
 
 			if let Some(PPUMode::HBlank) = mode {

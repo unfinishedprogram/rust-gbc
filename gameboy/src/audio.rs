@@ -26,22 +26,22 @@ impl Default for Audio {
 }
 
 impl Audio {
-	pub fn step(&mut self, apu: &mut Apu, t_states: usize) {
-		for _ in 0..t_states {
-			self.step_single(apu);
-		}
-	}
-
-	fn step_single(&mut self, apu: &mut Apu) {
-		self.sample_countdown -= 1;
+	pub fn step(&mut self, apu: &mut Apu) {
 		if self.sample_countdown == 0 {
 			self.sample_countdown = 4;
-			let (left, right) = apu.sample();
-			self.raw_samples.push_back((left, right));
+			self.raw_samples.push_back(apu.sample());
 			if self.raw_samples.len() > 80_000 {
 				self.raw_samples.pop_front();
 			}
+		} else {
+			self.sample_countdown -= 1;
 		}
+	}
+
+	pub fn take_raw_samples(&mut self) -> VecDeque<(f32, f32)> {
+		let mut new_samples = VecDeque::new();
+		std::mem::swap(&mut self.raw_samples, &mut new_samples);
+		new_samples
 	}
 
 	// This is expected to happen once per frame
