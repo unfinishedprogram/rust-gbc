@@ -3,6 +3,7 @@
 /node_modules
 *.log
 /dist
+/web/dist
 /roms/test/gambatte
 /test_data
 Cargo.lock

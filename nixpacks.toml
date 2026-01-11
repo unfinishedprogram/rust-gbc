@@ -9,4 +9,4 @@ cmds = ["rustup default nightly", "rustup target add wasm32-unknown-unknown"]
 
 [phases.build]
 nixPkgs = ['trunk']
-cmds = ['./build.sh']
+cmds = ['./web/build.sh']

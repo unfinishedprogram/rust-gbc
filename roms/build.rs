@@ -1,6 +1,6 @@
 use std::{
 	cmp::Ordering,
-	fs::{self, read_dir, DirEntry},
+	fs::{self, DirEntry, read_dir},
 	io::Error,
 };
 
@@ -42,10 +42,20 @@ fn recursive_dir_parse(root: &str) -> Result<Entry, Error> {
 }
 
 fn main() -> Result<(), Error> {
-	let entries = recursive_dir_parse("roms")?;
-	let serialized = serde_json::to_string(&entries)?;
-	fs::write("roms.json", serialized.as_bytes())?;
-	println!("cargo:rerun-if-changed=roms");
+	let serialized = get_roms_serialized()?;
+	let out_dir = std::env::var("OUT_DIR").unwrap();
+	let out_path = std::path::Path::new(&out_dir).join("roms.json");
 
+	println!("cargo:rustc-env=GENERATED_JSON_PATH={}", out_path.display());
+
+	println!("cargo:rerun-if-changed=roms");
+	println!("cargo:rerun-if-changed=build.rs");
+	fs::write(out_path, serialized.as_bytes())?;
 	Ok(())
+}
+
+pub fn get_roms_serialized() -> Result<String, Error> {
+	let entries = recursive_dir_parse("roms")?;
+	let res = serde_json::to_string(&entries)?;
+	Ok(res)
 }

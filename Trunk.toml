@@ -1,2 +1,4 @@
 [build]
 filehash = false
+target = "web/index.html"
+dist = "web/dist"

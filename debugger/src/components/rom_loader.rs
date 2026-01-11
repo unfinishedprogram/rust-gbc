@@ -22,7 +22,7 @@ pub enum Entry {
 }
 
 thread_local! {
-	pub static ROMS : Entry = serde_json::from_str(std::include_str!("../../../roms.json")).unwrap();
+	pub static ROMS : Entry = serde_json::from_str(std::include_str!("../../../roms/roms.json")).unwrap();
 	pub static LOAD_RESULT:RefCell<Option<Result<RomResource, String>>> = const { RefCell::new(None) };
 }
 

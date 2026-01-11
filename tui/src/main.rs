@@ -30,7 +30,7 @@ fn main() {
 	let mut gb = Gameboy::default();
 
 	gb.load_rom(
-		include_bytes!("../../../rust-gbc/roms/games/Super Mario Bros. Deluxe.gbc"),
+		include_bytes!("../../../rust-gbc/roms/roms/games/Super Mario Bros. Deluxe.gbc"),
 		None,
 	);
 

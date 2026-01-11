@@ -1,4 +1,4 @@
-# Game Boy Color 
+# Game Boy Color
 > Written in rust, mainly targeting thew web
 
 ## Requirements
@@ -15,7 +15,7 @@ cargo install trunk --locked
 
 ## Running
 
-### Wasm platform (main target) 
+### Wasm platform (main target)
 
 ```
 trunk serve

@@ -10,12 +10,8 @@ opt-level = 3
 [profile.dev]
 opt-level = 3
 
-[build-dependencies]
-serde = { version = "1.0.150", features = ["derive"] }
-serde_json = "1.0.89"
-
 [workspace]
-members = ["gameboy", "sm83", "debugger", "tui"]
+members = ["gameboy", "sm83", "debugger", "tui", "web", "roms"]
 
 [profile.release]
 lto = true
@@ -28,40 +24,4 @@ debug = true
 gameboy = { path = "gameboy" }
 log = "0.4.17"
 serde = { version = "1.0.150", features = ["derive"] }
-gloo = "0.11.0"
-wasm-bindgen-futures = "0.4"
-web-sys = { version = "0.3.64", features = [
-    "Navigator",
-    "Gamepad",
-    "GamepadButton",
-    "Document",
-    "HtmlElement",
-    "Node",
-    "Event",
-    "Storage",
-    "ImageData",
-    "CanvasRenderingContext2d",
-    "HtmlCanvasElement",
-    "KeyboardEvent",
-    "DragEvent",
-    "DataTransfer",
-    "Performance",
-    # For realtime audio playback
-    "AudioContext",
-    "AudioContextOptions",
-    "AudioDestinationNode",
-    "AudioNode",
-    "AudioParam",
-    "AudioBuffer",
-    "AudioBufferSourceNode",
-    "ScriptProcessorNode",
-    "AudioProcessingEvent",
-    "ConstantSourceNode",
-] }
-serde_json = "1.0.89"
-wasm-bindgen = "0.2.87"
 lazy_static = "1.4.0"
-tracing-wasm = "0.2.1"
-console_error_panic_hook = "0.1.7"
-wasm-logger = "0.2.0"
-js-sys = "0.3.67"

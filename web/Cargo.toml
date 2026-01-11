@@ -1,0 +1,49 @@
+[package]
+name = "web"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+gameboy = { path = "../gameboy" }
+web-sys = { version = "0.3.64", features = [
+  "Navigator",
+  "Gamepad",
+  "GamepadButton",
+  "Document",
+  "HtmlElement",
+  "Node",
+  "Event",
+  "Storage",
+  "ImageData",
+  "CanvasRenderingContext2d",
+  "HtmlCanvasElement",
+  "KeyboardEvent",
+  "DragEvent",
+  "DataTransfer",
+  "Performance",
+  # For realtime audio playback
+  "AudioContext",
+  "AudioContextOptions",
+  "AudioDestinationNode",
+  "AudioNode",
+  "AudioParam",
+  "AudioBuffer",
+  "AudioBufferSourceNode",
+  "ScriptProcessorNode",
+  "AudioProcessingEvent",
+  "ConstantSourceNode",
+] }
+js-sys = "0.3.67"
+console_error_panic_hook = "0.1.7"
+tracing-wasm = "0.2.1"
+wasm-logger = "0.2.0"
+wasm-bindgen-futures = "0.4"
+wasm-bindgen = "0.2.87"
+gloo = "0.11.0"
+serde_json = "1.0.89"
+log = "0.4.17"
+serde = { version = "1.0.150", features = ["derive"] }
+
+[build-dependencies]
+serde_json = "1.0.89"
+serde = { version = "1.0.150", features = ["derive"] }

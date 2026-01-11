@@ -1,9 +1,8 @@
 <html>
 
 <head>
-	<link data-trunk rel="copy-dir" href="roms">
+	<link data-trunk rel="copy-dir" href="../roms/roms">
 	<link data-trunk rel="copy-dir" href="assets">
-	<link data-trunk rel="copy-file" href="roms.json">
 	<link data-trunk rel="scss" href="/style.scss">
 	<link data-trunk rel="rust" data-wasm-opt="0" data-bin="application">
 
@@ -58,8 +57,7 @@
 				</tbody>
 			</table>
 			<div>
-				<button id="cancel" type="reset"
-					onclick='document.getElementById("keybinding_dialog").close()'>Cancel</button>
+				<button id="cancel" type="reset" onclick='document.getElementById("keybinding_dialog").close()'>Cancel</button>
 				<button type="submit">Apply</button>
 			</div>
 		</form>
@@ -69,12 +67,11 @@
 
 		<div id="menu">
 			<button id="toggle_menu">
-				<svg id="icon" width="3rem" height="3rem" viewBox="0 0 24 24" fill="none"
-					xmlns="http://www.w3.org/2000/svg">
-					<path d="M12 7L7 12L12 17 M18 7L13 12L18 17" stroke="currentColor" stroke-width="2"
-						stroke-linecap="round" stroke-linejoin="round">
-						<animate id="animate_open" attributeName="d" dur="200ms" to="M6 7L11 12L6 17M12 7L17 12L12 17"
-							fill="freeze" begin="indefinite" />
+				<svg id="icon" width="3rem" height="3rem" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M12 7L7 12L12 17 M18 7L13 12L18 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+						stroke-linejoin="round">
+						<animate id="animate_open" attributeName="d" dur="200ms" to="M6 7L11 12L6 17M12 7L17 12L12 17" fill="freeze"
+							begin="indefinite" />
 
 						<animate id="animate_close" attributeName="d" dur="200ms" to="M12 7L7 12L12 17M18 7L13 12L18 17"
 							fill="freeze" begin="indefinite" />
