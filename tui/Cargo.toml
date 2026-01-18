@@ -9,5 +9,4 @@ edition = "2021"
 gameboy = { path = "../gameboy" }
 climg = { path = "./climg" }
 rayon = "1.6.1"
-rdev = "0.5.3"
 crossterm = "0.28.1"

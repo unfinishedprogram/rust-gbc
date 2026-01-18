@@ -8,7 +8,7 @@ use climg::image_builder::{ImageBuilder, ImageBuilderConfig};
 
 use crossterm::{
 	event::{
-		KeyEvent, KeyboardEnhancementFlags, PopKeyboardEnhancementFlags,
+		KeyCode, KeyEvent, KeyEventKind, KeyboardEnhancementFlags, PopKeyboardEnhancementFlags,
 		PushKeyboardEnhancementFlags,
 	},
 	execute,
@@ -55,20 +55,20 @@ fn main() {
 			}) = event
 			{
 				let is_down = match kind {
-					crossterm::event::KeyEventKind::Press => true,
-					crossterm::event::KeyEventKind::Release => false,
-					crossterm::event::KeyEventKind::Repeat => true,
+					KeyEventKind::Press => true,
+					KeyEventKind::Release => false,
+					KeyEventKind::Repeat => true,
 				};
 				match code {
-					crossterm::event::KeyCode::Esc => break 'outer,
-					crossterm::event::KeyCode::Char('q') => break 'outer,
-					crossterm::event::KeyCode::Left => controller_state.left = is_down,
-					crossterm::event::KeyCode::Right => controller_state.right = is_down,
-					crossterm::event::KeyCode::Up => controller_state.up = is_down,
-					crossterm::event::KeyCode::Down => controller_state.down = is_down,
-					crossterm::event::KeyCode::Tab => controller_state.select = is_down,
-					crossterm::event::KeyCode::Char('z') => controller_state.a = is_down,
-					crossterm::event::KeyCode::Char('x') => controller_state.b = is_down,
+					KeyCode::Esc => break 'outer,
+					KeyCode::Char('q') => break 'outer,
+					KeyCode::Left => controller_state.left = is_down,
+					KeyCode::Right => controller_state.right = is_down,
+					KeyCode::Up => controller_state.up = is_down,
+					KeyCode::Down => controller_state.down = is_down,
+					KeyCode::Tab => controller_state.select = is_down,
+					KeyCode::Char('z') => controller_state.a = is_down,
+					KeyCode::Char('x') => controller_state.b = is_down,
 					_ => {}
 				}
 			}
