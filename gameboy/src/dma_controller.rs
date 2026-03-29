@@ -42,7 +42,7 @@ impl DMAController {
 
 	pub fn write_destination_high(&mut self, value: u8) {
 		self.destination &= 0x00FF;
-		self.destination |= (((value & 0x1F) as u16) << 8) | 0x8000;
+		self.destination |= ((value & 0x1F) as u16) << 8;
 	}
 
 	pub fn write_destination_low(&mut self, value: u8) {
@@ -55,7 +55,6 @@ impl DMAController {
 	}
 
 	pub fn get_source(&self) -> u16 {
-		// test result: FAILED. 251 passed; 427 failed; 0 ignored; 0 measured; 2722 filtered out; finished in 1.40s
 		match self.source {
 			(0xE000..=0xFFFF) => self.source - 0xE000 + 0xA000,
 			_ => self.source,
@@ -63,7 +62,7 @@ impl DMAController {
 	}
 
 	pub fn get_destination(&self) -> u16 {
-		self.destination
+		self.destination | 0x8000
 	}
 
 	pub fn write_hdma5(&mut self, value: u8) -> Option<DMATransferRequest> {
