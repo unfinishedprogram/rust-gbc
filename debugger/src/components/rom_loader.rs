@@ -37,7 +37,7 @@ fn recursive_dir(ui: &mut Ui, url: &mut String, entry: &Entry) -> bool {
 			if ui.button(file_name(path)).clicked() {
 				*url = path.clone();
 				updated = true;
-				ui.close_menu();
+				ui.close_kind(egui::UiKind::Menu);
 			}
 		}
 		Entry::Dir { path, entries } => {

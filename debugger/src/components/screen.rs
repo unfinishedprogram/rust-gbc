@@ -1,4 +1,6 @@
-use egui::{load::SizedTexture, Color32, ColorImage, Image, TextureHandle, TextureOptions, Ui};
+use egui::{
+	load::SizedTexture, Color32, ColorImage, Image, TextureHandle, TextureOptions, Ui, Vec2,
+};
 
 #[derive(Default)]
 pub struct Screen {
@@ -15,6 +17,7 @@ impl Screen {
 
 		let image = ColorImage {
 			size: [160, 144],
+			source_size: Vec2::new(160.0, 144.0),
 			pixels: buffer,
 		};
 

@@ -25,7 +25,7 @@ impl TileImage {
 		Self {
 			name,
 			texture: None,
-			image: ColorImage::new(size, color),
+			image: ColorImage::filled(size, color),
 		}
 	}
 

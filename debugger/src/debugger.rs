@@ -3,7 +3,7 @@ use crate::components::{
 	show_system_info, AudioVisualizer, CheckpointManager, Disassembler, JoypadInput, MemoryImage,
 	MemoryView, RomLoader, Screen, VramView,
 };
-use egui::{CentralPanel, SidePanel, Style, TextStyle, TopBottomPanel, Window};
+use egui::{CentralPanel, Panel, Style, TextStyle, Window};
 
 use gameboy::Gameboy;
 
@@ -48,15 +48,15 @@ impl Debugger {
 }
 
 impl eframe::App for Debugger {
-	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		self.gameboy.set_controller_state(self.joypad.update(ctx));
+	fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+		self.gameboy.set_controller_state(self.joypad.update(ui));
 
-		ctx.set_style(Style {
+		ui.set_style(Style {
 			override_text_style: Some(TextStyle::Monospace),
 			..Default::default()
 		});
 
-		TopBottomPanel::top("top").show(ctx, |ui| {
+		Panel::top("top").show_inside(ui, |ui| {
 			ui.horizontal(|ui| {
 				if let Some(action) = self
 					.run_controller
@@ -122,36 +122,35 @@ impl eframe::App for Debugger {
 
 		let screen_buffer = self.gameboy.ppu.lcd.front_buffer();
 
-		SidePanel::right("right").show(ctx, |ui| show_system_info(&self.gameboy, ui));
+		Panel::right("right").show_inside(ui, |ui| show_system_info(&self.gameboy, ui));
 
-		CentralPanel::default().show(ctx, |ui| self.screen.draw(ui, screen_buffer));
+		CentralPanel::default().show_inside(ui, |ui| self.screen.draw(ui, screen_buffer));
 
 		if self.disassembler_enabled {
-			Window::new("Instructions").show(ctx, |ui| self.disassembler.draw(&self.gameboy, ui));
+			Window::new("Instructions").show(ui, |ui| self.disassembler.draw(&self.gameboy, ui));
 		}
 
 		if self.memory_view_enabled {
-			Window::new("Memory").show(ctx, |ui| self.memory_view.draw(&self.gameboy, ui));
+			Window::new("Memory").show(ui, |ui| self.memory_view.draw(&self.gameboy, ui));
 		}
 		if self.memory_image_enabled {
-			Window::new("MemImage").show(ctx, |ui| self.memory_image.draw(&self.gameboy, ui));
+			Window::new("MemImage").show(ui, |ui| self.memory_image.draw(&self.gameboy, ui));
 		}
 
 		if self.vram_view_enabled {
-			Window::new("VramView").show(ctx, |ui| self.vram_view.draw(&self.gameboy, ui));
+			Window::new("VramView").show(ui, |ui| self.vram_view.draw(&self.gameboy, ui));
 		}
 
 		if self.checkpoint_manager_enabled {
-			Window::new("Checkpoints").show(ctx, |ui| {
-				self.checkpoint_manager.draw(&mut self.gameboy, ui)
-			});
+			Window::new("Checkpoints")
+				.show(ui, |ui| self.checkpoint_manager.draw(&mut self.gameboy, ui));
 		}
 
 		if self.audio_visualizer_enabled {
 			Window::new("Audio Visualizer")
-				.show(ctx, |ui| self.audio_visualizer.draw(&mut self.gameboy, ui));
+				.show(ui, |ui| self.audio_visualizer.draw(&mut self.gameboy, ui));
 		}
 
-		ctx.request_repaint();
+		ui.request_repaint();
 	}
 }

@@ -86,7 +86,7 @@ impl From<u16> for AddressRange {
 impl Default for MemoryImage {
 	fn default() -> Self {
 		let mut res = Self {
-			image: ColorImage::new([256, 256], egui::Color32::from_rgb(186, 172, 147)),
+			image: ColorImage::filled([256, 256], egui::Color32::from_rgb(186, 172, 147)),
 			texture: None,
 		};
 
