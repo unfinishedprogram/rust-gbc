@@ -54,7 +54,7 @@ impl CheckpointManager {
 
 	pub fn save(&mut self, state: &Gameboy) {
 		self.checkpoints.push(state.clone());
-		self.checkpoints.sort_by(|a, b| a.t_states.cmp(&b.t_states))
+		self.checkpoints.sort_by_key(|cp| cp.t_states);
 	}
 
 	pub fn load(&mut self, time: impl Into<TStates>) -> Option<Gameboy> {

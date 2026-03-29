@@ -29,12 +29,6 @@ impl Default for DMAController {
 	}
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum TransferMode {
-	GeneralPurpose,
-	HBlank,
-}
-
 impl DMAController {
 	pub fn write_source_high(&mut self, value: u8) {
 		self.source &= 0x00FF;

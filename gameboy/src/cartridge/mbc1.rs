@@ -2,16 +2,11 @@ use serde::{Deserialize, Serialize};
 
 use super::cartridge_data::CartridgeData;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 enum BankingMode {
+	#[default]
 	Simple,
 	Complex,
-}
-
-impl Default for BankingMode {
-	fn default() -> Self {
-		Self::Simple
-	}
 }
 
 #[derive(Clone, Default, Serialize, Deserialize, Debug)]

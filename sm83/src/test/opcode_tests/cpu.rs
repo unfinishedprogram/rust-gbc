@@ -70,7 +70,7 @@ impl From<TestState> for MockCpu {
 impl From<MockCpu> for TestState {
 	fn from(state: MockCpu) -> Self {
 		let mut ram = state.memory.data.clone();
-		ram.sort_by(|a, b| a.0.cmp(&b.0));
+		ram.sort_by_key(|(addr, _)| *addr);
 
 		TestState {
 			pc: state.cpu_state.read(PC),
