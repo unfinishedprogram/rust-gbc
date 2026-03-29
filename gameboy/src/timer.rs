@@ -28,9 +28,7 @@ impl Timer {
 	}
 
 	pub fn write_tima(&mut self, value: u8) {
-		if self.tima_delay > 0 {
-			self.tima_delay = 0;
-		}
+		self.tima_delay = 0;
 		self.tima = value;
 	}
 
@@ -40,7 +38,7 @@ impl Timer {
 
 	pub fn set_tac(&mut self, value: u8) {
 		let tac_enable = value & BIT_2 != 0;
-		if tac_enable & !self.tac_enabled() && self.current_output_clock() {
+		if !tac_enable & self.tac_enabled() && self.current_output_clock() {
 			self.increment_tima();
 		}
 
