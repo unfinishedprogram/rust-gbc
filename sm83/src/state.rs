@@ -53,7 +53,7 @@ impl CPUState {
 		let requests = self.interrupt_enable & self.interrupt_request;
 		if requests != 0 {
 			// Gets the rightmost set bit
-			let index = requests & (!requests + 1);
+			let index = requests & requests.wrapping_neg();
 			index.try_into().ok()
 		} else {
 			None
@@ -65,7 +65,10 @@ impl CPUState {
 	}
 
 	pub fn tick_ie_delay(&mut self) {
-		self.interrupt_master_enable = self.ie_next;
+		if self.ie_next {
+			self.ie_next = false;
+			self.interrupt_master_enable = true;
+		}
 	}
 }
 
