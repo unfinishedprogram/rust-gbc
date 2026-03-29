@@ -28,12 +28,21 @@ impl Timer {
 	}
 
 	pub fn write_tima(&mut self, value: u8) {
+		if self.tima_write_delay > 0 {
+			return;
+		}
+
 		self.tima_delay = 0;
 		self.tima = value;
 	}
 
 	pub fn write_tma(&mut self, value: u8) {
 		self.tma = value;
+
+		// If we're in the reload cycle, TIMA tracks TMA immediately
+		if self.tima_write_delay > 0 {
+			self.tima = value;
+		}
 	}
 
 	pub fn set_tac(&mut self, value: u8) {
