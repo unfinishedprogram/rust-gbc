@@ -149,8 +149,8 @@ impl Apu {
 	}
 
 	fn channel_enabled_lr(&self, channel_idx: u8) -> (f32, f32) {
-		let left = ((self.nr51 & (1 << channel_idx) != 0) as u8) as f32;
-		let right = ((self.nr51 & (1 << (channel_idx + 4)) != 0) as u8) as f32;
+		let right = ((self.nr51 & (1 << channel_idx) != 0) as u8) as f32;
+		let left = ((self.nr51 & (1 << (channel_idx + 4)) != 0) as u8) as f32;
 
 		(left, right)
 	}
@@ -219,7 +219,7 @@ impl Apu {
 	}
 
 	fn read_pcm_34(&self) -> u8 {
-		self.noise.sample() << 4
+		(self.noise.sample() << 4) | self.noise.sample()
 	}
 }
 
