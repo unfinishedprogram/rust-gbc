@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use egui::{Color32, Sense, Stroke, Ui, Vec2};
+use egui::{Color32, ScrollArea, Sense, Stroke, Ui, Vec2};
 use gameboy::Gameboy;
 
 pub struct AudioVisualizer {
@@ -65,6 +65,10 @@ impl AudioVisualizer {
 
 		lines.for_each(|[a, b]| {
 			painter.line_segment([a.to_pos2(), b.to_pos2()], stroke);
+		});
+
+		ScrollArea::vertical().show(ui, |ui: &mut Ui| {
+			ui.label(format!("{:#?}", gameboy.apu));
 		});
 	}
 }

@@ -2,7 +2,7 @@ use super::timer::Timer;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, Serialize, Deserialize, Default, Debug)]
 pub struct Sweep {
 	pub enabled: bool,
 	pub negate: bool,

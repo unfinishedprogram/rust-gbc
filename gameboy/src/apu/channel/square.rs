@@ -10,7 +10,7 @@ use super::super::{
 	volume_envelope::VolumeEnvelope,
 };
 
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, Serialize, Deserialize, Default, Debug)]
 pub struct Square {
 	sweeper: bool,
 	enabled: bool,

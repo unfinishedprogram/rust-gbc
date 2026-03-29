@@ -20,7 +20,7 @@ use self::frame_sequencer::FrameSequencer;
 
 // Audio Processing Unit
 // https://gbdev.io/pandocs/Audio_details.html#audio-details
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Apu {
 	prev_div: u8,
 	frame_sequencer: FrameSequencer,

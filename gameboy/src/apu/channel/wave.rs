@@ -8,7 +8,7 @@ use crate::{
 use super::super::{channel::Channel, length_counter::LengthCounter, timer::Timer};
 
 #[repr(u8)]
-#[derive(Copy, Clone, Serialize, Deserialize)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 pub enum VolumeCode {
 	Zero = 0,
 	OneHundred = 1,
@@ -27,7 +27,7 @@ impl VolumeCode {
 	}
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Wave {
 	dac_power: bool,
 	enabled: bool,

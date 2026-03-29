@@ -4,7 +4,7 @@ use crate::util::bits::BIT_3;
 
 use super::timer::Timer;
 
-#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Debug)]
 #[repr(u8)]
 pub enum Direction {
 	Decrease = 0,
@@ -20,7 +20,7 @@ impl From<Direction> for i8 {
 	}
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct VolumeEnvelope {
 	pub initial_volume: u8,
 	pub direction: Direction,

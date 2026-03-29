@@ -9,7 +9,7 @@ use super::super::{
 	volume_envelope::VolumeEnvelope,
 };
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Noise {
 	lfsr: Lfsr,
 	volume_envelope: VolumeEnvelope,

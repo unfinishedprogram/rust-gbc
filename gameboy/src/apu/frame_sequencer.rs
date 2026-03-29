@@ -7,7 +7,7 @@ pub enum TickResult {
 	LengthCtrlAndSweep,
 }
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize, Debug)]
 pub struct FrameSequencer {
 	pub value: u8,
 }
