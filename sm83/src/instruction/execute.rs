@@ -15,13 +15,13 @@ use super::{
 };
 
 pub trait Execute {
-	fn execute(&mut self, instruction: Instruction) -> Instruction;
+	fn execute(&mut self, instruction: Instruction);
 }
 
 use std::ops::{BitAnd, BitOr, BitXor};
 
 impl<T: SM83> Execute for T {
-	fn execute(&mut self, instruction: Instruction) -> Instruction {
+	fn execute(&mut self, instruction: Instruction) {
 		let cpu = self;
 		match instruction {
 			NOP => {}
@@ -464,6 +464,5 @@ impl<T: SM83> Execute for T {
 				cpu.execute(RET(Condition::Always));
 			}
 		}
-		instruction
 	}
 }
