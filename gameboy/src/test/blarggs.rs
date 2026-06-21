@@ -58,7 +58,7 @@ fn run_blarggs(name: &str, postfix: &str) {
 
 #[test]
 fn cgb_sound() {
-	run_blarggs("cgb_sound", "-dmg-cgb");
+	run_blarggs("cgb_sound", "-cgb");
 }
 
 #[test]
