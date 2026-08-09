@@ -1,14 +1,14 @@
 [package]
 name = "gb-debug"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui = "0.34.1"
-eframe = { version = "0.34.1", default-features = false, features = ["glow"] }
-egui_extras = "0.34.1"
+eframe = { version = "0.36.1" }
+egui = "0.36.1"
+egui_extras = "0.36.1"
 console_error_panic_hook = "0.1.7"
 tracing-wasm = "0.2.1"
 wasm-bindgen-futures = "0.4.42"

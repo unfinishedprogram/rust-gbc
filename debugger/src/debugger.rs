@@ -1,7 +1,9 @@
 use crate::components::{
+	AudioVisualizer, Disassembler, JoypadInput, MemoryImage, MemoryView, RomLoader, Screen,
+	VramView,
 	run_controller::{self, RunController},
-	show_system_info, AudioVisualizer, CheckpointManager, Disassembler, JoypadInput, MemoryImage,
-	MemoryView, RomLoader, Screen, VramView,
+	show_system_info,
+	timeline::Timeline,
 };
 use egui::{CentralPanel, Panel, Style, TextStyle, Window};
 
@@ -16,9 +18,6 @@ pub struct Debugger {
 	joypad: JoypadInput,
 
 	// Debugging Windows
-	checkpoint_manager: CheckpointManager,
-	checkpoint_manager_enabled: bool,
-
 	memory_image: MemoryImage,
 	memory_image_enabled: bool,
 
@@ -33,6 +32,9 @@ pub struct Debugger {
 
 	audio_visualizer: AudioVisualizer,
 	audio_visualizer_enabled: bool,
+
+	timeline: Timeline,
+	timeline_enable: bool,
 }
 
 impl Debugger {
@@ -42,7 +44,7 @@ impl Debugger {
 
 	// Returns true if breakpoint was hit
 	fn step_gb(&mut self) -> bool {
-		self.gameboy.step();
+		self.timeline.step_gameboy(&mut self.gameboy);
 		self.disassembler.should_break(&self.gameboy)
 	}
 }
@@ -56,7 +58,7 @@ impl eframe::App for Debugger {
 			..Default::default()
 		});
 
-		Panel::top("top").show_inside(ui, |ui| {
+		Panel::top("top").show(ui, |ui| {
 			ui.horizontal(|ui| {
 				if let Some(action) = self
 					.run_controller
@@ -111,7 +113,7 @@ impl eframe::App for Debugger {
 
 				self.rom_loader.draw(ui, &mut self.gameboy);
 
-				ui.checkbox(&mut self.checkpoint_manager_enabled, "Checkpoint Manager");
+				ui.checkbox(&mut self.timeline_enable, "Timeline");
 				ui.checkbox(&mut self.memory_image_enabled, "Memory Image");
 				ui.checkbox(&mut self.vram_view_enabled, "Vram View");
 				ui.checkbox(&mut self.memory_view_enabled, "Memory View");
@@ -122,9 +124,9 @@ impl eframe::App for Debugger {
 
 		let screen_buffer = self.gameboy.ppu.lcd.front_buffer();
 
-		Panel::right("right").show_inside(ui, |ui| show_system_info(&self.gameboy, ui));
+		Panel::right("right").show(ui, |ui| show_system_info(&self.gameboy, ui));
 
-		CentralPanel::default().show_inside(ui, |ui| self.screen.draw(ui, screen_buffer));
+		CentralPanel::default().show(ui, |ui| self.screen.draw(ui, screen_buffer));
 
 		if self.disassembler_enabled {
 			Window::new("Instructions").show(ui, |ui| self.disassembler.draw(&self.gameboy, ui));
@@ -141,9 +143,8 @@ impl eframe::App for Debugger {
 			Window::new("VramView").show(ui, |ui| self.vram_view.draw(&self.gameboy, ui));
 		}
 
-		if self.checkpoint_manager_enabled {
-			Window::new("Checkpoints")
-				.show(ui, |ui| self.checkpoint_manager.draw(&mut self.gameboy, ui));
+		if self.timeline_enable {
+			Window::new("Timeline").show(ui, |ui| self.timeline.draw(&mut self.gameboy, ui));
 		}
 
 		if self.audio_visualizer_enabled {

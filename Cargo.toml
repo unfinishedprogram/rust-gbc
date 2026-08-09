@@ -26,6 +26,7 @@ debug = true
 
 [dependencies]
 gameboy = { path = "gameboy" }
+gb-debug = { path = "debugger" }
 log = "0.4.17"
 serde = { version = "1.0.150", features = ["derive"] }
 gloo = "0.12.0"

@@ -8,7 +8,7 @@ mod rom_loader;
 pub mod run_controller;
 mod screen;
 mod system_info;
-mod timeline;
+pub mod timeline;
 mod util;
 mod validated_input;
 mod vram_view;
