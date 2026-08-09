@@ -106,8 +106,8 @@ impl Channel for Square {
 		if trigger {
 			self.length_counter.unfreeze();
 			self.enabled = true;
-			if self.sweeper {
-				self.sweep.trigger(self.frequency);
+			if self.sweeper && self.sweep.trigger(self.frequency) {
+				self.enabled = false;
 			}
 		}
 

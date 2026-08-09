@@ -21,12 +21,12 @@ impl Timer {
 			return false;
 		}
 
+		self.counter -= 1;
 		if self.counter == 0 {
 			self.reload();
 			return true;
 		}
 
-		self.counter -= 1;
 		false
 	}
 

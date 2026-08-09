@@ -13,13 +13,14 @@ pub struct Sweep {
 }
 
 impl Sweep {
-	pub fn trigger(&mut self, frequency: u16) {
+	pub fn trigger(&mut self, frequency: u16) -> bool {
 		self.timer.reload();
 		self.shadow_frequency = frequency;
 		self.enabled = self.shift != 0 || self.timer.get_period() != 0;
 		if self.shift != 0 {
-			// We ignore the second calculate, but it still updates our shadow frequency
-			_ = self.calculate();
+			self.next_shadow_freq() > 2047
+		} else {
+			false
 		}
 	}
 
@@ -61,20 +62,6 @@ impl Sweep {
 		self.timer.set_period(((value >> 4) & 0b0111) as u16);
 		self.negate = value & 0b1000 != 0;
 		self.shift = value & 0b0111;
-	}
-
-	// Updates the frequency shadow register
-	// Returns true if the channel should be disabled
-	#[must_use]
-	fn calculate(&mut self) -> bool {
-		let new_freq = self.shadow_frequency >> self.shift;
-
-		if self.negate {
-			self.shadow_frequency -= new_freq;
-		} else {
-			self.shadow_frequency += new_freq;
-		}
-		self.shadow_frequency > 2047
 	}
 
 	pub fn read_byte(&self) -> u8 {
