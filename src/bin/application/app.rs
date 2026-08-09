@@ -105,24 +105,6 @@ impl Application {
 		}
 
 		delta_t
-
-		// if let Some(audio) = &mut self.audio {
-		// 	audio.pull_samples(&mut self.emulator_state.audio, delta_t);
-		// } else if self.input_state.get_controller_state().as_byte() != 255 {
-		// 	log::error!(
-		// 		"Audio not initialized {:?}",
-		// 		self.input_state.get_controller_state().as_byte()
-		// 	);
-		// 	match audio::AudioHandler::new() {
-		// 		Ok(mut audio) => {
-		// 			audio.play();
-		// 			self.audio = Some(audio);
-		// 		}
-		// 		Err(err) => {
-		// 			log::error!("Failed to create audio context: {:?}", err);
-		// 		}
-		// 	}
-		// }
 	}
 
 	#[wasm_bindgen]

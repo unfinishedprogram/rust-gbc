@@ -20,14 +20,6 @@ function run(time) {
   ctx.putImageData(screen_image, 0, 0);
 }
 
-// const loop = (time) => {
-//   requestAnimationFrame(loop);
-// };
-
-setInterval(() => run(performance.now()), 16);
-
-// requestAnimationFrame(loop);
-
-// setInterval(loop, 16);
+setInterval(() => run(performance.now()), 1000 / 60);
 
 export default app;

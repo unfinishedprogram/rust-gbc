@@ -36,7 +36,6 @@ export default class GBCAudio {
   }
 
   samplesToPull(deltaMs) {
-    // Smooth delta over 64 frames to avoid jitter-driven over/under-pulls
     this.deltas[this.deltaIndex] = deltaMs;
     this.deltaIndex = (this.deltaIndex + 1) % this.deltas.length;
     if (this.deltaCount < this.deltas.length) this.deltaCount++;
