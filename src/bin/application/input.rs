@@ -20,12 +20,11 @@ impl InputState {
 
 	pub fn get_controller_state(&self) -> JoypadState {
 		let mut state = JoypadState::default();
-		if let Some(dom) = window().get("controller_state") {
-			if let Some(json) = dom.as_string() {
-				if let Ok(dom_state) = serde_json::from_str::<JoypadState>(&json) {
-					state |= dom_state;
-				}
-			}
+		if let Some(dom) = window().get("controller_state")
+			&& let Some(json) = dom.as_string()
+			&& let Ok(dom_state) = serde_json::from_str::<JoypadState>(&json)
+		{
+			state |= dom_state;
 		}
 
 		if let Some(gp) = self.get_gamepad() {
