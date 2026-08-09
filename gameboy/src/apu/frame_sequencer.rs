@@ -1,3 +1,4 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 pub enum TickResult {
@@ -7,7 +8,7 @@ pub enum TickResult {
 	LengthCtrlAndSweep,
 }
 
-#[derive(Default, Clone, Serialize, Deserialize, Debug)]
+#[derive(Default, Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct FrameSequencer {
 	pub value: u8,
 }

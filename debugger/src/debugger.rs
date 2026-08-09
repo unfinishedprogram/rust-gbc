@@ -111,7 +111,10 @@ impl eframe::App for Debugger {
 					}
 				}
 
-				self.rom_loader.draw(ui, &mut self.gameboy);
+				let rom_loaded = self.rom_loader.draw(ui, &mut self.gameboy);
+				if rom_loaded {
+					self.timeline.reset();
+				}
 
 				ui.checkbox(&mut self.timeline_enable, "Timeline");
 				ui.checkbox(&mut self.memory_image_enabled, "Memory Image");

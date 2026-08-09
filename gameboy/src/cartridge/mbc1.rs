@@ -1,15 +1,16 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use super::cartridge_data::CartridgeData;
 
-#[derive(Clone, Serialize, Deserialize, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default, GetSize)]
 enum BankingMode {
 	#[default]
 	Simple,
 	Complex,
 }
 
-#[derive(Clone, Default, Serialize, Deserialize, Debug)]
+#[derive(Clone, Default, Serialize, Deserialize, Debug, GetSize)]
 pub struct MBC1State {
 	banking_mode: BankingMode,
 	banking_register: u8,

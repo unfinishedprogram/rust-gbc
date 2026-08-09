@@ -1,9 +1,10 @@
 use super::PPUMode;
 use crate::util::bits::*;
 
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Default, Clone, Copy, Debug)]
+#[derive(Serialize, Deserialize, Default, Clone, Copy, Debug, GetSize)]
 pub struct Stat(u8);
 
 impl_bitlike!(Stat);

@@ -1,10 +1,11 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::util::bits::BIT_3;
 
 use super::timer::Timer;
 
-#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Debug, GetSize)]
 #[repr(u8)]
 pub enum Direction {
 	Decrease = 0,
@@ -20,7 +21,7 @@ impl From<Direction> for i8 {
 	}
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct VolumeEnvelope {
 	pub initial_volume: u8,
 	pub direction: Direction,

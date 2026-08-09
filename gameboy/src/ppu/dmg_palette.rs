@@ -1,6 +1,7 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, GetSize)]
 pub struct DMGPalette([(u8, u8, u8, u8); 4]);
 
 impl Default for DMGPalette {

@@ -65,25 +65,29 @@ impl RomLoader {
 		});
 	}
 
-	pub fn draw(&mut self, ui: &mut Ui, gameboy: &mut Gameboy) {
+	pub fn draw(&mut self, ui: &mut Ui, gameboy: &mut Gameboy) -> bool {
 		if recursive_dir(ui, &mut self.url, &ROMS.with(|r| r.clone())) {
 			self.load_rom(ui);
 		}
 
-		match LOAD_RESULT.with(|r| r.borrow_mut().take()) {
+		let rom_loaded = match LOAD_RESULT.with(|r| r.borrow_mut().take()) {
 			Some(Ok(resource)) => {
 				*gameboy = Gameboy::cgb();
 				gameboy.load_rom(&resource.response.bytes, None);
+				true
 			}
 			Some(Err(error)) => {
 				let msg = if error.is_empty() { "Error" } else { &error };
 				self.error_msg = Some(msg.to_owned());
+				false
 			}
-			None => {}
-		}
+			None => false,
+		};
 
 		if let Some(error) = &self.error_msg {
 			ui.label(error);
 		}
+
+		rom_loaded
 	}
 }

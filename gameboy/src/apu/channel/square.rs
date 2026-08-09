@@ -1,3 +1,4 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -10,7 +11,7 @@ use super::super::{
 	volume_envelope::VolumeEnvelope,
 };
 
-#[derive(Clone, Serialize, Deserialize, Default, Debug)]
+#[derive(Clone, Serialize, Deserialize, Default, Debug, GetSize)]
 pub struct Square {
 	sweeper: bool,
 	enabled: bool,

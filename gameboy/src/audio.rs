@@ -1,10 +1,11 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::apu::Apu;
 use std::collections::VecDeque;
 
 // Manages audio buffers and synchronization
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct Audio {
 	raw_samples: VecDeque<(f32, f32)>,
 	t_states: usize,
@@ -28,9 +29,9 @@ impl Default for Audio {
 impl Audio {
 	pub fn step(&mut self, apu: &mut Apu) {
 		if self.sample_countdown == 0 {
-			self.sample_countdown = 4;
+			self.sample_countdown = 64;
 			self.raw_samples.push_back(apu.sample());
-			if self.raw_samples.len() > 80_000 {
+			if self.raw_samples.len() > 2048 {
 				self.raw_samples.pop_front();
 			}
 		} else {
@@ -50,6 +51,13 @@ impl Audio {
 
 		let raw_samples = self.raw_samples.len();
 		let ratio = raw_samples as f64 / samples as f64;
+
+		log::error!(
+			"Pulling audio samples: {} ({} -> {})",
+			samples,
+			raw_samples,
+			ratio
+		);
 
 		// Resample buffer to the requested size
 		for i in 0..samples {

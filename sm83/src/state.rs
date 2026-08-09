@@ -1,3 +1,5 @@
+#[allow(unused_imports)]
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -7,7 +9,7 @@ use crate::{
 
 use super::registers::{CPURegister8, CPURegisters};
 
-#[derive(Clone, Default, Serialize, Deserialize)]
+#[derive(Clone, Default, Serialize, Deserialize, GetSize)]
 pub struct CPUState {
 	registers: CPURegisters,
 	pub halted: bool,

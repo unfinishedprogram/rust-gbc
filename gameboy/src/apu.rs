@@ -14,13 +14,14 @@ use crate::{
 	util::bits::{falling_edge, BIT_4, BIT_5, BIT_7},
 };
 
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use self::frame_sequencer::FrameSequencer;
 
 // Audio Processing Unit
 // https://gbdev.io/pandocs/Audio_details.html#audio-details
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct Apu {
 	prev_div: u8,
 	frame_sequencer: FrameSequencer,

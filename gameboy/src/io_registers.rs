@@ -1,5 +1,6 @@
 use std::ops::{Index, IndexMut};
 
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 use sm83::{memory_mapper::MemoryMapper, Interrupt};
 
@@ -96,7 +97,7 @@ pub const HDMA3: u16 = 0xFF53;
 pub const HDMA4: u16 = 0xFF54;
 pub const HDMA5: u16 = 0xFF55;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct IORegisterState {
 	#[serde(with = "BigArray")]
 	values: [u8; 0x80],

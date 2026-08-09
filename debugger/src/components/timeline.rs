@@ -2,9 +2,10 @@ mod checkpoint_manager;
 mod t_states;
 
 pub use checkpoint_manager::CheckpointManager;
-use egui::{Color32, Pos2, Rect, Sense, Vec2};
+use egui::{Color32, Pos2, Sense, Vec2};
 use gameboy::{Gameboy, joypad::JoypadState};
-use sm83::{Instruction, SM83};
+use get_size::GetSize;
+use sm83::Instruction;
 pub use t_states::TStates;
 
 pub struct TimelineEvent {
@@ -47,6 +48,42 @@ impl Timeline {
 		ui.label(format!("T-States: {}", gameboy.t_states));
 		ui.label(format!("Latest T-States: {}", self.latest_t_states));
 		ui.label(format!("Events: {}", self.events.len()));
+		ui.label(format!(
+			"Gameboy Size KB: {}",
+			gameboy.total_size_bytes() / 1024
+		));
+
+		ui.label(format!("APU Size KB: {}", gameboy.apu.get_size() / 1024));
+		ui.label(format!("PPU Size KB: {}", gameboy.ppu.get_size() / 1024));
+		ui.label(format!(
+			"CPU Size KB: {}",
+			gameboy.cpu_state.get_size() / 1024
+		));
+		ui.label(format!("HRAM Size KB: {}", gameboy.hram.get_size() / 1024));
+		ui.label(format!(
+			"VRAM Size KB: {}",
+			gameboy.get_vram_bank().get_size() / 1024
+		));
+		ui.label(format!("WRAM Size KB: {}", gameboy.w_ram.get_size() / 1024));
+		ui.label(format!("HRAM Size KB: {}", gameboy.hram.get_size() / 1024));
+		ui.label(format!(
+			"Total Size KB: {}",
+			gameboy.total_size_bytes() / 1024
+		));
+		ui.label(format!("Checkpoint Count: {}", self.checkpoints.len()));
+		ui.label(format!("Event Count: {}", self.events.len()));
+		ui.label(format!("Latest T-States: {}", self.latest_t_states));
+		ui.label(format!("Ram size KB: {}", gameboy.w_ram.get_size() / 1024));
+		ui.label(format!("HRam size KB: {}", gameboy.hram.get_size() / 1024));
+		ui.label(format!(
+			"Rom size KB: {}",
+			gameboy.cartridge_state.get_size() / 1024
+		));
+
+		ui.label(format!(
+			"Audio Size KB: {}",
+			gameboy.audio.get_size() / 1024
+		));
 
 		self.show_single_frame = true;
 
@@ -131,6 +168,10 @@ impl Timeline {
 
 		if gameboy.ppu.frame != previous_frame {
 			self.add_event(TimelineEvent::new(gameboy.t_states, EventType::FrameEnd));
+			self.checkpoints.push(Checkpoint {
+				t_states: gameboy.t_states,
+				state: Box::new(gameboy.clone()),
+			});
 		}
 
 		if let Some(Instruction::INT) = instruction {
@@ -141,8 +182,18 @@ impl Timeline {
 		}
 
 		self.view_end = gameboy.t_states;
-		self.view_start = self.view_end.saturating_sub(100_000_00);
+		self.view_start = self.view_end.saturating_sub(1_000_000);
 
 		instruction
+	}
+
+	pub fn reset(&mut self) {
+		self.checkpoints.clear();
+		self.events.clear();
+		self.latest_t_states = 0;
+
+		self.view_start = 0;
+		self.view_end = 0;
+		self.show_single_frame = false;
 	}
 }

@@ -3,9 +3,10 @@ use crate::{
 	util::bits::{BIT_0, BIT_7},
 };
 use core::ops::Not;
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct CGBState {
 	wram_bank: usize,
 	vram_bank: VRAMBank,
@@ -13,7 +14,7 @@ pub struct CGBState {
 	pub prepare_speed_switch: bool,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Default, Debug)]
+#[derive(Clone, Copy, Serialize, Deserialize, Default, Debug, GetSize)]
 pub enum Speed {
 	#[default]
 	Normal,

@@ -11,6 +11,7 @@ use crate::{
 	ppu::renderer::PixelFIFO,
 	util::{bits::BIT_7, BigArray},
 };
+use get_size::GetSize;
 use sm83::Interrupt;
 use std::collections::VecDeque;
 
@@ -21,21 +22,21 @@ use self::{
 	sprite::Sprite, stat::Stat,
 };
 
-#[derive(Clone, Copy, Serialize, Deserialize, Default)]
+#[derive(Clone, Copy, Serialize, Deserialize, Default, GetSize)]
 pub enum FetcherMode {
 	#[default]
 	Background,
 	Window,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Default)]
+#[derive(Clone, Copy, Serialize, Deserialize, Default, GetSize)]
 pub enum GBMode {
 	#[default]
 	CGB,
 	DMG,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[derive(Clone, Copy, Serialize, Deserialize, Debug, GetSize)]
 pub enum PPUMode {
 	HBlank = 0,
 	VBlank = 1,
@@ -43,7 +44,7 @@ pub enum PPUMode {
 	Draw = 3,
 }
 
-#[derive(Clone, Copy, Default, Serialize, Deserialize)]
+#[derive(Clone, Copy, Default, Serialize, Deserialize, GetSize)]
 pub enum VRAMBank {
 	#[default]
 	Bank0,
@@ -60,7 +61,7 @@ impl From<u8> for VRAMBank {
 	}
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default, GetSize)]
 pub struct Registers {
 	pub scy: u8,
 	pub scx: u8,
@@ -75,7 +76,7 @@ pub struct Registers {
 	pub lcdc: Lcdc,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct PPU {
 	pub gb_mode: GBMode,
 	pub cycle: u64,

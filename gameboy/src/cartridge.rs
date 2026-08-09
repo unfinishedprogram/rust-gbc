@@ -1,4 +1,5 @@
 use cartridge_data::CartridgeData;
+use get_size::GetSize;
 use header::{CartridgeInfo, CartridgeParseError, RawCartridgeHeader};
 use mbc1::MBC1State;
 use mbc2::MBC2State;
@@ -17,7 +18,7 @@ mod mbc3;
 mod mbc5;
 pub mod memory_bank_controller;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct Cartridge {
 	pub data: CartridgeData,
 	pub mbc: Mbc,

@@ -1,3 +1,4 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 use sm83::memory_mapper::MemoryMapper;
 
@@ -8,7 +9,7 @@ pub trait MemoryBankController: Default + Clone {
 	fn write(&mut self, addr: u16, value: u8);
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub enum Mbc {
 	ROM,
 	MBC1(MBC1State),

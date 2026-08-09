@@ -1,8 +1,9 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use super::cartridge_data::CartridgeData;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct MBC2State {
 	ram_enabled: bool,
 	ram_data: Vec<u8>,

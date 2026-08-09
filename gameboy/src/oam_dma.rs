@@ -1,9 +1,10 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 use sm83::memory_mapper::MemoryMapper;
 
 use crate::Gameboy;
 
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, Serialize, Deserialize, Default, GetSize)]
 pub struct OamDmaState {
 	start_delay: u32,
 	dma_cycle: u16,

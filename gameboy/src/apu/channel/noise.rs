@@ -2,6 +2,7 @@ use crate::{
 	apu::frame_sequencer,
 	util::bits::{BIT_3, BIT_6, BIT_7},
 };
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use super::super::{
@@ -9,7 +10,7 @@ use super::super::{
 	volume_envelope::VolumeEnvelope,
 };
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct Noise {
 	lfsr: Lfsr,
 	volume_envelope: VolumeEnvelope,

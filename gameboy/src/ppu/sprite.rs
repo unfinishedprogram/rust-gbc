@@ -1,7 +1,8 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use super::tile_data::TileAttributes;
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct Sprite {
 	pub addr: u16,
 	pub x: u8,

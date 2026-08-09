@@ -1,3 +1,4 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::{lcd::Color, util::bits::BIT_7};
@@ -5,7 +6,7 @@ use crate::{lcd::Color, util::bits::BIT_7};
 use super::{renderer::Pixel, PPUMode};
 
 /// Handles reading and writing of color pallette data for CGB mode
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct ColorRamController {
 	increment: bool,
 	index: usize,

@@ -1,16 +1,17 @@
 use std::ops::{Index, IndexMut};
 
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::util::BigArray;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct RamBank {
 	#[serde(with = "BigArray")]
 	pub data: [u8; 0x2000],
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct RomBank {
 	#[serde(with = "BigArray")]
 	pub data: [u8; 0x4000],
@@ -44,7 +45,7 @@ impl IndexMut<usize> for RomBank {
 	}
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct CartridgeData {
 	pub ram_banks: Vec<RamBank>,
 

@@ -1,10 +1,11 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::util::BigArray;
 
 const BANK_SIZE: usize = 0x1000;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub enum WorkRam {
 	Cgb(Box<WorkRamDataCGB>),
 	Dmg(Box<WorkRamDataDMG>),
@@ -77,7 +78,7 @@ impl BankedWorkRam for WorkRam {
 	}
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct WorkRamDataCGB {
 	bank: u8,
 
@@ -99,7 +100,7 @@ pub struct WorkRamDataCGB {
 	bank_7: [u8; BANK_SIZE],
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct WorkRamDataDMG {
 	#[serde(with = "BigArray")]
 	bank_0: [u8; BANK_SIZE],

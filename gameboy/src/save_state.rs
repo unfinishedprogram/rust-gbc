@@ -1,11 +1,12 @@
 use std::fmt::Display;
 
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::Gameboy;
 use std::time::SystemTime;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, GetSize)]
 pub enum RomSource {
 	ExternalUrl(String),
 	LocalUrl(String),

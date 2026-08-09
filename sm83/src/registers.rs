@@ -2,6 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use std::fmt::Debug;
 
+#[allow(unused_imports)]
+use get_size::GetSize;
+
 pub trait Addressable<Idx, T> {
 	fn read(&self, index: Idx) -> T;
 	fn write(&mut self, index: Idx, value: T);
@@ -30,7 +33,7 @@ pub enum CPURegister16 {
 	PC,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Default)]
+#[derive(Clone, Copy, Serialize, Deserialize, Default, GetSize)]
 pub struct CPURegisters {
 	inner: [u8; 8],
 	pc: u16,

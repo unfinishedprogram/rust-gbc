@@ -1,3 +1,4 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -23,7 +24,7 @@ use super::{
 
 use sm83::{memory_mapper::MemoryMapper, CPUState, Instruction, Interrupt, SM83};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub enum Mode {
 	// Gameboy Color mode
 	GBC(CGBState),
@@ -40,7 +41,7 @@ impl Mode {
 	}
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct Gameboy {
 	debug_break: bool,
 	pub mode: Mode,
@@ -282,6 +283,10 @@ impl Gameboy {
 			return true;
 		}
 		false
+	}
+
+	pub fn total_size_bytes(&self) -> usize {
+		self.get_size()
 	}
 }
 

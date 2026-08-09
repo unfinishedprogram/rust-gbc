@@ -1,6 +1,7 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct LengthCounter {
 	enabled: bool,
 	length: u8,

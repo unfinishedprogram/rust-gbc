@@ -1,18 +1,15 @@
 use gloo::{file::callbacks::FileReader, net::http::Request};
 use std::{cell::RefCell, collections::VecDeque, fmt::Display};
 
-use wasm_bindgen::{prelude::wasm_bindgen, Clamped};
+use wasm_bindgen::{Clamped, prelude::wasm_bindgen};
 use web_sys::ImageData;
 
 use gameboy::{
-	save_state::{RomSource, SaveState},
 	Gameboy,
+	save_state::{RomSource, SaveState},
 };
 
-use crate::{
-	// audio::{self, AudioHandler},
-	input::InputState,
-};
+use crate::input::InputState;
 
 thread_local! {
 	pub static APPLICATION: RefCell<Application> = RefCell::new(Application::default());

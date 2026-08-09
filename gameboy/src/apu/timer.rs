@@ -1,6 +1,7 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize, Default, Debug)]
+#[derive(Clone, Serialize, Deserialize, Default, Debug, GetSize)]
 pub struct Timer {
 	counter: u16,
 	period: u16,

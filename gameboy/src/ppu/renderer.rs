@@ -1,3 +1,4 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::util::bits::*;
@@ -8,7 +9,7 @@ use super::{
 	FetcherMode, GBMode, VRAMBank, PPU,
 };
 
-#[derive(Clone, Serialize, Deserialize, Default, Copy)]
+#[derive(Clone, Serialize, Deserialize, Default, Copy, GetSize)]
 pub struct Pixel {
 	/// a value between 0 and 3
 	pub color: u8,

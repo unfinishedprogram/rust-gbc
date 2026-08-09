@@ -1,9 +1,10 @@
 use crate::util::bits::BIT_2;
 
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 use sm83::Interrupt;
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize, GetSize)]
 pub struct Timer {
 	system_clock: u16,
 	tima: u8,

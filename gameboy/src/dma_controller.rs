@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::util::bits::BIT_7;
@@ -12,7 +13,7 @@ pub struct DMATransferRequest {
 	pub rows: u16,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct DMAController {
 	source: u16,      // HDMA1 | HDMA2
 	destination: u16, // HDMA3 | HDMA4

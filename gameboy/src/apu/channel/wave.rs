@@ -1,3 +1,4 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -8,7 +9,7 @@ use crate::{
 use super::super::{channel::Channel, length_counter::LengthCounter, timer::Timer};
 
 #[repr(u8)]
-#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, GetSize)]
 pub enum VolumeCode {
 	Zero = 0,
 	OneHundred = 1,
@@ -27,7 +28,7 @@ impl VolumeCode {
 	}
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct Wave {
 	dac_power: bool,
 	enabled: bool,

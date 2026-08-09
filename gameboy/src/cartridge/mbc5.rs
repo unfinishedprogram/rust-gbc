@@ -1,8 +1,9 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use super::cartridge_data::CartridgeData;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, GetSize)]
 pub struct MBC5State {
 	rom_bank: u16,
 	ram_bank: u8,

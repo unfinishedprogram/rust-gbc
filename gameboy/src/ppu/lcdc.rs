@@ -3,9 +3,10 @@ use super::{
 	FetcherMode,
 };
 use crate::util::bits::*;
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug, GetSize)]
 pub struct Lcdc(u8);
 
 impl_bitlike!(Lcdc);

@@ -1,8 +1,9 @@
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 pub type Color = (u8, u8, u8, u8);
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, GetSize)]
 pub struct GameboyLCD {
 	buffer_front: Vec<u8>,
 	buffer_back: Vec<u8>,
@@ -12,7 +13,7 @@ pub struct GameboyLCD {
 	pub scale: f32,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, GetSize)]
 pub enum SyncMode {
 	DoubleBuffered,
 	None,

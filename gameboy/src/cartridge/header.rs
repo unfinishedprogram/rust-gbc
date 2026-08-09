@@ -1,5 +1,6 @@
 // https://gbdev.io/pandocs/The_Cartridge_Header.html
 
+use get_size::GetSize;
 use serde::{Deserialize, Serialize};
 
 use crate::save_state::RomSource;
@@ -28,7 +29,7 @@ pub struct RawCartridgeHeader {
 	pub global_checksum: u16,        // 014E-014F
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, GetSize)]
 pub struct CartridgeInfo {
 	pub rom_source: Option<RomSource>,
 	pub title: String,
